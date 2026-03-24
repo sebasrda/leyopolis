@@ -168,6 +168,8 @@ model Book {
   moduleItems CourseModuleItem[]
   gradeCollections BookCollectionByGradeBook[]
   
+  published   Boolean  @default(true)
+  
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }

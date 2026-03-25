@@ -90,23 +90,23 @@ export async function GET() {
         take: 6,
       }),
       prisma.$queryRaw<Array<{ day: string; count: number }>>`
-        SELECT strftime('%Y-%m-%d', startTime) as day, COUNT(*) as count
-        FROM ReadingSession
-        WHERE startTime >= ${monthStart}
+        SELECT TO_CHAR("startTime", 'YYYY-MM-DD') as day, COUNT(*)::INT as count
+        FROM "ReadingSession"
+        WHERE "startTime" >= ${monthStart}
         GROUP BY day
         ORDER BY day ASC
       `,
       prisma.$queryRaw<Array<{ day: string; count: number }>>`
-        SELECT strftime('%Y-%m-%d', createdAt) as day, COUNT(*) as count
-        FROM User
-        WHERE createdAt >= ${monthStart}
+        SELECT TO_CHAR("createdAt", 'YYYY-MM-DD') as day, COUNT(*)::INT as count
+        FROM "User"
+        WHERE "createdAt" >= ${monthStart}
         GROUP BY day
         ORDER BY day ASC
       `,
       prisma.$queryRaw<Array<{ hour: number; count: number }>>`
-        SELECT CAST(strftime('%H', createdAt) AS INTEGER) as hour, COUNT(*) as count
-        FROM UserActivity
-        WHERE createdAt >= ${weekStart} AND userId != ${DEMO_USER_ID}
+        SELECT EXTRACT(HOUR FROM "createdAt")::INT as hour, COUNT(*)::INT as count
+        FROM "UserActivity"
+        WHERE "createdAt" >= ${weekStart} AND "userId" != ${DEMO_USER_ID}
         GROUP BY hour
         ORDER BY hour ASC
       `,

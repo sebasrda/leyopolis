@@ -11,6 +11,7 @@ import {
   Image as ImageIcon,
   FileText
 } from "lucide-react";
+import { upload } from "@vercel/blob/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,6 +47,9 @@ export default function AdminBooksPage() {
   const [selectedCover, setSelectedCover] = useState<File | null>(null);
   const [bookTitle, setBookTitle] = useState("");
   const [bookAuthor, setBookAuthor] = useState("");
+  const [bookCategory, setBookCategory] = useState("Literatura");
+  const [bookDifficulty, setBookDifficulty] = useState("Intermedio");
+  const [bookAgeRange, setBookAgeRange] = useState("9-12");
   const [uploadProgress, setUploadProgress] = useState(0);
 
   useEffect(() => {
@@ -79,9 +83,17 @@ export default function AdminBooksPage() {
     formData.append("author", bookAuthor || "Autor Desconocido");
 
     try {
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
+      // We'll try to use formData for everyone, let the server handle Vercel Blob if needed
+      // but if the client has Vercel Blob configured, it's faster to do it here.
+      // For simplicity and consistency, focusing on the API route first.
+      
+      formData.append("category", bookCategory);
+      formData.append("difficulty", bookDifficulty);
+      formData.append("ageRange", bookAgeRange);
+
+      const res = await fetch("/api/upload", { 
+        method: "POST", 
+        body: formData 
       });
 
       if (res.ok) {
@@ -93,14 +105,26 @@ export default function AdminBooksPage() {
           setSelectedCover(null);
           setBookTitle("");
           setBookAuthor("");
+          setBookCategory("Literatura");
+          setBookDifficulty("Intermedio");
+          setBookAgeRange("9-12");
           fetchBooks(); // Refresh list
         }, 500);
       } else {
-        alert("Error al subir el libro");
+        const ct = res.headers.get("content-type") || "";
+        if (ct.includes("application/json")) {
+          const err = await res.json().catch(() => null);
+          alert(err?.message || err?.error || err?.details || "Error al subir el libro");
+        } else {
+          const text = await res.text().catch(() => "");
+          alert(text ? text.slice(0, 500) : "Error al subir el libro");
+        }
         setUploadProgress(0);
       }
     } catch (error) {
       console.error("Error uploading:", error);
+      const msg = error instanceof Error ? error.message : String(error);
+      alert(msg || "Error al subir el libro");
       setUploadProgress(0);
     }
   };
@@ -169,6 +193,49 @@ export default function AdminBooksPage() {
                   onChange={(e) => setBookAuthor(e.target.value)}
                 />
               </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>Categoría</Label>
+                  <select 
+                    className="w-full p-2 border rounded-md text-sm"
+                    value={bookCategory}
+                    onChange={(e) => setBookCategory(e.target.value)}
+                  >
+                    <option value="Infantil">Infantil</option>
+                    <option value="Literatura">Literatura</option>
+                    <option value="Académico">Académico</option>
+                    <option value="Ciencia">Ciencia</option>
+                    <option value="Historia">Historia</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Dificultad</Label>
+                  <select 
+                    className="w-full p-2 border rounded-md text-sm"
+                    value={bookDifficulty}
+                    onChange={(e) => setBookDifficulty(e.target.value)}
+                  >
+                    <option value="Principiante">Principiante</option>
+                    <option value="Intermedio">Intermedio</option>
+                    <option value="Avanzado">Avanzado</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Edad Recom.</Label>
+                  <select 
+                    className="w-full p-2 border rounded-md text-sm"
+                    value={bookAgeRange}
+                    onChange={(e) => setBookAgeRange(e.target.value)}
+                  >
+                    <option value="3-5">3-5 años</option>
+                    <option value="6-8">6-8 años</option>
+                    <option value="9-12">9-12 años</option>
+                    <option value="13-15">13-15 años</option>
+                    <option value="16+">16+ años</option>
+                  </select>
+                </div>
+              </div>
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -236,6 +303,7 @@ export default function AdminBooksPage() {
               <TableHead>Portada</TableHead>
               <TableHead>Título</TableHead>
               <TableHead>Autor</TableHead>
+              <TableHead>Edad</TableHead>
               <TableHead>Categoría</TableHead>
               <TableHead>Acciones</TableHead>
             </TableRow>
@@ -261,6 +329,11 @@ export default function AdminBooksPage() {
                   </TableCell>
                   <TableCell className="font-medium">{book.title}</TableCell>
                   <TableCell>{book.author}</TableCell>
+                  <TableCell>
+                    <Badge variant="secondary" className="bg-blue-50 text-blue-700">
+                      {book.ageRange || "N/A"}
+                    </Badge>
+                  </TableCell>
                   <TableCell><Badge variant="outline">{book.category}</Badge></TableCell>
                   <TableCell>
                     <Button 

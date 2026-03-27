@@ -19,6 +19,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import { 
   Table, 
   TableBody, 
@@ -39,6 +40,7 @@ import {
 export default function AdminDashboardPage() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [ageRange, setAgeRange] = useState("9-12");
 
   const handleFileUpload = async () => {
     if (!selectedFile) return;
@@ -48,6 +50,9 @@ export default function AdminDashboardPage() {
     const formData = new FormData();
     formData.append("file", selectedFile);
     formData.append("title", selectedFile.name.replace(".pdf", ""));
+    formData.append("ageRange", ageRange);
+    formData.append("category", "General");
+    formData.append("difficulty", "Intermedio");
 
     try {
       const response = await fetch("/api/upload", {
@@ -93,17 +98,31 @@ export default function AdminDashboardPage() {
       {/* Upload Book Section */}
       <Card className="p-6 border-dashed border-2 border-indigo-200 bg-indigo-50/50">
         <h3 className="text-lg font-bold text-indigo-900 mb-2">Subir Nuevo Libro (PDF)</h3>
-        <div className="flex items-center gap-4">
-          <Input 
-            type="file" 
-            accept=".pdf" 
-            className="bg-white" 
-            onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-          />
-          <Button onClick={handleFileUpload} disabled={!selectedFile || (uploadProgress > 0 && uploadProgress < 100)}>
+          <div className="flex-1">
+            <Input 
+              type="file" 
+              accept=".pdf" 
+              className="bg-white mb-2" 
+              onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+            />
+            <div className="flex items-center gap-2">
+              <Label className="text-xs text-indigo-700 whitespace-nowrap">Rango de Edad:</Label>
+              <select 
+                className="p-1 text-sm border rounded bg-white focus:ring-1 focus:ring-indigo-500"
+                value={ageRange}
+                onChange={(e) => setAgeRange(e.target.value)}
+              >
+                <option value="3-5">3-5 años</option>
+                <option value="6-8">6-8 años</option>
+                <option value="9-12">9-12 años</option>
+                <option value="13-15">13-15 años</option>
+                <option value="16+">16+ años</option>
+              </select>
+            </div>
+          </div>
+          <Button onClick={handleFileUpload} disabled={!selectedFile || (uploadProgress > 0 && uploadProgress < 100)} className="bg-indigo-600 hover:bg-indigo-700">
             {uploadProgress > 0 && uploadProgress < 100 ? `Subiendo ${uploadProgress}%` : "Subir y Procesar"}
           </Button>
-        </div>
       </Card>
 
       {/* Stats Cards */}

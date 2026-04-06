@@ -1,53 +1,104 @@
-
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { requireRole } from "@/lib/access";
 
-export async function GET() {
-  const session = await getServerSession(authOptions);
-  if (!session || !session.user || !("id" in session.user)) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+export async function GET(req: Request) {
+  const auth = await requireRole("SUPERADMIN", "ADMIN", "COORDINATOR", "TEACHER");
+  if ("error" in auth) return auth.error;
+
+  const url = new URL(req.url);
+  const subject = url.searchParams.get("subject");
+  const grade = url.searchParams.get("grade");
+
+  const dbUser = await prisma.user.findUnique({
+    where: { id: auth.user.userId },
+    select: { role: true, institutionId: true }
+  });
+
+  const baseFilter: any = {};
+  if (dbUser?.role !== "SUPERADMIN" && dbUser?.institutionId) {
+    baseFilter.institutionId = dbUser.institutionId;
   }
 
+  // Si es un profesor, ver solo sus clases
+  if (auth.user.role === "TEACHER") {
+    baseFilter.teacherId = auth.user.userId;
+  }
+
+  if (subject) baseFilter.subject = subject;
+  if (grade) baseFilter.grade = grade;
+
   try {
-    const userId = (session.user as any).id;
     const classes = await prisma.class.findMany({
-      where: {
-        teacherId: userId
-      },
+      where: baseFilter,
       include: {
+        teacher: {
+          select: { id: true, name: true, email: true },
+        },
         _count: {
-          select: { students: true }
-        }
-      }
+          select: { students: true },
+        },
+      },
+      orderBy: { createdAt: "desc" },
     });
 
     return NextResponse.json(classes);
   } catch (error) {
-    return NextResponse.json({ message: "Error" }, { status: 500 });
+    console.error("Error fetching classes:", error);
+    return NextResponse.json({ message: "Error interno del servidor" }, { status: 500 });
   }
 }
 
 export async function POST(req: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session || !session.user || !("id" in session.user)) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-  }
+  const auth = await requireRole("SUPERADMIN", "ADMIN", "COORDINATOR");
+  if ("error" in auth) return auth.error;
 
   try {
-    const { name } = await req.json();
-    const userId = (session.user as any).id;
-    
-    const newClass = await prisma.class.create({
+    const body = await req.json();
+    const { name, teacherId, subject, grade } = body;
+
+    const classDb = prisma as unknown as {
+      class: {
+        create: (args: unknown) => Promise<unknown>;
+      };
+      user: {
+        findUnique: (args: unknown) => Promise<{ institutionId: string | null; role: string | null } | null>;
+      };
+    };
+
+    const dbUser = await prisma.user.findUnique({
+      where: { id: auth.user.userId },
+      select: { institutionId: true, role: true }
+    });
+
+    if (!dbUser?.institutionId && dbUser?.role !== "SUPERADMIN") {
+      return NextResponse.json({ message: "No tienes una institución asignada" }, { status: 400 });
+    }
+
+    if (!name || !teacherId) {
+      return NextResponse.json(
+        { message: "Nombre de clase y profesor son requeridos" },
+        { status: 400 }
+      );
+    }
+
+    const newClass = await classDb.class.create({
       data: {
         name,
-        teacherId: userId
+        teacherId,
+        subject,
+        grade,
+        institutionId: dbUser.institutionId
+      },
+      include: {
+        teacher: { select: { id: true, name: true, email: true } },
+        _count: { select: { students: true } }
       }
     });
 
     return NextResponse.json(newClass);
   } catch (error) {
-    return NextResponse.json({ message: "Error" }, { status: 500 });
+    console.error("Error creating class:", error);
+    return NextResponse.json({ message: "Error interno del servidor" }, { status: 500 });
   }
 }

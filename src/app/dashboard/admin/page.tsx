@@ -1,19 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Users, 
   BookOpen, 
   TrendingUp, 
-  DollarSign, 
   Activity, 
   AlertCircle,
   MoreHorizontal,
   Search,
   CheckCircle2,
-  XCircle,
   Plus,
-  Download
+  GraduationCap,
+  Loader2,
+  UserCog,
+  Trash2,
+  FileText,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,17 +38,85 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import Link from "next/link";
+
+interface Stats {
+  totalUsers: number;
+  totalStudents: number;
+  totalTeachers: number;
+  totalAdmins: number;
+  totalBooks: number;
+  totalClasses: number;
+  totalReadingSessions: number;
+  totalActivities: number;
+  studentPercent: number;
+  teacherPercent: number;
+  adminPercent: number;
+  recentUsers: { id: string; name: string; email: string; role: string; createdAt: string }[];
+  institution?: {
+    name: string;
+    status: string;
+    plan: string;
+    maxStudents: number;
+    endDate: string | null;
+  };
+}
 
 export default function AdminDashboardPage() {
-  const [uploadProgress, setUploadProgress] = useState(0);
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Upload state
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [ageRange, setAgeRange] = useState("9-12");
+  const [uploadProgress, setUploadProgress] = useState(0);
+
+  // Create user state
+  const [createUserOpen, setCreateUserOpen] = useState(false);
+  const [newUserName, setNewUserName] = useState("");
+  const [newUserEmail, setNewUserEmail] = useState("");
+  const [newUserPassword, setNewUserPassword] = useState("");
+  const [newUserRole, setNewUserRole] = useState("STUDENT");
+  const [creatingUser, setCreatingUser] = useState(false);
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
+  const fetchStats = async () => {
+    try {
+      const res = await fetch("/api/admin/stats");
+      if (res.ok) {
+        setStats(await res.json());
+      } else {
+        setError("Error al cargar estadísticas");
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Error de conexión");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleFileUpload = async () => {
     if (!selectedFile) return;
-
-    setUploadProgress(10); // Start progress
-
+    setUploadProgress(10);
     const formData = new FormData();
     formData.append("file", selectedFile);
     formData.append("title", selectedFile.name.replace(".pdf", ""));
@@ -55,20 +125,17 @@ export default function AdminDashboardPage() {
     formData.append("difficulty", "Intermedio");
 
     try {
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-
+      const response = await fetch("/api/upload", { method: "POST", body: formData });
       if (response.ok) {
         setUploadProgress(100);
         setTimeout(() => {
-          alert("Libro subido exitosamente. Ahora está disponible en la Biblioteca.");
           setUploadProgress(0);
           setSelectedFile(null);
+          fetchStats();
         }, 500);
       } else {
-        alert("Error al subir el libro.");
+        const err = await response.json().catch(() => null);
+        alert(err?.message || "Error al subir el libro.");
         setUploadProgress(0);
       }
     } catch (error) {
@@ -78,198 +145,251 @@ export default function AdminDashboardPage() {
     }
   };
 
+  const handleCreateUser = async () => {
+    if (!newUserName || !newUserEmail || !newUserPassword) return;
+    setCreatingUser(true);
+    try {
+      const res = await fetch("/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: newUserName,
+          email: newUserEmail,
+          password: newUserPassword,
+          role: newUserRole,
+        }),
+      });
+      if (res.ok) {
+        setCreateUserOpen(false);
+        setNewUserName("");
+        setNewUserEmail("");
+        setNewUserPassword("");
+        setNewUserRole("STUDENT");
+        fetchStats();
+      } else {
+        const data = await res.json();
+        alert(data.message || "Error al crear usuario");
+      }
+    } catch {
+      alert("Error de conexión");
+    } finally {
+      setCreatingUser(false);
+    }
+  };
+
+  const handleDeleteUser = async (id: string) => {
+    if (!confirm("¿Eliminar usuario permanentemente?")) return;
+    try {
+      const res = await fetch(`/api/users/${id}`, { method: "DELETE" });
+      if (res.ok) fetchStats();
+      else alert("Error al eliminar");
+    } catch { alert("Error de conexión"); }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+        <span className="ml-3 text-gray-500">Cargando panel de administración...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[50vh] gap-3">
+        <AlertCircle className="h-10 w-10 text-red-400" />
+        <p className="text-gray-600">{error}</p>
+        <Button onClick={fetchStats}>Reintentar</Button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Panel de Administración</h1>
-          <p className="text-gray-500">Gestiona usuarios, libros y contenido de la plataforma.</p>
+          <h1 className="text-3xl font-bold text-gray-900">Gestión del Colegio</h1>
+          <p className="text-gray-500">
+            {stats?.institution?.name 
+              ? `Plataforma de ${stats.institution.name}` 
+              : "Administra usuarios y clases de tu institución."}
+          </p>
         </div>
         <div className="flex gap-2">
-          <Button className="bg-indigo-600 hover:bg-indigo-500 gap-2">
-            <Plus className="h-4 w-4" /> Nuevo Usuario
-          </Button>
-          <Button variant="outline" className="gap-2">
-            <Download className="h-4 w-4" /> Exportar Reporte
-          </Button>
+          <Dialog open={createUserOpen} onOpenChange={setCreateUserOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-indigo-600 hover:bg-indigo-500 gap-2">
+                <Plus className="h-4 w-4" /> Nuevo Usuario
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader><DialogTitle>Añadir Usuario al Colegio</DialogTitle></DialogHeader>
+              <div className="space-y-3 py-2">
+                <div className="space-y-1">
+                  <Label>Nombre</Label>
+                  <Input value={newUserName} onChange={e => setNewUserName(e.target.value)} placeholder="Nombre completo" />
+                </div>
+                <div className="space-y-1">
+                  <Label>Email</Label>
+                  <Input type="email" value={newUserEmail} onChange={e => setNewUserEmail(e.target.value)} placeholder="correo@ejemplo.com" />
+                </div>
+                <div className="space-y-1">
+                  <Label>Contraseña</Label>
+                  <Input type="password" value={newUserPassword} onChange={e => setNewUserPassword(e.target.value)} placeholder="Mínimo 6 caracteres" />
+                </div>
+                <div className="space-y-1">
+                  <Label>Rol</Label>
+                  <Select value={newUserRole} onValueChange={setNewUserRole}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="STUDENT">Estudiante</SelectItem>
+                      <SelectItem value="TEACHER">Docente</SelectItem>
+                      <SelectItem value="COORDINATOR">Coordinador</SelectItem>
+                      <SelectItem value="ADMIN">Admin Secundario</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button onClick={handleCreateUser} disabled={creatingUser || !newUserName || !newUserEmail || !newUserPassword} className="w-full">
+                  {creatingUser ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Creando...</> : "Añadir Usuario"}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
-      {/* Upload Book Section */}
-      <Card className="p-6 border-dashed border-2 border-indigo-200 bg-indigo-50/50">
-        <h3 className="text-lg font-bold text-indigo-900 mb-2">Subir Nuevo Libro (PDF)</h3>
-          <div className="flex-1">
-            <Input 
-              type="file" 
-              accept=".pdf" 
-              className="bg-white mb-2" 
-              onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-            />
-            <div className="flex items-center gap-2">
-              <Label className="text-xs text-indigo-700 whitespace-nowrap">Rango de Edad:</Label>
-              <select 
-                className="p-1 text-sm border rounded bg-white focus:ring-1 focus:ring-indigo-500"
-                value={ageRange}
-                onChange={(e) => setAgeRange(e.target.value)}
-              >
-                <option value="3-5">3-5 años</option>
-                <option value="6-8">6-8 años</option>
-                <option value="9-12">9-12 años</option>
-                <option value="13-15">13-15 años</option>
-                <option value="16+">16+ años</option>
-              </select>
+      {/* Subscription Card */}
+      {stats?.institution && (
+        <Card className={`border-2 ${stats.institution.status === 'activa' ? 'border-green-200 bg-green-50/30' : 'border-amber-200 bg-amber-50/30'}`}>
+          <CardContent className="p-6">
+            <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
+              <div>
+                <h3 className="text-lg font-bold flex items-center gap-2">
+                  Suscripción: {stats.institution.plan}
+                  <Badge variant={stats.institution.status === 'activa' ? "default" : "secondary"} className={stats.institution.status === 'activa' ? "bg-green-600" : ""}>
+                    {stats.institution.status.toUpperCase()}
+                  </Badge>
+                </h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  Estudiantes inscritos: <span className="font-bold">{stats.totalStudents || 0}</span> / {stats.institution.maxStudents} límite
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-gray-500">Vencimiento del plan</p>
+                <p className="font-semibold text-gray-900">
+                  {stats.institution.endDate ? new Date(stats.institution.endDate).toLocaleDateString() : 'Ilimitado'}
+                </p>
+              </div>
             </div>
-          </div>
-          <Button onClick={handleFileUpload} disabled={!selectedFile || (uploadProgress > 0 && uploadProgress < 100)} className="bg-indigo-600 hover:bg-indigo-700">
-            {uploadProgress > 0 && uploadProgress < 100 ? `Subiendo ${uploadProgress}%` : "Subir y Procesar"}
-          </Button>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* Upload Book Section (Hidden locally unless superadmin/coordinador wants local books, removing to clean UI as requested) */}
+
+      {/* Stats Cards - REAL DATA */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Usuarios Totales</CardTitle>
             <Users className="h-4 w-4 text-gray-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">12,345</div>
-            <p className="text-xs text-green-500 flex items-center mt-1">
-              <TrendingUp className="h-3 w-3 mr-1" /> +18.2% este mes
-            </p>
+            <div className="text-2xl font-bold">{stats?.totalUsers || 0}</div>
+            <p className="text-xs text-gray-500 mt-1">{stats?.totalStudents || 0} est. · {stats?.totalTeachers || 0} doc. · {stats?.totalAdmins || 0} admin</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Libros Traducidos</CardTitle>
+            <CardTitle className="text-sm font-medium">Libros en Biblioteca</CardTitle>
             <BookOpen className="h-4 w-4 text-gray-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">843</div>
-            <p className="text-xs text-green-500 flex items-center mt-1">
-              <TrendingUp className="h-3 w-3 mr-1" /> +5.4% esta semana
-            </p>
+            <div className="text-2xl font-bold">{stats?.totalBooks || 0}</div>
+            <p className="text-xs text-gray-500 mt-1">PDFs disponibles en la plataforma</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Ingresos (MRR)</CardTitle>
-            <DollarSign className="h-4 w-4 text-gray-500" />
+            <CardTitle className="text-sm font-medium">Clases Activas</CardTitle>
+            <GraduationCap className="h-4 w-4 text-gray-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$45,231</div>
-            <p className="text-xs text-green-500 flex items-center mt-1">
-              <TrendingUp className="h-3 w-3 mr-1" /> +12.1% vs mes anterior
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Estado del Sistema</CardTitle>
-            <Activity className="h-4 w-4 text-gray-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">99.9%</div>
-            <p className="text-xs text-gray-500 mt-1">Uptime últimos 30 días</p>
+            <div className="text-2xl font-bold">{stats?.totalClasses || 0}</div>
+            <p className="text-xs text-gray-500 mt-1">Grupos con docente asignado</p>
           </CardContent>
         </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Recent Users Table */}
+        {/* Recent Users Table - REAL DATA */}
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle>Usuarios Recientes</CardTitle>
-            <CardDescription>Gestión de los últimos usuarios registrados.</CardDescription>
+            <CardDescription>Últimos usuarios registrados en la plataforma.</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <div className="relative flex-1">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
-                  <Input placeholder="Buscar usuarios..." className="pl-9" />
-                </div>
-              </div>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Usuario</TableHead>
-                    <TableHead>Rol</TableHead>
-                    <TableHead>Estado</TableHead>
-                    <TableHead>Fecha</TableHead>
-                    <TableHead className="text-right">Acciones</TableHead>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Usuario</TableHead>
+                  <TableHead>Rol</TableHead>
+                  <TableHead>Fecha</TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {(stats?.recentUsers || []).map((user) => (
+                  <TableRow key={user.id}>
+                    <TableCell>
+                      <div>
+                        <p className="font-medium">{user.name || "Sin nombre"}</p>
+                        <p className="text-xs text-gray-500">{user.email}</p>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={user.role === "ADMIN" ? "default" : user.role === "TEACHER" ? "secondary" : "outline"}>
+                        {user.role}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-sm text-gray-500">
+                      {new Date(user.createdAt).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                          <DropdownMenuItem asChild><Link href="/dashboard/admin/users">Ver en gestión</Link></DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem className="text-red-600" onClick={() => handleDeleteUser(user.id)}>
+                            <Trash2 className="h-4 w-4 mr-2" /> Eliminar
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {[
-                    { name: "Ana García", email: "ana@example.com", role: "Estudiante", status: "Activo", date: "Hoy" },
-                    { name: "Carlos Ruiz", email: "carlos@example.com", role: "Profesor", status: "Activo", date: "Ayer" },
-                    { name: "Maria Loza", email: "maria@example.com", role: "Estudiante", status: "Inactivo", date: "Hace 2 días" },
-                    { name: "John Doe", email: "john@example.com", role: "Estudiante", status: "Activo", date: "Hace 3 días" },
-                    { name: "Admin Test", email: "admin@leyopolis.com", role: "Admin", status: "Activo", date: "Hace 1 semana" },
-                  ].map((user, i) => (
-                    <TableRow key={i}>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium">{user.name}</p>
-                          <p className="text-xs text-gray-500">{user.email}</p>
-                        </div>
-                      </TableCell>
-                      <TableCell>{user.role}</TableCell>
-                      <TableCell>
-                        <Badge variant={user.status === "Activo" ? "default" : "secondary"} className={user.status === "Activo" ? "bg-green-100 text-green-700 hover:bg-green-200" : ""}>
-                          {user.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{user.date}</TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                            <DropdownMenuItem>Ver perfil</DropdownMenuItem>
-                            <DropdownMenuItem>Editar</DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem className="text-red-600">Suspender</DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                ))}
+                {(!stats?.recentUsers || stats.recentUsers.length === 0) && (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center py-8 text-gray-500">No hay usuarios registrados</TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+            <Button variant="outline" className="w-full mt-4" asChild>
+              <Link href="/dashboard/admin/users">Ver todos los usuarios</Link>
+            </Button>
           </CardContent>
         </Card>
 
-        {/* System Health / Alerts */}
+        {/* User Distribution - REAL DATA */}
         <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Alertas del Sistema</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-start gap-4 p-3 bg-yellow-50 rounded-lg border border-yellow-100">
-                <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
-                <div>
-                  <h4 className="text-sm font-bold text-yellow-900">Alto uso de API de Traducción</h4>
-                  <p className="text-xs text-yellow-700 mt-1">Se ha alcanzado el 85% de la cuota mensual de OpenAI.</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-4 p-3 bg-green-50 rounded-lg border border-green-100">
-                <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5" />
-                <div>
-                  <h4 className="text-sm font-bold text-green-900">Backup Completado</h4>
-                  <p className="text-xs text-green-700 mt-1">La copia de seguridad de la base de datos se realizó con éxito a las 03:00 AM.</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
           <Card>
             <CardHeader>
               <CardTitle>Distribución de Usuarios</CardTitle>
@@ -279,31 +399,46 @@ export default function AdminDashboardPage() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
                     <span className="font-medium">Estudiantes</span>
-                    <span className="text-gray-500">85%</span>
+                    <span className="text-gray-500">{stats?.studentPercent || 0}%</span>
                   </div>
                   <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-indigo-600 w-[85%]"></div>
+                    <div className="h-full bg-indigo-600 transition-all" style={{ width: `${stats?.studentPercent || 0}%` }}></div>
                   </div>
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
                     <span className="font-medium">Profesores</span>
-                    <span className="text-gray-500">12%</span>
+                    <span className="text-gray-500">{stats?.teacherPercent || 0}%</span>
                   </div>
                   <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-purple-600 w-[12%]"></div>
+                    <div className="h-full bg-purple-600 transition-all" style={{ width: `${stats?.teacherPercent || 0}%` }}></div>
                   </div>
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
                     <span className="font-medium">Admins</span>
-                    <span className="text-gray-500">3%</span>
+                    <span className="text-gray-500">{stats?.adminPercent || 0}%</span>
                   </div>
                   <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-gray-800 w-[3%]"></div>
+                    <div className="h-full bg-gray-800 transition-all" style={{ width: `${stats?.adminPercent || 0}%` }}></div>
                   </div>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Quick Actions */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Acciones Rápidas</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Button className="w-full justify-start gap-2 bg-indigo-600 hover:bg-indigo-700 text-white" asChild>
+                <Link href="/dashboard/admin/classes"><Plus className="h-4 w-4" /> Crear Nueva Clase</Link>
+              </Button>
+              <Button variant="outline" className="w-full justify-start gap-2" asChild>
+                <Link href="/dashboard/admin/users"><Users className="h-4 w-4" /> Asignar Estudiantes</Link>
+              </Button>
             </CardContent>
           </Card>
         </div>

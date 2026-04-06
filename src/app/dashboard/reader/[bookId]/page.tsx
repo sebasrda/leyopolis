@@ -2,6 +2,9 @@
 
 import { useState, useEffect, use } from "react";
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
+import { Sparkles } from 'lucide-react';
+import { Button } from "@/components/ui/button";
 
 const ProfessionalFlipbook = dynamic(() => import('@/components/reader/ProfessionalFlipbook'), {
   ssr: false,
@@ -44,10 +47,21 @@ export default function ReaderPage({ params }: { params: Promise<{ bookId: strin
   const pdfUrl = bookDetails?.contentUrl || (bookId === "the-great-gatsby" ? "/books/gatsby.pdf" : "/books/sample.pdf");
 
   return (
-    <ProfessionalFlipbook 
-      pdfUrl={pdfUrl}
-      bookTitle={bookDetails?.title || titleParam || "Libro"}
-      bookId={bookId}
-    />
+    <div className="relative h-screen w-full">
+      <ProfessionalFlipbook 
+        pdfUrl={pdfUrl}
+        bookTitle={bookDetails?.title || titleParam || "Libro"}
+        bookId={bookId}
+      />
+      {bookDetails?.quizId && (
+        <div className="absolute top-6 right-6 z-50">
+          <Link href={`/dashboard/quiz/${bookDetails.quizId}`}>
+            <Button className="bg-green-600 hover:bg-green-500 shadow-lg gap-2 text-white border-2 border-green-400">
+              <Sparkles className="h-4 w-4" /> Hacer Quiz
+            </Button>
+          </Link>
+        </div>
+      )}
+    </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { 
+  Building2,
   BookOpen, 
   LayoutDashboard, 
   Library, 
@@ -15,8 +16,9 @@ import {
   GraduationCap,
   MessageSquare,
   BarChart3,
-  Languages,
-  Sparkles
+  Sparkles,
+  Bot,
+  Crown
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +31,7 @@ import {
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -36,41 +39,61 @@ import { signOut, useSession } from "next-auth/react";
 import dynamic from 'next/dynamic';
 import { LanguageSelector } from "@/components/i18n/LanguageSelector";
 
-const AiTutorWidget = dynamic(() => import('@/components/reader/AiTutorWidget'), { ssr: false });
 const FloatingAiTutor = dynamic(() => import("@/components/dashboard/FloatingAiTutor").then((m) => m.FloatingAiTutor), {
   ssr: false,
 });
 
-const sidebarItems = [
+// Student sidebar
+const studentItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
   { icon: Library, label: "Biblioteca", href: "/dashboard/library" },
-  { icon: Languages, label: "Traductor IA", href: "/dashboard/translator" },
   { icon: BookOpen, label: "Mis Lecturas", href: "/dashboard/my-readings" },
-  { icon: GraduationCap, label: "Aprendizaje", href: "/dashboard/learning" },
-  { icon: MessageSquare, label: "Comunidad", href: "/dashboard/community" },
+  { icon: GraduationCap, label: "Estudiante", href: "/dashboard/estudiante" },
   { icon: BarChart3, label: "Progreso", href: "/dashboard/progress" },
+  { icon: MessageSquare, label: "Comunidad", href: "/dashboard/community" },
 ];
 
+// Teacher sidebar
 const teacherItems = [
+  { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
+  { icon: Library, label: "Biblioteca", href: "/dashboard/library" },
+  { icon: BookOpen, label: "Mis Lecturas", href: "/dashboard/my-readings" },
   { icon: GraduationCap, label: "Profesor", href: "/dashboard/profesor" },
-  { icon: Sparkles, label: "Generador", href: "/dashboard/profesor/generador" },
+  { icon: Bot, label: "IA Docente", href: "/dashboard/profesor/ai-tools" },
+  { icon: Sparkles, label: "Generador Quiz", href: "/dashboard/profesor/generador" },
+  { icon: Users, label: "Mis Clases", href: "/dashboard/classes" },
+  { icon: BarChart3, label: "Reportes", href: "/dashboard/reports" },
+  { icon: MessageSquare, label: "Comunidad", href: "/dashboard/community" },
+];
+
+// Coordinator sidebar
+const coordinatorItems = [
+  { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
+  { icon: Library, label: "Biblioteca", href: "/dashboard/library" },
+  { icon: BarChart3, label: "Coordinador", href: "/dashboard/coordinador" },
+  { icon: GraduationCap, label: "Profesor", href: "/dashboard/profesor" },
+  { icon: Bot, label: "IA Docente", href: "/dashboard/profesor/ai-tools" },
   { icon: Users, label: "Mis Clases", href: "/dashboard/classes" },
   { icon: BarChart3, label: "Reportes", href: "/dashboard/reports" },
 ];
 
-const coordinatorItems = [
-  { icon: BarChart3, label: "Coordinador", href: "/dashboard/coordinador" },
-];
-
-const studentItems = [
-  { icon: GraduationCap, label: "Estudiante", href: "/dashboard/estudiante" },
-];
-
+// School Admin sidebar
 const adminItems = [
+  { icon: Building2, label: "Mi Colegio", href: "/dashboard/admin" },
   { icon: Users, label: "Usuarios", href: "/dashboard/admin/users" },
-  { icon: Library, label: "Gestión Libros", href: "/dashboard/admin/books" },
-  { icon: BarChart3, label: "Estadísticas", href: "/dashboard/admin/stats" },
+  { icon: GraduationCap, label: "Clases y Docentes", href: "/dashboard/admin/classes" },
+  { icon: Library, label: "Biblioteca Local", href: "/dashboard/library" },
   { icon: Settings, label: "Configuración", href: "/dashboard/admin/settings" },
+];
+
+// Super Admin sidebar
+const superAdminItems = [
+  { icon: Crown, label: "Súper Admin", href: "/dashboard/superadmin" },
+  { icon: Building2, label: "Colegios", href: "/dashboard/superadmin" },
+  { icon: Library, label: "Gestión Libros BBDD", href: "/dashboard/admin/books" },
+  { icon: Users, label: "Todos los Usuarios", href: "/dashboard/admin/users" },
+  { icon: BarChart3, label: "Métricas Reales", href: "/dashboard/admin/stats" },
+  { icon: Settings, label: "Plataforma", href: "/dashboard/admin/settings" },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -78,12 +101,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
   const router = useRouter();
   const { data: session } = useSession();
-  const [stableRole, setStableRole] = useState<"STUDENT" | "TEACHER" | "COORDINATOR" | "ADMIN">("STUDENT");
+  const [stableRole, setStableRole] = useState<"STUDENT" | "TEACHER" | "COORDINATOR" | "ADMIN" | "SUPERADMIN">("STUDENT");
   const role = stableRole;
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
-    const nextRole = session?.user?.role;
+    const nextRole = session?.user?.role as any;
     if (nextRole) setStableRole(nextRole);
   }, [session?.user?.role]);
 
@@ -93,15 +116,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
   };
 
-  let items = sidebarItems;
-  if (role === "TEACHER") {
-    items = [...sidebarItems, ...teacherItems];
-  } else if (role === "COORDINATOR") {
-    items = [...sidebarItems, ...coordinatorItems, ...teacherItems];
+  // Select sidebar items based on role
+  let items = studentItems;
+  if (role === "SUPERADMIN") {
+    items = superAdminItems;
   } else if (role === "ADMIN") {
     items = adminItems;
-  } else {
-    items = [...sidebarItems, ...studentItems];
+  } else if (role === "COORDINATOR") {
+    items = coordinatorItems;
+  } else if (role === "TEACHER") {
+    items = teacherItems;
   }
 
   return (
@@ -132,10 +156,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </Button>
         </div>
 
-        <nav className="flex-1 px-4 py-4 space-y-2">
+        <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
           {items.map((item) => (
             <Link 
-              key={item.href} 
+              key={item.href + item.label} 
               href={item.href}
               className={cn(
                 "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors",
@@ -145,7 +169,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               )}
             >
               <item.icon className="h-5 w-5 shrink-0" />
-              {!collapsed && <span className="font-medium">{item.label}</span>}
+              {!collapsed && <span className="font-medium text-sm">{item.label}</span>}
             </Link>
           ))}
         </nav>
@@ -189,6 +213,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
 
           <div className="flex items-center gap-4">
+            {role === "SUPERADMIN" && (
+                <Badge className="bg-purple-100 text-purple-700 border-purple-200 hover:bg-purple-100">
+                  ⚡ Súper Admin
+                </Badge>
+            )}
+
             <Button variant="ghost" size="icon" className="relative text-gray-500 hover:text-indigo-600">
               <Bell className="h-5 w-5" />
               <span className="absolute top-2 right-2 h-2 w-2 bg-red-500 rounded-full border-2 border-white"></span>
@@ -216,9 +246,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>Mi Perfil</DropdownMenuItem>
-                <DropdownMenuItem>Mis Estadísticas</DropdownMenuItem>
-                <DropdownMenuItem>Suscripción</DropdownMenuItem>
+                <DropdownMenuItem asChild><Link href="/dashboard/settings">Mi Perfil</Link></DropdownMenuItem>
+                <DropdownMenuItem asChild><Link href="/dashboard/progress">Mis Estadísticas</Link></DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => signOut({ callbackUrl: "/login" })}>Cerrar sesión</DropdownMenuItem>
               </DropdownMenuContent>
@@ -233,8 +262,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         </main>
       </div>
-      {!pathname.includes("/reader/") && (
-        <FloatingAiTutor role={role} />
+      {/* Only show floating AI for non-students and non-reader pages */}
+      {!pathname.includes("/reader/") && role !== "STUDENT" && (
+        <FloatingAiTutor role={role as any} />
       )}
     </div>
   );

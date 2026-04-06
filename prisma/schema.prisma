@@ -25,6 +25,7 @@ model User {
   role          String    @default("STUDENT")
   institutionId String?
   grade         String?
+  isDemo        Boolean   @default(false)
   accounts      Account[]
   sessions      Session[]
   
@@ -62,20 +63,29 @@ model User {
 
   @@index([institutionId])
   @@index([grade])
+  @@index([isDemo])
 }
 
 model Institution {
-  id      String  @id @default(cuid())
-  name    String
-  domain  String  @unique
-  city    String?
-  country String?
+  id              String   @id @default(cuid())
+  name            String
+  domain          String   @unique
+  city            String?
+  country         String?
+  
+  // Suscripcion
+  status          String   @default("trial") // "trial" | "activa" | "vencida"
+  plan            String   @default("TRIAL") // "TRIAL" | "MENSUAL" | "ANUAL"
+  startDate       DateTime @default(now())
+  endDate         DateTime?
+  maxStudents     Int      @default(30)
 
-  users   User[]
+  users           User[]
+  classes         Class[]  // Aislacion de colegio
   gradeCollections BookCollectionByGrade[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   @@index([domain])
 }
@@ -155,6 +165,10 @@ model Book {
   format      String   // EPUB, PDF, DOCX
   contentUrl  String
   ageRange    String?  // Rango de edad: 6-8, 9-12, etc.
+  grade       String?  // Grado escolar: 1ro, 2do, etc.
+  subject     String?  // Materia: Español, Ciencias, etc.
+  quizId      String?  // ID de la Activity (quiz) asociada
+  isDemo      Boolean  @default(false)
   
   users       UserBook[]
   sessions    ReadingSession[]
@@ -173,6 +187,10 @@ model Book {
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@index([grade])
+  @@index([subject])
+  @@index([isDemo])
 }
 
 model UserActivity {
@@ -239,15 +257,24 @@ model ReadingSession {
 }
 
 model Class {
-  id          String   @id @default(cuid())
-  name        String
-  teacherId   String
-  teacher     User     @relation(fields: [teacherId], references: [id])
-  students    User[]   @relation("ClassStudents")
-  assignments Assignment[]
+  id            String   @id @default(cuid())
+  name          String
+  subject       String?  // Materia
+  grade         String?  // Grado
+  teacherId     String
+  teacher       User     @relation(fields: [teacherId], references: [id])
+  institutionId String?
+  institution   Institution? @relation(fields: [institutionId], references: [id])
+  students      User[]   @relation("ClassStudents")
+  assignments   Assignment[]
+  isDemo        Boolean  @default(false)
   
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([teacherId])
+  @@index([institutionId])
+  @@index([isDemo])
 }
 
 model Assignment {

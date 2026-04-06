@@ -2,7 +2,7 @@ import "next-auth";
 import "next-auth/jwt";
 import type { DefaultSession } from "next-auth";
 
-export type LeyopolisUserRole = "STUDENT" | "TEACHER" | "COORDINATOR" | "ADMIN";
+export type LeyopolisUserRole = "SUPERADMIN" | "STUDENT" | "TEACHER" | "COORDINATOR" | "ADMIN";
 
 declare module "next-auth" {
   interface Session {

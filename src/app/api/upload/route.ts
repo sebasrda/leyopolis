@@ -17,7 +17,7 @@ export async function POST(req: Request) {
   const userRole = (session?.user as any)?.role;
   await log(`Usuario: ${session?.user?.email}, Rol: ${userRole}`);
   
-  const allowedRoles = ["ADMIN", "COORDINATOR", "TEACHER", "PROFESSOR", "STUDENT"]; // Temporarily allow STUDENT to eliminate role as blocker
+  const allowedRoles = ["ADMIN", "COORDINATOR"]; // Only admin and coordinator can upload books
   
   if (!session?.user || !allowedRoles.includes(userRole)) {
     console.error("Unauthorized upload attempt:", session?.user?.email, "Role:", userRole);
@@ -67,6 +67,8 @@ export async function POST(req: Request) {
     const category = formData.get("category") as string || "General";
     const difficulty = formData.get("difficulty") as string || "Intermedio";
     const ageRange = formData.get("ageRange") as string || null;
+    const grade = formData.get("grade") as string || null;
+    const subject = formData.get("subject") as string || null;
 
     if (!file) {
       return NextResponse.json(
@@ -136,6 +138,8 @@ export async function POST(req: Request) {
         category,
         difficulty,
         ageRange,
+        grade,
+        subject,
         language: "Español", // Default
         format: "PDF",
         contentUrl,

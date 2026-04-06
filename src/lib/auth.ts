@@ -63,7 +63,7 @@ export const authOptions: NextAuthOptions = {
         }
 
         const role =
-          user.role === "STUDENT" || user.role === "TEACHER" || user.role === "COORDINATOR" || user.role === "ADMIN"
+          user.role === "SUPERADMIN" || user.role === "STUDENT" || user.role === "TEACHER" || user.role === "COORDINATOR" || user.role === "ADMIN"
             ? user.role
             : "STUDENT";
 
@@ -81,7 +81,7 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         const role = (user as unknown as { role?: string }).role;
-        if (role === "STUDENT" || role === "TEACHER" || role === "COORDINATOR" || role === "ADMIN") {
+        if (role === "SUPERADMIN" || role === "STUDENT" || role === "TEACHER" || role === "COORDINATOR" || role === "ADMIN") {
           token.role = role;
         }
         token.id = user.id;
@@ -89,7 +89,7 @@ export const authOptions: NextAuthOptions = {
       if (token.id && !token.role) {
         const dbUser = await prisma.user.findUnique({ where: { id: String(token.id) }, select: { role: true } });
         const role = dbUser?.role;
-        if (role === "STUDENT" || role === "TEACHER" || role === "COORDINATOR" || role === "ADMIN") {
+        if (role === "SUPERADMIN" || role === "STUDENT" || role === "TEACHER" || role === "COORDINATOR" || role === "ADMIN") {
           token.role = role;
         }
       }

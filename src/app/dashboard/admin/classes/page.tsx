@@ -1,0 +1,450 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import {
+  Users,
+  Plus,
+  Search,
+  GraduationCap,
+  Trash2,
+  UserPlus,
+  Loader2,
+  CheckCircle2,
+  AlertCircle,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+
+interface ClassItem {
+  id: string;
+  name: string;
+  subject?: string;
+  grade?: string;
+  teacher: { id: string; name: string; email: string };
+  _count: { students: number };
+  students?: { id: string; name: string; email: string }[];
+  createdAt: string;
+}
+
+interface UserItem {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+}
+
+export default function AdminClassesPage() {
+  const [classes, setClasses] = useState<ClassItem[]>([]);
+  const [users, setUsers] = useState<UserItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  // Create class state
+  const [createOpen, setCreateOpen] = useState(false);
+  const [newClassName, setNewClassName] = useState("");
+  const [newClassSubject, setNewClassSubject] = useState("");
+  const [newClassGrade, setNewClassGrade] = useState("");
+  const [newClassTeacherId, setNewClassTeacherId] = useState("");
+  const [creating, setCreating] = useState(false);
+
+  // Enroll state
+  const [enrollOpen, setEnrollOpen] = useState(false);
+  const [enrollClassId, setEnrollClassId] = useState("");
+  const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
+  const [enrolling, setEnrolling] = useState(false);
+  const [studentSearch, setStudentSearch] = useState("");
+
+  // Detail view
+  const [detailClass, setDetailClass] = useState<ClassItem | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+
+  const teachers = users.filter(u => u.role === "TEACHER" || u.role === "COORDINATOR");
+  const students = users.filter(u => u.role === "STUDENT");
+
+  useEffect(() => {
+    fetchAll();
+  }, []);
+
+  useEffect(() => {
+    if (success) {
+      const t = setTimeout(() => setSuccess(null), 3000);
+      return () => clearTimeout(t);
+    }
+  }, [success]);
+
+  const fetchAll = async () => {
+    try {
+      const [classRes, usersRes] = await Promise.all([
+        fetch("/api/classes"),
+        fetch("/api/users"),
+      ]);
+      if (classRes.ok) setClasses(await classRes.json());
+      if (usersRes.ok) setUsers(await usersRes.json());
+    } catch (err) {
+      console.error(err);
+      setError("Error al cargar datos");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreate = async () => {
+    if (!newClassName || !newClassTeacherId) return;
+    setCreating(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/classes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: newClassName,
+          teacherId: newClassTeacherId,
+          subject: newClassSubject || undefined,
+          grade: newClassGrade || undefined,
+        }),
+      });
+      if (res.ok) {
+        const newCls = await res.json();
+        setClasses(prev => [newCls, ...prev]);
+        setCreateOpen(false);
+        setNewClassName("");
+        setNewClassSubject("");
+        setNewClassGrade("");
+        setNewClassTeacherId("");
+        setSuccess("Clase creada exitosamente");
+      } else {
+        const data = await res.json();
+        setError(data.message || "Error al crear clase");
+      }
+    } catch {
+      setError("Error de conexión");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleEnroll = async () => {
+    if (!enrollClassId || selectedStudents.length === 0) return;
+    setEnrolling(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/classes/${enrollClassId}/students`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ studentIds: selectedStudents }),
+      });
+      if (res.ok) {
+        setEnrollOpen(false);
+        setSelectedStudents([]);
+        setEnrollClassId("");
+        setSuccess(`${selectedStudents.length} estudiante(s) matriculado(s)`);
+        fetchAll();
+      } else {
+        const data = await res.json();
+        setError(data.message || "Error al matricular");
+      }
+    } catch {
+      setError("Error de conexión");
+    } finally {
+      setEnrolling(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("¿Eliminar esta clase permanentemente?")) return;
+    try {
+      const res = await fetch(`/api/classes/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        setClasses(prev => prev.filter(c => c.id !== id));
+        setSuccess("Clase eliminada");
+      }
+    } catch {
+      setError("Error al eliminar");
+    }
+  };
+
+  const viewDetail = async (id: string) => {
+    setDetailLoading(true);
+    try {
+      const res = await fetch(`/api/classes/${id}`);
+      if (res.ok) setDetailClass(await res.json());
+    } catch {
+      setError("Error al cargar detalle");
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
+  const removeStudent = async (classId: string, studentId: string) => {
+    try {
+      await fetch(`/api/classes/${classId}/students`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ studentId }),
+      });
+      if (detailClass) {
+        setDetailClass({
+          ...detailClass,
+          students: detailClass.students?.filter(s => s.id !== studentId),
+          _count: { students: (detailClass._count?.students || 1) - 1 },
+        });
+      }
+      setSuccess("Estudiante removido");
+    } catch {
+      setError("Error al remover");
+    }
+  };
+
+  const toggleStudent = (id: string) => {
+    setSelectedStudents(prev =>
+      prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]
+    );
+  };
+
+  const filteredStudents = students.filter(s =>
+    s.name?.toLowerCase().includes(studentSearch.toLowerCase()) ||
+    s.email?.toLowerCase().includes(studentSearch.toLowerCase())
+  );
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Notifications */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 p-3 rounded-lg flex items-center gap-2 text-red-700 text-sm">
+          <AlertCircle className="h-4 w-4" /> {error}
+          <button onClick={() => setError(null)} className="ml-auto text-red-400 hover:text-red-600">✕</button>
+        </div>
+      )}
+      {success && (
+        <div className="bg-green-50 border border-green-200 p-3 rounded-lg flex items-center gap-2 text-green-700 text-sm">
+          <CheckCircle2 className="h-4 w-4" /> {success}
+        </div>
+      )}
+
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Gestión de Clases</h1>
+          <p className="text-gray-500">Crea clases, asigna docentes y matricula estudiantes.</p>
+        </div>
+        <div className="flex gap-2">
+          <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-indigo-600 hover:bg-indigo-500 gap-2">
+                <Plus className="h-4 w-4" /> Nueva Clase
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Crear Nueva Clase</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-2">
+                <div className="space-y-2">
+                  <Label>Nombre de la Clase *</Label>
+                  <Input value={newClassName} onChange={e => setNewClassName(e.target.value)} placeholder="Ej. Español 8vo A" />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label>Materia</Label>
+                    <Input value={newClassSubject} onChange={e => setNewClassSubject(e.target.value)} placeholder="Ej. Español" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Grado</Label>
+                    <Input value={newClassGrade} onChange={e => setNewClassGrade(e.target.value)} placeholder="Ej. 8vo" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Docente Asignado *</Label>
+                  <Select value={newClassTeacherId} onValueChange={setNewClassTeacherId}>
+                    <SelectTrigger><SelectValue placeholder="Seleccionar docente" /></SelectTrigger>
+                    <SelectContent>
+                      {teachers.map(t => (
+                        <SelectItem key={t.id} value={t.id}>{t.name} ({t.email})</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button onClick={handleCreate} disabled={creating || !newClassName || !newClassTeacherId} className="w-full">
+                  {creating ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Creando...</> : "Crear Clase"}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={enrollOpen} onOpenChange={setEnrollOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <UserPlus className="h-4 w-4" /> Matricular
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Matricular Estudiantes</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-2">
+                <div className="space-y-2">
+                  <Label>Clase</Label>
+                  <Select value={enrollClassId} onValueChange={setEnrollClassId}>
+                    <SelectTrigger><SelectValue placeholder="Seleccionar clase" /></SelectTrigger>
+                    <SelectContent>
+                      {classes.map(c => (
+                        <SelectItem key={c.id} value={c.id}>{c.name} ({c._count.students} est.)</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Buscar Estudiantes</Label>
+                  <Input value={studentSearch} onChange={e => setStudentSearch(e.target.value)} placeholder="Buscar por nombre o email..." />
+                </div>
+                <div className="max-h-48 overflow-y-auto border rounded-lg divide-y">
+                  {filteredStudents.length === 0 ? (
+                    <p className="text-sm text-gray-500 p-3 text-center">No hay estudiantes registrados</p>
+                  ) : (
+                    filteredStudents.map(s => (
+                      <label key={s.id} className="flex items-center gap-3 p-2 hover:bg-gray-50 cursor-pointer">
+                        <input type="checkbox" checked={selectedStudents.includes(s.id)} onChange={() => toggleStudent(s.id)} className="rounded" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{s.name}</p>
+                          <p className="text-xs text-gray-500 truncate">{s.email}</p>
+                        </div>
+                      </label>
+                    ))
+                  )}
+                </div>
+                {selectedStudents.length > 0 && (
+                  <p className="text-sm text-indigo-600 font-medium">{selectedStudents.length} seleccionado(s)</p>
+                )}
+                <Button onClick={handleEnroll} disabled={enrolling || !enrollClassId || selectedStudents.length === 0} className="w-full">
+                  {enrolling ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Matriculando...</> : `Matricular ${selectedStudents.length} Estudiantes`}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
+
+      {/* Detail view */}
+      {detailClass && (
+        <Card className="border-indigo-200 bg-indigo-50/30">
+          <CardHeader className="flex flex-row items-start justify-between">
+            <div>
+              <CardTitle className="text-xl">{detailClass.name}</CardTitle>
+              <CardDescription>
+                Docente: {detailClass.teacher?.name} · {detailClass.subject || "Sin materia"} · {detailClass.grade || "Sin grado"}
+              </CardDescription>
+            </div>
+            <Button variant="ghost" size="sm" onClick={() => setDetailClass(null)}>✕</Button>
+          </CardHeader>
+          <CardContent>
+            <h4 className="font-semibold text-sm mb-2">Estudiantes ({detailClass.students?.length || 0})</h4>
+            {detailClass.students && detailClass.students.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nombre</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Acciones</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {detailClass.students.map(s => (
+                    <TableRow key={s.id}>
+                      <TableCell className="font-medium">{s.name}</TableCell>
+                      <TableCell className="text-gray-500 text-sm">{s.email}</TableCell>
+                      <TableCell>
+                        <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700" onClick={() => removeStudent(detailClass.id, s.id)}>
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <p className="text-sm text-gray-500">No hay estudiantes matriculados.</p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Classes Grid */}
+      {classes.length === 0 ? (
+        <Card className="p-12 border-dashed border-2 text-center">
+          <GraduationCap className="h-12 w-12 mx-auto text-gray-300 mb-3" />
+          <h3 className="font-bold text-gray-900">No hay clases creadas</h3>
+          <p className="text-sm text-gray-500 mt-1">Crea tu primera clase con el botón de arriba.</p>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {classes.map(cls => (
+            <Card key={cls.id} className="hover:shadow-md transition-shadow">
+              <CardHeader className="pb-2">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <CardTitle className="text-lg text-indigo-900">{cls.name}</CardTitle>
+                    <CardDescription className="text-xs mt-1">
+                      {cls.subject && <Badge variant="outline" className="mr-1">{cls.subject}</Badge>}
+                      {cls.grade && <Badge variant="secondary" className="text-xs">{cls.grade}</Badge>}
+                    </CardDescription>
+                  </div>
+                  <Button variant="ghost" size="icon" className="text-red-400 hover:text-red-600 -mt-1" onClick={() => handleDelete(cls.id)}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="text-sm text-gray-600">
+                  <span className="font-medium">Docente:</span> {cls.teacher?.name || "Sin asignar"}
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-500 flex items-center gap-1">
+                    <Users className="h-4 w-4" /> Estudiantes
+                  </span>
+                  <span className="font-bold">{cls._count?.students || 0}</span>
+                </div>
+                <Button variant="outline" className="w-full" size="sm" onClick={() => viewDetail(cls.id)}>
+                  Ver Detalles
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

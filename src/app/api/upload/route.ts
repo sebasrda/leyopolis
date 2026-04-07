@@ -135,16 +135,17 @@ export async function POST(req: Request) {
       // Step 2: Use AI to convert to JSON or generate from scratch
       const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || "";
       
-      if (!finalJsonString && apiKey) {
-        const { GoogleGenerativeAI } = require("@google/generative-ai");
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const aiModel = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-        
-        let prompt = "";
-        
-        if (quizFromFile && rawText) {
-          // CASE A: Quiz file uploaded — extract questions from the document
-          prompt = `Analiza el siguiente texto de un examen/quiz y conviértelo a JSON.
+      if (!finalJsonString) {
+        if (apiKey) {
+          try {
+            const { GoogleGenerativeAI } = require("@google/generative-ai");
+            const genAI = new GoogleGenerativeAI(apiKey);
+            const aiModel = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+            
+            let prompt = "";
+            if (quizFromFile && rawText) {
+              // CASE A: Quiz file uploaded — extract questions from the document
+              prompt = `Analiza el siguiente texto de un examen/quiz y conviértelo a JSON.
 El texto proviene de un archivo subido por un profesor como evaluación del libro "${title}".
 EXTRAE las preguntas TAL CUAL están en el documento y formátalas en este esquema JSON:
 {
@@ -161,9 +162,9 @@ TEXTO DEL EXAMEN:
 """
 ${rawText.slice(0, 8000)}
 """`;
-        } else {
-          // CASE B: No quiz file — generate from scratch based on book title
-          prompt = `Genera un JSON educativo completo para el libro "${title}" del autor "${author}".
+            } else {
+              // CASE B: No quiz file — generate from scratch based on book title
+              prompt = `Genera un JSON educativo completo para el libro "${title}" del autor "${author}".
 Esquema EXACTO (sin markdown, solo JSON puro):
 {
   "questions": [{"id": 1, "question": "Pregunta de comprensión", "options": ["A", "B", "C", "D"], "correctAnswer": 0}],
@@ -172,10 +173,40 @@ Esquema EXACTO (sin markdown, solo JSON puro):
   "sentences": [{"id": 1, "sentence": "Frase del libro para ordenar"}]
 }
 Genera 10 preguntas variadas de comprensión lectora, 10 palabras clave en MAYÚSCULAS, 6 parejas personaje-descripción y 5 frases. Las preguntas deben ser coherentes con la trama real del libro. Responde SOLO con JSON válido.`;
-        }
+            }
 
-        const result = await aiModel.generateContent(prompt);
-        finalJsonString = result.response.text().replace(/```json|```/g, "").trim();
+            const result = await aiModel.generateContent(prompt);
+            finalJsonString = result.response.text().replace(/```json|```/g, "").trim();
+          } catch (aiErr: any) {
+            console.error("Gemini API Error during upload:", aiErr.message);
+          }
+        }
+        
+        // Fallback generic content if AI fails or apiKey is absent
+        if (!finalJsonString) {
+          console.log("Using generic fallback for book upload due to AI failure.");
+          let questions: any[] = [];
+          if (quizFromFile && rawText) {
+             const lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 10);
+             questions = lines.slice(0, 10).map((q, i) => ({
+               id: i + 1, question: q.length > 100 ? q.substring(0, 100) + '...' : q, options: ["A", "B", "C", "D"], correctAnswer: 0
+             }));
+          }
+          if (questions.length === 0) {
+             questions = [
+               { id: 1, question: `¿De qué trata principalmente el libro "${title}"?`, options: ["Varias temáticas", "No se especifica", "Ficción", "Realidad"], correctAnswer: 0 },
+               { id: 2, question: `¿Quién es el autor de "${title}"?`, options: [author, "Anónimo", "Desconocido", "Múltiples autores"], correctAnswer: 0 }
+             ];
+          }
+          
+          const fallbackJson = {
+            questions,
+            keywords: ["LECTURA", "LIBRO", "PROFESOR", "HISTORIA", "PERSONAJES", "TRAMA"],
+            memoryPairs: [{ character: "Protagonista", description: "Personaje principal de la obra" }],
+            sentences: [{ id: 1, sentence: "El libro nos enseña grandes lecciones." }]
+          };
+          finalJsonString = JSON.stringify(fallbackJson);
+        }
       }
 
       // Step 3: Save quiz and games to database

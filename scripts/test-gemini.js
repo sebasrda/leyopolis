@@ -17,7 +17,7 @@ async function test() {
       console.log(`  ✅ ${modelName}: ${result.response.text().trim()}`);
       return modelName; // Return first working model
     } catch (err) {
-      console.log(`  ❌ ${modelName}: ${err.message.substring(0, 100)}`);
+      console.log(`  ❌ ${modelName}:`, err);
     }
   }
 }

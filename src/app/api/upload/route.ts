@@ -17,7 +17,7 @@ export async function POST(req: Request) {
   const userRole = (session?.user as any)?.role;
   await log(`Usuario: ${session?.user?.email}, Rol: ${userRole}`);
   
-  const allowedRoles = ["ADMIN", "COORDINATOR"]; // Only admin and coordinator can upload books
+  const allowedRoles = ["ADMIN", "COORDINATOR", "SUPERADMIN"]; // Only admin and coordinator can upload books
   
   if (!session?.user || !allowedRoles.includes(userRole)) {
     console.error("Unauthorized upload attempt:", session?.user?.email, "Role:", userRole);

@@ -31,6 +31,9 @@ export async function requireRole(...allowedRoles: AppRole[]) {
   if (!user) {
     return { error: NextResponse.json({ message: "No autorizado" }, { status: 401 }) };
   }
+  if (user.role === "SUPERADMIN") {
+    return { user };
+  }
   if (!allowedRoles.includes(user.role)) {
     return { error: NextResponse.json({ message: "Acceso denegado para tu rol" }, { status: 403 }) };
   }

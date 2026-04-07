@@ -19,7 +19,7 @@ export async function GET() {
 
   const [courses, activities, videos, attempts7d] = await prisma.$transaction([
     eduDb.course.count({ where: whereTeacher }),
-    edu(prisma as any).activity.count({ where: whereCreator }),
+    (prisma as any).activity.count({ where: whereCreator }),
     eduDb.video.count({ where: whereTeacher }),
     eduDb.activityAttempt.count({
       where: { createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) }, userId: { not: DEMO_USER_ID } },
@@ -50,4 +50,6 @@ export async function GET() {
     })),
   });
 }
+
+
 

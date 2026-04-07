@@ -128,3 +128,5 @@ function fallbackTutorReply(message: string, context: any, mode?: string) {
   return `Estoy listo para ayudarte con "${bookTitle}". Intenta pasar de página o volver a abrir el libro y pregunta otra vez.`;
 }
 
+
+

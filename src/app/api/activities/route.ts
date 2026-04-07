@@ -23,7 +23,7 @@ export async function GET() {
         ? { OR: [{ published: true }, { createdById: userId }] }
         : { published: true };
 
-  const activities = await edu(prisma as any).activity.findMany({
+  const activities = await (prisma as any).activity.findMany({
     where,
     orderBy: { createdAt: "desc" },
     select: {
@@ -77,7 +77,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ message: "Invalid payload" }, { status: 400 });
   }
 
-  const created = await edu(prisma as any).activity.create({
+  const created = await (prisma as any).activity.create({
     data: {
       title,
       description,
@@ -98,4 +98,6 @@ export async function POST(req: Request) {
 
   return NextResponse.json(created);
 }
+
+
 

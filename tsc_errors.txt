@@ -1,0 +1,29 @@
+.next/dev/types/validator.ts(549,31): error TS2344: Type 'typeof import("D:/trae_projects/Leyopolis/src/app/api/books/[bookId]/attempts/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/books/[bookId]/attempts">'.
+  Types of property 'GET' are incompatible.
+    Type '(req: Request, { params }: { params: { bookId: string; }; }) => Promise<NextResponse<{ message: string; }> | NextResponse<{ hasAttempt: boolean; lastAttempt: any; }>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ bookId: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ bookId: string; }>; }' is not assignable to type '{ params: { bookId: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'bookId' is missing in type 'Promise<{ bookId: string; }>' but required in type '{ bookId: string; }'.
+.next/types/validator.ts(549,31): error TS2344: Type 'typeof import("D:/trae_projects/Leyopolis/src/app/api/books/[bookId]/attempts/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/books/[bookId]/attempts">'.
+  Types of property 'GET' are incompatible.
+    Type '(req: Request, { params }: { params: { bookId: string; }; }) => Promise<NextResponse<{ message: string; }> | NextResponse<{ hasAttempt: boolean; lastAttempt: any; }>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ bookId: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ bookId: string; }>; }' is not assignable to type '{ params: { bookId: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'bookId' is missing in type 'Promise<{ bookId: string; }>' but required in type '{ bookId: string; }'.
+src/app/api/activities/route.ts(26,28): error TS2304: Cannot find name 'edu'.
+src/app/api/activities/route.ts(80,25): error TS2304: Cannot find name 'edu'.
+src/app/api/admin/demo/seed/route.ts(86,16): error TS7006: Parameter 'b' implicitly has an 'any' type.
+src/app/api/admin/intelligence/route.ts(175,41): error TS7006: Parameter 'b' implicitly has an 'any' type.
+src/app/api/admin/intelligence/route.ts(187,22): error TS2339: Property 'title' does not exist on type '{}'.
+src/app/api/admin/intelligence/route.ts(188,23): error TS2339: Property 'author' does not exist on type '{}'.
+src/app/api/admin/intelligence/route.ts(230,22): error TS2339: Property 'title' does not exist on type '{}'.
+src/app/api/admin/intelligence/route.ts(231,23): error TS2339: Property 'author' does not exist on type '{}'.
+src/app/api/coordinator/overview/route.ts(55,5): error TS2349: This expression is not callable.
+  Type '{ userId: string; role: AppRole; }' has no call signatures.
+src/app/api/games/generate/route.ts(65,5): error TS2552: Cannot find name 'activity'. Did you mean 'activityDb'?
+src/app/api/games/generate/route.ts(78,5): error TS2552: Cannot find name 'activity'. Did you mean 'activityDb'?
+src/app/api/games/generate/route.ts(91,5): error TS2552: Cannot find name 'activity'. Did you mean 'activityDb'?
+src/app/api/quizzes/generate/route.ts(77,25): error TS2552: Cannot find name 'activity'. Did you mean 'activityDb'?
+src/app/api/teacher/education/overview/route.ts(22,5): error TS2304: Cannot find name 'edu'.

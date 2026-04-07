@@ -52,7 +52,7 @@ export async function GET(req: Request) {
   const [students, teachers, books, sessions7d, avgProgressAgg, avgQuizAgg] = await Promise.all([
     userDb.user.count({ where: { institutionId: myInstitutionId, role: "STUDENT" } }),
     userDb.user.count({ where: { institutionId: myInstitutionId, role: { in: ["TEACHER", "COORDINATOR"] } } }),
-    user(prisma as any).book.count(),
+    (prisma as any).book.count(),
     userDb.readingSession.count({
       where: { createdAt: { gte: weekStart }, user: { institutionId: myInstitutionId, id: { not: DEMO_USER_ID } } },
     }),
@@ -114,4 +114,6 @@ export async function GET(req: Request) {
     })),
   });
 }
+
+
 

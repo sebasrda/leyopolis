@@ -40,3 +40,4 @@ export async function GET() {
     return NextResponse.json({ message: "Error fetching users" }, { status: 500 });
   }
 }
+

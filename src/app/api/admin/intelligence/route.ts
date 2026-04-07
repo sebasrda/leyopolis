@@ -69,8 +69,8 @@ export async function GET() {
     ] = await prisma.$transaction([
       prisma.user.count(),
       prisma.user.count({ where: { createdAt: { gte: weekStart } } }),
-      prisma.book.count(),
-      prisma.book.findMany({
+      (prisma as any).book.count(),
+      (prisma as any).book.findMany({
         orderBy: { createdAt: "desc" },
         take: 5,
         select: { id: true, title: true, author: true, createdAt: true },
@@ -168,7 +168,7 @@ export async function GET() {
     const topBookIds = topBooksByReadsTyped.map((r) => r.bookId);
     const topBookViewsIds = topBooksOpenedRowsTyped.map((r) => r.bookId);
     const bookIdsToFetch = Array.from(new Set([...topBookIds, ...topBookViewsIds]));
-    const books = await prisma.book.findMany({
+    const books = await (prisma as any).book.findMany({
       where: { id: { in: bookIdsToFetch } },
       select: { id: true, title: true, author: true },
     });
@@ -277,3 +277,4 @@ export async function GET() {
     return NextResponse.json({ message: "Error" }, { status: 500 });
   }
 }
+

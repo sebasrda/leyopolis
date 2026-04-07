@@ -24,7 +24,7 @@ export async function GET() {
 
     // 2. Find books NOT in that list (Recommendations)
     // We can limit to 3-5 recommendations
-    const recommendations = await prisma.book.findMany({
+    const recommendations = await (prisma as any).book.findMany({
       where: {
         id: { notIn: readBookIds },
         published: true, // Only published books
@@ -44,3 +44,4 @@ export async function GET() {
     return NextResponse.json({ error: "Failed to fetch recommendations" }, { status: 500 });
   }
 }
+

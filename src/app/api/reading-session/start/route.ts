@@ -31,13 +31,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Book ID required" }, { status: 400 });
     }
 
-    const existingBook = await prisma.book.findUnique({ where: { id: bookId } });
+    const existingBook = await (prisma as any).book.findUnique({ where: { id: bookId } });
     if (!existingBook) {
       if (!contentUrl) {
         return NextResponse.json({ message: "contentUrl required for new book" }, { status: 400 });
       }
 
-      await prisma.book.create({
+      await (prisma as any).book.create({
         data: {
           id: bookId,
           title: bookTitle || "Libro",
@@ -114,3 +114,4 @@ export async function POST(req: Request) {
     return NextResponse.json({ message: "Error starting session" }, { status: 500 });
   }
 }
+

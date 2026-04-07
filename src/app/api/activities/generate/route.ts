@@ -101,3 +101,4 @@ Prompt del profesor: ${prompt}`
     return NextResponse.json(fallbackActivity(prompt));
   }
 }
+

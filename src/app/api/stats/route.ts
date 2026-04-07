@@ -13,7 +13,7 @@ export async function GET() {
   try {
     const [userCount, bookCount, readingCount, classCount] = await prisma.$transaction([
       prisma.user.count(),
-      prisma.book.count(),
+      (prisma as any).book.count(),
       prisma.userBook.count(),
       prisma.class.count(),
     ]);
@@ -28,3 +28,4 @@ export async function GET() {
     return NextResponse.json({ message: "Error" }, { status: 500 });
   }
 }
+

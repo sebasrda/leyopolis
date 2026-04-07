@@ -62,7 +62,7 @@ Contexto:
   };
 
   const [ws, reorder, match] = await Promise.all([
-    activityDb.activity.create({
+    activity(prisma as any).activity.create({
       data: {
         title: `Sopa de letras: ${book.title}`,
         description: `Juego generado para "${book.title}".`,
@@ -75,7 +75,7 @@ Contexto:
       },
       select: { id: true },
     }),
-    activityDb.activity.create({
+    activity(prisma as any).activity.create({
       data: {
         title: `Ordenar eventos: ${book.title}`,
         description: `Juego generado para "${book.title}".`,
@@ -88,7 +88,7 @@ Contexto:
       },
       select: { id: true },
     }),
-    activityDb.activity.create({
+    activity(prisma as any).activity.create({
       data: {
         title: `Relacionar conceptos: ${book.title}`,
         description: `Juego generado para "${book.title}".`,
@@ -105,3 +105,4 @@ Contexto:
 
   return NextResponse.json({ wordsearchId: ws.id, reorderId: reorder.id, matchId: match.id });
 }
+

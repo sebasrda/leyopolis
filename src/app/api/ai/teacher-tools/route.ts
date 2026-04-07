@@ -109,3 +109,4 @@ function getFallbackResult(tool: string, input: any): string {
       return "Herramienta no reconocida.";
   }
 }
+

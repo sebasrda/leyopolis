@@ -91,3 +91,4 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Failed to update reading' }, { status: 500 });
   }
 }
+

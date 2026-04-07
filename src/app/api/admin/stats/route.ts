@@ -74,3 +74,4 @@ export async function GET() {
     return NextResponse.json({ message: "Error al obtener estadísticas" }, { status: 500 });
   }
 }
+

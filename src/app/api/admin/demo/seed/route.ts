@@ -76,7 +76,7 @@ export async function POST() {
     });
   }
 
-  const books = await prisma.book.findMany({
+  const books = await (prisma as any).book.findMany({
     orderBy: { createdAt: "desc" },
     take: 6,
     select: { id: true },
@@ -102,3 +102,4 @@ export async function POST() {
     ],
   });
 }
+

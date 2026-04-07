@@ -74,7 +74,7 @@ Instrucción del profesor/coordinador: "${prompt}"`
   }
 
   const activityDb = prisma as unknown as { activity: { create: (args: { data: Record<string, unknown>; select: { id: true } }) => Promise<{ id: string }> } };
-  const created = await activityDb.activity.create({
+  const created = await activity(prisma as any).activity.create({
     data: {
       title: typeof quiz.title === "string" ? quiz.title : `Quiz: ${book.title}`,
       description: typeof quiz.description === "string" ? quiz.description : null,
@@ -91,4 +91,5 @@ Instrucción del profesor/coordinador: "${prompt}"`
 
   return NextResponse.json({ id: created.id });
 }
+
 

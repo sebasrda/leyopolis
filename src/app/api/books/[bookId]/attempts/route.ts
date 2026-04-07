@@ -12,7 +12,7 @@ export async function GET(req: Request, { params }: { params: { bookId: string }
 
   try {
     // A user has an attempt if they have an EvaluationResult for any Evaluation of this book
-    const attempt = await prisma.evaluationResult.findFirst({
+    const attempt = await (prisma as any).evaluationResult.findFirst({
       where: {
         userId: session.user.id,
         evaluation: {
@@ -41,12 +41,12 @@ export async function POST(req: Request, { params }: { params: { bookId: string 
 
   try {
     // 1. Find or create the Evaluation for this book
-    let evaluation = await prisma.evaluation.findFirst({
+    let evaluation = await (prisma as any).evaluation.findFirst({
       where: { bookId: bookId, type: "QUIZ" }
     });
 
     if (!evaluation) {
-      evaluation = await prisma.evaluation.create({
+      evaluation = await (prisma as any).evaluation.create({
         data: {
           bookId: bookId,
           type: "QUIZ",
@@ -56,7 +56,7 @@ export async function POST(req: Request, { params }: { params: { bookId: string 
     }
 
     // 2. Create the EvaluationResult
-    const result = await prisma.evaluationResult.create({
+    const result = await (prisma as any).evaluationResult.create({
       data: {
         userId: session.user.id,
         evaluationId: evaluation.id,

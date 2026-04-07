@@ -45,3 +45,4 @@ export async function POST(req: Request) {
     return NextResponse.json({ message: "Error al guardar intento" }, { status: 500 });
   }
 }
+

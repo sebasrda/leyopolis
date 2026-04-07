@@ -142,7 +142,6 @@ export default function GamesModal({ isOpen, onClose, bookTitle, bookId }: Games
                         onExit={() => setActiveGame(null)}
                     />
                 )}
-                {activeGame === 'evaluation' && <EvaluationMode onClose={onClose} />}
               </div>
             </div>
           )}
@@ -201,14 +200,6 @@ function GameMenu({ onSelectGame }: { onSelectGame: (g: GameType) => void }) {
       icon: PenTool,
       color: "bg-cyan-500",
       gradient: "from-cyan-500 to-blue-400"
-    },
-    {
-      id: "evaluation",
-      title: "Evaluación Final",
-      description: "Examen formal para calificar tu comprensión del libro.",
-      icon: GraduationCap,
-      color: "bg-emerald-600",
-      gradient: "from-emerald-600 to-green-500"
     }
   ];
 

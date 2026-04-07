@@ -180,13 +180,29 @@ export async function POST(req: Request) {
             });
             const prompt = `Convierte este examen crudo en un JSON estricto con el esquema: {"questions": [{"id": 1, "question": "...", "options": ["A", "B", "C"], "correctAnswer": 0}]}. Si es pregunta abierta sin opciones, omite 'options' y 'correctAnswer' y pon 'answer': "Respuesta Sugerida". Solo devuelve el JSON válido. Texto del examen: ${rawText}`;
             const result = await model.generateContent(prompt);
-            finalJsonString = result.response.text();
+            let aiText = result.response.text();
+            
+            // Clean markdown if present
+            if (aiText.includes("```")) {
+              aiText = aiText.replace(/```json/g, "").replace(/```/g, "").trim();
+            }
+            finalJsonString = aiText;
           }
         }
 
         if (finalJsonString) {
-          const parsedQuiz = JSON.parse(finalJsonString);
-          const quiz = await (prisma as any).activity.create({
+          let parsedQuiz;
+          try {
+            parsedQuiz = JSON.parse(finalJsonString);
+          } catch (e) {
+            console.error("AI returned invalid JSON:", finalJsonString);
+            // Attempt one more cleanup
+            const match = finalJsonString.match(/\{[\s\S]*\}/);
+            if (match) parsedQuiz = JSON.parse(match[0]);
+          }
+
+          if (parsedQuiz) {
+            const quiz = await (prisma as any).activity.create({
             data: {
               title: `Quiz: ${book.title}`,
               description: `Quiz de comprensión para "${book.title}" generado desde ${quizFile.name}`,
@@ -204,10 +220,11 @@ export async function POST(req: Request) {
             data: { quizId: quiz.id }
           });
         }
-      } catch (err) {
-        console.error("Failed to parse or save quiz file during upload", err);
       }
+    } catch (err) {
+      console.error("Failed to parse or save quiz file during upload", err);
     }
+  }
 
     return NextResponse.json({ 
       message: "Libro subido exitosamente", 

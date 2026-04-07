@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, CheckCircle, AlertCircle, Award, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
 
 interface Question {
   id: number;
@@ -133,27 +134,33 @@ export default function ExamModal({ isOpen, onClose, bookTitle, bookId }: { isOp
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden"
+          exit={{ scale: 0.9, opacity: 0 }}
+          className="bg-white dark:bg-gray-900 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden relative print:shadow-none print:max-w-full print:rounded-none"
         >
-          {/* Header */}
-          <div className="bg-indigo-600 p-6 flex justify-between items-center text-white">
+          <div className="bg-indigo-600 p-6 flex justify-between items-center no-print print:hidden">
             <div>
-              <h2 className="text-2xl font-bold">Examen de Comprensión</h2>
-              <p className="text-indigo-200 text-sm">{bookTitle}</p>
+              <h2 className="text-2xl font-bold text-white">Examen de Comprensión</h2>
+              <p className="text-indigo-100 text-sm">{bookTitle}</p>
             </div>
-            <Button variant="ghost" size="icon" onClick={onClose} className="hover:bg-white/20 text-white">
+            <button onClick={onClose} className="text-white/80 hover:text-white transition-colors">
               <X size={24} />
-            </Button>
+            </button>
           </div>
 
           <div className="p-8">
+            <div className="hidden print:block text-center mb-8 border-b pb-4">
+              <h1 className="text-3xl font-bold text-indigo-700">Evidencia de Evaluación - Leyópolis</h1>
+              <p className="text-gray-600 mt-2">Libro: {bookTitle}</p>
+              <p className="text-gray-400 text-xs mt-1">{new Date().toLocaleString()}</p>
+            </div>
+            
             {loading ? (
-              <div className="flex flex-col items-center justify-center py-12">
+              <div className="flex flex-col items-center justify-center py-12 print:hidden">
                 <Loader2 className="h-8 w-8 animate-spin text-indigo-600 mb-4" />
                 <p className="text-gray-500">Cargando preguntas oficiales...</p>
               </div>
             ) : error ? (
-              <div className="text-center py-12">
+              <div className="text-center py-12 print:hidden">
                 <AlertCircle className="h-12 w-12 text-amber-500 mx-auto mb-4" />
                 <h3 className="text-xl font-bold text-gray-800 mb-2">¡Ups!</h3>
                 <p className="text-gray-500 mb-6">{error}</p>
@@ -162,7 +169,7 @@ export default function ExamModal({ isOpen, onClose, bookTitle, bookId }: { isOp
             ) : !showResult && questions.length > 0 ? (
               <>
                 {/* Progress Bar */}
-                <div className="mb-6 space-y-2">
+                <div className="mb-6 space-y-2 print:hidden">
                   <div className="flex justify-between text-sm text-gray-500 font-medium">
                     <span>Pregunta {currentQuestion + 1} de {questions.length}</span>
                     <span>{Math.round(((currentQuestion) / questions.length) * 100)}% Completado</span>
@@ -226,10 +233,25 @@ export default function ExamModal({ isOpen, onClose, bookTitle, bookId }: { isOp
             ) : (
               <div className="text-center py-8">
                 <div className="inline-flex items-center justify-center p-6 bg-yellow-100 rounded-full mb-6">
-                  <Award size={64} className="text-yellow-600" />
+                  {score / questions.length >= 0.6 ? (
+                    <Award size={64} className="text-yellow-600" />
+                  ) : (
+                    <AlertCircle size={64} className="text-red-600" />
+                  )}
                 </div>
-                <h3 className="text-3xl font-bold text-gray-800 mb-2">¡Examen Completado!</h3>
-                <p className="text-gray-500 mb-8">Has demostrado un gran conocimiento sobre la lectura.</p>
+                <h3 className="text-3xl font-bold text-gray-800 mb-2">
+                  {score / questions.length >= 0.6 ? "¡Felicidades, Aprobaste!" : "Evaluación Finalizada"}
+                </h3>
+                <div className="mb-4">
+                  <Badge className={score / questions.length >= 0.6 ? "bg-green-100 text-green-700 hover:bg-green-100 px-4 py-1 text-lg" : "bg-red-100 text-red-700 hover:bg-red-100 px-4 py-1 text-lg"}>
+                    {score / questions.length >= 0.6 ? "APROBADO" : "REPROBADO"}
+                  </Badge>
+                </div>
+                <p className="text-gray-500 mb-8">
+                  {score / questions.length >= 0.6 
+                    ? "Has demostrado un excelente conocimiento de la lectura." 
+                    : "Te recomendamos volver a leer los puntos clave para mejorar tu nivel."}
+                </p>
                 
                 <div className="grid grid-cols-2 gap-4 max-w-sm mx-auto mb-10">
                   <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
@@ -242,7 +264,10 @@ export default function ExamModal({ isOpen, onClose, bookTitle, bookId }: { isOp
                   </div>
                 </div>
 
-                <div className="flex justify-center gap-4">
+                <div className="flex justify-center gap-4 no-print print:hidden">
+                  <Button variant="outline" onClick={() => window.print()} size="lg" className="border-indigo-200 text-indigo-700">
+                    Descargar Evidencia
+                  </Button>
                   <Button variant="outline" onClick={onClose} size="lg">Cerrar</Button>
                   <Button onClick={resetExam} size="lg" className="bg-indigo-600 hover:bg-indigo-700">Intentar de Nuevo</Button>
                 </div>

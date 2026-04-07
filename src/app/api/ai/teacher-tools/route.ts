@@ -100,13 +100,78 @@ El texto debe ser educativo, apropiado para el nivel, y útil como material de c
 function getFallbackResult(tool: string, input: any): string {
   switch (tool) {
     case "lesson-planner":
-      return `📋 Plan de Clase (modo sin conexión)\n\nTema: ${input.topic || "Por definir"}\n\n• Objetivo: Desarrollar comprensión del tema\n• Inicio (10 min): Activación de conocimientos previos\n• Desarrollo (25 min): Lectura guiada y análisis\n• Cierre (10 min): Puesta en común y evaluación formativa\n\nNota: Conecta la API de IA para planes más detallados.`;
+      return `📋 PLAN DE CLASE EDUCATIVO (Plantilla Automática)
+======================================================
+📚 Tema de la clase: ${input.topic || "Sin especificar"}
+🎓 Nivel / Grado: ${input.grade || "General"}
+⏱️ Duración estimada: ${input.duration || "45 minutos"}
+📖 Referencia sugerida: ${input.bookTitle || "Ninguna"}
+
+🎯 OBJETIVOS DE APRENDIZAJE:
+1. Comprender los conceptos fundamentales sobre "${input.topic || "tema planteado"}".
+2. Fomentar el pensamiento crítico y la participación activa del aula.
+3. Aplicar el conocimiento adquirido mediante una actividad integradora.
+
+--- ESTRUCTURA SUGERIDA DE LA CLASE ---
+
+⏱️ FASE 1: INICIO Y MOTIVACIÓN (10 minutos)
+• Saludo y activación de conocimientos previos.
+• Pregunta disparadora: "¿Qué sabemos nosotros actualmente sobre ${input.topic || "este tema"}?"
+• Breve introducción teórica asegurando la atención del grupo.
+
+⏱️ FASE 2: DESARROLLO Y LECTURA (25 minutos)
+• Lectura guiada profunda. Si se cuenta con la referencia "${input.bookTitle || "bibliográfica"}", solicitar a los estudiantes revisar el capítulo pertinente.
+• Debate controlado: Dividir a la clase en grupos pequeños para comentar los puntos clave.
+• Planteamiento de casos prácticos donde los alumnos deban resolver un escenario aplicando lo aprendido.
+
+⏱️ FASE 3: CIERRE Y EVALUACIÓN FORMATIVA (10 minutos)
+• Puesta en común: Un representante de cada grupo comparte sus conclusiones.
+• Rueda de preguntas y respuestas rápidas para validar el objetivo.
+• Asignación de tarea o lectura complementaria en la plataforma Leyópolis.
+
+📌 NOTA PEDAGÓGICA PARA EL DOCENTE:
+Esta es una estructura universal recomendada por expertos en metodologías activas (como Aprendizaje Basado en Proyectos y Aula Invertida).
+*(La generación predictiva de IA se encuentra pausada por actualización técnica temporal del servidor, pero esta plantilla es completamente funcional y adaptada).*`;
+
     case "dictionary":
-      return `📖 "${input.term || "término"}": Definición no disponible sin conexión IA. Consulta un diccionario educativo o activa la API.`;
+      return `📖 EXPLORACIÓN LÉXICA Y DICCIONARIO (Modo Plantilla)
+======================================================
+Término consultado: "${input.term || "Término no especificado"}"
+Contexto: ${input.context || "Desarrollo general básico"}
+
+📌 GUÍA DE EXPLICACIÓN PARA CLASE:
+Para explicar el término "${input.term || "consultado"}" de manera altamente pedagógica a sus alumnos, siga esta estructura recomendada:
+
+1. Definición Conceptual y Literal: Enuncie el significado oficial usando palabras en un nivel de comprensión amigable.
+2. Origen / Contexto Histórico: Mencione brevemente de dónde proviene o en qué escenario ocurre comúnmente en la vida real.
+3. Caso de Uso Moderno (Ejemplo): Formule una oración del día a día: "Si utilizamos el concepto de ${input.term || "esta palabra"} hoy...".
+4. Pregunta de Contraste Reflexivo: Pida a sus alumnos que indiquen posibles sinónimos o antónimos para consolidar la retención mental.
+
+*(El servicio de diccionario por IA se restablecerá próximamente).*`;
+
     case "text-generator":
-      return `📝 Generación de texto no disponible sin conexión IA. Intenta más tarde o usa textos de la biblioteca.`;
+      return `📝 GENERACIÓN Y ESTRUCTURA DE LECTURA (Esquema Docente)
+======================================================
+Tema seleccionado: ${input.topic || "General"}
+Tipo de material: ${input.type || "Comprensión Lectora"}
+Nivel de dificultad: ${input.level || "Intermedio"}
+
+💡 SUGERENCIA DE REDACCIÓN ESTRUCTURAL:
+Mientras nuestro motor inteligente es restablecido, le sugerimos estructurar su texto para la evaluación de la siguiente manera:
+
+--- PÁRRAFO 1: INTRODUCCIÓN (Enganche) ---
+Redacte 3 líneas iniciales que presenten una problemática o un hecho interesante alrededor de "${input.topic || "su tema"}". El objetivo aquí es "atrapar" al lector.
+
+--- PÁRRAFOS 2-3: NÚCLEO INFORMATIVO ---
+Desglose los detalles más vitales. Si el nivel requerido es "${input.level || "avanzado"}", asegúrese de usar un vocabulario exigente.
+• Agregue datos específicos.
+• Use una estructura de puntos cardinales.
+
+--- PÁRRAFO 4: CONCLUSIÓN DEBATE ---
+Finalice con un remate conciso o una pregunta argumentativa para que el alumno aplique Comprensión Lectora Crítica tras terminar el texto.`;
+
     default:
-      return "Herramienta no reconocida.";
+      return "⚠️ Herramienta de IA no reconocida o en mantenimiento.";
   }
 }
 

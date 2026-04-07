@@ -1,0 +1,153 @@
+Ôû▓ Next.js 16.1.6 (Turbopack)
+- Environments: .env.local, .env
+
+ÔÜá The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+Ô£ô Compiled successfully in 2.6min
+  Running TypeScript ...
+  Collecting page data using 15 workers ...
+  Generating static pages using 15 workers (0/63) ...
+­ƒîÉ i18next is made possible by our own product, Locize ÔÇö consider powering your project with managed localization (AI, CDN, integrations): https://locize.com ­ƒÆÖ
+­ƒîÉ i18next is made possible by our own product, Locize ÔÇö consider powering your project with managed localization (AI, CDN, integrations): https://locize.com ­ƒÆÖ
+­ƒîÉ i18next is made possible by our own product, Locize ÔÇö consider powering your project with managed localization (AI, CDN, integrations): https://locize.com ­ƒÆÖ
+  Generating static pages using 15 workers (15/63) 
+The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+  Generating static pages using 15 workers (31/63) 
+  Generating static pages using 15 workers (47/63) 
+Ô£ô Generating static pages using 15 workers (63/63) in 4.8s
+  Finalizing page optimization ...
+
+Route (app)
+Ôöî Ôùï /
+Ôö£ Ôùï /_not-found
+Ôö£ ãÆ /api/activities
+Ôö£ ãÆ /api/activities/[id]
+Ôö£ ãÆ /api/activities/[id]/attempt
+Ôö£ ãÆ /api/activities/generate
+Ôö£ ãÆ /api/activity/attempt
+Ôö£ ãÆ /api/activity/pageview
+Ôö£ ãÆ /api/admin/demo/seed
+Ôö£ ãÆ /api/admin/demo/seed-gustavo
+Ôö£ ãÆ /api/admin/intelligence
+Ôö£ ãÆ /api/admin/stats
+Ôö£ ãÆ /api/ai-tutor
+Ôö£ ãÆ /api/ai/teacher-tools
+Ôö£ ãÆ /api/auth/[...nextauth]
+Ôö£ ãÆ /api/blob/upload
+Ôö£ ãÆ /api/books
+Ôö£ ãÆ /api/books/[bookId]
+Ôö£ ãÆ /api/books/[bookId]/attempts
+Ôö£ ãÆ /api/books/[bookId]/quiz
+Ôö£ ãÆ /api/books/[bookId]/quiz/upload
+Ôö£ ãÆ /api/classes
+Ôö£ ãÆ /api/classes/[id]
+Ôö£ ãÆ /api/classes/[id]/students
+Ôö£ ãÆ /api/community/clubs
+Ôö£ ãÆ /api/community/clubs/[clubId]
+Ôö£ ãÆ /api/community/clubs/[clubId]/posts
+Ôö£ ãÆ /api/coordinator/overview
+Ôö£ ãÆ /api/coordinator/users
+Ôö£ ãÆ /api/courses
+Ôö£ ãÆ /api/courses/[id]
+Ôö£ ãÆ /api/courses/[id]/enroll
+Ôö£ ãÆ /api/courses/[id]/modules
+Ôö£ ãÆ /api/courses/modules/[moduleId]/items
+Ôö£ ãÆ /api/games/generate
+Ôö£ ãÆ /api/me
+Ôö£ ãÆ /api/quizzes/generate
+Ôö£ ãÆ /api/reading-session/end
+Ôö£ ãÆ /api/reading-session/start
+Ôö£ ãÆ /api/reading-session/update
+Ôö£ ãÆ /api/recommendations
+Ôö£ ãÆ /api/register
+Ôö£ ãÆ /api/reports
+Ôö£ ãÆ /api/settings
+Ôö£ ãÆ /api/stats
+Ôö£ ãÆ /api/student/grade-books
+Ôö£ ãÆ /api/superadmin/institutions
+Ôö£ ãÆ /api/superadmin/institutions/[id]
+Ôö£ ãÆ /api/superadmin/institutions/[id]/classes
+Ôö£ ãÆ /api/superadmin/institutions/[id]/classes/[classId]
+Ôö£ ãÆ /api/superadmin/institutions/[id]/users
+Ôö£ ãÆ /api/superadmin/institutions/[id]/users/[userId]
+Ôö£ ãÆ /api/teacher/assignments
+Ôö£ ãÆ /api/teacher/classes
+Ôö£ ãÆ /api/teacher/classes/[classId]
+Ôö£ ãÆ /api/teacher/education/overview
+Ôö£ ãÆ /api/translate
+Ôö£ ãÆ /api/upload
+Ôö£ ãÆ /api/user/assignments
+Ôö£ ãÆ /api/user/notes
+Ôö£ ãÆ /api/user/progress
+Ôö£ ãÆ /api/user/readings
+Ôö£ ãÆ /api/user/stats
+Ôö£ ãÆ /api/user/vocabulary
+Ôö£ ãÆ /api/users
+Ôö£ ãÆ /api/users/[id]
+Ôö£ ãÆ /api/videos
+Ôö£ ãÆ /api/videos/[id]
+Ôö£ ãÆ /api/webviewClick
+Ôö£ Ôùï /biblioteca
+Ôö£ ãÆ /books/gatsby.pdf
+Ôö£ Ôùï /dashboard
+Ôö£ Ôùï /dashboard/activities
+Ôö£ ãÆ /dashboard/activities/[id]
+Ôö£ Ôùï /dashboard/admin
+Ôö£ Ôùï /dashboard/admin/books
+Ôö£ Ôùï /dashboard/admin/classes
+Ôö£ Ôùï /dashboard/admin/settings
+Ôö£ Ôùï /dashboard/admin/stats
+Ôö£ Ôùï /dashboard/admin/users
+Ôö£ Ôùï /dashboard/classes
+Ôö£ Ôùï /dashboard/community
+Ôö£ ãÆ /dashboard/community/club/[id]
+Ôö£ Ôùï /dashboard/coordinador
+Ôö£ Ôùï /dashboard/courses
+Ôö£ ãÆ /dashboard/courses/[id]
+Ôö£ Ôùï /dashboard/estudiante
+Ôö£ Ôùï /dashboard/learning
+Ôö£ Ôùï /dashboard/library
+Ôö£ Ôùï /dashboard/my-readings
+Ôö£ Ôùï /dashboard/profesor
+Ôö£ Ôùï /dashboard/profesor/ai-tools
+Ôö£ Ôùï /dashboard/profesor/generador
+Ôö£ Ôùï /dashboard/progress
+Ôö£ ãÆ /dashboard/quiz/[quizId]
+Ôö£ ãÆ /dashboard/reader/[bookId]
+Ôö£ Ôùï /dashboard/reports
+Ôö£ Ôùï /dashboard/settings
+Ôö£ Ôùï /dashboard/superadmin
+Ôö£ ãÆ /dashboard/superadmin/colegio/[id]
+Ôö£ Ôùï /dashboard/teacher
+Ôö£ ãÆ /dashboard/teacher/class/[id]
+Ôö£ Ôùï /dashboard/translator
+Ôö£ Ôùï /dashboard/videos
+Ôö£ ãÆ /dashboard/videos/[id]
+Ôö£ Ôùï /demo
+Ôö£ ãÆ /demo/reader/[slug]
+Ôö£ Ôùï /educacion
+Ôö£ Ôùï /login
+Ôö£ Ôùï /precios
+Ôöö Ôùï /register
+
+
+ãÆ Proxy (Middleware)
+
+Ôùï  (Static)   prerendered as static content
+ãÆ  (Dynamic)  server-rendered on demand
+

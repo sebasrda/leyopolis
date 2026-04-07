@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { 
   Building2, 
   Users, 
@@ -195,11 +196,12 @@ export default function SuperAdminDashboard() {
                     <span className="font-medium text-red-600">{inst.endDate ? new Date(inst.endDate).toLocaleDateString() : "Ilimitado"}</span>
                   </div>
                 </div>
-                
                 <div className="flex gap-2 pt-2">
-                  <Button variant="outline" size="sm" className="w-full">
-                    <Settings className="h-4 w-4 mr-1" /> Ajustes
-                  </Button>
+                  <Link href={`/dashboard/superadmin/colegio/${inst.id}`} className="w-full">
+                    <Button variant="outline" size="sm" className="w-full bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100 hover:text-indigo-800 font-semibold gap-2">
+                      Entrar al colegio
+                    </Button>
+                  </Link>
                 </div>
               </CardContent>
             </Card>

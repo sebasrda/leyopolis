@@ -107,48 +107,86 @@ export async function POST(req: Request) {
     try {
       let rawText = "";
       let finalJsonString = "";
+      let quizFromFile = false;
 
-      if (quizFile) {
+      // Step 1: Extract text from uploaded quiz file (if any)
+      if (quizFile && quizFile.size > 0) {
         if (quizFile.name.endsWith(".json")) {
           finalJsonString = await quizFile.text();
+          quizFromFile = true;
         } else {
           const quizBuffer = Buffer.from(await quizFile.arrayBuffer());
           if (quizFile.name.endsWith(".pdf")) {
-            const pdfParse = require("pdf-parse");
-            rawText = (await pdfParse(quizBuffer)).text;
-          } else if (quizFile.name.endsWith(".docx")) {
-            const mammoth = require("mammoth");
-            rawText = (await mammoth.extractRawText({ buffer: quizBuffer })).value;
+            try {
+              const pdfParse = require("pdf-parse");
+              rawText = (await pdfParse(quizBuffer)).text;
+              quizFromFile = true;
+            } catch (e) { console.error("PDF parse error:", e); }
+          } else if (quizFile.name.endsWith(".docx") || quizFile.name.endsWith(".doc")) {
+            try {
+              const mammoth = require("mammoth");
+              rawText = (await mammoth.extractRawText({ buffer: quizBuffer })).value;
+              quizFromFile = true;
+            } catch (e) { console.error("DOCX parse error:", e); }
           }
         }
       }
 
-      if (!finalJsonString) {
+      // Step 2: Use AI to convert to JSON or generate from scratch
+      const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || "";
+      
+      if (!finalJsonString && apiKey) {
         const { GoogleGenerativeAI } = require("@google/generative-ai");
-        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
-        const aiModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash", generationConfig: { responseMimeType: "application/json" } });
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const aiModel = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
         
-        const prompt = `Genera un JSON educativo para el libro "${title}". 
-        Contexto opcional: ${rawText || description}.
-        Esquema:
-        {
-          "questions": [{"id": 1, "question": "...", "options": ["A", "B", "C"], "correctAnswer": 0}],
-          "keywords": ["PALABRA1", "PALABRA2", "PALABRA3"], 
-          "memoryPairs": [{"character": "Nombre", "description": "Relación/Rol"}],
-          "sentences": [{"id": 1, "sentence": "Frase importante para ordenar"}]
+        let prompt = "";
+        
+        if (quizFromFile && rawText) {
+          // CASE A: Quiz file uploaded — extract questions from the document
+          prompt = `Analiza el siguiente texto de un examen/quiz y conviértelo a JSON.
+El texto proviene de un archivo subido por un profesor como evaluación del libro "${title}".
+EXTRAE las preguntas TAL CUAL están en el documento y formátalas en este esquema JSON:
+{
+  "questions": [{"id": 1, "question": "pregunta textual del documento", "options": ["opción A", "opción B", "opción C", "opción D"], "correctAnswer": 0}],
+  "keywords": ["PALABRA1", "PALABRA2"],
+  "memoryPairs": [{"character": "Nombre", "description": "Relación"}],
+  "sentences": [{"id": 1, "sentence": "Frase importante"}]
+}
+Si las preguntas no tienen opciones, inventa 4 opciones para cada una con 1 correcta.
+También genera 8 palabras clave, 6 parejas de memoria y 5 frases basadas en el contenido.
+Responde SOLO con JSON válido, sin markdown.
+
+TEXTO DEL EXAMEN:
+"""
+${rawText.slice(0, 8000)}
+"""`;
+        } else {
+          // CASE B: No quiz file — generate from scratch based on book title
+          prompt = `Genera un JSON educativo completo para el libro "${title}" del autor "${author}".
+Esquema EXACTO (sin markdown, solo JSON puro):
+{
+  "questions": [{"id": 1, "question": "Pregunta de comprensión", "options": ["A", "B", "C", "D"], "correctAnswer": 0}],
+  "keywords": ["PALABRA1", "PALABRA2"],
+  "memoryPairs": [{"character": "Nombre", "description": "Descripción"}],
+  "sentences": [{"id": 1, "sentence": "Frase del libro para ordenar"}]
+}
+Genera 10 preguntas variadas de comprensión lectora, 10 palabras clave en MAYÚSCULAS, 6 parejas personaje-descripción y 5 frases. Las preguntas deben ser coherentes con la trama real del libro. Responde SOLO con JSON válido.`;
         }
-        Genera 10 preguntas, 10 palabras clave, 6 parejas de memoria y 5 frases. No uses markdown, solo el JSON.`;
 
         const result = await aiModel.generateContent(prompt);
         finalJsonString = result.response.text().replace(/```json|```/g, "").trim();
       }
 
+      // Step 3: Save quiz and games to database
       if (finalJsonString) {
         const parsedQuiz = JSON.parse(finalJsonString);
+        
+        // Create Quiz Activity and link to book
         const quiz = await (prisma as any).activity.create({
           data: {
             title: `Quiz: ${title}`,
-            description: `Actividades para "${title}"`,
+            description: quizFromFile ? `Examen del profesor para "${title}"` : `Quiz generado por IA para "${title}"`,
             type: "QUIZ",
             content: JSON.stringify(parsedQuiz),
             points: 100,
@@ -158,9 +196,38 @@ export async function POST(req: Request) {
           },
         });
         await (prisma as any).book.update({ where: { id: book.id }, data: { quizId: quiz.id } });
+
+        // Create game activities (wordsearch, memory, reorder)
+        if (parsedQuiz.keywords && parsedQuiz.keywords.length > 0) {
+          await (prisma as any).activity.create({
+            data: {
+              title: `Sopa de letras: ${title}`, description: `Palabras clave de "${title}"`,
+              type: "WORDSEARCH", content: JSON.stringify({ words: parsedQuiz.keywords.slice(0, 10), gridSize: 12 }),
+              points: 50, published: true, createdById: session.user.id, bookId: book.id,
+            },
+          });
+        }
+        if (parsedQuiz.memoryPairs && parsedQuiz.memoryPairs.length > 0) {
+          await (prisma as any).activity.create({
+            data: {
+              title: `Memoria: ${title}`, description: `Personajes de "${title}"`,
+              type: "MATCH", content: JSON.stringify({ pairs: parsedQuiz.memoryPairs.map((p: any, i: number) => ({ id: i+1, word: p.character, def: p.description })) }),
+              points: 50, published: true, createdById: session.user.id, bookId: book.id,
+            },
+          });
+        }
+        if (parsedQuiz.sentences && parsedQuiz.sentences.length > 0) {
+          await (prisma as any).activity.create({
+            data: {
+              title: `Ordenar: ${title}`, description: `Eventos de "${title}"`,
+              type: "REORDER", content: JSON.stringify({ sentences: parsedQuiz.sentences }),
+              points: 50, published: true, createdById: session.user.id, bookId: book.id,
+            },
+          });
+        }
       }
     } catch (aiErr) {
-      console.error("AI Error:", aiErr);
+      console.error("AI/Quiz Error:", aiErr);
     }
 
     return NextResponse.json({ message: "Libro subido exitosamente", book });

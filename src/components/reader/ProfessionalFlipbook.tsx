@@ -839,6 +839,13 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", book
         
         {/* Izquierda: Título y Herramientas Educativas */}
         <div className="flex items-center gap-4 shrink-0">
+            <button 
+                onClick={() => setIsDarkMode(!isDarkMode)} 
+                className={cn("p-2 rounded-full transition-colors shrink-0 flex items-center justify-center border", isDarkMode ? "bg-gray-800 border-gray-700 text-yellow-400 hover:bg-gray-700" : "bg-white/10 border-white/20 text-gray-200 hover:bg-white/20")}
+                title="Cambiar Tema"
+            >
+                {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
             <div className="flex flex-col">
                 <h1 className="text-sm font-medium truncate max-w-[150px] opacity-90">{bookTitle}</h1>
                 <span className="text-[10px] text-gray-400">Página {currentPage + 1} de {numPages}</span>
@@ -936,13 +943,6 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", book
 
             {/* Ajustes Visuales */}
             <div className="flex items-center gap-1">
-                <button 
-                    onClick={() => setIsDarkMode(!isDarkMode)} 
-                    className={cn("p-2 rounded-full transition-colors", isDarkMode ? "text-yellow-400 hover:bg-yellow-400/10" : "text-gray-300 hover:bg-white/10")}
-                    title="Cambiar Tema"
-                >
-                    {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
-                </button>
                 
                 <button 
                     id="save-global-btn"

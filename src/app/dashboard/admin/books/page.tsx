@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { 
-  Library, Trash2, Plus, Search, FileText, Loader2, AlertCircle, CheckCircle2, Sparkles, Image as ImageIcon
+  Library, Trash2, Plus, Search, FileText, Loader2, AlertCircle, CheckCircle2, Sparkles, Image as ImageIcon, Upload
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -39,6 +39,8 @@ export default function AdminBooksPage() {
   const [bookSubject, setBookSubject] = useState("");
   const [quizFile, setQuizFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadingQuizFor, setUploadingQuizFor] = useState<string | null>(null);
+  const quizInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { fetchBooks(); }, []);
   useEffect(() => { if (success) { const t = setTimeout(() => setSuccess(null), 3000); return () => clearTimeout(t); } }, [success]);
@@ -133,6 +135,27 @@ export default function AdminBooksPage() {
       }
     } catch {
       setError("Error de conexión");
+    }
+  };
+
+  const handleQuizUpload = async (bookId: string, file: File) => {
+    setUploadingQuizFor(bookId);
+    setError(null);
+    try {
+      const formData = new FormData();
+      formData.append("quizFile", file);
+      const res = await fetch(`/api/books/${bookId}/quiz/upload`, { method: "POST", body: formData });
+      const data = await res.json();
+      if (res.ok) {
+        setSuccess(`Quiz actualizado: ${data.questionsCount} preguntas cargadas`);
+        fetchBooks();
+      } else {
+        setError(data.message || "Error al subir quiz");
+      }
+    } catch {
+      setError("Error de conexión al subir quiz");
+    } finally {
+      setUploadingQuizFor(null);
     }
   };
 
@@ -322,9 +345,31 @@ export default function AdminBooksPage() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="icon" className="text-red-400 hover:text-red-700 hover:bg-red-50 rounded-full" onClick={() => handleDelete(book.id)}>
-                      <Trash2 className="h-5 w-5" />
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      <input
+                        type="file"
+                        accept=".pdf,.doc,.docx,.json,.txt"
+                        className="hidden"
+                        id={`quiz-upload-${book.id}`}
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (f) handleQuizUpload(book.id, f);
+                          e.target.value = "";
+                        }}
+                      />
+                      <Button
+                        variant="ghost" size="icon"
+                        className="text-indigo-400 hover:text-indigo-700 hover:bg-indigo-50 rounded-full"
+                        title="Subir quiz (PDF/Word)"
+                        disabled={uploadingQuizFor === book.id}
+                        onClick={() => document.getElementById(`quiz-upload-${book.id}`)?.click()}
+                      >
+                        {uploadingQuizFor === book.id ? <Loader2 className="h-5 w-5 animate-spin" /> : <Upload className="h-5 w-5" />}
+                      </Button>
+                      <Button variant="ghost" size="icon" className="text-red-400 hover:text-red-700 hover:bg-red-50 rounded-full" onClick={() => handleDelete(book.id)}>
+                        <Trash2 className="h-5 w-5" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))

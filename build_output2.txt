@@ -1,0 +1,20 @@
+Ôû▓ Next.js 16.1.6 (Turbopack)
+- Environments: .env.local, .env
+
+ÔÜá The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+Ô£ô Compiled successfully in 57s
+  Running TypeScript ...
+Failed to compile.
+
+./src/app/api/admin/demo/seed/route.ts:86:16
+Type error: Parameter 'b' implicitly has an 'any' type.
+
+  84 |
+  85 |   await Promise.all(
+> 86 |     books.map((b) =>
+     |                ^
+  87 |       db.bookCollectionByGradeBook.upsert({
+  88 |         where: { collectionId_bookId: { collectionId: collection.id, bookId: b.id } },
+  89 |         update: {},
+Next.js build worker exited with code: 1 and signal: null

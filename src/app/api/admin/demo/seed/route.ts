@@ -83,7 +83,7 @@ export async function POST() {
   });
 
   await Promise.all(
-    books.map((b) =>
+    books.map((b: any) =>
       db.bookCollectionByGradeBook.upsert({
         where: { collectionId_bookId: { collectionId: collection.id, bookId: b.id } },
         update: {},

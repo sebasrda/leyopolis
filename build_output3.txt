@@ -1,0 +1,20 @@
+Ôû▓ Next.js 16.1.6 (Turbopack)
+- Environments: .env.local, .env
+
+ÔÜá The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+Ô£ô Compiled successfully in 42s
+  Running TypeScript ...
+Failed to compile.
+
+./src/app/api/admin/intelligence/route.ts:175:41
+Type error: Parameter 'b' implicitly has an 'any' type.
+
+  173 |       select: { id: true, title: true, author: true },
+  174 |     });
+> 175 |     const bookById = new Map(books.map((b) => [b.id, b]));
+      |                                         ^
+  176 |
+  177 |     const readsThisWeekMap = new Map(readsThisWeekByBookTyped.map((r) => [r.bookId, r._count.bookId]));
+  178 |     const readsPrevWeekMap = new Map(readsPrevWeekByBookTyped.map((r) => [r.bookId, r._count.bookId]));
+Next.js build worker exited with code: 1 and signal: null

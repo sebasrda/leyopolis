@@ -172,7 +172,7 @@ export async function GET() {
       where: { id: { in: bookIdsToFetch } },
       select: { id: true, title: true, author: true },
     });
-    const bookById = new Map(books.map((b) => [b.id, b]));
+    const bookById: Map<string, any> = new Map(books.map((b: any) => [b.id, b]));
 
     const readsThisWeekMap = new Map(readsThisWeekByBookTyped.map((r) => [r.bookId, r._count.bookId]));
     const readsPrevWeekMap = new Map(readsPrevWeekByBookTyped.map((r) => [r.bookId, r._count.bookId]));

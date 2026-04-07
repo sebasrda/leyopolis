@@ -4,14 +4,13 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
-export async function GET(req: Request, { params }: { params: { bookId: string } }) {
+export async function GET(req: Request, { params }: { params: Promise<{ bookId: string }> }) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return NextResponse.json({ message: "No autorizado" }, { status: 401 });
 
-  const { bookId } = params;
+  const { bookId } = await params;
 
   try {
-    // A user has an attempt if they have an EvaluationResult for any Evaluation of this book
     const attempt = await (prisma as any).evaluationResult.findFirst({
       where: {
         userId: session.user.id,
@@ -32,11 +31,11 @@ export async function GET(req: Request, { params }: { params: { bookId: string }
   }
 }
 
-export async function POST(req: Request, { params }: { params: { bookId: string } }) {
+export async function POST(req: Request, { params }: { params: Promise<{ bookId: string }> }) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return NextResponse.json({ message: "No autorizado" }, { status: 401 });
 
-  const { bookId } = params;
+  const { bookId } = await params;
   const body = await req.json();
 
   try {
@@ -50,7 +49,7 @@ export async function POST(req: Request, { params }: { params: { bookId: string 
         data: {
           bookId: bookId,
           type: "QUIZ",
-          content: "{}" // Placeholder
+          content: "{}"
         }
       });
     }
@@ -66,7 +65,7 @@ export async function POST(req: Request, { params }: { params: { bookId: string 
     });
 
     // 3. Register Activity
-    await (prisma.userActivity as any).create({
+    await (prisma as any).userActivity.create({
       data: {
         userId: session.user.id,
         type: "QUIZ",

@@ -69,7 +69,7 @@ export async function POST(req: Request) {
     const ageRange = formData.get("ageRange") as string || null;
     const grade = formData.get("grade") as string || null;
     const subject = formData.get("subject") as string || null;
-    const quizJsonStr = formData.get("quizJson") as string || null;
+    const quizFile = formData.get("quizFile") as File | null;
 
     if (!file) {
       return NextResponse.json(
@@ -149,28 +149,63 @@ export async function POST(req: Request) {
       }
     });
 
-    if (quizJsonStr && quizJsonStr.trim() !== "") {
+    // Manejar Quiz File
+    if (quizFile) {
       try {
-        const parsedQuiz = JSON.parse(quizJsonStr);
-        const quiz = await (prisma as any).activity.create({
-          data: {
-            title: `Quiz: ${book.title}`,
-            description: `Quiz de comprensión para "${book.title}"`,
-            type: "QUIZ",
-            content: JSON.stringify(parsedQuiz),
-            points: 100,
-            published: true,
-            createdById: session.user.id,
-            bookId: book.id,
-          },
-        });
-        
-        await (prisma as any).book.update({
-          where: { id: book.id },
-          data: { quizId: quiz.id }
-        });
+        let finalJsonString = "";
+
+        if (quizFile.name.endsWith(".json") || quizFile.type === "application/json") {
+          finalJsonString = await quizFile.text();
+        } else {
+          // Extraer texto de PDF o Word
+          const quizBuffer = Buffer.from(await quizFile.arrayBuffer());
+          let rawText = "";
+
+          if (quizFile.name.endsWith(".pdf")) {
+            const pdfParse = require("pdf-parse");
+            const data = await pdfParse(quizBuffer);
+            rawText = data.text;
+          } else if (quizFile.name.endsWith(".docx") || quizFile.type.includes("word")) {
+            const mammoth = require("mammoth");
+            const data = await mammoth.extractRawText({ buffer: quizBuffer });
+            rawText = data.value;
+          }
+
+          if (rawText && rawText.trim() !== "") {
+            const { GoogleGenerativeAI } = require("@google/generative-ai");
+            const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+            const model = genAI.getGenerativeModel({ 
+              model: "gemini-1.5-flash",
+              generationConfig: { responseMimeType: "application/json" }
+            });
+            const prompt = `Convierte este examen crudo en un JSON estricto con el esquema: {"questions": [{"id": 1, "question": "...", "options": ["A", "B", "C"], "correctAnswer": 0}]}. Si es pregunta abierta sin opciones, omite 'options' y 'correctAnswer' y pon 'answer': "Respuesta Sugerida". Solo devuelve el JSON válido. Texto del examen: ${rawText}`;
+            const result = await model.generateContent(prompt);
+            finalJsonString = result.response.text();
+          }
+        }
+
+        if (finalJsonString) {
+          const parsedQuiz = JSON.parse(finalJsonString);
+          const quiz = await (prisma as any).activity.create({
+            data: {
+              title: `Quiz: ${book.title}`,
+              description: `Quiz de comprensión para "${book.title}" generado desde ${quizFile.name}`,
+              type: "QUIZ",
+              content: JSON.stringify(parsedQuiz),
+              points: 100,
+              published: true,
+              createdById: session.user.id,
+              bookId: book.id,
+            },
+          });
+          
+          await (prisma as any).book.update({
+            where: { id: book.id },
+            data: { quizId: quiz.id }
+          });
+        }
       } catch (err) {
-        console.error("Failed to parse or save quiz JSON during upload", err);
+        console.error("Failed to parse or save quiz file during upload", err);
       }
     }
 

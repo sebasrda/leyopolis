@@ -38,7 +38,7 @@ export default function AdminBooksPage() {
   const [bookAgeRange, setBookAgeRange] = useState("9-12");
   const [bookGrade, setBookGrade] = useState("");
   const [bookSubject, setBookSubject] = useState("");
-  const [quizJson, setQuizJson] = useState("");
+  const [quizFile, setQuizFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
 
   useEffect(() => { fetchBooks(); }, []);
@@ -70,7 +70,7 @@ export default function AdminBooksPage() {
     formData.append("ageRange", bookAgeRange);
     if (bookGrade) formData.append("grade", bookGrade);
     if (bookSubject) formData.append("subject", bookSubject);
-    if (quizJson) formData.append("quizJson", quizJson);
+    if (quizFile) formData.append("quizFile", quizFile);
 
     try {
       const res = await fetch("/api/upload", { method: "POST", body: formData });
@@ -102,10 +102,9 @@ export default function AdminBooksPage() {
     setBookAuthor("");
     setBookCategory("Literatura");
     setBookDifficulty("Intermedio");
-    setBookAgeRange("9-12");
     setBookGrade("");
     setBookSubject("");
-    setQuizJson("");
+    setQuizFile(null);
   };
 
   const handleDelete = async (id: string) => {
@@ -232,14 +231,22 @@ export default function AdminBooksPage() {
               </div>
 
               <div className="space-y-1 mt-2">
-                <Label>Añadir Quiz (Opcional - JSON)</Label>
-                <div className="text-xs text-gray-500 mb-1">Si dejas esto en blanco, el sistema podrá generar uno dinámicamente luego. Si ya tienes un formato válido de JSON, pégalo aquí.</div>
-                <textarea 
-                  className="w-full text-xs font-mono p-2 border rounded-md h-20" 
-                  placeholder={`{\n  "questions": [\n    { "id": 1, "question": "...", "options": ["A", "B", "C"], "correctAnswer": 0 }\n  ]\n}`}
-                  value={quizJson}
-                  onChange={e => setQuizJson(e.target.value)}
-                />
+                <Label>Añadir Quiz (Opcional)</Label>
+                <div className="text-xs text-gray-500 mb-1">
+                  Sube el archivo del cuestionario (PDF, Word o JSON). La IA detectará las preguntas.
+                </div>
+                <div className="border-2 border-dashed border-gray-200 rounded-lg p-3 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 relative h-16">
+                  <Input 
+                    type="file" 
+                    accept=".pdf,.docx,application/msword,.json" 
+                    className="absolute inset-0 opacity-0 cursor-pointer" 
+                    onChange={e => setQuizFile(e.target.files?.[0] || null)} 
+                  />
+                  <FileText className="h-4 w-4 text-gray-400 mb-1" />
+                  <span className="text-xs text-center text-gray-500">
+                    {quizFile ? quizFile.name : "Seleccionar Quiz"}
+                  </span>
+                </div>
               </div>
               
               <Button onClick={handleUpload} disabled={!selectedPdf || (uploadProgress > 0 && uploadProgress < 100)} className="w-full mt-1">

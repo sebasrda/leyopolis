@@ -34,17 +34,39 @@ interface GamesModalProps {
   isOpen: boolean;
   onClose: () => void;
   bookTitle: string;
+  bookId?: string;
 }
 
 type GameType = "quiz" | "memory" | "wordsearch" | "wordmatch" | "crossword" | "evaluation" | "scramble" | null;
 
-export default function GamesModal({ isOpen, onClose, bookTitle }: GamesModalProps) {
+export default function GamesModal({ isOpen, onClose, bookTitle, bookId }: GamesModalProps) {
   const [activeGame, setActiveGame] = useState<GameType>(null);
+  const [quizData, setQuizData] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
 
   // Reset active game when modal opens/closes
   useEffect(() => {
-    if (!isOpen) setActiveGame(null);
-  }, [isOpen]);
+    if (!isOpen) {
+      setActiveGame(null);
+    } else if (bookId) {
+      // Fetch quiz data for the games
+      const fetchQuiz = async () => {
+        setLoading(true);
+        try {
+          const res = await fetch(`/api/books/${bookId}/quiz`);
+          const data = await res.json();
+          if (data.quiz && data.quiz.content) {
+            setQuizData(typeof data.quiz.content === 'string' ? JSON.parse(data.quiz.content) : data.quiz.content);
+          }
+        } catch (err) {
+          console.error("Error fetching games data:", err);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchQuiz();
+    }
+  }, [isOpen, bookId]);
 
   if (!isOpen) return null;
 
@@ -95,27 +117,26 @@ export default function GamesModal({ isOpen, onClose, bookTitle }: GamesModalPro
                 </h3>
               </div>
               <div className="flex-1 overflow-y-auto p-6 flex justify-center">
-                {activeGame === 'quiz' && <QuizGame questions={[
-                    {id: 1, question: "¿Quién escribió 'El Principito'?", options: ["Antoine de Saint-Exupéry", "J.K. Rowling", "Cervantes", "Borges"], correctAnswer: 0},
-                    {id: 2, question: "¿Qué animal se come al elefante en el dibujo?", options: ["Una boa", "Un león", "Un tigre", "Un gato"], correctAnswer: 0},
-                    {id: 3, question: "¿Qué pide el Principito que le dibujen?", options: ["Un cordero", "Una flor", "Una casa", "Un avión"], correctAnswer: 0}
-                ]} onComplete={() => {}} onExit={() => setActiveGame(null)} />}
-                {activeGame === 'memory' && <MemoryGame pairs={[
-                    {character: "Principito", description: "Niño de las estrellas"},
-                    {character: "Zorro", description: "Amigo sabio"},
-                    {character: "Rosa", description: "Flor vanidosa"},
-                    {character: "Aviador", description: "Narrador"},
-                    {character: "Rey", description: "Monarca solitario"},
-                    {character: "Serpiente", description: "Misteriosa"}
+                {activeGame === 'quiz' && (
+                  <QuizGame 
+                    questions={quizData?.questions || [
+                      {id: 1, question: "¿Listo para comenzar?", options: ["Sí", "Claro"], correctAnswer: 0}
+                    ]} 
+                    onComplete={() => {}} 
+                    onExit={() => setActiveGame(null)} 
+                  />
+                )}
+                {activeGame === 'memory' && <MemoryGame pairs={quizData?.memoryPairs || [
+                    {character: bookTitle, description: "Libro principal"},
+                    {character: "Autor", description: "Creador de la obra"}
                 ]} onComplete={() => {}} />}
-                {activeGame === 'wordsearch' && <WordSearchGame words={["PRINCIPITO", "ZORRO", "ROSA", "PLANETA", "BAOBAB", "AVIADOR"]} onComplete={() => {}} />}
+                {activeGame === 'wordsearch' && <WordSearchGame words={quizData?.keywords || ["LECTURA", "LIBRO", "APRENDER", "LEYOPOLIS"]} onComplete={() => {}} />}
                 {activeGame === 'wordmatch' && <WordMatchGame />}
                 {activeGame === 'crossword' && <CrosswordGame />}
                 {activeGame === 'scramble' && (
                     <WordScrambleGame 
-                        sentences={[
-                            { id: 1, sentence: "Lo esencial es invisible a los ojos" },
-                            { id: 2, sentence: "Fue el tiempo que pasaste con tu rosa" }
+                        sentences={quizData?.sentences || [
+                            { id: 1, sentence: "La lectura es un viaje" }
                         ]}
                         onComplete={() => {}}
                         onExit={() => setActiveGame(null)}

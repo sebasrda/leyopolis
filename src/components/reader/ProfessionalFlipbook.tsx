@@ -38,13 +38,14 @@ interface TextSelection {
 }
 
 // Componente Smart Menu (Menú Contextual Inteligente)
-const SmartMenu = ({ selection, onDefine, onTranslate, onSaveVocab, onNote, onClose }: { 
+const SmartMenu = ({ selection, onDefine, onTranslate, onSaveVocab, onNote, onClose, hideAi }: { 
   selection: TextSelection; 
   onDefine: () => void; 
   onTranslate: () => void;
   onSaveVocab: () => void; 
   onNote: () => void;
   onClose: () => void;
+  hideAi?: boolean;
 }) => {
   return (
     <motion.div
@@ -58,11 +59,15 @@ const SmartMenu = ({ selection, onDefine, onTranslate, onSaveVocab, onNote, onCl
         transform: 'translateX(-50%)' 
       }}
     >
-      <button onClick={onDefine} className="flex flex-col items-center p-2 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-md transition-colors group" title="Definir con IA">
-        <Search size={16} className="text-indigo-600 dark:text-indigo-400 mb-1" />
-        <span className="text-[10px] font-medium text-gray-600 dark:text-gray-300">Definir</span>
-      </button>
-      <div className="w-px h-8 bg-gray-200 dark:bg-gray-700 mx-1" />
+      {!hideAi && (
+        <>
+          <button onClick={onDefine} className="flex flex-col items-center p-2 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-md transition-colors group" title="Definir con IA">
+            <Search size={16} className="text-indigo-600 dark:text-indigo-400 mb-1" />
+            <span className="text-[10px] font-medium text-gray-600 dark:text-gray-300">Definir</span>
+          </button>
+          <div className="w-px h-8 bg-gray-200 dark:bg-gray-700 mx-1" />
+        </>
+      )}
       <button onClick={onTranslate} className="flex flex-col items-center p-2 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-md transition-colors group" title="Traducir selección">
         <Languages size={16} className="text-blue-600 dark:text-blue-400 mb-1" />
         <span className="text-[10px] font-medium text-gray-600 dark:text-gray-300">Traducir</span>
@@ -819,6 +824,7 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", book
                     onTranslate={handleTranslateSelection}
                     onSaveVocab={handleSaveVocab}
                     onNote={handleNote}
+                    hideAi={userRole === "STUDENT"}
                     onClose={() => {
                         setTextSelection(null);
                         window.getSelection()?.removeAllRanges();
@@ -1163,8 +1169,8 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", book
       </div>
 
       {/* Modales */}
-      <ExamModal isOpen={showExam} onClose={() => setShowExam(false)} bookTitle={bookTitle} />
-      <GamesModal isOpen={showGames} onClose={() => setShowGames(false)} bookTitle={bookTitle} />
+      <ExamModal isOpen={showExam} onClose={() => setShowExam(false)} bookTitle={bookTitle} bookId={bookId} />
+      <GamesModal isOpen={showGames} onClose={() => setShowGames(false)} bookTitle={bookTitle} bookId={bookId} />
       
       {/* AI Tutor Widget */}
       {session?.user?.role !== "STUDENT" && (

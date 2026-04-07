@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, CheckCircle, AlertCircle, Award } from 'lucide-react';
+import { X, CheckCircle, AlertCircle, Award, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 
@@ -46,12 +46,44 @@ const SAMPLE_QUESTIONS: Question[] = [
   }
 ];
 
-export default function ExamModal({ isOpen, onClose, bookTitle }: { isOpen: boolean; onClose: () => void; bookTitle: string }) {
+export default function ExamModal({ isOpen, onClose, bookTitle, bookId }: { isOpen: boolean; onClose: () => void; bookTitle: string; bookId?: string }) {
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [score, setScore] = useState(0);
   const [showResult, setShowResult] = useState(false);
   const [isAnswered, setIsAnswered] = useState(false);
+
+  React.useEffect(() => {
+    if (isOpen && bookId) {
+      const fetchQuiz = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+          const res = await fetch(`/api/books/${bookId}/quiz`);
+          const data = await res.json();
+          if (data.quiz && data.quiz.content) {
+            const parsed = typeof data.quiz.content === 'string' ? JSON.parse(data.quiz.content) : data.quiz.content;
+            if (parsed.questions && parsed.questions.length > 0) {
+              setQuestions(parsed.questions);
+            } else {
+              setError("Este libro no tiene preguntas configuradas todavía.");
+            }
+          } else {
+            setError("No se encontró un examen para este libro.");
+          }
+        } catch (err) {
+          console.error("Error fetching quiz:", err);
+          setError("Error al cargar el examen.");
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchQuiz();
+    }
+  }, [isOpen, bookId]);
 
   const handleOptionSelect = (index: number) => {
     if (isAnswered) return;
@@ -62,7 +94,7 @@ export default function ExamModal({ isOpen, onClose, bookTitle }: { isOpen: bool
     if (selectedOption === null) return;
 
     // Check answer
-    if (selectedOption === SAMPLE_QUESTIONS[currentQuestion].correctAnswer) {
+    if (selectedOption === questions[currentQuestion].correctAnswer) {
       setScore(prev => prev + 1);
     }
 
@@ -70,7 +102,7 @@ export default function ExamModal({ isOpen, onClose, bookTitle }: { isOpen: bool
 
     // Wait a bit before showing next question or result
     setTimeout(() => {
-      if (currentQuestion < SAMPLE_QUESTIONS.length - 1) {
+      if (currentQuestion < questions.length - 1) {
         setCurrentQuestion(prev => prev + 1);
         setSelectedOption(null);
         setIsAnswered(false);
@@ -115,29 +147,41 @@ export default function ExamModal({ isOpen, onClose, bookTitle }: { isOpen: bool
           </div>
 
           <div className="p-8">
-            {!showResult ? (
+            {loading ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-indigo-600 mb-4" />
+                <p className="text-gray-500">Cargando preguntas oficiales...</p>
+              </div>
+            ) : error ? (
+              <div className="text-center py-12">
+                <AlertCircle className="h-12 w-12 text-amber-500 mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-gray-800 mb-2">¡Ups!</h3>
+                <p className="text-gray-500 mb-6">{error}</p>
+                <Button onClick={onClose} className="bg-indigo-600">Volver a la lectura</Button>
+              </div>
+            ) : !showResult && questions.length > 0 ? (
               <>
                 {/* Progress Bar */}
                 <div className="mb-6 space-y-2">
                   <div className="flex justify-between text-sm text-gray-500 font-medium">
-                    <span>Pregunta {currentQuestion + 1} de {SAMPLE_QUESTIONS.length}</span>
-                    <span>{Math.round(((currentQuestion) / SAMPLE_QUESTIONS.length) * 100)}% Completado</span>
+                    <span>Pregunta {currentQuestion + 1} de {questions.length}</span>
+                    <span>{Math.round(((currentQuestion) / questions.length) * 100)}% Completado</span>
                   </div>
-                  <Progress value={((currentQuestion) / SAMPLE_QUESTIONS.length) * 100} className="h-2" />
+                  <Progress value={((currentQuestion) / questions.length) * 100} className="h-2" />
                 </div>
 
                 {/* Question */}
                 <h3 className="text-xl font-semibold text-gray-800 mb-6">
-                  {SAMPLE_QUESTIONS[currentQuestion].text}
+                  {questions[currentQuestion].text || (questions[currentQuestion] as any).question}
                 </h3>
 
                 {/* Options */}
                 <div className="space-y-3 mb-8">
-                  {SAMPLE_QUESTIONS[currentQuestion].options.map((option, index) => {
+                  {questions[currentQuestion].options?.map((option, index) => {
                     let optionClass = "border-2 border-gray-200 hover:border-indigo-300 hover:bg-indigo-50";
                     
                     if (isAnswered) {
-                      if (index === SAMPLE_QUESTIONS[currentQuestion].correctAnswer) {
+                      if (index === questions[currentQuestion].correctAnswer) {
                         optionClass = "border-green-500 bg-green-50 text-green-700";
                       } else if (index === selectedOption) {
                         optionClass = "border-red-500 bg-red-50 text-red-700";
@@ -156,10 +200,10 @@ export default function ExamModal({ isOpen, onClose, bookTitle }: { isOpen: bool
                         className={`w-full text-left p-4 rounded-xl transition-all duration-200 font-medium flex justify-between items-center ${optionClass}`}
                       >
                         <span>{option}</span>
-                        {isAnswered && index === SAMPLE_QUESTIONS[currentQuestion].correctAnswer && (
+                        {isAnswered && index === questions[currentQuestion].correctAnswer && (
                           <CheckCircle className="text-green-600" size={20} />
                         )}
-                        {isAnswered && index === selectedOption && index !== SAMPLE_QUESTIONS[currentQuestion].correctAnswer && (
+                        {isAnswered && index === selectedOption && index !== questions[currentQuestion].correctAnswer && (
                           <AlertCircle className="text-red-600" size={20} />
                         )}
                       </button>
@@ -190,11 +234,11 @@ export default function ExamModal({ isOpen, onClose, bookTitle }: { isOpen: bool
                 <div className="grid grid-cols-2 gap-4 max-w-sm mx-auto mb-10">
                   <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
                     <p className="text-sm text-gray-500 uppercase font-bold tracking-wider">Puntuación</p>
-                    <p className="text-4xl font-black text-indigo-600">{score}/{SAMPLE_QUESTIONS.length}</p>
+                    <p className="text-4xl font-black text-indigo-600">{score}/{questions.length}</p>
                   </div>
                   <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
                     <p className="text-sm text-gray-500 uppercase font-bold tracking-wider">Precisión</p>
-                    <p className="text-4xl font-black text-green-600">{Math.round((score / SAMPLE_QUESTIONS.length) * 100)}%</p>
+                    <p className="text-4xl font-black text-green-600">{Math.round((score / questions.length) * 100)}%</p>
                   </div>
                 </div>
 

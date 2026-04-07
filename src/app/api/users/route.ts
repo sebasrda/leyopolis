@@ -7,8 +7,10 @@ import { authOptions } from "@/lib/auth";
 export async function GET() {
   const session = await getServerSession(authOptions);
   
-  // Check if admin
-  if (!session || !session.user || (session.user as any).role !== "ADMIN") {
+  const userRole = (session?.user as any)?.role;
+  const allowed = ["ADMIN", "SUPERADMIN"];
+  
+  if (!session?.user || !allowed.includes(userRole)) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
@@ -19,7 +21,13 @@ export async function GET() {
         name: true,
         email: true,
         role: true,
-        // status is not in schema yet, assuming active if exists
+        grade: true,
+        xp: true,
+        level: true,
+        lastActive: true,
+        institution: {
+          select: { name: true }
+        }
       },
       orderBy: { createdAt: 'desc' }
     });

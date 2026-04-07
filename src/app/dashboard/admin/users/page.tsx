@@ -114,8 +114,10 @@ export default function AdminUsersPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Usuario</TableHead>
+              <TableHead>Colegio / Grado</TableHead>
               <TableHead>Rol</TableHead>
-              <TableHead>Estado</TableHead>
+              <TableHead>Progreso (XP/Lvl)</TableHead>
+              <TableHead>Última Actividad</TableHead>
               <TableHead>Acciones</TableHead>
             </TableRow>
           </TableHeader>
@@ -129,14 +131,28 @@ export default function AdminUsersPage() {
                   </div>
                 </TableCell>
                 <TableCell>
-                  <Badge variant={user.role === "ADMIN" ? "default" : user.role === "TEACHER" ? "secondary" : "outline"}>
+                  <div className="flex flex-col">
+                    <span className="font-semibold text-indigo-700">{user.institution?.name || "Sin Colegio"}</span>
+                    <span className="text-xs text-gray-500">{user.grade || "S/G"}</span>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <Badge variant={user.role === "SUPERADMIN" ? "default" : user.role === "ADMIN" ? "outline" : user.role === "TEACHER" ? "secondary" : "outline"} className={user.role === "SUPERADMIN" ? "bg-purple-600" : ""}>
                     {user.role}
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                    {user.status}
-                  </Badge>
+                  <div className="flex flex-col">
+                    <div className="flex items-center gap-1">
+                      <span className="text-xs font-bold text-amber-600">{user.xp || 0} XP</span>
+                      <span className="text-[10px] text-gray-400">| Lvl {user.level || 1}</span>
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <span className="text-xs text-gray-500">
+                    {user.lastActive ? new Date(user.lastActive).toLocaleDateString() : "N/A"}
+                  </span>
                 </TableCell>
                 <TableCell>
                   <DropdownMenu>

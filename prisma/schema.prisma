@@ -1,10 +1,3 @@
-
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -14,52 +7,43 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  password      String?
-  role          String    @default("STUDENT")
-  institutionId String?
-  grade         String?
-  isDemo        Boolean   @default(false)
-  accounts      Account[]
-  sessions      Session[]
-  
-  // Student specific
-  readings      UserBook[]
-  readingSessions ReadingSession[]
-  evaluations   EvaluationResult[]
-  enrolledClasses Class[] @relation("ClassStudents")
-  vocabulary    Vocabulary[]
-  notes         Note[]
-  clubMemberships ClubMember[]
-  posts         Post[]
-  comments      Comment[]
-  activities    UserActivity[]
-  bookViews     BookView[]
-  createdCourses Course[]
-  courseEnrollments CourseEnrollment[]
+  id                String             @id @default(cuid())
+  name              String?
+  email             String?            @unique
+  emailVerified     DateTime?
+  image             String?
+  password          String?
+  role              String             @default("STUDENT")
+  institutionId     String?
+  grade             String?
+  xp                Int                @default(0)
+  level             Int                @default(1)
+  streak            Int                @default(0)
+  lastActive        DateTime           @default(now())
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  isDemo            Boolean            @default(false)
+  accounts          Account[]
   createdActivities Activity[]
-  activityAttempts ActivityAttempt[]
-  videos        Video[]
-  
-  // Gamification
-  xp            Int       @default(0)
-  level         Int       @default(1)
-  streak        Int       @default(0)
-  lastActive    DateTime  @default(now())
-
-  // Teacher specific
-  classes       Class[]
-  
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  institution   Institution? @relation(fields: [institutionId], references: [id], onDelete: SetNull)
+  activityAttempts  ActivityAttempt[]
+  bookViews         BookView[]
+  classes           Class[]
+  clubMemberships   ClubMember[]
+  comments          Comment[]
+  createdCourses    Course[]
+  courseEnrollments CourseEnrollment[]
+  evaluations       EvaluationResult[]
+  notes             Note[]
+  posts             Post[]
+  readingSessions   ReadingSession[]
+  sessions          Session[]
+  institution       Institution?       @relation(fields: [institutionId], references: [id])
+  activities        UserActivity[]
+  readings          UserBook[]
+  videos            Video[]
+  vocabulary        Vocabulary[]
+  enrolledClasses   Class[]            @relation("ClassStudents")
 
   @@index([institutionId])
   @@index([grade])
@@ -67,52 +51,45 @@ model User {
 }
 
 model Institution {
-  id              String   @id @default(cuid())
-  name            String
-  domain          String   @unique
-  city            String?
-  country         String?
-  
-  // Suscripcion
-  status          String   @default("trial") // "trial" | "activa" | "vencida"
-  plan            String   @default("TRIAL") // "TRIAL" | "MENSUAL" | "ANUAL"
-  startDate       DateTime @default(now())
-  endDate         DateTime?
-  maxStudents     Int      @default(30)
-
-  users           User[]
-  classes         Class[]  // Aislacion de colegio
+  id               String                  @id @default(cuid())
+  name             String
+  domain           String                  @unique
+  city             String?
+  country          String?
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
+  endDate          DateTime?
+  maxStudents      Int                     @default(30)
+  plan             String                  @default("TRIAL")
+  startDate        DateTime                @default(now())
+  status           String                  @default("trial")
   gradeCollections BookCollectionByGrade[]
-
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  classes          Class[]
+  users            User[]
 
   @@index([domain])
 }
 
 model BookCollectionByGrade {
-  id            String @id @default(cuid())
+  id            String                      @id @default(cuid())
   institutionId String?
   grade         String
   name          String
-
-  institution Institution? @relation(fields: [institutionId], references: [id], onDelete: SetNull)
-  books        BookCollectionByGradeBook[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt     DateTime                    @default(now())
+  updatedAt     DateTime                    @updatedAt
+  institution   Institution?                @relation(fields: [institutionId], references: [id])
+  books         BookCollectionByGradeBook[]
 
   @@unique([institutionId, grade, name])
   @@index([grade])
 }
 
 model BookCollectionByGradeBook {
-  id           String @id @default(cuid())
+  id           String                @id @default(cuid())
   collectionId String
   bookId       String
-
-  collection BookCollectionByGrade @relation(fields: [collectionId], references: [id], onDelete: Cascade)
-  book       Book                  @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  book         Book                  @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  collection   BookCollectionByGrade @relation(fields: [collectionId], references: [id], onDelete: Cascade)
 
   @@unique([collectionId, bookId])
   @@index([bookId])
@@ -131,8 +108,7 @@ model Account {
   scope             String?
   id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -154,39 +130,36 @@ model VerificationToken {
 }
 
 model Book {
-  id          String   @id @default(cuid())
-  title       String
-  author      String
-  description String?
-  coverImage  String?
-  category    String   // Infantil, Académico, Literatura, Ciencia, Historia
-  language    String   // Español, Inglés, etc.
-  difficulty  String   // Principiante, Intermedio, Avanzado
-  format      String   // EPUB, PDF, DOCX
-  contentUrl  String
-  ageRange    String?  // Rango de edad: 6-8, 9-12, etc.
-  grade       String?  // Grado escolar: 1ro, 2do, etc.
-  subject     String?  // Materia: Español, Ciencias, etc.
-  quizId      String?  // ID de la Activity (quiz) asociada
-  isDemo      Boolean  @default(false)
-  
-  users       UserBook[]
-  sessions    ReadingSession[]
-  evaluations Evaluation[]
-  vocabulary  Vocabulary[]
-  notes       Note[]
-  assignments Assignment[]
-  clubs       Club[]
-  views       BookView[]
-  activities  UserActivity[]
+  id               String                      @id @default(cuid())
+  title            String
+  author           String
+  description      String?
+  coverImage       String?
+  category         String
+  language         String
+  difficulty       String
+  format           String
+  contentUrl       String
+  createdAt        DateTime                    @default(now())
+  updatedAt        DateTime                    @updatedAt
+  published        Boolean                     @default(true)
+  ageRange         String?
+  grade            String?
+  isDemo           Boolean                     @default(false)
+  quizId           String?
+  subject          String?
   linkedActivities Activity[]
-  moduleItems CourseModuleItem[]
+  assignments      Assignment[]
   gradeCollections BookCollectionByGradeBook[]
-  
-  published   Boolean  @default(true)
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  views            BookView[]
+  clubs            Club[]
+  moduleItems      CourseModuleItem[]
+  evaluations      Evaluation[]
+  notes            Note[]
+  sessions         ReadingSession[]
+  activities       UserActivity[]
+  users            UserBook[]
+  vocabulary       Vocabulary[]
 
   @@index([grade])
   @@index([subject])
@@ -196,14 +169,13 @@ model Book {
 model UserActivity {
   id        String   @id @default(cuid())
   userId    String
-  type      String   // SIGN_IN, PAGE_VIEW, BOOK_OPEN, READING_END, etc.
-  path      String?  // for PAGE_VIEW
-  bookId    String?  // for BOOK_OPEN / READING
-  metadata  String?  // JSON string, optional
+  type      String
+  path      String?
+  bookId    String?
+  metadata  String?
   createdAt DateTime @default(now())
-
-  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  book Book? @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  book      Book?    @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
   @@index([type, createdAt])
@@ -214,11 +186,10 @@ model BookView {
   id        String   @id @default(cuid())
   userId    String
   bookId    String
-  path      String?  // page where book was opened
+  path      String?
   createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  book      Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
   @@index([bookId, createdAt])
@@ -226,51 +197,47 @@ model BookView {
 }
 
 model UserBook {
-  id        String   @id @default(cuid())
-  userId    String
-  bookId    String
-  progress  Int      @default(0) // Percentage
-  status    String   @default("IN_PROGRESS") // IN_PROGRESS, COMPLETED
-  lastRead  DateTime @default(now())
-  
-  user User @relation(fields: [userId], references: [id])
-  book Book @relation(fields: [bookId], references: [id])
+  id       String   @id @default(cuid())
+  userId   String
+  bookId   String
+  progress Int      @default(0)
+  status   String   @default("IN_PROGRESS")
+  lastRead DateTime @default(now())
+  book     Book     @relation(fields: [bookId], references: [id])
+  user     User     @relation(fields: [userId], references: [id])
 
   @@unique([userId, bookId])
 }
 
 model ReadingSession {
-  id              String   @id @default(cuid())
+  id              String    @id @default(cuid())
   userId          String
   bookId          String
   chapterId       String?
-  startTime       DateTime @default(now())
+  startTime       DateTime  @default(now())
   endTime         DateTime?
-  durationSeconds Int      @default(0)
-  pagesRead       Int      @default(0)
-  
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  durationSeconds Int       @default(0)
+  pagesRead       Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  book            Book      @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Class {
-  id            String   @id @default(cuid())
+  id            String       @id @default(cuid())
   name          String
-  subject       String?  // Materia
-  grade         String?  // Grado
   teacherId     String
-  teacher       User     @relation(fields: [teacherId], references: [id])
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  grade         String?
+  isDemo        Boolean      @default(false)
+  subject       String?
   institutionId String?
-  institution   Institution? @relation(fields: [institutionId], references: [id])
-  students      User[]   @relation("ClassStudents")
   assignments   Assignment[]
-  isDemo        Boolean  @default(false)
-  
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  institution   Institution? @relation(fields: [institutionId], references: [id])
+  teacher       User         @relation(fields: [teacherId], references: [id])
+  students      User[]       @relation("ClassStudents")
 
   @@index([teacherId])
   @@index([institutionId])
@@ -284,70 +251,60 @@ model Assignment {
   title       String
   dueDate     DateTime
   description String?
-  
-  class       Class    @relation(fields: [classId], references: [id])
-  book        Book     @relation(fields: [bookId], references: [id])
-  
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  book        Book     @relation(fields: [bookId], references: [id])
+  class       Class    @relation(fields: [classId], references: [id])
 }
 
 model Evaluation {
-  id        String   @id @default(cuid())
+  id        String             @id @default(cuid())
   bookId    String
-  book      Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
-  type      String   @default("QUIZ") // QUIZ, MEMORY, WORDMATCH
-  content   String   // JSON string of content (questions for quiz, pairs for memory)
-  
+  type      String             @default("QUIZ")
+  content   String
+  createdAt DateTime           @default(now())
+  book      Book               @relation(fields: [bookId], references: [id], onDelete: Cascade)
   results   EvaluationResult[]
-  
-  createdAt DateTime @default(now())
 }
 
 model EvaluationResult {
-  id           String   @id @default(cuid())
+  id           String     @id @default(cuid())
   userId       String
   evaluationId String
   score        Float
   feedback     String?
-  
-  user       User       @relation(fields: [userId], references: [id])
-  evaluation Evaluation @relation(fields: [evaluationId], references: [id])
-  
-  createdAt    DateTime @default(now())
+  createdAt    DateTime   @default(now())
+  evaluation   Evaluation @relation(fields: [evaluationId], references: [id])
+  user         User       @relation(fields: [userId], references: [id])
 }
 
 model Vocabulary {
-  id          String   @id @default(cuid())
-  userId      String
-  bookId      String?
-  bookTitle   String?  // Added for flexibility
-  word        String
-  definition  String
-  context     String?
-  mastered    Boolean  @default(false)
-  
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  book        Book?    @relation(fields: [bookId], references: [id])
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String   @id @default(cuid())
+  userId     String
+  bookId     String?
+  bookTitle  String?
+  word       String
+  definition String
+  context    String?
+  mastered   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  book       Book?    @relation(fields: [bookId], references: [id])
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Note {
-  id          String   @id @default(cuid())
-  userId      String
-  bookId      String?  // Made optional
-  bookTitle   String?  // Added for flexibility
-  page        Int
-  text        String
-  quote       String?
-  
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  book        Book?    @relation(fields: [bookId], references: [id])
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(cuid())
+  userId    String
+  bookId    String?
+  bookTitle String?
+  page      Int
+  text      String
+  quote     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  book      Book?    @relation(fields: [bookId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model SystemSetting {
@@ -356,46 +313,40 @@ model SystemSetting {
 }
 
 model Club {
-  id          String   @id @default(cuid())
+  id          String       @id @default(cuid())
   name        String
   description String
   coverImage  String?
-  bookId      String?  // Optional: Club focused on a specific book
-  
-  book        Book?    @relation(fields: [bookId], references: [id])
+  bookId      String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  book        Book?        @relation(fields: [bookId], references: [id])
   members     ClubMember[]
   posts       Post[]
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
 }
 
 model ClubMember {
-  id        String   @id @default(cuid())
-  userId    String
-  clubId    String
-  role      String   @default("MEMBER") // MEMBER, ADMIN
-  
-  user      User     @relation(fields: [userId], references: [id])
-  club      Club     @relation(fields: [clubId], references: [id])
-  
-  joinedAt  DateTime @default(now())
+  id       String   @id @default(cuid())
+  userId   String
+  clubId   String
+  role     String   @default("MEMBER")
+  joinedAt DateTime @default(now())
+  club     Club     @relation(fields: [clubId], references: [id])
+  user     User     @relation(fields: [userId], references: [id])
 
   @@unique([userId, clubId])
 }
 
 model Post {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   content   String
   userId    String
   clubId    String
-  
-  user      User     @relation(fields: [userId], references: [id])
-  club      Club     @relation(fields: [clubId], references: [id])
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   comments  Comment[]
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  club      Club      @relation(fields: [clubId], references: [id])
+  user      User      @relation(fields: [userId], references: [id])
 }
 
 model Comment {
@@ -403,29 +354,25 @@ model Comment {
   content   String
   userId    String
   postId    String
-  
-  user      User     @relation(fields: [userId], references: [id])
-  post      Post     @relation(fields: [postId], references: [id])
-  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  post      Post     @relation(fields: [postId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
 }
 
 model Course {
-  id          String   @id @default(cuid())
+  id          String             @id @default(cuid())
   title       String
   description String?
   teacherId   String
-  published   Boolean  @default(true)
-
-  teacher     User     @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  published   Boolean            @default(true)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  activities  Activity[]
+  teacher     User               @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   enrollments CourseEnrollment[]
   modules     CourseModule[]
-  activities  Activity[]
   videos      Video[]
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
 
   @@index([teacherId, createdAt])
 }
@@ -436,42 +383,39 @@ model CourseEnrollment {
   userId    String
   role      String   @default("STUDENT")
   createdAt DateTime @default(now())
-
-  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([courseId, userId])
   @@index([userId, createdAt])
 }
 
 model CourseModule {
-  id        String   @id @default(cuid())
+  id        String             @id @default(cuid())
   courseId  String
   title     String
-  order     Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  items  CourseModuleItem[]
+  order     Int                @default(0)
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  course    Course             @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  items     CourseModuleItem[]
 
   @@index([courseId, order])
 }
 
 model CourseModuleItem {
-  id        String   @id @default(cuid())
-  moduleId  String
-  type      String   // BOOK, ACTIVITY, VIDEO
-  order     Int      @default(0)
-  bookId    String?
+  id         String       @id @default(cuid())
+  moduleId   String
+  type       String
+  order      Int          @default(0)
+  bookId     String?
   activityId String?
-  videoId   String?
-  createdAt DateTime @default(now())
-
-  module   CourseModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  book     Book?        @relation(fields: [bookId], references: [id], onDelete: Cascade)
-  activity Activity?    @relation(fields: [activityId], references: [id], onDelete: Cascade)
-  video    Video?       @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  videoId    String?
+  createdAt  DateTime     @default(now())
+  activity   Activity?    @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  book       Book?        @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  module     CourseModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  video      Video?       @relation(fields: [videoId], references: [id], onDelete: Cascade)
 
   @@index([moduleId, order])
   @@index([bookId, createdAt])
@@ -480,14 +424,13 @@ model CourseModuleItem {
 }
 
 model Activity {
-  id          String   @id @default(cuid())
+  id          String             @id @default(cuid())
   title       String
   description String?
-  type        String   // QUIZ, TRUE_FALSE, FILL_BLANK, SHORT_ANSWER, WORDSEARCH, CROSSWORD, REORDER, MATCH, READING_COMPREHENSION
-  content     String   // JSON
-  points      Int      @default(100)
-  published   Boolean  @default(true)
-
+  type        String
+  content     String
+  points      Int                @default(100)
+  published   Boolean            @default(true)
   createdById String
   courseId    String?
   bookId      String?
@@ -495,15 +438,13 @@ model Activity {
   pageStart   Int?
   pageEnd     Int?
   excerpt     String?
-
-  createdBy User    @relation(fields: [createdById], references: [id], onDelete: Cascade)
-  course    Course? @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  book      Book?   @relation(fields: [bookId], references: [id], onDelete: Cascade)
-  attempts  ActivityAttempt[]
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  book        Book?              @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  course      Course?            @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  createdBy   User               @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  attempts    ActivityAttempt[]
   moduleItems CourseModuleItem[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 
   @@index([createdById, createdAt])
   @@index([courseId, createdAt])
@@ -511,38 +452,35 @@ model Activity {
 }
 
 model ActivityAttempt {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   activityId  String
   userId      String
-  score       Float    @default(0)
-  answers     String   // JSON
+  score       Float     @default(0)
+  answers     String
   completedAt DateTime?
-  createdAt   DateTime @default(now())
-
-  activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  activity    Activity  @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([activityId, createdAt])
   @@index([userId, createdAt])
 }
 
 model Video {
-  id          String   @id @default(cuid())
-  title       String
-  description String?
-  provider    String   // YOUTUBE, VIMEO, EXTERNAL
-  url         String
+  id              String             @id @default(cuid())
+  title           String
+  description     String?
+  provider        String
+  url             String
   durationSeconds Int?
-  teacherId   String
-  courseId    String?
-  published   Boolean  @default(true)
-
-  teacher User    @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  course  Course? @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  moduleItems CourseModuleItem[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  teacherId       String
+  courseId        String?
+  published       Boolean            @default(true)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  moduleItems     CourseModuleItem[]
+  course          Course?            @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  teacher         User               @relation(fields: [teacherId], references: [id], onDelete: Cascade)
 
   @@index([teacherId, createdAt])
   @@index([courseId, createdAt])

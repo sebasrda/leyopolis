@@ -41,7 +41,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ message: "contentUrl requerido" }, { status: 400 });
       }
 
-      const book = await prisma.book.create({
+      const book = await (prisma as any).book.create({
         data: {
           title: title || "Libro",
           author,
@@ -69,6 +69,7 @@ export async function POST(req: Request) {
     const ageRange = formData.get("ageRange") as string || null;
     const grade = formData.get("grade") as string || null;
     const subject = formData.get("subject") as string || null;
+    const quizJsonStr = formData.get("quizJson") as string || null;
 
     if (!file) {
       return NextResponse.json(
@@ -147,6 +148,31 @@ export async function POST(req: Request) {
         description: "Libro subido por el administrador"
       }
     });
+
+    if (quizJsonStr && quizJsonStr.trim() !== "") {
+      try {
+        const parsedQuiz = JSON.parse(quizJsonStr);
+        const quiz = await (prisma as any).activity.create({
+          data: {
+            title: `Quiz: ${book.title}`,
+            description: `Quiz de comprensión para "${book.title}"`,
+            type: "QUIZ",
+            content: JSON.stringify(parsedQuiz),
+            points: 100,
+            published: true,
+            createdById: session.user.id,
+            bookId: book.id,
+          },
+        });
+        
+        await (prisma as any).book.update({
+          where: { id: book.id },
+          data: { quizId: quiz.id }
+        });
+      } catch (err) {
+        console.error("Failed to parse or save quiz JSON during upload", err);
+      }
+    }
 
     return NextResponse.json({ 
       message: "Libro subido exitosamente", 

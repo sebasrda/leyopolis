@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLearning } from '@/context/LearningContext';
 import { useTranslation } from "react-i18next";
+import { useSession } from "next-auth/react";
 
 // Importar estilos necesarios para la capa de texto de react-pdf
 import 'react-pdf/dist/Page/TextLayer.css';
@@ -194,6 +195,8 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", book
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
   const { i18n: uiI18n } = useTranslation();
+  const { data: session } = useSession();
+  const userRole = (session?.user as any)?.role || "STUDENT"; // Fallback a STUDENT si no hay sesión
 
   // Estados para Traducción
   const [translatedLanguage, setTranslatedLanguage] = useState<string | null>(null);
@@ -1164,15 +1167,17 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", book
       <GamesModal isOpen={showGames} onClose={() => setShowGames(false)} bookTitle={bookTitle} />
       
       {/* AI Tutor Widget */}
-      <div className="absolute bottom-6 left-6 z-[60]">
-        <AiTutorWidget 
-            ref={aiTutorRef}
-            bookTitle={bookTitle} 
-            currentPageNumber={currentPage + 1}
-            currentPageText={currentTextContent}
-            isDarkMode={isDarkMode}
-        />
-      </div>
+      {session?.user?.role !== "STUDENT" && (
+        <div className="absolute bottom-6 left-6 z-[60]">
+            <AiTutorWidget 
+                ref={aiTutorRef}
+                bookTitle={bookTitle} 
+                currentPageNumber={currentPage + 1}
+                currentPageText={currentTextContent}
+                isDarkMode={isDarkMode}
+            />
+        </div>
+      )}
     </div>
   );
 }

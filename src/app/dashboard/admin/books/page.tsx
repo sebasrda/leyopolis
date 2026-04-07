@@ -38,6 +38,7 @@ export default function AdminBooksPage() {
   const [bookAgeRange, setBookAgeRange] = useState("9-12");
   const [bookGrade, setBookGrade] = useState("");
   const [bookSubject, setBookSubject] = useState("");
+  const [quizJson, setQuizJson] = useState("");
   const [uploadProgress, setUploadProgress] = useState(0);
 
   useEffect(() => { fetchBooks(); }, []);
@@ -69,6 +70,7 @@ export default function AdminBooksPage() {
     formData.append("ageRange", bookAgeRange);
     if (bookGrade) formData.append("grade", bookGrade);
     if (bookSubject) formData.append("subject", bookSubject);
+    if (quizJson) formData.append("quizJson", quizJson);
 
     try {
       const res = await fetch("/api/upload", { method: "POST", body: formData });
@@ -103,6 +105,7 @@ export default function AdminBooksPage() {
     setBookAgeRange("9-12");
     setBookGrade("");
     setBookSubject("");
+    setQuizJson("");
   };
 
   const handleDelete = async (id: string) => {
@@ -226,6 +229,17 @@ export default function AdminBooksPage() {
                     <span className="text-xs text-center text-gray-500">{selectedCover ? "Cambiar" : "Seleccionar"}</span>
                   </div>
                 </div>
+              </div>
+
+              <div className="space-y-1 mt-2">
+                <Label>Añadir Quiz (Opcional - JSON)</Label>
+                <div className="text-xs text-gray-500 mb-1">Si dejas esto en blanco, el sistema podrá generar uno dinámicamente luego. Si ya tienes un formato válido de JSON, pégalo aquí.</div>
+                <textarea 
+                  className="w-full text-xs font-mono p-2 border rounded-md h-20" 
+                  placeholder={`{\n  "questions": [\n    { "id": 1, "question": "...", "options": ["A", "B", "C"], "correctAnswer": 0 }\n  ]\n}`}
+                  value={quizJson}
+                  onChange={e => setQuizJson(e.target.value)}
+                />
               </div>
               
               <Button onClick={handleUpload} disabled={!selectedPdf || (uploadProgress > 0 && uploadProgress < 100)} className="w-full mt-1">

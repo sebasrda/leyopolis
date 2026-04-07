@@ -25,11 +25,11 @@ export async function GET() {
 
   const sessionRole = session?.user?.role;
   const role =
-    sessionRole === "ADMIN" || sessionRole === "TEACHER" || sessionRole === "STUDENT"
+    sessionRole === "SUPERADMIN" || sessionRole === "ADMIN" || sessionRole === "TEACHER" || sessionRole === "STUDENT"
       ? sessionRole
       : (await prisma.user.findUnique({ where: { id: userId }, select: { role: true } }))?.role;
 
-  if (role !== "ADMIN") {
+  if (role !== "ADMIN" && role !== "SUPERADMIN") {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 

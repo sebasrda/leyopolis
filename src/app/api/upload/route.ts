@@ -132,7 +132,7 @@ export async function POST(req: Request) {
     }
     
     // Create DB entry
-    const book = await prisma.book.create({
+    const book = await (prisma as any).book.create({
       data: {
         title: title || file.name.replace(".pdf", ""),
         author,

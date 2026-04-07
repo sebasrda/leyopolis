@@ -25,7 +25,7 @@ export async function POST(req: Request) {
   const extractedText = typeof body.text === "string" ? body.text : "";
   if (!bookId) return NextResponse.json({ message: "bookId required" }, { status: 400 });
 
-  const book = await prisma.book.findUnique({ where: { id: bookId }, select: { id: true, title: true, author: true } });
+  const book = await (prisma as any).book.findUnique({ where: { id: bookId }, select: { id: true, title: true, author: true } });
   if (!book) return NextResponse.json({ message: "Book not found" }, { status: 404 });
 
   let games = fallbackGames(book.title);

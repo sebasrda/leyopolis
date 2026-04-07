@@ -23,7 +23,7 @@ export async function GET(request: Request) {
       where.isDemo = false;
     }
 
-    const books = await prisma.book.findMany({
+    const books = await (prisma as any).book.findMany({
       where,
       include: {
         _count: {

@@ -7,7 +7,7 @@ import { authOptions } from "@/lib/auth";
 export async function GET(req: Request, { params }: { params: Promise<{ bookId: string }> }) {
   const { bookId } = await params;
   try {
-    const book = await prisma.book.findUnique({
+    const book = await (prisma as any).book.findUnique({
       where: {
         id: bookId
       },
@@ -47,7 +47,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ bookI
 
   try {
     // Check if book exists
-    const book = await prisma.book.findUnique({
+    const book = await (prisma as any).book.findUnique({
       where: { id: bookId }
     });
 
@@ -61,7 +61,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ bookI
     // Ideally we should delete physical files too if we stored them locally, 
     // but since we might use external URLs or blob storage, we just delete the DB record.
     
-    await prisma.book.delete({
+    await (prisma as any).book.delete({
       where: { id: bookId }
     });
 

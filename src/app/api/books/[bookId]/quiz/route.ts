@@ -9,7 +9,7 @@ export async function GET(
   const { bookId } = await params;
 
   try {
-    const book = await prisma.book.findUnique({
+    const book = await (prisma as any).book.findUnique({
       where: { id: bookId },
       select: { quizId: true, title: true, allowMultipleAttempts: true, passScore: true },
     });
@@ -58,7 +58,7 @@ export async function POST(
     const body = await req.json();
     const { questions, title, description } = body;
 
-    const book = await prisma.book.findUnique({
+    const book = await (prisma as any).book.findUnique({
       where: { id: bookId },
       select: { id: true, title: true, quizId: true },
     });
@@ -82,7 +82,7 @@ export async function POST(
     });
 
     // Link the quiz to the book
-    await prisma.book.update({
+    await (prisma as any).book.update({
       where: { id: bookId },
       data: { quizId: quiz.id },
     });

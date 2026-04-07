@@ -11,7 +11,7 @@ export async function GET(
   try {
     const book = await prisma.book.findUnique({
       where: { id: bookId },
-      select: { quizId: true, title: true },
+      select: { quizId: true, title: true, allowMultipleAttempts: true, passScore: true },
     });
 
     if (!book) {
@@ -34,7 +34,11 @@ export async function GET(
       },
     });
 
-    return NextResponse.json({ quiz });
+    return NextResponse.json({ 
+      quiz, 
+      allowMultipleAttempts: book.allowMultipleAttempts,
+      passScore: book.passScore 
+    });
   } catch (error) {
     console.error("Error fetching book quiz:", error);
     return NextResponse.json({ message: "Error al obtener quiz" }, { status: 500 });

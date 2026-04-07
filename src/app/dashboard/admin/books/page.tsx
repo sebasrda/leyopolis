@@ -1,9 +1,8 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
 import { 
-  Library, Trash2, Plus, Search, FileText, Loader2, AlertCircle, CheckCircle2, Sparkles
+  Library, Trash2, Plus, Search, FileText, Loader2, AlertCircle, CheckCircle2, Sparkles, Image as ImageIcon
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,7 +18,7 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Image as ImageIcon } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 
 export default function AdminBooksPage() {
   const [books, setBooks] = useState<any[]>([]);
@@ -81,17 +80,32 @@ export default function AdminBooksPage() {
           setUploadProgress(0);
           resetForm();
           fetchBooks();
-          setSuccess("Libro subido exitosamente");
+          setSuccess("Libro subido exitosamente con actividades IA");
         }, 500);
       } else {
-        const ct = res.headers.get("content-type") || "";
-        const err = ct.includes("json") ? await res.json().catch(() => null) : null;
+        const err = await res.json().catch(() => null);
         setError(err?.message || "Error al subir el libro");
         setUploadProgress(0);
       }
     } catch (err) {
       setError("Error de conexión");
       setUploadProgress(0);
+    }
+  };
+
+  const toggleMultipleAttempts = async (bookId: string, currentState: boolean) => {
+    try {
+      const res = await fetch(`/api/books/${bookId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ allowMultipleAttempts: !currentState })
+      });
+      if (res.ok) {
+        setBooks(books.map(b => b.id === bookId ? { ...b, allowMultipleAttempts: !currentState } : b));
+        setSuccess("Preferencia de intentos actualizada");
+      }
+    } catch (err) {
+      setError("Error al actualizar preferencia");
     }
   };
 
@@ -143,8 +157,8 @@ export default function AdminBooksPage() {
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Gestión de Libros</h1>
-          <p className="text-gray-500">Sube, edita y administra la biblioteca digital.</p>
+          <h1 className="text-3xl font-bold text-gray-900">Gestión de Biblioteca</h1>
+          <p className="text-gray-500">Administra libros, exámenes y juegos interactivos.</p>
         </div>
         
         <Dialog open={uploadOpen} onOpenChange={setUploadOpen}>
@@ -154,7 +168,7 @@ export default function AdminBooksPage() {
           <DialogContent className="sm:max-w-[520px]">
             <DialogHeader>
               <DialogTitle>Subir Nuevo Libro</DialogTitle>
-              <DialogDescription>Sube el archivo PDF con la información del libro.</DialogDescription>
+              <DialogDescription>Completa los datos. Si no subes un quiz, la IA generará uno automático.</DialogDescription>
             </DialogHeader>
             <div className="grid gap-3 py-2">
               <div className="grid grid-cols-2 gap-3">
@@ -175,8 +189,6 @@ export default function AdminBooksPage() {
                     <option value="Infantil">Infantil</option>
                     <option value="Literatura">Literatura</option>
                     <option value="Académico">Académico</option>
-                    <option value="Ciencia">Ciencia</option>
-                    <option value="Historia">Historia</option>
                     <option value="General">General</option>
                   </select>
                 </div>
@@ -194,7 +206,6 @@ export default function AdminBooksPage() {
                     <option value="3-5">3-5</option>
                     <option value="6-8">6-8</option>
                     <option value="9-12">9-12</option>
-                    <option value="13-15">13-15</option>
                     <option value="16+">16+</option>
                   </select>
                 </div>
@@ -212,106 +223,107 @@ export default function AdminBooksPage() {
               </div>
               
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
+                <div className="space-y-1 text-center">
                   <Label>Archivo PDF *</Label>
-                  <div className="border-2 border-dashed border-gray-200 rounded-lg p-3 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 relative">
+                  <div className="border-2 border-dashed border-gray-200 rounded-lg p-3 cursor-pointer hover:bg-gray-50 relative">
                     <Input type="file" accept=".pdf" className="absolute inset-0 opacity-0 cursor-pointer" onChange={e => setSelectedPdf(e.target.files?.[0] || null)} />
-                    <FileText className="h-6 w-6 text-gray-400 mb-1" />
-                    <span className="text-xs text-center text-gray-500">{selectedPdf ? selectedPdf.name : "Seleccionar PDF"}</span>
+                    <FileText className="h-6 w-6 text-gray-400 mx-auto" />
+                    <span className="text-xs">{selectedPdf ? selectedPdf.name : "Subir PDF"}</span>
                   </div>
                 </div>
-                <div className="space-y-1">
+                <div className="space-y-1 text-center">
                   <Label>Portada</Label>
-                  <div className="border-2 border-dashed border-gray-200 rounded-lg p-3 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 relative">
+                  <div className="border-2 border-dashed border-gray-200 rounded-lg p-3 cursor-pointer hover:bg-gray-50 relative">
                     <Input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" onChange={e => setSelectedCover(e.target.files?.[0] || null)} />
-                    <ImageIcon className="h-6 w-6 text-gray-400 mb-1" />
-                    <span className="text-xs text-center text-gray-500">{selectedCover ? "Cambiar" : "Seleccionar"}</span>
+                    <ImageIcon className="h-6 w-6 text-gray-400 mx-auto" />
+                    <span className="text-xs">{selectedCover ? "Cambiar" : "Subir Imagen"}</span>
                   </div>
                 </div>
               </div>
 
               <div className="space-y-1 mt-2">
-                <Label>Añadir Quiz (Opcional)</Label>
-                <div className="text-xs text-gray-500 mb-1">
-                  Sube el archivo del cuestionario (PDF, Word o JSON). La IA detectará las preguntas.
-                </div>
-                <div className="border-2 border-dashed border-gray-200 rounded-lg p-3 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 relative h-16">
-                  <Input 
-                    type="file" 
-                    accept=".pdf,.docx,application/msword,.json" 
-                    className="absolute inset-0 opacity-0 cursor-pointer" 
-                    onChange={e => setQuizFile(e.target.files?.[0] || null)} 
-                  />
-                  <FileText className="h-4 w-4 text-gray-400 mb-1" />
-                  <span className="text-xs text-center text-gray-500">
-                    {quizFile ? quizFile.name : "Seleccionar Quiz"}
-                  </span>
+                <Label>Añadir Quiz Manual (Opcional)</Label>
+                <div className="border-2 border-dashed border-gray-200 rounded-lg p-3 relative h-14 flex items-center justify-center">
+                  <Input type="file" accept=".pdf,.docx,.json" className="absolute inset-0 opacity-0 cursor-pointer" onChange={e => setQuizFile(e.target.files?.[0] || null)} />
+                  <span className="text-xs text-gray-500">{quizFile ? quizFile.name : "Subir PDF/Word de examen"}</span>
                 </div>
               </div>
               
-              <Button onClick={handleUpload} disabled={!selectedPdf || (uploadProgress > 0 && uploadProgress < 100)} className="w-full mt-1">
-                {uploadProgress > 0 ? `Subiendo ${uploadProgress}%...` : "Subir Libro"}
+              <Button onClick={handleUpload} disabled={!selectedPdf || (uploadProgress > 0 && uploadProgress < 100)} className="w-full mt-2 bg-indigo-600">
+                {uploadProgress > 0 ? `Procesando... ${uploadProgress}%` : "Subir y Generar Actividades"}
               </Button>
             </div>
           </DialogContent>
         </Dialog>
       </div>
 
-      <div className="flex items-center gap-2 max-w-sm">
-        <Search className="h-4 w-4 text-gray-400" />
-        <Input placeholder="Buscar libros..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+      <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm">
+        <div className="flex items-center gap-2 max-w-sm w-full">
+          <Search className="h-4 w-4 text-gray-400" />
+          <Input placeholder="Buscar por título o autor..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+        </div>
+        <div className="flex items-center gap-4">
+           <Badge variant="outline" className="bg-indigo-50 text-indigo-700">Total: {filteredBooks.length}</Badge>
+        </div>
       </div>
 
-      <Card>
+      <Card className="overflow-hidden border-none shadow-lg">
         <Table>
-          <TableHeader>
+          <TableHeader className="bg-gray-50">
             <TableRow>
-              <TableHead>Portada</TableHead>
-              <TableHead>Título</TableHead>
-              <TableHead>Autor</TableHead>
-              <TableHead>Grado</TableHead>
-              <TableHead>Materia</TableHead>
-              <TableHead>Quiz</TableHead>
-              <TableHead>Categoría</TableHead>
+              <TableHead className="w-20">Portada</TableHead>
+              <TableHead>Libro</TableHead>
+              <TableHead>Grado/Materia</TableHead>
+              <TableHead>IA Activa</TableHead>
+              <TableHead>Reintentos</TableHead>
               <TableHead>Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8">
-                  <Loader2 className="h-5 w-5 animate-spin inline mr-2" />Cargando libros...
+                <TableCell colSpan={6} className="text-center py-20">
+                  <Loader2 className="h-10 w-10 animate-spin text-indigo-600 mx-auto mb-4" />
+                  <p className="text-gray-500">Cargando biblioteca...</p>
                 </TableCell>
               </TableRow>
             ) : filteredBooks.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8 text-gray-500">No se encontraron libros</TableCell>
+                <TableCell colSpan={6} className="text-center py-20 text-gray-400">No se encontraron libros en el catálogo.</TableCell>
               </TableRow>
             ) : (
               filteredBooks.map(book => (
-                <TableRow key={book.id}>
+                <TableRow key={book.id} className="hover:bg-gray-50/50 transition-colors">
                   <TableCell>
-                    <img src={book.coverImage || `https://placehold.co/80x120?text=PDF`} alt={book.title} className="h-12 w-8 object-cover rounded shadow-sm" />
-                  </TableCell>
-                  <TableCell className="font-medium">{book.title}</TableCell>
-                  <TableCell className="text-gray-500">{book.author}</TableCell>
-                  <TableCell>
-                    {book.grade ? <Badge variant="secondary" className="text-xs">{book.grade}</Badge> : <span className="text-gray-400">—</span>}
+                    <img src={book.coverImage || `https://placehold.co/80x120?text=PDF`} alt={book.title} className="h-16 w-12 object-cover rounded-md shadow-md border" />
                   </TableCell>
                   <TableCell>
-                    {book.subject ? <Badge variant="outline" className="text-xs">{book.subject}</Badge> : <span className="text-gray-400">—</span>}
+                    <div className="font-bold text-gray-900">{book.title}</div>
+                    <div className="text-xs text-gray-500">{book.author} • {book.category}</div>
                   </TableCell>
                   <TableCell>
-                    {book.quizId ? (
-                      <Badge className="bg-green-100 text-green-700"><Sparkles className="h-3 w-3 mr-1" /> Sí</Badge>
-                    ) : (
-                      <span className="text-gray-400 text-xs">No</span>
-                    )}
+                    <div className="flex flex-col gap-1">
+                      <Badge variant="secondary" className="w-fit text-[10px]">{book.grade || "No asig."}</Badge>
+                      <Badge variant="outline" className="w-fit text-[10px]">{book.subject || "General"}</Badge>
+                    </div>
                   </TableCell>
-                  <TableCell><Badge variant="outline">{book.category}</Badge></TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => handleDelete(book.id)}>
-                      <Trash2 className="h-4 w-4" />
+                    <Badge className={book.quizId ? "bg-green-500/10 text-green-600 border-green-200" : "bg-gray-100 text-gray-400"}>
+                      <Sparkles className="h-3 w-3 mr-1" /> {book.quizId ? "Activo" : "No"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                       <Switch 
+                         checked={book.allowMultipleAttempts} 
+                         onCheckedChange={() => toggleMultipleAttempts(book.id, book.allowMultipleAttempts)} 
+                       />
+                       <span className="text-[10px] uppercase font-bold text-gray-400">{book.allowMultipleAttempts ? "Sí" : "No"}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Button variant="ghost" size="icon" className="text-red-400 hover:text-red-700 hover:bg-red-50 rounded-full" onClick={() => handleDelete(book.id)}>
+                      <Trash2 className="h-5 w-5" />
                     </Button>
                   </TableCell>
                 </TableRow>

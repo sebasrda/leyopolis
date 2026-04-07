@@ -14,8 +14,12 @@ export async function GET(request: Request) {
     if (grade) where.grade = grade;
     if (subject) where.subject = subject;
 
-    // In production, filter out demo books unless demo mode is on
-    if (!isDemoMode()) {
+    const session = await getServerSession(authOptions);
+    const userRole = (session?.user as any)?.role;
+    const isSuperAdmin = userRole === "SUPERADMIN";
+
+    // In production, filter out demo books unless demo mode is on OR user is SuperAdmin
+    if (!isDemoMode() && !isSuperAdmin) {
       where.isDemo = false;
     }
 
@@ -44,13 +48,16 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
-  if (!session?.user || (session.user as any).role !== "ADMIN") {
+  const userRole = (session?.user as any)?.role;
+  const isAuthorized = userRole === "ADMIN" || userRole === "SUPERADMIN";
+
+  if (!session?.user || !isAuthorized) {
     return NextResponse.json({ message: "No autorizado" }, { status: 401 });
   }
 
   try {
     const body = await request.json();
-    const book = await prisma.book.create({
+    const book = await (prisma.book as any).create({
       data: {
         title: body.title,
         author: body.author,

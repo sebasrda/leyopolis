@@ -15,7 +15,8 @@ import {
   Lightbulb,
   GraduationCap,
   Grid3X3,
-  PenTool
+  PenTool,
+  Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -37,19 +38,17 @@ interface GamesModalProps {
   bookId?: string;
 }
 
-type GameType = "quiz" | "memory" | "wordsearch" | "wordmatch" | "crossword" | "evaluation" | "scramble" | null;
+type GameType = "quiz" | "memory" | "wordsearch" | "wordmatch" | "crossword" | "scramble" | null;
 
 export default function GamesModal({ isOpen, onClose, bookTitle, bookId }: GamesModalProps) {
   const [activeGame, setActiveGame] = useState<GameType>(null);
   const [quizData, setQuizData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
-  // Reset active game when modal opens/closes
   useEffect(() => {
     if (!isOpen) {
       setActiveGame(null);
     } else if (bookId) {
-      // Fetch quiz data for the games
       const fetchQuiz = async () => {
         setLoading(true);
         try {
@@ -72,9 +71,8 @@ export default function GamesModal({ isOpen, onClose, bookTitle, bookId }: Games
 
   return (
     <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-300">
-      <div className="w-full max-w-5xl h-[90vh] bg-white rounded-3xl overflow-hidden shadow-2xl flex flex-col relative">
+      <div className="w-full max-w-5xl h-[90vh] bg-white dark:bg-gray-900 rounded-3xl overflow-hidden shadow-2xl flex flex-col relative">
         
-        {/* Header */}
         <div className="h-20 bg-gradient-to-r from-indigo-600 to-purple-600 flex items-center justify-between px-8 text-white shrink-0">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-white/20 rounded-xl backdrop-blur-md">
@@ -82,65 +80,66 @@ export default function GamesModal({ isOpen, onClose, bookTitle, bookId }: Games
             </div>
             <div>
               <h2 className="text-xl font-bold">Zona Interactiva: {bookTitle}</h2>
-              <p className="text-indigo-100 text-sm">Aprende, juega y evalúate</p>
+              <p className="text-indigo-100 text-sm">Contenido dinámico basado en tu lectura</p>
             </div>
           </div>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={onClose} 
-            className="hover:bg-white/20 text-white rounded-full h-10 w-10"
-          >
+          <Button variant="ghost" size="icon" onClick={onClose} className="hover:bg-white/20 text-white rounded-full h-10 w-10">
             <X className="h-6 w-6" />
           </Button>
         </div>
 
-        {/* Content Area */}
-        <div className="flex-1 overflow-hidden bg-indigo-50/30">
+        <div className="flex-1 overflow-hidden bg-indigo-50/10">
           {!activeGame ? (
             <GameMenu onSelectGame={setActiveGame} />
           ) : (
             <div className="h-full flex flex-col">
-              <div className="p-4 border-b bg-white flex items-center gap-4 shrink-0">
-                <Button variant="ghost" onClick={() => setActiveGame(null)}>
-                  ← Volver al Menú
-                </Button>
+              <div className="p-4 border-b bg-white dark:bg-gray-800 flex items-center gap-4 shrink-0">
+                <Button variant="ghost" onClick={() => setActiveGame(null)}>← Menú</Button>
                 <div className="h-6 w-px bg-gray-200" />
-                <h3 className="font-bold text-lg text-indigo-900">
-                  {activeGame === 'quiz' && 'Desafío de Preguntas'}
-                  {activeGame === 'memory' && 'Memoria Literaria'}
-                  {activeGame === 'wordsearch' && 'Sopa de Letras'}
-                  {activeGame === 'wordmatch' && 'Conecta Palabras'}
+                <h3 className="font-bold text-lg text-indigo-900 dark:text-indigo-300">
+                  {activeGame === 'quiz' && 'Reto de Preguntas'}
+                  {activeGame === 'memory' && 'Parejas de Personajes'}
+                  {activeGame === 'wordsearch' && 'Busca las Palabras'}
                   {activeGame === 'scramble' && 'Ordena la Frase'}
-                  {activeGame === 'crossword' && 'Crucigrama'}
-                  {activeGame === 'evaluation' && 'Evaluación Final'}
+                  {activeGame === 'wordmatch' && 'Relacionar Conceptos'}
                 </h3>
               </div>
-              <div className="flex-1 overflow-y-auto p-6 flex justify-center">
-                {activeGame === 'quiz' && (
-                  <QuizGame 
-                    questions={quizData?.questions || [
-                      {id: 1, question: "¿Listo para comenzar?", options: ["Sí", "Claro"], correctAnswer: 0}
-                    ]} 
-                    onComplete={() => {}} 
-                    onExit={() => setActiveGame(null)} 
-                  />
-                )}
-                {activeGame === 'memory' && <MemoryGame pairs={quizData?.memoryPairs || [
-                    {character: bookTitle, description: "Libro principal"},
-                    {character: "Autor", description: "Creador de la obra"}
-                ]} onComplete={() => {}} />}
-                {activeGame === 'wordsearch' && <WordSearchGame words={quizData?.keywords || ["LECTURA", "LIBRO", "APRENDER", "LEYOPOLIS"]} onComplete={() => {}} />}
-                {activeGame === 'wordmatch' && <WordMatchGame />}
-                {activeGame === 'crossword' && <CrosswordGame />}
-                {activeGame === 'scramble' && (
-                    <WordScrambleGame 
-                        sentences={quizData?.sentences || [
-                            { id: 1, sentence: "La lectura es un viaje" }
-                        ]}
+              <div className="flex-1 overflow-y-auto p-6 flex justify-center items-center">
+                {quizData ? (
+                  <>
+                    {activeGame === 'quiz' && (
+                      <QuizGame 
+                        questions={quizData.questions || []} 
+                        onComplete={() => {}} 
+                        onExit={() => setActiveGame(null)} 
+                      />
+                    )}
+                    {activeGame === 'memory' && (
+                      <MemoryGame 
+                        pairs={quizData.memoryPairs || []} 
+                        onComplete={() => {}} 
+                      />
+                    )}
+                    {activeGame === 'wordsearch' && (
+                      <WordSearchGame 
+                        words={quizData.keywords || ["LEYOPOLIS", "LECTURA"]} 
+                        onComplete={() => {}} 
+                      />
+                    )}
+                    {activeGame === 'scramble' && (
+                      <WordScrambleGame 
+                        sentences={quizData.sentences || []}
                         onComplete={() => {}}
                         onExit={() => setActiveGame(null)}
-                    />
+                      />
+                    )}
+                    {activeGame === 'wordmatch' && <WordMatchGame />}
+                  </>
+                ) : (
+                  <div className="text-center">
+                    <Loader2 className="h-10 w-10 animate-spin text-indigo-600 mx-auto mb-4" />
+                    <p>Cargando actividades personalizadas...</p>
+                  </div>
                 )}
               </div>
             </div>
@@ -153,60 +152,16 @@ export default function GamesModal({ isOpen, onClose, bookTitle, bookId }: Games
 
 function GameMenu({ onSelectGame }: { onSelectGame: (g: GameType) => void }) {
   const games = [
-    {
-      id: "quiz",
-      title: "Desafío de Preguntas",
-      description: "Pon a prueba tu comprensión lectora con este quiz interactivo.",
-      icon: BrainCircuit,
-      color: "bg-blue-500",
-      gradient: "from-blue-500 to-cyan-400"
-    },
-    {
-      id: "memory",
-      title: "Memoria Literaria",
-      description: "Encuentra las parejas de personajes y conceptos del libro.",
-      icon: Puzzle,
-      color: "bg-purple-500",
-      gradient: "from-purple-500 to-pink-400"
-    },
-    {
-      id: "wordsearch",
-      title: "Sopa de Letras",
-      description: "Busca y encuentra las palabras ocultas en la cuadrícula.",
-      icon: Grid3X3,
-      color: "bg-red-500",
-      gradient: "from-red-500 to-orange-400"
-    },
-    {
-      id: "wordmatch",
-      title: "Conecta Palabras",
-      description: "Une las palabras clave con sus definiciones correctas.",
-      icon: Lightbulb,
-      color: "bg-orange-500",
-      gradient: "from-orange-500 to-yellow-400"
-    },
-    {
-      id: "scramble",
-      title: "Ordena la Frase",
-      description: "Reconstruye frases célebres del libro en el orden correcto.",
-      icon: PenTool,
-      color: "bg-teal-500",
-      gradient: "from-teal-500 to-green-400"
-    },
-    {
-      id: "crossword",
-      title: "Crucigrama",
-      description: "Completa el crucigrama con pistas del libro.",
-      icon: PenTool,
-      color: "bg-cyan-500",
-      gradient: "from-cyan-500 to-blue-400"
-    }
+    { id: "quiz", title: "Preguntas", description: "Pon a prueba lo que leíste.", icon: BrainCircuit, color: "bg-blue-500", gradient: "from-blue-500 to-cyan-400" },
+    { id: "memory", title: "Memoria", description: "Encuentra los personajes.", icon: Puzzle, color: "bg-purple-500", gradient: "from-purple-500 to-pink-400" },
+    { id: "wordsearch", title: "Sopa de Letras", description: "Busca palabras clave.", icon: Grid3X3, color: "bg-red-500", gradient: "from-red-500 to-orange-400" },
+    { id: "scramble", title: "Ordenar", description: "Ordena frases del libro.", icon: PenTool, color: "bg-teal-500", gradient: "from-teal-500 to-green-400" },
   ];
 
   return (
     <div className="h-full flex flex-col items-center justify-center p-8 overflow-y-auto">
-      <h3 className="text-3xl font-bold text-gray-800 mb-12 text-center">¡Elige tu Actividad!</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 w-full max-w-7xl px-4">
+      <h3 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-12 text-center">Zona de Juegos Literarios</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 w-full max-w-5xl">
         {games.map((game) => (
           <motion.div
             key={game.id}
@@ -215,15 +170,15 @@ function GameMenu({ onSelectGame }: { onSelectGame: (g: GameType) => void }) {
             className="cursor-pointer"
             onClick={() => onSelectGame(game.id as GameType)}
           >
-            <Card className="h-full overflow-hidden border-none shadow-xl hover:shadow-2xl transition-all duration-300 flex flex-col">
+            <Card className="h-full overflow-hidden border-none shadow-xl flex flex-col">
               <div className={`h-32 bg-gradient-to-br ${game.gradient} flex items-center justify-center`}>
-                <game.icon className="h-16 w-16 text-white opacity-90 drop-shadow-md" />
+                <game.icon className="h-16 w-16 text-white opacity-90" />
               </div>
               <CardContent className="p-6 text-center flex-1 flex flex-col">
-                <h4 className="text-xl font-bold text-gray-900 mb-2">{game.title}</h4>
+                <h4 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">{game.title}</h4>
                 <p className="text-sm text-gray-500 flex-1">{game.description}</p>
                 <Button className={`mt-6 w-full ${game.color} hover:opacity-90 text-white font-bold rounded-full`}>
-                  {game.id === 'evaluation' ? 'Iniciar Examen' : 'Jugar Ahora'}
+                  Jugar
                 </Button>
               </CardContent>
             </Card>

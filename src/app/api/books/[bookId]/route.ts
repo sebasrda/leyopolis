@@ -35,9 +35,11 @@ export async function GET(req: Request, { params }: { params: Promise<{ bookId: 
 
 export async function DELETE(req: Request, { params }: { params: Promise<{ bookId: string }> }) {
   const session = await getServerSession(authOptions);
+  const userRole = (session?.user as any)?.role;
+  const isAuthorized = userRole === "ADMIN" || userRole === "TEACHER" || userRole === "SUPERADMIN";
   
-  // Check if user is authorized (Admin or Teacher)
-  if (!session || (session.user.role !== "ADMIN" && session.user.role !== "TEACHER")) {
+  // Check if user is authorized
+  if (!session || !isAuthorized) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
@@ -70,5 +72,32 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ bookI
       { message: "Error deleting book" },
       { status: 500 }
     );
+  }
+}
+export async function PATCH(req: Request, { params }: { params: Promise<{ bookId: string }> }) {
+  const session = await getServerSession(authOptions);
+  const userRole = (session?.user as any)?.role;
+  const isAuthorized = userRole === "ADMIN" || userRole === "SUPERADMIN";
+  
+  if (!session || !isAuthorized) {
+    return NextResponse.json({ message: "No autorizado" }, { status: 401 });
+  }
+
+  const { bookId } = await params;
+  const body = await req.json();
+
+  try {
+    const book = await (prisma as any).book.update({
+      where: { id: bookId },
+      data: {
+        allowMultipleAttempts: body.allowMultipleAttempts !== undefined ? body.allowMultipleAttempts : undefined,
+        passScore: body.passScore !== undefined ? body.passScore : undefined,
+      }
+    });
+
+    return NextResponse.json({ message: "Libro actualizado", book });
+  } catch (error) {
+    console.error("Error updating book:", error);
+    return NextResponse.json({ message: "Error al actualizar libro" }, { status: 500 });
   }
 }

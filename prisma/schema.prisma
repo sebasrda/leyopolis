@@ -148,6 +148,8 @@ model Book {
   isDemo           Boolean                     @default(false)
   quizId           String?
   subject          String?
+  allowMultipleAttempts Boolean           @default(false)
+  passScore        Int                         @default(60)
   linkedActivities Activity[]
   assignments      Assignment[]
   gradeCollections BookCollectionByGradeBook[]
@@ -203,7 +205,7 @@ model UserBook {
   progress Int      @default(0)
   status   String   @default("IN_PROGRESS")
   lastRead DateTime @default(now())
-  book     Book     @relation(fields: [bookId], references: [id])
+  book     Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
   user     User     @relation(fields: [userId], references: [id])
 
   @@unique([userId, bookId])
@@ -253,7 +255,7 @@ model Assignment {
   description String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  book        Book     @relation(fields: [bookId], references: [id])
+  book        Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
   class       Class    @relation(fields: [classId], references: [id])
 }
 
@@ -289,7 +291,7 @@ model Vocabulary {
   mastered   Boolean  @default(false)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
-  book       Book?    @relation(fields: [bookId], references: [id])
+  book       Book?    @relation(fields: [bookId], references: [id], onDelete: Cascade)
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
@@ -320,7 +322,7 @@ model Club {
   bookId      String?
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
-  book        Book?        @relation(fields: [bookId], references: [id])
+  book        Book?        @relation(fields: [bookId], references: [id], onDelete: Cascade)
   members     ClubMember[]
   posts       Post[]
 }

@@ -17,226 +17,155 @@ export async function POST(req: Request) {
   const userRole = (session?.user as any)?.role;
   await log(`Usuario: ${session?.user?.email}, Rol: ${userRole}`);
   
-  const allowedRoles = ["ADMIN", "COORDINATOR", "SUPERADMIN"]; // Only admin and coordinator can upload books
+  const allowedRoles = ["ADMIN", "COORDINATOR", "SUPERADMIN"];
   
   if (!session?.user || !allowedRoles.includes(userRole)) {
-    console.error("Unauthorized upload attempt:", session?.user?.email, "Role:", userRole);
     return NextResponse.json({ message: "No autorizado para subir libros" }, { status: 401 });
   }
 
   try {
     const contentType = req.headers.get("content-type") || "";
-    await log(`ContentType: ${contentType}`);
-    if (contentType.includes("application/json")) {
-      const body = (await req.json()) as Record<string, unknown>;
-      const title = typeof body.title === "string" ? body.title : "";
-      const author = typeof body.author === "string" ? body.author : "Autor Desconocido";
-      const category = typeof body.category === "string" ? body.category : "General";
-      const difficulty = typeof body.difficulty === "string" ? body.difficulty : "Intermedio";
-      const ageRange = typeof body.ageRange === "string" ? body.ageRange : null;
-      const contentUrl = typeof body.contentUrl === "string" ? body.contentUrl : "";
-      const coverImage = typeof body.coverImage === "string" ? body.coverImage : null;
-
-      if (!contentUrl) {
-        return NextResponse.json({ message: "contentUrl requerido" }, { status: 400 });
-      }
-
-      const book = await (prisma as any).book.create({
-        data: {
-          title: title || "Libro",
-          author,
-          category,
-          difficulty,
-          ageRange,
-          language: "Español",
-          format: "PDF",
-          contentUrl,
-          coverImage: coverImage || "https://placehold.co/400x600?text=PDF",
-          description: "Libro subido por el administrador",
-        },
-      });
-
-      return NextResponse.json({ message: "Libro subido exitosamente", book });
-    }
-
-    const formData = await req.formData();
-    const file = formData.get("file") as File;
-    const cover = formData.get("cover") as File;
-    const title = formData.get("title") as string;
-    const author = formData.get("author") as string || "Autor Desconocido";
-    const category = formData.get("category") as string || "General";
-    const difficulty = formData.get("difficulty") as string || "Intermedio";
-    const ageRange = formData.get("ageRange") as string || null;
-    const grade = formData.get("grade") as string || null;
-    const subject = formData.get("subject") as string || null;
-    const quizFile = formData.get("quizFile") as File | null;
-
-    if (!file) {
-      return NextResponse.json(
-        { message: "No se ha proporcionado ningún archivo PDF" },
-        { status: 400 }
-      );
-    }
-
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const safeOriginalName = file.name.replaceAll(" ", "_");
-    const uniquePrefix = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-    const filename = `${uniquePrefix}-${safeOriginalName}`;
-
-    let contentUrl = "";
-    let coverUrl = "https://placehold.co/400x600?text=PDF";
-
-    const canUseBlob = !!process.env.BLOB_READ_WRITE_TOKEN;
-    const isVercel = !!process.env.VERCEL;
-
-    if (isVercel && canUseBlob) {
-      const mod = (await import("@vercel/blob").catch(() => null)) as any;
-      const put = mod?.put as undefined | ((name: string, data: Blob | Buffer, opts: { access: "public"; contentType?: string }) => Promise<{ url: string }>);
-      if (!put) {
-        return NextResponse.json(
-          { message: "Falta dependencia @vercel/blob en el deployment." },
-          { status: 500 }
-        );
-      }
-
-      const pdfRes = await put(`books/${filename}`, buffer, { access: "public", contentType: "application/pdf" });
-      contentUrl = pdfRes.url;
-
-      if (cover) {
-        const coverBuffer = Buffer.from(await cover.arrayBuffer());
-        const coverFilename = `${uniquePrefix}-cover-${cover.name.replaceAll(" ", "_")}`;
-        const coverRes = await put(`books/${coverFilename}`, coverBuffer, { access: "public" });
-        coverUrl = coverRes.url;
-      }
-    } else if (isVercel && !canUseBlob) {
-      return NextResponse.json(
-        {
-          message:
-            "En Vercel no se puede guardar archivos en /public. Configura storage persistente: crea Vercel Blob y define BLOB_READ_WRITE_TOKEN en Environment Variables.",
-        },
-        { status: 500 }
-      );
-    } else {
-      // Local dev: store under /public/books
-      const publicPath = path.join(process.cwd(), "public", "books", filename);
-      await writeFile(publicPath, buffer);
-      contentUrl = `/books/${filename}`;
-
-      if (cover) {
-        const coverBuffer = Buffer.from(await cover.arrayBuffer());
-        const coverFilename = `${uniquePrefix}-cover-${cover.name.replaceAll(" ", "_")}`;
-        const coverPath = path.join(process.cwd(), "public", "books", coverFilename);
-        await writeFile(coverPath, coverBuffer);
-        coverUrl = `/books/${coverFilename}`;
-      }
-    }
     
-    // Create DB entry
-    const book = await (prisma as any).book.create({
-      data: {
-        title: title || file.name.replace(".pdf", ""),
-        author,
-        category,
-        difficulty,
-        ageRange,
-        grade,
-        subject,
-        language: "Español", // Default
-        format: "PDF",
-        contentUrl,
-        coverImage: coverUrl,
-        description: "Libro subido por el administrador"
+    let book;
+    let title = "";
+    let author = "Autor Desconocido";
+    let category = "General";
+    let difficulty = "Intermedio";
+    let ageRange = null;
+    let grade = null;
+    let subject = null;
+    let quizFile: File | null = null;
+    let description = "Libro subido por el administrador";
+
+    if (contentType.includes("application/json")) {
+      const body = await req.json();
+      title = body.title || "Libro";
+      author = body.author || "Autor Desconocido";
+      category = body.category || "General";
+      difficulty = body.difficulty || "Intermedio";
+      ageRange = body.ageRange || null;
+      const contentUrl = body.contentUrl || "";
+      const coverImage = body.coverImage || "https://placehold.co/400x600?text=PDF";
+
+      book = await (prisma as any).book.create({
+        data: {
+          title, author, category, difficulty, ageRange,
+          language: "Español", format: "PDF", contentUrl,
+          coverImage, description
+        }
+      });
+    } else {
+      const formData = await req.formData();
+      const file = formData.get("file") as File;
+      const cover = formData.get("cover") as File;
+      title = formData.get("title") as string || file.name.replace(".pdf", "");
+      author = formData.get("author") as string || "Autor Desconocido";
+      category = formData.get("category") as string || "General";
+      difficulty = formData.get("difficulty") as string || "Intermedio";
+      ageRange = formData.get("ageRange") as string || null;
+      grade = formData.get("grade") as string || null;
+      subject = formData.get("subject") as string || null;
+      quizFile = formData.get("quizFile") as File | null;
+
+      if (!file) return NextResponse.json({ message: "Archivo PDF requerido" }, { status: 400 });
+
+      const buffer = Buffer.from(await file.arrayBuffer());
+      const uniqueName = `${Date.now()}-${file.name.replaceAll(" ", "_")}`;
+      
+      let contentUrl = "";
+      let coverUrl = "https://placehold.co/400x600?text=PDF";
+
+      if (process.env.VERCEL && process.env.BLOB_READ_WRITE_TOKEN) {
+        const { put } = await import("@vercel/blob");
+        const pdfRes = await put(`books/${uniqueName}`, buffer, { access: "public", contentType: "application/pdf" });
+        contentUrl = pdfRes.url;
+        if (cover) {
+          const coverRes = await put(`covers/${Date.now()}-${cover.name}`, Buffer.from(await cover.arrayBuffer()), { access: "public" });
+          coverUrl = coverRes.url;
+        }
+      } else {
+        const publicPath = path.join(process.cwd(), "public", "books", uniqueName);
+        await writeFile(publicPath, buffer);
+        contentUrl = `/books/${uniqueName}`;
+        if (cover) {
+          const coverName = `cover-${uniqueName}-${cover.name}`;
+          await writeFile(path.join(process.cwd(), "public", "books", coverName), Buffer.from(await cover.arrayBuffer()));
+          coverUrl = `/books/${coverName}`;
+        }
       }
-    });
 
-    // Manejar Quiz File
-    if (quizFile) {
-      try {
-        let finalJsonString = "";
+      book = await (prisma as any).book.create({
+        data: {
+          title, author, category, difficulty, ageRange, grade, subject,
+          language: "Español", format: "PDF", contentUrl,
+          coverImage: coverUrl, description
+        }
+      });
+    }
 
-        if (quizFile.name.endsWith(".json") || quizFile.type === "application/json") {
+    // AI Quiz & Games Generation
+    try {
+      let rawText = "";
+      let finalJsonString = "";
+
+      if (quizFile) {
+        if (quizFile.name.endsWith(".json")) {
           finalJsonString = await quizFile.text();
         } else {
-          // Extraer texto de PDF o Word
           const quizBuffer = Buffer.from(await quizFile.arrayBuffer());
-          let rawText = "";
-
           if (quizFile.name.endsWith(".pdf")) {
             const pdfParse = require("pdf-parse");
-            const data = await pdfParse(quizBuffer);
-            rawText = data.text;
-          } else if (quizFile.name.endsWith(".docx") || quizFile.type.includes("word")) {
+            rawText = (await pdfParse(quizBuffer)).text;
+          } else if (quizFile.name.endsWith(".docx")) {
             const mammoth = require("mammoth");
-            const data = await mammoth.extractRawText({ buffer: quizBuffer });
-            rawText = data.value;
+            rawText = (await mammoth.extractRawText({ buffer: quizBuffer })).value;
           }
-
-          if (rawText && rawText.trim() !== "") {
-            const { GoogleGenerativeAI } = require("@google/generative-ai");
-            const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
-            const model = genAI.getGenerativeModel({ 
-              model: "gemini-1.5-flash",
-              generationConfig: { responseMimeType: "application/json" }
-            });
-            const prompt = `Convierte este examen crudo en un JSON estricto con el esquema: {"questions": [{"id": 1, "question": "...", "options": ["A", "B", "C"], "correctAnswer": 0}]}. Si es pregunta abierta sin opciones, omite 'options' y 'correctAnswer' y pon 'answer': "Respuesta Sugerida". Solo devuelve el JSON válido. Texto del examen: ${rawText}`;
-            const result = await model.generateContent(prompt);
-            let aiText = result.response.text();
-            
-            // Clean markdown if present
-            if (aiText.includes("```")) {
-              aiText = aiText.replace(/```json/g, "").replace(/```/g, "").trim();
-            }
-            finalJsonString = aiText;
-          }
-        }
-
-        if (finalJsonString) {
-          let parsedQuiz;
-          try {
-            parsedQuiz = JSON.parse(finalJsonString);
-          } catch (e) {
-            console.error("AI returned invalid JSON:", finalJsonString);
-            // Attempt one more cleanup
-            const match = finalJsonString.match(/\{[\s\S]*\}/);
-            if (match) parsedQuiz = JSON.parse(match[0]);
-          }
-
-          if (parsedQuiz) {
-            const quiz = await (prisma as any).activity.create({
-            data: {
-              title: `Quiz: ${book.title}`,
-              description: `Quiz de comprensión para "${book.title}" generado desde ${quizFile.name}`,
-              type: "QUIZ",
-              content: JSON.stringify(parsedQuiz),
-              points: 100,
-              published: true,
-              createdById: session.user.id,
-              bookId: book.id,
-            },
-          });
-          
-          await (prisma as any).book.update({
-            where: { id: book.id },
-            data: { quizId: quiz.id }
-          });
         }
       }
-    } catch (err) {
-      console.error("Failed to parse or save quiz file during upload", err);
-    }
-  }
 
-    return NextResponse.json({ 
-      message: "Libro subido exitosamente", 
-      book 
-    });
-    
+      if (!finalJsonString) {
+        const { GoogleGenerativeAI } = require("@google/generative-ai");
+        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+        const aiModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash", generationConfig: { responseMimeType: "application/json" } });
+        
+        const prompt = `Genera un JSON educativo para el libro "${title}". 
+        Contexto opcional: ${rawText || description}.
+        Esquema:
+        {
+          "questions": [{"id": 1, "question": "...", "options": ["A", "B", "C"], "correctAnswer": 0}],
+          "keywords": ["PALABRA1", "PALABRA2", "PALABRA3"], 
+          "memoryPairs": [{"character": "Nombre", "description": "Relación/Rol"}],
+          "sentences": [{"id": 1, "sentence": "Frase importante para ordenar"}]
+        }
+        Genera 10 preguntas, 10 palabras clave, 6 parejas de memoria y 5 frases. No uses markdown, solo el JSON.`;
+
+        const result = await aiModel.generateContent(prompt);
+        finalJsonString = result.response.text().replace(/```json|```/g, "").trim();
+      }
+
+      if (finalJsonString) {
+        const parsedQuiz = JSON.parse(finalJsonString);
+        const quiz = await (prisma as any).activity.create({
+          data: {
+            title: `Quiz: ${title}`,
+            description: `Actividades para "${title}"`,
+            type: "QUIZ",
+            content: JSON.stringify(parsedQuiz),
+            points: 100,
+            published: true,
+            createdById: session.user.id,
+            bookId: book.id,
+          },
+        });
+        await (prisma as any).book.update({ where: { id: book.id }, data: { quizId: quiz.id } });
+      }
+    } catch (aiErr) {
+      console.error("AI Error:", aiErr);
+    }
+
+    return NextResponse.json({ message: "Libro subido exitosamente", book });
   } catch (error) {
-    await log(`ERROR: ${error instanceof Error ? error.stack : String(error)}`);
-    console.error("Error al subir libro:", error);
-    return NextResponse.json(
-      { message: "Error interno del servidor al procesar el archivo", details: error instanceof Error ? error.message : String(error) },
-      { status: 500 }
-    );
+    console.error("Upload error:", error);
+    return NextResponse.json({ message: "Error al procesar subida", error: String(error) }, { status: 500 });
   }
 }

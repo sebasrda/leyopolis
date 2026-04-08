@@ -67,14 +67,16 @@ export async function POST(req: Request) {
 function getPrompt(tool: string, input: any): string {
   switch (tool) {
     case "lesson-planner":
-      return `Eres un asistente educativo experto. Genera un plan de clase detallado en español para:
+      return `Eres un experto pedagógico altamente innovador. Genera un plan de clase DETALLADO y CREATIVO en español usando Markdown:
 Tema: ${input.topic || "No especificado"}
 Grado/Nivel: ${input.grade || "No especificado"}
 Duración: ${input.duration || "45 minutos"}
 Libro de referencia: ${input.bookTitle || "No especificado"}
 
-Incluye: Objetivo, materiales, actividades de inicio/desarrollo/cierre, evaluación.
-Formato claro con viñetas. Responde en español.`;
+Instrucciones Críticas:
+1. NO uses texto genérico sin sentido. Hazlo extremadamente útil y aplicable para el aula de hoy.
+2. Crea dinámicas altamente interactivas, como debates, uso de aula invertida o aprendizaje basado en retos.
+3. Formatea con títulos claros, listas y viñetas (Markdown) para: Objetivo, Materiales Disruptivos, Inicio (Enganche), Desarrollo (El Reto), Cierre y Evaluación Formativa.`;
 
     case "dictionary":
       return `Eres un diccionario educativo en español. Define el siguiente término de forma clara y pedagógica, apropiada para estudiantes:
@@ -84,13 +86,15 @@ Contexto educativo: ${input.context || "General"}
 Incluye: Definición clara, ejemplo de uso, sinónimos si aplica. Responde en español.`;
 
     case "text-generator":
-      return `Eres un generador de textos educativos en español. Genera un texto corto para una actividad en clase:
+      return `Eres un creador de contenido dinámico para el aula. Genera una lectura/texto escolar muy interesante en español:
 Tema: ${input.topic || "No especificado"}
 Tipo: ${input.type || "Lectura corta"}
 Nivel: ${input.level || "Intermedio"}
-Extensión: ${input.length || "150-200 palabras"}
 
-El texto debe ser educativo, apropiado para el nivel, y útil como material de clase. Responde en español.`;
+Instrucciones Críticas:
+1. El texto debe atrapar al estudiante desde la primera línea. Usa narrativa inmersiva y datos curiosos.
+2. Incluye subtítulos, pausas de reflexión (preguntas abiertas incrustadas) dentro del texto.
+3. Formatea el texto con Markdown limpio. Debe estar listo para llevar al salón de clases y usarse hoy mismo.`;
 
     default:
       return `Responde en español como asistente educativo: ${input.query || ""}`;

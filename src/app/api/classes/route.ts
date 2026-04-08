@@ -50,12 +50,14 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const auth = await requireRole("SUPERADMIN", "ADMIN", "COORDINATOR");
+  const auth = await requireRole("SUPERADMIN", "ADMIN", "COORDINATOR", "TEACHER");
   if ("error" in auth) return auth.error;
 
   try {
     const body = await req.json();
-    const { name, teacherId, subject, grade } = body;
+    let { name, teacherId, subject, grade } = body;
+
+    if (auth.user.role === "TEACHER") teacherId = auth.user.userId;
 
     const classDb = prisma as unknown as {
       class: {

@@ -67,7 +67,8 @@ Contexto extraído (puede estar incompleto):
 Instrucción del profesor/coordinador: "${prompt}"`
       );
       const raw = result.response.text().trim();
-      const parsed = JSON.parse(raw) as any;
+      const cleanedRaw = raw.replace(/```json/i, "").replace(/```/g, "").trim();
+      const parsed = JSON.parse(cleanedRaw) as any;
       if (parsed && parsed.content && Array.isArray(parsed.content.questions)) quiz = parsed;
     } catch {
     }

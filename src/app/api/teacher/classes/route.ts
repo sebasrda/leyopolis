@@ -1,26 +1,17 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-
-// Hardcoded demo teacher for prototype
-const DEMO_TEACHER_ID = "clt_demo_teacher_001";
+import { getUserIdAndRole } from '@/lib/access';
 
 export async function GET() {
   try {
-    // Ensure teacher exists
-    let teacher = await prisma.user.findUnique({ where: { id: DEMO_TEACHER_ID } });
-    if (!teacher) {
-        teacher = await prisma.user.create({
-            data: {
-                id: DEMO_TEACHER_ID,
-                name: "Profesor Demo",
-                email: "teacher@leyopolis.com",
-                role: "TEACHER"
-            }
-        });
+    const user = await getUserIdAndRole();
+    if (!user) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    if (user.role !== "TEACHER" && user.role !== "ADMIN" && user.role !== "COORDINATOR") {
+      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 
     const classes = await prisma.class.findMany({
-      where: { teacherId: DEMO_TEACHER_ID },
+      where: { teacherId: user.userId },
       include: {
         _count: {
             select: { students: true }
@@ -56,6 +47,11 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const user = await getUserIdAndRole();
+    if (!user) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+
+    const dbUser = await prisma.user.findUnique({ where: { id: user.userId }, select: { institutionId: true } });
+
     const body = await request.json();
     const { name } = body;
 
@@ -64,7 +60,8 @@ export async function POST(request: Request) {
     const newClass = await prisma.class.create({
         data: {
             name,
-            teacherId: DEMO_TEACHER_ID
+            teacherId: user.userId,
+            institutionId: dbUser?.institutionId || null
         }
     });
 

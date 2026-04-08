@@ -42,6 +42,7 @@ export default function TeacherDashboard() {
     const [isAssignmentDialogOpen, setIsAssignmentDialogOpen] = useState(false);
     const [eduOverview, setEduOverview] = useState<{
         counts: { courses: number; activities: number; videos: number; attempts7d: number };
+        dashboardStats?: { totalStudents: number; activeReadings: number; averageComprehension: number };
         latestAttempts: { id: string; score: number; createdAt: string; activity: { id: string; title: string }; user: { id: string; name: string | null; email: string | null } }[];
     } | null>(null);
 
@@ -134,12 +135,12 @@ export default function TeacherDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <Card>
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-gray-500">Total Estudiantes</CardTitle>
+                        <CardTitle className="text-sm font-medium text-gray-500">Estudiantes Activos</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">72</div>
-                        <p className="text-xs text-green-600 flex items-center mt-1">
-                            +4 nuevos esta semana
+                        <div className="text-2xl font-bold">{eduOverview?.dashboardStats?.totalStudents ?? 0}</div>
+                        <p className="text-xs text-gray-500 mt-1">
+                            estudiantes enrolados
                         </p>
                     </CardContent>
                 </Card>
@@ -148,9 +149,9 @@ export default function TeacherDashboard() {
                         <CardTitle className="text-sm font-medium text-gray-500">Lecturas Activas</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">5</div>
+                        <div className="text-2xl font-bold">{eduOverview?.dashboardStats?.activeReadings ?? 0}</div>
                         <p className="text-xs text-gray-500 mt-1">
-                            3 asignaciones finalizan pronto
+                            asignaciones vigentes
                         </p>
                     </CardContent>
                 </Card>
@@ -159,9 +160,9 @@ export default function TeacherDashboard() {
                         <CardTitle className="text-sm font-medium text-gray-500">Comprensión Promedio</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">78%</div>
-                        <p className="text-xs text-green-600 flex items-center mt-1">
-                            +2% vs mes anterior
+                        <div className="text-2xl font-bold">{eduOverview?.dashboardStats?.averageComprehension ?? 0}%</div>
+                        <p className="text-xs text-indigo-600 flex items-center mt-1">
+                            basado en evaluaciones
                         </p>
                     </CardContent>
                 </Card>

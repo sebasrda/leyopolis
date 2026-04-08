@@ -39,8 +39,50 @@ export async function GET() {
   const filtered =
     user.role === "ADMIN" ? latestAttempts : latestAttempts.filter((a: any) => a.activity.createdById === teacherId);
 
+  // Calcular métricas reales del Dashboard
+  const classesWithStudents = await prisma.class.findMany({
+    where: whereTeacher,
+    select: { students: { select: { id: true } } }
+  });
+  const studentSet = new Set();
+  classesWithStudents.forEach(c => c.students.forEach((s: any) => studentSet.add(s.id)));
+  const totalStudents = studentSet.size;
+
+  const activeReadingsCount = await prisma.assignment.count({
+    where: {
+      class: whereTeacher,
+      dueDate: { gte: new Date() }
+    }
+  });
+
+  const allAttempts = await eduDb.activityAttempt.findMany({
+    where: { activity: whereCreator, userId: { not: DEMO_USER_ID } },
+    select: { score: true }
+  });
+  
+  let averageComprehension = 0;
+  if (allAttempts.length > 0) {
+    const sum = allAttempts.reduce((acc: number, val: any) => acc + val.score, 0);
+    averageComprehension = Math.round((sum / allAttempts.length) * 10) / 10; // decimal si es necesario, pero int esta bien
+  } else {
+     // Check EvaluationResults as fallback
+     const evals = await prisma.evaluationResult.findMany({
+       where: { evaluation: { book: { assignments: { some: { class: whereTeacher } } } } },
+       select: { score: true }
+     });
+     if (evals.length > 0) {
+       const sum = evals.reduce((acc: number, val: any) => acc + val.score, 0);
+       averageComprehension = Math.round(sum / evals.length);
+     }
+  }
+
   return NextResponse.json({
     counts: { courses, activities, videos, attempts7d },
+    dashboardStats: {
+      totalStudents,
+      activeReadings: activeReadingsCount,
+      averageComprehension
+    },
     latestAttempts: filtered.map((a: any) => ({
       id: a.id,
       score: a.score,

@@ -10,6 +10,7 @@ import {
   BookOpen,
   Trash2
 } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -127,9 +128,13 @@ export default function TeacherClassesPage() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem>Ver Estudiantes</DropdownMenuItem>
-                  <DropdownMenuItem>Asignar Lectura</DropdownMenuItem>
-                  <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(cls.id)}>
+                  <DropdownMenuItem asChild>
+                    <Link href={`/dashboard/classes/${cls.id}?tab=students`} className="cursor-pointer">Ver Estudiantes</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href={`/dashboard/classes/${cls.id}?tab=assignments`} className="cursor-pointer">Asignar Lectura</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="text-red-600 cursor-pointer" onClick={() => handleDelete(cls.id)}>
                     <Trash2 className="h-4 w-4 mr-2" /> Eliminar Clase
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -149,7 +154,9 @@ export default function TeacherClassesPage() {
                   Sin asignación
                 </div>
               </div>
-              <Button variant="outline" className="w-full">Gestionar Clase</Button>
+              <Button variant="outline" className="w-full" asChild>
+                <Link href={`/dashboard/classes/${cls.id}`}>Gestionar Clase</Link>
+              </Button>
             </CardContent>
           </Card>
         ))}

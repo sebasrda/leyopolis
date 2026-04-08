@@ -54,7 +54,7 @@ export async function POST(
     const addedStudents = updated?.students.filter(s => studentIds.includes(s.id));
     if (addedStudents && addedStudents.length > 0) {
       for (const s of addedStudents) {
-        if (s.email) await simulateEmailSending(s.email, updated.name);
+        if (s.email) await simulateEmailSending(s.email, updated?.name || "Tu Clase");
       }
     }
 

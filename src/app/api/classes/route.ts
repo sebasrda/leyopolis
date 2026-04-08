@@ -88,7 +88,7 @@ export async function POST(req: Request) {
         teacherId,
         subject,
         grade,
-        institutionId: dbUser.institutionId
+        institutionId: dbUser?.institutionId || null
       },
       include: {
         teacher: { select: { id: true, name: true, email: true } },

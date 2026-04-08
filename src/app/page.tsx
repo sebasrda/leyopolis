@@ -17,7 +17,6 @@ export default function Home() {
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600">
             <a href="#caracteristicas" className="hover:text-indigo-600">Características</a>
             <a href="#biblioteca" className="hover:text-indigo-600">Biblioteca</a>
-            <a href="#precios" className="hover:text-indigo-600">Precios</a>
           </div>
           <div className="flex items-center gap-4">
             <a href="/login" className="text-sm font-medium text-gray-600 hover:text-indigo-600">Iniciar sesión</a>
@@ -121,56 +120,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="precios" className="border-t bg-gray-50 scroll-mt-20">
-        <div className="container mx-auto px-6 py-16">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-            <div className="max-w-3xl">
-              <h2 className="text-3xl font-bold tracking-tight text-gray-900">Precios</h2>
-              <p className="mt-3 text-gray-600">
-                Planes institucionales listos para colegios, academias y bibliotecas.
-              </p>
-            </div>
-            <Button asChild variant="outline" className="border-indigo-200 text-indigo-600 hover:bg-indigo-50">
-              <a href="/precios">Ver planes</a>
-            </Button>
-          </div>
 
-          <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-6">
-            {[
-              {
-                name: "Institucional Básico",
-                price: "$299/mes",
-                items: ["Hasta 500 estudiantes", "Biblioteca completa", "Panel de administración", "Soporte por email"],
-              },
-              {
-                name: "Institucional Pro",
-                price: "$599/mes",
-                items: ["Estudiantes ilimitados", "Analíticas avanzadas", "Soporte prioritario", "Integraciones"],
-              },
-            ].map((p) => (
-              <Card key={p.name} className="border-none shadow-md">
-                <CardContent className="p-6 space-y-4">
-                  <div className="flex items-baseline justify-between">
-                    <h3 className="font-bold text-gray-900">{p.name}</h3>
-                    <div className="font-bold text-indigo-600">{p.price}</div>
-                  </div>
-                  <ul className="space-y-2 text-sm text-gray-600">
-                    {p.items.map((it) => (
-                      <li key={it} className="flex items-center gap-2">
-                        <span className="h-1.5 w-1.5 rounded-full bg-indigo-600" />
-                        <span>{it}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <Button asChild className="w-full bg-indigo-600 hover:bg-indigo-500">
-                    <a href="/register">Solicitar acceso</a>
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
       <footer className="border-t py-12">
         <div className="container mx-auto px-6 text-center text-sm text-gray-500">
           <p>© 2026 LEYÓPOLIS. Todos los derechos reservados.</p>

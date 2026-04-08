@@ -3,7 +3,8 @@
 import React, { useState, useRef, useEffect, useCallback, forwardRef } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import HTMLFlipBook from 'react-pageflip';
-import { Loader2, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Maximize, Minimize, Type, ScanLine, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Save, Moon, Sun, Languages, Gamepad2, GraduationCap, X, BookMarked, MessageSquare, Search, Highlighter } from 'lucide-react';
+import Link from 'next/link';
+import { Loader2, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Maximize, Minimize, Type, ScanLine, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Save, Moon, Sun, Languages, Gamepad2, GraduationCap, X, BookMarked, MessageSquare, Search, Highlighter, Sparkles } from 'lucide-react';
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import ExamModal from './ExamModal';
 import GamesModal from './GamesModal';
@@ -26,6 +27,7 @@ interface ProfessionalFlipbookProps {
   bookTitle?: string;
   initialPage?: number;
   bookId?: string;
+  quizId?: string;
 }
 
 // Interfaz para la selección de texto
@@ -188,7 +190,7 @@ const PageComponent = forwardRef<HTMLDivElement, {
 });
 PageComponent.displayName = "PageComponent";
 
-export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", bookId }: ProfessionalFlipbookProps) {
+export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", bookId, quizId }: ProfessionalFlipbookProps) {
   const [numPages, setNumPages] = useState<number>(0);
   const [pageWidth, setPageWidth] = useState<number>(0);
   const [pageHeight, setPageHeight] = useState<number>(0);
@@ -870,6 +872,17 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", book
                     <Gamepad2 size={16} className="text-pink-400 group-hover:text-pink-300 mb-0.5" />
                     <span className="text-[9px] font-medium">Juegos</span>
                 </button>
+                {quizId && (
+                  <Link href={`/dashboard/quiz/${quizId}`}>
+                    <button 
+                      className="ml-2 flex items-center justify-center h-10 px-3 bg-green-600 hover:bg-green-500 rounded-md transition-colors gap-1.5 border-2 border-green-400 shadow-sm group"
+                      title="Hacer Quiz"
+                    >
+                        <Sparkles size={14} className="text-white" />
+                        <span className="text-xs font-bold text-white">Hacer Quiz</span>
+                    </button>
+                  </Link>
+                )}
             </div>
         </div>
         

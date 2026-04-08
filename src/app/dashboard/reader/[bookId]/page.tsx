@@ -52,16 +52,8 @@ export default function ReaderPage({ params }: { params: Promise<{ bookId: strin
         pdfUrl={pdfUrl}
         bookTitle={bookDetails?.title || titleParam || "Libro"}
         bookId={bookId}
+        quizId={bookDetails?.quizId}
       />
-      {bookDetails?.quizId && (
-        <div className="absolute top-6 right-6 z-50">
-          <Link href={`/dashboard/quiz/${bookDetails.quizId}`}>
-            <Button className="bg-green-600 hover:bg-green-500 shadow-lg gap-2 text-white border-2 border-green-400">
-              <Sparkles className="h-4 w-4" /> Hacer Quiz
-            </Button>
-          </Link>
-        </div>
-      )}
     </div>
   );
 }

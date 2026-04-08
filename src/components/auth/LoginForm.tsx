@@ -98,12 +98,9 @@ export default function LoginForm() {
             <span className="bg-white px-2 text-gray-500">O continúa con</span>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="flex justify-center">
           <Button variant="outline" className="w-full" onClick={() => signIn("google")}>
-            <Chrome className="mr-2 h-4 w-4" /> Google
-          </Button>
-          <Button variant="outline" className="w-full" onClick={() => signIn("apple")}>
-            <Github className="mr-2 h-4 w-4" /> Apple
+            <Chrome className="mr-2 h-4 w-4" /> Entrar con Google
           </Button>
         </div>
       </CardContent>

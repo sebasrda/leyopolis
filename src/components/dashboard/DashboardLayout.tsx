@@ -90,6 +90,8 @@ const adminItems = [
 const superAdminItems = [
   { icon: Crown, label: "Súper Admin", href: "/dashboard/superadmin" },
   { icon: Building2, label: "Colegios", href: "/dashboard/superadmin" },
+  { icon: Library, label: "Biblioteca", href: "/dashboard/library" },
+  { icon: BookOpen, label: "Mis Lecturas", href: "/dashboard/my-readings" },
   { icon: Library, label: "Gestión Libros BBDD", href: "/dashboard/admin/books" },
   { icon: Users, label: "Todos los Usuarios", href: "/dashboard/admin/users" },
   { icon: BarChart3, label: "Métricas Reales", href: "/dashboard/admin/stats" },

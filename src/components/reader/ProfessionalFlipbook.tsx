@@ -351,61 +351,114 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", book
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [sessionId, currentPage, numPages, bookId]);
 
-  // Cargar preferencias guardadas al iniciar
+  // Cargar preferencias guardadas al iniciar (DB primero, luego localStorage)
   useEffect(() => {
-    // 1. Intentar cargar configuración específica del libro
-    if (pdfUrl) {
-      const savedSettings = localStorage.getItem(`flipbook-settings-${pdfUrl}`);
-      if (savedSettings) {
-        try {
-          const parsed = JSON.parse(savedSettings);
-          if (parsed.scale) setContentScale(parsed.scale);
-          if (parsed.offsetX) setContentOffsetX(parsed.offsetX);
-          if (parsed.offsetY) setContentOffsetY(parsed.offsetY);
-          if (parsed.isDarkMode !== undefined) setIsDarkMode(parsed.isDarkMode);
-          return; // Si encontramos configuración específica, terminamos
-        } catch (e) {
-          console.error("Error loading specific settings", e);
+    let cancelled = false;
+
+    const applySettings = (parsed: any) => {
+      if (parsed.scale) setContentScale(parsed.scale);
+      if (parsed.offsetX !== undefined) setContentOffsetX(parsed.offsetX);
+      if (parsed.offsetY !== undefined) setContentOffsetY(parsed.offsetY);
+      if (parsed.isDarkMode !== undefined) setIsDarkMode(parsed.isDarkMode);
+    };
+
+    const loadSettings = async () => {
+      // 1. Intentar localStorage específico del libro (preferencia personal del usuario)
+      if (pdfUrl) {
+        const savedSettings = localStorage.getItem(`flipbook-settings-${pdfUrl}`);
+        if (savedSettings) {
+          try {
+            const parsed = JSON.parse(savedSettings);
+            if (!cancelled) applySettings(parsed);
+            return;
+          } catch {}
         }
       }
-    }
 
-    // 2. Si no hay específica, intentar cargar configuración GLOBAL
-    const globalSettings = localStorage.getItem(`flipbook-global-settings`);
-    if (globalSettings) {
+      // 2. Intentar cargar desde la base de datos (configuración del admin para TODOS los usuarios)
+      if (bookId) {
+        try {
+          const res = await fetch(`/api/books/${bookId}/display-settings`);
+          if (res.ok) {
+            const data = await res.json();
+            // Per-book DB settings
+            if (data.settings && !cancelled) {
+              applySettings(data.settings);
+              return;
+            }
+            // Global DB settings
+            if (data.globalSettings && !cancelled) {
+              applySettings(data.globalSettings);
+              return;
+            }
+          }
+        } catch {}
+      }
+
+      // 3. Fallback: localStorage global
+      const globalSettings = localStorage.getItem(`flipbook-global-settings`);
+      if (globalSettings) {
+        try {
+          const parsed = JSON.parse(globalSettings);
+          if (!cancelled) applySettings(parsed);
+        } catch {}
+      }
+    };
+
+    loadSettings();
+    return () => { cancelled = true; };
+  }, [pdfUrl, bookId]);
+
+  // Guardar configuración GLOBAL (para ADMIN/SUPERADMIN se guarda en BD, para otros en localStorage)
+  const saveAsGlobalDefault = async () => {
+    const settings = {
+      scale: contentScale,
+      offsetX: contentOffsetX,
+      offsetY: contentOffsetY,
+      isDarkMode: isDarkMode,
+    };
+
+    // Siempre guardar en localStorage como fallback
+    localStorage.setItem(`flipbook-global-settings`, JSON.stringify(settings));
+
+    const isAdmin = userRole === "ADMIN" || userRole === "SUPERADMIN";
+
+    if (isAdmin) {
       try {
-        const parsed = JSON.parse(globalSettings);
-        if (parsed.scale) setContentScale(parsed.scale);
-        if (parsed.offsetX) setContentOffsetX(parsed.offsetX);
-        if (parsed.offsetY) setContentOffsetY(parsed.offsetY);
-        if (parsed.isDarkMode !== undefined) setIsDarkMode(parsed.isDarkMode);
+        // Guardar configuración GLOBAL en BD (para todos los usuarios)
+        await fetch("/api/settings/flipbook-defaults", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(settings),
+        });
+
+        // También guardar configuración para ESTE libro específico en BD
+        if (bookId) {
+          await fetch(`/api/books/${bookId}/display-settings`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(settings),
+          });
+        }
       } catch (e) {
-        console.error("Error loading global settings", e);
+        console.error("Error saving to DB:", e);
       }
     }
-  }, [pdfUrl]);
 
-  // Guardar configuración GLOBAL
-  const saveAsGlobalDefault = () => {
-    const settings = {
-        scale: contentScale,
-        offsetX: contentOffsetX,
-        offsetY: contentOffsetY,
-        isDarkMode: isDarkMode
-    };
-    localStorage.setItem(`flipbook-global-settings`, JSON.stringify(settings));
-    // Pequeño feedback visual (podría mejorarse con un toast real)
+    // Feedback visual
     const btn = document.getElementById('save-global-btn');
     if (btn) {
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '<span class="text-green-400 text-xs">¡Guardado!</span>';
-        setTimeout(() => {
-            btn.innerHTML = originalText;
-        }, 2000);
+      const originalText = btn.innerHTML;
+      btn.innerHTML = isAdmin
+        ? '<span class="text-green-400 text-xs">¡Guardado para TODOS!</span>'
+        : '<span class="text-green-400 text-xs">¡Guardado!</span>';
+      setTimeout(() => {
+        btn.innerHTML = originalText;
+      }, 2500);
     }
   };
 
-  // Guardar preferencias específicas cuando cambian
+  // Guardar preferencias específicas del usuario actual en localStorage
   useEffect(() => {
     if (pdfUrl && !loading) {
       const settings = {
@@ -960,8 +1013,15 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", book
                 <button 
                     id="save-global-btn"
                     onClick={saveAsGlobalDefault} 
-                    className="p-2 hover:bg-white/10 rounded-full transition text-green-400 hover:text-green-300" 
-                    title="Guardar Global"
+                    className={cn(
+                      "p-2 hover:bg-white/10 rounded-full transition",
+                      (userRole === "ADMIN" || userRole === "SUPERADMIN")
+                        ? "text-yellow-400 hover:text-yellow-300"
+                        : "text-green-400 hover:text-green-300"
+                    )}
+                    title={(userRole === "ADMIN" || userRole === "SUPERADMIN") 
+                      ? "Guardar orientación para TODOS los usuarios" 
+                      : "Guardar orientación"}
                 >
                     <Save size={18} />
                 </button>

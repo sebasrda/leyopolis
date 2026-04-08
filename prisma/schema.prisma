@@ -150,6 +150,7 @@ model Book {
   subject          String?
   allowMultipleAttempts Boolean           @default(false)
   passScore        Int                         @default(60)
+  displaySettings  String?                     // JSON: {"scale":1,"offsetX":0,"offsetY":0}
   linkedActivities Activity[]
   assignments      Assignment[]
   gradeCollections BookCollectionByGradeBook[]

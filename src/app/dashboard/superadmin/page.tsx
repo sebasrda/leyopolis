@@ -101,6 +101,20 @@ export default function SuperAdminDashboard() {
     }
   };
 
+  const handleSyncDb = async () => {
+    try {
+      const res = await fetch("/api/superadmin/migrate", { method: "POST" });
+      const data = await res.json();
+      if (res.ok) {
+        alert("Sincronización completada:\n" + data.results.join("\n"));
+      } else {
+        alert("Error: " + data.message);
+      }
+    } catch (e) {
+      alert("Error de conexión");
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -108,12 +122,16 @@ export default function SuperAdminDashboard() {
           <h1 className="text-3xl font-bold text-gray-900">Plataforma Leyópolis</h1>
           <p className="text-gray-500">Gestión global de contratos, colegios y suscripciones B2B.</p>
         </div>
-        <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-indigo-600 hover:bg-indigo-500 gap-2">
-              <Plus className="h-4 w-4" /> Nuevo Colegio
-            </Button>
-          </DialogTrigger>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleSyncDb} className="gap-2 border-indigo-200 text-indigo-700 hover:bg-indigo-50">
+            <Settings className="h-4 w-4" /> Sincronizar BD
+          </Button>
+          <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-indigo-600 hover:bg-indigo-500 gap-2">
+                <Plus className="h-4 w-4" /> Nuevo Colegio
+              </Button>
+            </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Registrar Nuevo Colegio</DialogTitle>
@@ -156,6 +174,7 @@ export default function SuperAdminDashboard() {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {loading ? (

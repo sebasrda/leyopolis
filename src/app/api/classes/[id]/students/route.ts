@@ -2,11 +2,17 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/access";
 
+async function simulateEmailSending(studentEmail: string, className: string) {
+  console.log(`[SIMULADOR CORREO] Despachando a: ${studentEmail}`);
+  console.log(`Asunto: Inscripción a la clase ${className}`);
+  console.log(`Cuerpo: Has sido enlazado a la clase ${className} de Leyópolis. ¡Revisa tus tareas!`);
+}
+
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const auth = await requireRole("ADMIN");
+  const auth = await requireRole("ADMIN", "TEACHER", "SUPERADMIN");
   if ("error" in auth) return auth.error;
 
   const { id } = await params;
@@ -35,6 +41,7 @@ export async function POST(
     });
 
     // Fetch updated class with student count
+    // Fetch updated class with student count
     const updated = await prisma.class.findUnique({
       where: { id },
       include: {
@@ -42,6 +49,14 @@ export async function POST(
         _count: { select: { students: true } },
       },
     });
+
+    // Simulate email to all newly added students
+    const addedStudents = updated?.students.filter(s => studentIds.includes(s.id));
+    if (addedStudents && addedStudents.length > 0) {
+      for (const s of addedStudents) {
+        if (s.email) await simulateEmailSending(s.email, updated.name);
+      }
+    }
 
     return NextResponse.json(updated);
   } catch (error) {
@@ -54,7 +69,7 @@ export async function DELETE(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const auth = await requireRole("ADMIN");
+  const auth = await requireRole("ADMIN", "TEACHER", "SUPERADMIN");
   if ("error" in auth) return auth.error;
 
   const { id } = await params;

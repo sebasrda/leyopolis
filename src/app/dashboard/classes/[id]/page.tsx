@@ -2,7 +2,7 @@
 
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Users, BookOpen, Plus, Calendar, Clock, Trash2 } from "lucide-react";
+import { ArrowLeft, Users, BookOpen, Plus, Calendar, Clock, Trash2, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -20,6 +20,12 @@ export default function ClassDetailsPage({ params }: { params: Promise<{ id: str
   const [selectedBookId, setSelectedBookId] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [assignmentTitle, setAssignmentTitle] = useState("");
+
+  // Add student form
+  const [openStudentModal, setOpenStudentModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
   useEffect(() => {
     // Check URL query parameters for default tab
@@ -44,6 +50,43 @@ export default function ClassDetailsPage({ params }: { params: Promise<{ id: str
     try {
       const res = await fetch("/api/books");
       if (res.ok) setBooks(await res.json());
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleSearchStudent = async (query: string) => {
+    setSearchQuery(query);
+    if (query.length < 2) {
+      setSearchResults([]);
+      return;
+    }
+    setIsSearching(true);
+    try {
+      const res = await fetch(`/api/students/search?query=${query}`);
+      if (res.ok) setSearchResults(await res.json());
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleEnrollStudent = async (studentId: string) => {
+    try {
+      const res = await fetch(`/api/classes/${id}/students`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ studentIds: [studentId] })
+      });
+      if (res.ok) {
+        setOpenStudentModal(false);
+        setSearchQuery("");
+        setSearchResults([]);
+        fetchClassData();
+      } else {
+        alert("Error al añadir al estudiante.");
+      }
     } catch (e) {
       console.error(e);
     }
@@ -148,9 +191,63 @@ export default function ClassDetailsPage({ params }: { params: Promise<{ id: str
                 <CardTitle>Estudiantes Matriculados</CardTitle>
                 <CardDescription>Usuarios asociados a esta clase y sus progresos.</CardDescription>
               </div>
-              <Button disabled variant="outline" className="gap-2">
-                <Plus className="h-4 w-4" /> Añadir Estudiante
-              </Button>
+              <Dialog open={openStudentModal} onOpenChange={setOpenStudentModal}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="gap-2">
+                    <Plus className="h-4 w-4" /> Añadir Estudiante
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Buscar e Inscribir Estudiante</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-2 relative">
+                      <Label>Buscar por Nombre o Correo (Solo tu colegio)</Label>
+                      <div className="relative">
+                        <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                        <Input 
+                          placeholder="Escribe para buscar..." 
+                          className="pl-9"
+                          value={searchQuery}
+                          onChange={(e) => handleSearchStudent(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="border rounded-md min-h-[150px] max-h-[300px] overflow-y-auto bg-gray-50 p-2">
+                      {isSearching ? (
+                        <p className="text-center text-gray-500 py-4 text-sm">Buscando...</p>
+                      ) : searchResults.length > 0 ? (
+                        <div className="space-y-2">
+                          {searchResults.map(st => (
+                            <div key={st.id} className="flex justify-between items-center p-2 bg-white border border-gray-200 rounded-md">
+                              <div>
+                                <p className="font-semibold text-sm">{st.name}</p>
+                                <p className="text-xs text-gray-500">{st.email}</p>
+                              </div>
+                              <Button 
+                                size="sm" 
+                                onClick={() => handleEnrollStudent(st.id)}
+                                disabled={cls.students?.some((s: any) => s.id === st.id)}
+                              >
+                                {cls.students?.some((s: any) => s.id === st.id) ? "Inscrito" : "Añadir"}
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      ) : searchQuery.length >= 2 ? (
+                        <p className="text-center text-gray-500 py-4 text-sm">No se encontraron estudiantes.</p>
+                      ) : (
+                        <p className="text-center text-gray-400 py-4 text-sm flex items-center justify-center gap-2">
+                          <Users className="h-4 w-4" /> Escribe al menos 2 letras
+                        </p>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2">* Al inscribir a un estudiante, se registrará el enlace y, de haber un servicio de correo habilitado, se le enviará un email de bienvenida.</p>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </CardHeader>
             <CardContent>
               {cls.students?.length === 0 ? (

@@ -75,10 +75,6 @@ export async function POST(req: Request) {
       select: { institutionId: true, role: true }
     });
 
-    if (!dbUser?.institutionId && dbUser?.role !== "SUPERADMIN") {
-      return NextResponse.json({ message: "No tienes una institución asignada" }, { status: 400 });
-    }
-
     if (!name || !teacherId) {
       return NextResponse.json(
         { message: "Nombre de clase y profesor son requeridos" },

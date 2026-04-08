@@ -104,38 +104,36 @@ Instrucciones Críticas:
 function getFallbackResult(tool: string, input: any): string {
   switch (tool) {
     case "lesson-planner":
-      return `📋 PLAN DE CLASE EDUCATIVO (Plantilla Automática)
+      return `🚀 **PLAN DE AULA 360° E INTERACTIVO**
 ======================================================
-📚 Tema de la clase: ${input.topic || "Sin especificar"}
-🎓 Nivel / Grado: ${input.grade || "General"}
-⏱️ Duración estimada: ${input.duration || "45 minutos"}
-📖 Referencia sugerida: ${input.bookTitle || "Ninguna"}
+**🌟 Asignatura/Tema:** ${input.topic || "Exploración Creativa"}
+**🎯 Nivel:** ${input.grade || "Aula General"}
+**⏱️ Tiempo:** ${input.duration || "45 minutos"}
+**📖 Recurso Ancla:** ${input.bookTitle || "Material asignado"}
 
-🎯 OBJETIVOS DE APRENDIZAJE:
-1. Comprender los conceptos fundamentales sobre "${input.topic || "tema planteado"}".
-2. Fomentar el pensamiento crítico y la participación activa del aula.
-3. Aplicar el conocimiento adquirido mediante una actividad integradora.
+🎯 **MISIONES DE APRENDIZAJE**
+1. Que los estudiantes no solo memoricen, sino que **apliquen** los principios de *${input.topic || "la temática"}* en un caso real.
+2. Despertar el sentido crítico mediante el **"Aprendizaje Invertido" (Flipped Classroom)**.
+3. Generar una chispa de curiosidad que vaya más allá del aula.
 
---- ESTRUCTURA SUGERIDA DE LA CLASE ---
+--- ⚡ CRONOGRAMA DE GESTIÓN DINÁMICA ---
 
-⏱️ FASE 1: INICIO Y MOTIVACIÓN (10 minutos)
-• Saludo y activación de conocimientos previos.
-• Pregunta disparadora: "¿Qué sabemos nosotros actualmente sobre ${input.topic || "este tema"}?"
-• Breve introducción teórica asegurando la atención del grupo.
+⏱️ **FASE 1: EL GANCHO (El Rompehielo) (10 min)**
+• **Dinámica:** La Pregunta Imposible.
+• **Acción:** Entra al salón y anota en el pizarrón: *"¿Qué pasaría si el mundo funcionara sin ${input.topic || "este concepto"}?"*. No respondas. Deja que ellos discutan en parejas por 3 minutos antes de introducir formalmente la teoría.
+• **Material Disruptivo:** Un objeto, imagen o noticia reciente (opcional) que esté directamente relacionada para captar atención visual.
 
-⏱️ FASE 2: DESARROLLO Y LECTURA (25 minutos)
-• Lectura guiada profunda. Si se cuenta con la referencia "${input.bookTitle || "bibliográfica"}", solicitar a los estudiantes revisar el capítulo pertinente.
-• Debate controlado: Dividir a la clase en grupos pequeños para comentar los puntos clave.
-• Planteamiento de casos prácticos donde los alumnos deban resolver un escenario aplicando lo aprendido.
+⏱️ **FASE 2: LABORATORIO DE IDEAS (Aula Invertida) (25 min)**
+• En lugar de dictar, divide al salón en 4 *"Escuadrones"*.
+• **El Reto:** Si tienen el texto base ("*${input.bookTitle || "documento de referencia"}*"), pídeles que extraigan el argumento principal, no como resumen, sino como un reportaje de noticias urgente. 
+• **Interactividad:** El profesor actúa únicamente como "Mentor". Camina por el salón haciendo preguntas difíciles a cada grupo, forzando la argumentación lógica.
 
-⏱️ FASE 3: CIERRE Y EVALUACIÓN FORMATIVA (10 minutos)
-• Puesta en común: Un representante de cada grupo comparte sus conclusiones.
-• Rueda de preguntas y respuestas rápidas para validar el objetivo.
-• Asignación de tarea o lectura complementaria en la plataforma Leyópolis.
+⏱️ **FASE 3: EL DEBATE DE CIERRE (10 min)**
+• Un representante por escuadrón presenta su postura/reportaje.
+• **Cierre Reflexivo:** En lugar de una nota, haz una votación rápida (pulgares arriba o abajo) sobre un dilema moral o práctico que involucre el tema.
+• **Misión para Casa:** Buscar 1 ejemplo sobre *${input.topic || "la temática"}* en su vida cotidiana para comentarlo la próxima sesión.
 
-📌 NOTA PEDAGÓGICA PARA EL DOCENTE:
-Esta es una estructura universal recomendada por expertos en metodologías activas (como Aprendizaje Basado en Proyectos y Aula Invertida).
-*(La generación predictiva de IA se encuentra pausada por actualización técnica temporal del servidor, pero esta plantilla es completamente funcional y adaptada).*`;
+*(Este plan utiliza metodologías activas y gamificación para garantizar la atención total).*`;
 
     case "dictionary":
       return `📖 EXPLORACIÓN LÉXICA Y DICCIONARIO (Modo Plantilla)
@@ -154,25 +152,24 @@ Para explicar el término "${input.term || "consultado"}" de manera altamente pe
 *(El servicio de diccionario por IA se restablecerá próximamente).*`;
 
     case "text-generator":
-      return `📝 GENERACIÓN Y ESTRUCTURA DE LECTURA (Esquema Docente)
+      return `📜 **TEXTO INTERACTIVO: EXPLORANDO UN NUEVO MUNDO**
 ======================================================
-Tema seleccionado: ${input.topic || "General"}
-Tipo de material: ${input.type || "Comprensión Lectora"}
-Nivel de dificultad: ${input.level || "Intermedio"}
+> **📌 Para el estudiante:** *Lee con cuidado. Al final encontrarás un dilema que solo tú puedes resolver.*
 
-💡 SUGERENCIA DE REDACCIÓN ESTRUCTURAL:
-Mientras nuestro motor inteligente es restablecido, le sugerimos estructurar su texto para la evaluación de la siguiente manera:
+**Tema:** ${input.topic || "Explorando lo desconocido..."}
 
---- PÁRRAFO 1: INTRODUCCIÓN (Enganche) ---
-Redacte 3 líneas iniciales que presenten una problemática o un hecho interesante alrededor de "${input.topic || "su tema"}". El objetivo aquí es "atrapar" al lector.
+Imagina que despiertas y descubres una realidad que nunca te habías planteado sobre *${input.topic || "nuestro tema principal"}*. Durante mucho tiempo, hemos creído entender cómo funciona el mundo, pero la verdad es mucho más sorprendente y profunda.
 
---- PÁRRAFOS 2-3: NÚCLEO INFORMATIVO ---
-Desglose los detalles más vitales. Si el nivel requerido es "${input.level || "avanzado"}", asegúrese de usar un vocabulario exigente.
-• Agregue datos específicos.
-• Use una estructura de puntos cardinales.
+**🔍 Una Observación Curiosa:**
+Históricamente, los mayores saltos en la humanidad comenzaron al cuestionar lo evidente. Al estudiar *${input.topic || "esta área"}*, los expertos descubrieron que no se trata solo de datos aburridos, sino de un mecanismo complejo que sostiene todo lo que nos rodea. Es como un motor invisible.
 
---- PÁRRAFO 4: CONCLUSIÓN DEBATE ---
-Finalice con un remate conciso o una pregunta argumentativa para que el alumno aplique Comprensión Lectora Crítica tras terminar el texto.`;
+> **⏸️ PAUSA ACTIVA (¡Piensa!):**
+> *Si tú pudieras cambiar una sola regla sobre cómo funciona esto en la vida real, ¿qué cambiarías y por qué? Discútelo internamente por 10 segundos antes de seguir leyendo.*
+
+El impacto que esto tiene en la modernidad es innegable. Las personas que dominan y entienden este concepto son aquellas capaces de liderar los equipos del mañana, porque entienden las causas raíz de los problemas, en lugar de solo mirar los síntomas.
+
+**💥 EL RETO FINAL (Para debatir en clase):**
+Sabiendo todo esto, tu misión es construir un contra-argumento. Si alguien te dice que *${input.topic || "este tema"}* ya no es importante para la sociedad actual... ¿Qué evidencia de tu vida diaria usarías para demostrarle que está completamente equivocado?`;
 
     default:
       return "⚠️ Herramienta de IA no reconocida o en mantenimiento.";

@@ -16,12 +16,16 @@ export async function GET() {
       update: {
         role: "SUPERADMIN",
         password: hashedPassword,
+        institutionId: null,
+        isDemo: false,
+        grade: null,
       },
       create: {
         email,
         name: "Sebastian Admin",
         role: "SUPERADMIN",
-        password: hashedPassword, 
+        password: hashedPassword,
+        isDemo: false,
       },
     });
 

@@ -90,19 +90,6 @@ export default function LoginForm() {
             {loading ? "Iniciando sesión..." : "Iniciar sesión"}
           </Button>
         </form>
-        <div className="relative my-6">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-white px-2 text-gray-500">O continúa con</span>
-          </div>
-        </div>
-        <div className="flex justify-center">
-          <Button variant="outline" className="w-full" onClick={() => signIn("google")}>
-            <Chrome className="mr-2 h-4 w-4" /> Entrar con Google
-          </Button>
-        </div>
       </CardContent>
       <CardFooter className="flex flex-col space-y-2">
         <p className="text-sm text-center text-gray-600">

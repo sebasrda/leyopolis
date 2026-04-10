@@ -77,7 +77,7 @@ export default function ClassesTab({ institutionId, onUpdate }: { institutionId:
       const res = await fetch(`/api/superadmin/institutions/${institutionId}/classes`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, teacherId, grade, studentIds, bookIds }),
+        body: JSON.stringify({ name, teacherId, grade, studentIds: newClassStudentIds, bookIds: newClassBookIds }),
       });
       const data = await res.json();
       if (res.ok) {

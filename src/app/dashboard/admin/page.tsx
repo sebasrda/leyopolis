@@ -72,6 +72,7 @@ interface Stats {
   institution?: {
     name: string;
     status: string;
+    plan: string;
     maxStudents: number;
     endDate: string | null;
     isLibraryRestricted?: boolean;

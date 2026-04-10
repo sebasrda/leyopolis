@@ -303,6 +303,13 @@ export default function AdminClassesPage() {
                 </div>
                 <div className="space-y-2">
                   <Label>Docente Asignado *</Label>
+                  <Select value={newClassTeacherId} onValueChange={setNewClassTeacherId}>
+                    <SelectTrigger><SelectValue placeholder="Seleccionar docente" /></SelectTrigger>
+                    <SelectContent>
+                      {teachers.map(t => (
+                        <SelectItem key={t.id} value={t.id}>{t.name} ({t.email})</SelectItem>
+                      ))}
+                    </SelectContent>
                   </Select>
                 </div>
 

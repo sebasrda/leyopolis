@@ -101,6 +101,7 @@ export default function AdminClassesPage() {
   const [editBookIds, setEditBookIds] = useState<string[]>([]);
   const [updating, setUpdating] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [bookSearch, setBookSearch] = useState("");
 
   const teachers = users.filter(u => u.role === "TEACHER" || u.role === "COORDINATOR");
   const students = users.filter(u => u.role === "STUDENT");
@@ -277,8 +278,12 @@ export default function AdminClassesPage() {
   };
 
   const filteredStudents = students.filter(s =>
-    s.name?.toLowerCase().includes(studentSearch.toLowerCase()) ||
-    s.email?.toLowerCase().includes(studentSearch.toLowerCase())
+    (s.name || "").toLowerCase().includes(studentSearch.toLowerCase()) ||
+    (s.email || "").toLowerCase().includes(studentSearch.toLowerCase())
+  );
+
+  const filteredBooks = books.filter(b =>
+    (b.title || "").toLowerCase().includes(bookSearch.toLowerCase())
   );
 
   if (loading) {
@@ -349,13 +354,24 @@ export default function AdminClassesPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Matricular Estudiantes Iniciales</Label>
-                  <div className="border rounded-md p-2 max-h-32 overflow-y-auto space-y-1">
-                    {students.length === 0 ? (
-                      <div className="text-xs text-gray-500">No hay estudiantes registrados</div>
+                  <Label className="flex items-center justify-between">
+                    <span>Matricular Estudiantes Iniciales</span>
+                    <div className="relative w-40">
+                      <Search className="absolute left-2 top-2.5 h-3 w-3 text-gray-400" />
+                      <Input 
+                        placeholder="Buscar..." 
+                        className="pl-7 h-8 text-xs" 
+                        value={studentSearch} 
+                        onChange={e => setStudentSearch(e.target.value)} 
+                      />
+                    </div>
+                  </Label>
+                  <div className="border rounded-md p-2 max-h-32 overflow-y-auto space-y-1 bg-gray-50/20">
+                    {filteredStudents.length === 0 ? (
+                      <div className="text-xs text-gray-500 text-center py-2">No se encontraron estudiantes</div>
                     ) : (
-                      students.map(s => (
-                        <label key={s.id} className="flex items-center gap-2 cursor-pointer text-xs p-1 hover:bg-gray-50 rounded">
+                      filteredStudents.map(s => (
+                        <label key={s.id} className="flex items-center gap-2 cursor-pointer text-xs p-1 hover:bg-white rounded border border-transparent hover:border-gray-100">
                           <input 
                             type="checkbox" 
                             checked={newClassStudentIds.includes(s.id)} 
@@ -373,13 +389,24 @@ export default function AdminClassesPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Asignar Unidades de Lectura</Label>
-                  <div className="border rounded-md p-2 max-h-32 overflow-y-auto space-y-1">
-                    {books.length === 0 ? (
-                      <div className="text-xs text-gray-500">No hay libros disponibles</div>
+                  <Label className="flex items-center justify-between">
+                    <span>Asignar Unidades de Lectura</span>
+                    <div className="relative w-40">
+                      <Search className="absolute left-2 top-2.5 h-3 w-3 text-gray-400" />
+                      <Input 
+                        placeholder="Buscar..." 
+                        className="pl-7 h-8 text-xs" 
+                        value={bookSearch} 
+                        onChange={e => setBookSearch(e.target.value)} 
+                      />
+                    </div>
+                  </Label>
+                  <div className="border rounded-md p-2 max-h-32 overflow-y-auto space-y-1 bg-gray-50/20">
+                    {filteredBooks.length === 0 ? (
+                      <div className="text-xs text-gray-500 text-center py-2">No se encontraron libros</div>
                     ) : (
-                      books.map(b => (
-                        <label key={b.id} className="flex items-center gap-2 cursor-pointer text-xs p-1 hover:bg-gray-50 rounded">
+                      filteredBooks.map(b => (
+                        <label key={b.id} className="flex items-center gap-2 cursor-pointer text-xs p-1 hover:bg-white rounded border border-transparent hover:border-gray-100">
                           <input 
                             type="checkbox" 
                             checked={newClassBookIds.includes(b.id)} 
@@ -495,37 +522,60 @@ export default function AdminClassesPage() {
             <div className="space-y-2 pt-2 border-t">
               <Label className="flex items-center justify-between">
                 <span>Estudiantes en Clase</span>
-                <Badge variant="outline">{editStudentIds.length}</Badge>
+                <div className="relative w-40">
+                  <Search className="absolute left-2 top-2.5 h-3 w-3 text-gray-400" />
+                  <Input 
+                    placeholder="Buscar..." 
+                    className="pl-7 h-8 text-xs" 
+                    value={studentSearch} 
+                    onChange={e => setStudentSearch(e.target.value)} 
+                  />
+                </div>
               </Label>
-              <div className="border rounded-md p-2 max-h-48 overflow-y-auto space-y-1 bg-gray-50/50">
-                {students.map(s => (
-                  <label key={s.id} className={`flex items-center gap-2 cursor-pointer text-xs p-1.5 hover:bg-white rounded border border-transparent ${editStudentIds.includes(s.id) ? 'bg-indigo-50 border-indigo-100' : ''}`}>
-                    <input type="checkbox" checked={editStudentIds.includes(s.id)} onChange={(e) => {
-                      if (e.target.checked) setEditStudentIds([...editStudentIds, s.id]);
-                      else setEditStudentIds(editStudentIds.filter(id => id !== s.id));
-                    }} className="rounded border-gray-300 text-indigo-600" />
-                    <span className="flex-1 truncate font-medium">{s.name}</span>
-                    <span className="text-gray-400 font-normal">{s.email}</span>
-                  </label>
-                ))}
+              <div className="border rounded-md p-2 max-h-48 overflow-y-auto space-y-1 bg-gray-50/30">
+                {filteredStudents.length === 0 ? (
+                  <p className="text-xs text-center text-gray-500 py-2">No se encontraron estudiantes</p>
+                ) : (
+                  filteredStudents.map(s => (
+                    <label key={s.id} className={`flex items-center gap-2 cursor-pointer text-xs p-1.5 hover:bg-white rounded border border-transparent ${editStudentIds.includes(s.id) ? 'bg-indigo-50 border-indigo-100' : 'hover:border-gray-100'}`}>
+                      <input type="checkbox" checked={editStudentIds.includes(s.id)} onChange={(e) => {
+                        if (e.target.checked) setEditStudentIds([...editStudentIds, s.id]);
+                        else setEditStudentIds(editStudentIds.filter(id => id !== s.id));
+                      }} className="rounded border-gray-300 text-indigo-600" />
+                      <span className="flex-1 truncate font-medium">{s.name || s.email}</span>
+                    </label>
+                  ))
+                )}
               </div>
             </div>
 
             <div className="space-y-2 pt-2 border-t">
               <Label className="flex items-center justify-between">
                 <span>Unidades de Lectura</span>
-                <Badge variant="outline">{editBookIds.length}</Badge>
+                <div className="relative w-40">
+                  <Search className="absolute left-2 top-2.5 h-3 w-3 text-gray-400" />
+                  <Input 
+                    placeholder="Buscar..." 
+                    className="pl-7 h-8 text-xs" 
+                    value={bookSearch} 
+                    onChange={e => setBookSearch(e.target.value)} 
+                  />
+                </div>
               </Label>
-              <div className="border rounded-md p-2 max-h-48 overflow-y-auto space-y-1 bg-gray-50/50">
-                {books.map(b => (
-                  <label key={b.id} className={`flex items-center gap-2 cursor-pointer text-xs p-1.5 hover:bg-white rounded border border-transparent ${editBookIds.includes(b.id) ? 'bg-indigo-50 border-indigo-100' : ''}`}>
-                    <input type="checkbox" checked={editBookIds.includes(b.id)} onChange={(e) => {
-                      if (e.target.checked) setEditBookIds([...editBookIds, b.id]);
-                      else setEditBookIds(editBookIds.filter(id => id !== b.id));
-                    }} className="rounded border-gray-300 text-indigo-600" />
-                    <span className="flex-1 truncate font-medium">{b.title}</span>
-                  </label>
-                ))}
+              <div className="border rounded-md p-2 max-h-48 overflow-y-auto space-y-1 bg-gray-50/30">
+                {filteredBooks.length === 0 ? (
+                  <p className="text-xs text-center text-gray-500 py-2">No se encontraron libros</p>
+                ) : (
+                  filteredBooks.map(b => (
+                    <label key={b.id} className={`flex items-center gap-2 cursor-pointer text-xs p-1.5 hover:bg-white rounded border border-transparent ${editBookIds.includes(b.id) ? 'bg-indigo-50 border-indigo-100' : 'hover:border-gray-100'}`}>
+                      <input type="checkbox" checked={editBookIds.includes(b.id)} onChange={(e) => {
+                        if (e.target.checked) setEditBookIds([...editBookIds, b.id]);
+                        else setEditBookIds(editBookIds.filter(id => id !== b.id));
+                      }} className="rounded border-gray-300 text-indigo-600" />
+                      <span className="flex-1 truncate font-medium">{b.title}</span>
+                    </label>
+                  ))
+                )}
               </div>
             </div>
 

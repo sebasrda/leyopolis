@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Search } from "lucide-react";
 
 export default function ClassesTab({ institutionId, onUpdate }: { institutionId: string, onUpdate: () => void }) {
   const [classes, setClasses] = useState<any[]>([]);
@@ -40,6 +41,10 @@ export default function ClassesTab({ institutionId, onUpdate }: { institutionId:
   const [editStudentIds, setEditStudentIds] = useState<string[]>([]);
   const [editBookIds, setEditBookIds] = useState<string[]>([]);
   const [updating, setUpdating] = useState(false);
+
+  // Search state
+  const [studentSearch, setStudentSearch] = useState("");
+  const [bookSearch, setBookSearch] = useState("");
 
   useEffect(() => {
     fetchData();
@@ -111,8 +116,13 @@ export default function ClassesTab({ institutionId, onUpdate }: { institutionId:
       }
     } catch (e) {
       console.error(e);
-    }
-  };
+  const filteredStudents = students.filter(s => 
+    (s.name || s.email || "").toLowerCase().includes(studentSearch.toLowerCase())
+  );
+
+  const filteredBooks = books.filter(b => 
+    (b.title || "").toLowerCase().includes(bookSearch.toLowerCase())
+  );
 
   const handleEditOpen = (cls: any) => {
     setEditingClass(cls);
@@ -195,10 +205,21 @@ export default function ClassesTab({ institutionId, onUpdate }: { institutionId:
                     </div>
 
                     <div className="space-y-2">
-                      <Label>Estudiantes a Matricular</Label>
-                      <div className="border rounded-md p-2 max-h-32 overflow-y-auto space-y-1">
-                        {students.length === 0 ? <div className="text-sm text-gray-500">No hay estudiantes en este colegio</div> : students.map(s => (
-                          <label key={s.id} className="flex items-center gap-2 cursor-pointer text-sm p-1 hover:bg-gray-50 rounded">
+                      <Label className="flex items-center justify-between">
+                        <span>Estudiantes a Matricular</span>
+                        <div className="relative w-40">
+                          <Search className="absolute left-2 top-2.5 h-3 w-3 text-gray-400" />
+                          <Input 
+                            placeholder="Buscar..." 
+                            className="pl-7 h-8 text-xs" 
+                            value={studentSearch} 
+                            onChange={e => setStudentSearch(e.target.value)} 
+                          />
+                        </div>
+                      </Label>
+                      <div className="border rounded-md p-2 max-h-32 overflow-y-auto space-y-1 bg-gray-50/30">
+                        {filteredStudents.length === 0 ? <div className="text-sm text-gray-500 text-center py-2">No se encontraron estudiantes</div> : filteredStudents.map(s => (
+                          <label key={s.id} className="flex items-center gap-2 cursor-pointer text-sm p-1 hover:bg-white rounded border border-transparent hover:border-gray-100">
                             <input type="checkbox" checked={newClassStudentIds.includes(s.id)} onChange={(e) => {
                               if (e.target.checked) setNewClassStudentIds([...newClassStudentIds, s.id]);
                               else setNewClassStudentIds(newClassStudentIds.filter(id => id !== s.id));
@@ -210,10 +231,21 @@ export default function ClassesTab({ institutionId, onUpdate }: { institutionId:
                     </div>
 
                     <div className="space-y-2">
-                      <Label>Unidades de Lectura (Libros Base)</Label>
-                      <div className="border rounded-md p-2 max-h-32 overflow-y-auto space-y-1">
-                        {books.length === 0 ? <div className="text-sm text-gray-500">No hay libros disponibles</div> : books.map(b => (
-                          <label key={b.id} className="flex items-center gap-2 cursor-pointer text-sm p-1 hover:bg-gray-50 rounded">
+                      <Label className="flex items-center justify-between">
+                        <span>Unidades de Lectura (Libros Base)</span>
+                        <div className="relative w-40">
+                          <Search className="absolute left-2 top-2.5 h-3 w-3 text-gray-400" />
+                          <Input 
+                            placeholder="Buscar..." 
+                            className="pl-7 h-8 text-xs" 
+                            value={bookSearch} 
+                            onChange={e => setBookSearch(e.target.value)} 
+                          />
+                        </div>
+                      </Label>
+                      <div className="border rounded-md p-2 max-h-32 overflow-y-auto space-y-1 bg-gray-50/30">
+                        {filteredBooks.length === 0 ? <div className="text-sm text-gray-500 text-center py-2">No se encontraron libros</div> : filteredBooks.map(b => (
+                          <label key={b.id} className="flex items-center gap-2 cursor-pointer text-sm p-1 hover:bg-white rounded border border-transparent hover:border-gray-100">
                             <input type="checkbox" checked={newClassBookIds.includes(b.id)} onChange={(e) => {
                               if (e.target.checked) setNewClassBookIds([...newClassBookIds, b.id]);
                               else setNewClassBookIds(newClassBookIds.filter(id => id !== b.id));
@@ -263,11 +295,19 @@ export default function ClassesTab({ institutionId, onUpdate }: { institutionId:
                 <div className="space-y-2 pt-2 border-t">
                   <Label className="flex items-center justify-between">
                     <span>Estudiantes Matriculados</span>
-                    <Badge variant="outline">{editStudentIds.length} seleccionados</Badge>
+                    <div className="relative w-36">
+                      <Search className="absolute left-2 top-2.5 h-3 w-3 text-gray-400" />
+                      <Input 
+                        placeholder="Buscar..." 
+                        className="pl-7 h-7 text-[10px]" 
+                        value={studentSearch} 
+                        onChange={e => setStudentSearch(e.target.value)} 
+                      />
+                    </div>
                   </Label>
                   <div className="border rounded-md p-2 max-h-40 overflow-y-auto space-y-1 bg-gray-50/50">
-                    {students.length === 0 ? <p className="text-xs text-center text-gray-500">No hay estudiantes</p> : students.map(s => (
-                      <label key={s.id} className={`flex items-center gap-2 cursor-pointer text-xs p-1.5 hover:bg-white rounded border border-transparent ${editStudentIds.includes(s.id) ? 'bg-indigo-50 border-indigo-100' : ''}`}>
+                    {filteredStudents.length === 0 ? <p className="text-xs text-center text-gray-500 py-2">No se encontraron estudiantes</p> : filteredStudents.map(s => (
+                      <label key={s.id} className={`flex items-center gap-2 cursor-pointer text-xs p-1.5 hover:bg-white rounded border border-transparent ${editStudentIds.includes(s.id) ? 'bg-indigo-50 border-indigo-100' : 'hover:border-gray-100'}`}>
                         <input type="checkbox" checked={editStudentIds.includes(s.id)} onChange={(e) => {
                           if (e.target.checked) setEditStudentIds([...editStudentIds, s.id]);
                           else setEditStudentIds(editStudentIds.filter(id => id !== s.id));
@@ -281,11 +321,19 @@ export default function ClassesTab({ institutionId, onUpdate }: { institutionId:
                 <div className="space-y-2 pt-2 border-t">
                   <Label className="flex items-center justify-between">
                     <span>Unidades de Lectura Asignadas</span>
-                    <Badge variant="outline">{editBookIds.length} seleccionados</Badge>
+                    <div className="relative w-36">
+                      <Search className="absolute left-2 top-2.5 h-3 w-3 text-gray-400" />
+                      <Input 
+                        placeholder="Buscar..." 
+                        className="pl-7 h-7 text-[10px]" 
+                        value={bookSearch} 
+                        onChange={e => setBookSearch(e.target.value)} 
+                      />
+                    </div>
                   </Label>
                   <div className="border rounded-md p-2 max-h-40 overflow-y-auto space-y-1 bg-gray-50/50">
-                    {books.length === 0 ? <p className="text-xs text-center text-gray-500">No hay libros</p> : books.map(b => (
-                      <label key={b.id} className={`flex items-center gap-2 cursor-pointer text-xs p-1.5 hover:bg-white rounded border border-transparent ${editBookIds.includes(b.id) ? 'bg-indigo-50 border-indigo-100' : ''}`}>
+                    {filteredBooks.length === 0 ? <p className="text-xs text-center text-gray-500 py-2">No se encontraron libros</p> : filteredBooks.map(b => (
+                      <label key={b.id} className={`flex items-center gap-2 cursor-pointer text-xs p-1.5 hover:bg-white rounded border border-transparent ${editBookIds.includes(b.id) ? 'bg-indigo-50 border-indigo-100' : 'hover:border-gray-100'}`}>
                         <input type="checkbox" checked={editBookIds.includes(b.id)} onChange={(e) => {
                           if (e.target.checked) setEditBookIds([...editBookIds, b.id]);
                           else setEditBookIds(editBookIds.filter(id => id !== b.id));

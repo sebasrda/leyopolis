@@ -268,25 +268,7 @@ export default function AdminClassesPage() {
     }
   };
 
-  const removeStudent = async (classId: string, studentId: string) => {
-    try {
-      await fetch(`/api/classes/${classId}/students`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ studentId }),
-      });
-      if (detailClass) {
-        setDetailClass({
-          ...detailClass,
-          students: detailClass.students?.filter(s => s.id !== studentId),
-          _count: { students: (detailClass._count?.students || 1) - 1 },
-        });
-      }
-      setSuccess("Estudiante removido");
-    } catch {
-      setError("Error al remover");
-    }
-  };
+
 
   const toggleStudent = (id: string) => {
     setSelectedStudents(prev =>

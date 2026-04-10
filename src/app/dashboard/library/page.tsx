@@ -58,6 +58,7 @@ export default function LibraryPage() {
           subject: b.subject,
           hasQuiz: b.hasQuiz || !!b.quizId,
           quizId: b.quizId,
+          isAssigned: !!b.isAssigned,
           image: b.coverImage || `https://placehold.co/400x600?text=${encodeURIComponent(b.title)}`,
           readTime: b.readTime || "—",
           fileUrl: b.contentUrl,
@@ -88,6 +89,9 @@ export default function LibraryPage() {
   });
 
   const hasActiveFilters = selectedCategory !== "Todos" || selectedDifficulty !== "Todos" || selectedGrade !== "Todos" || selectedSubject !== "Todos";
+
+  const assignedBooksList = filteredBooks.filter(b => b.isAssigned);
+  const otherBooksList = filteredBooks.filter(b => !b.isAssigned);
 
   return (
     <div className="space-y-8">
@@ -182,53 +186,109 @@ export default function LibraryPage() {
         </div>
       )}
 
-      {!loading && !error && filteredBooks.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredBooks.map((book) => (
-            <Card key={book.id} className="group overflow-hidden border-none shadow-md hover:shadow-xl transition-all duration-300 flex flex-col h-full">
-              <div className="relative aspect-[2/3] overflow-hidden bg-gray-100">
-                <img src={book.image} alt={book.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                <div className="absolute top-2 right-2 flex flex-col gap-1">
-                  <Badge className="bg-white/90 text-indigo-900 hover:bg-white shadow-sm backdrop-blur-sm">{book.category}</Badge>
-                  {book.hasQuiz && (
-                    <Badge className="bg-green-500/90 text-white hover:bg-green-600 shadow-sm backdrop-blur-sm flex items-center gap-1">
-                      <CheckCircle className="h-3 w-3" /> Quiz
-                    </Badge>
-                  )}
-                </div>
-                {book.grade && (
-                  <div className="absolute top-2 left-2">
-                    <Badge variant="secondary" className="bg-indigo-600/80 text-white text-xs backdrop-blur-sm">{book.grade}</Badge>
+      {/* Assigned Books Grid */}
+      {!loading && !error && assignedBooksList.length > 0 && (
+        <div className="mb-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="flex items-center gap-3 mb-6 bg-gradient-to-r from-indigo-50 to-white p-4 rounded-xl border border-indigo-100">
+            <div className="p-2 bg-indigo-100 rounded-lg text-indigo-600"><BookOpen className="h-6 w-6" /></div>
+            <div>
+              <h2 className="text-2xl font-bold text-indigo-950">Tus Unidades Asignadas</h2>
+              <p className="text-sm text-indigo-600/80">Lecturas recomendadas para tus clases matriculadas</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {assignedBooksList.map((book) => (
+              <Card key={book.id} className="group overflow-hidden border border-indigo-100 shadow-lg shadow-indigo-100/50 hover:shadow-xl hover:shadow-indigo-200 transition-all duration-300 flex flex-col h-full bg-indigo-50/20 ring-1 ring-indigo-50">
+                <div className="relative aspect-[2/3] overflow-hidden bg-gray-100">
+                  <img src={book.image} alt={book.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-purple-500"></div>
+                  <div className="absolute top-2 right-2 flex flex-col gap-1">
+                    <Badge className="bg-indigo-600 text-white shadow-sm backdrop-blur-sm border-none">Unidad Oficial</Badge>
                   </div>
-                )}
-                
-                <div className="absolute inset-0 bg-indigo-900/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center p-6 gap-3">
-                  <Link href={`/dashboard/reader/${book.id}?title=${encodeURIComponent(book.title)}`} className="w-full">
-                    <Button className="w-full bg-white text-indigo-900 hover:bg-indigo-50 font-bold">Leer Ahora</Button>
-                  </Link>
-                  {book.hasQuiz && book.quizId && (
-                    <Link href={`/dashboard/quiz/${book.quizId}`} className="w-full">
-                      <Button variant="outline" className="w-full border-white text-white hover:bg-white/10">
-                        <Sparkles className="h-4 w-4 mr-2" /> Hacer Quiz
-                      </Button>
+                  
+                  <div className="absolute inset-0 bg-indigo-900/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center p-6 gap-3">
+                    <Link href={`/dashboard/reader/${book.id}?title=${encodeURIComponent(book.title)}`} className="w-full">
+                      <Button className="w-full bg-white text-indigo-900 hover:bg-indigo-50 font-bold">Leer Ahora</Button>
                     </Link>
+                    {book.hasQuiz && book.quizId && (
+                      <Link href={`/dashboard/quiz/${book.quizId}`} className="w-full">
+                        <Button variant="outline" className="w-full border-white text-white hover:bg-white/10">
+                          <Sparkles className="h-4 w-4 mr-2" /> Hacer Quiz
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
+                </div>
+                
+                <CardContent className="p-4 flex-1 flex flex-col gap-2">
+                  <div>
+                    <h3 className="font-bold text-gray-900 line-clamp-1 text-lg" title={book.title}>{book.title}</h3>
+                    <p className="text-sm text-gray-500">{book.author}</p>
+                  </div>
+                  <div className="flex items-center gap-2 mt-auto pt-2 text-xs text-gray-400 flex-wrap">
+                    <span className="bg-indigo-100 px-2 py-1 rounded-md text-indigo-700 font-medium">{book.difficulty}</span>
+                    <span className="flex items-center gap-1 ml-auto"><Clock size={12} /> {book.readTime}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Books Grid */}
+      {!loading && !error && otherBooksList.length > 0 && (
+        <div className="animate-in fade-in slide-in-from-bottom-8 duration-700">
+          {assignedBooksList.length > 0 && (
+             <h2 className="text-xl font-bold text-gray-800 mb-6 border-t pt-8">Catálogo General</h2>
+          )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {otherBooksList.map((book) => (
+              <Card key={book.id} className="group overflow-hidden border-none shadow-md hover:shadow-xl transition-all duration-300 flex flex-col h-full">
+                <div className="relative aspect-[2/3] overflow-hidden bg-gray-100">
+                  <img src={book.image} alt={book.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  <div className="absolute top-2 right-2 flex flex-col gap-1">
+                    <Badge className="bg-white/90 text-indigo-900 hover:bg-white shadow-sm backdrop-blur-sm">{book.category}</Badge>
+                    {book.hasQuiz && (
+                      <Badge className="bg-green-500/90 text-white hover:bg-green-600 shadow-sm backdrop-blur-sm flex items-center gap-1">
+                        <CheckCircle className="h-3 w-3" /> Quiz
+                      </Badge>
+                    )}
+                  </div>
+                  {book.grade && (
+                    <div className="absolute top-2 left-2">
+                      <Badge variant="secondary" className="bg-indigo-600/80 text-white text-xs backdrop-blur-sm">{book.grade}</Badge>
+                    </div>
                   )}
+                  
+                  <div className="absolute inset-0 bg-indigo-900/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center p-6 gap-3">
+                    <Link href={`/dashboard/reader/${book.id}?title=${encodeURIComponent(book.title)}`} className="w-full">
+                      <Button className="w-full bg-white text-indigo-900 hover:bg-indigo-50 font-bold">Leer Ahora</Button>
+                    </Link>
+                    {book.hasQuiz && book.quizId && (
+                      <Link href={`/dashboard/quiz/${book.quizId}`} className="w-full">
+                        <Button variant="outline" className="w-full border-white text-white hover:bg-white/10">
+                          <Sparkles className="h-4 w-4 mr-2" /> Hacer Quiz
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
                 </div>
-              </div>
-              
-              <CardContent className="p-4 flex-1 flex flex-col gap-2">
-                <div>
-                  <h3 className="font-bold text-gray-900 line-clamp-1 text-lg" title={book.title}>{book.title}</h3>
-                  <p className="text-sm text-gray-500">{book.author}</p>
-                </div>
-                <div className="flex items-center gap-2 mt-auto pt-2 text-xs text-gray-400 flex-wrap">
-                  <span className="bg-gray-100 px-2 py-1 rounded-md text-gray-600 font-medium">{book.difficulty}</span>
-                  {book.subject && <span className="bg-blue-50 px-2 py-1 rounded-md text-blue-600 font-medium">{book.subject}</span>}
-                  <span className="flex items-center gap-1 ml-auto"><Clock size={12} /> {book.readTime}</span>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                
+                <CardContent className="p-4 flex-1 flex flex-col gap-2">
+                  <div>
+                    <h3 className="font-bold text-gray-900 line-clamp-1 text-lg" title={book.title}>{book.title}</h3>
+                    <p className="text-sm text-gray-500">{book.author}</p>
+                  </div>
+                  <div className="flex items-center gap-2 mt-auto pt-2 text-xs text-gray-400 flex-wrap">
+                    <span className="bg-gray-100 px-2 py-1 rounded-md text-gray-600 font-medium">{book.difficulty}</span>
+                    {book.subject && <span className="bg-blue-50 px-2 py-1 rounded-md text-blue-600 font-medium">{book.subject}</span>}
+                    <span className="flex items-center gap-1 ml-auto"><Clock size={12} /> {book.readTime}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
       )}
     </div>

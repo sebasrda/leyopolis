@@ -62,8 +62,9 @@ model Institution {
   maxStudents      Int                     @default(30)
   plan             String                  @default("TRIAL")
   startDate        DateTime                @default(now())
-  status           String                  @default("trial")
-  gradeCollections BookCollectionByGrade[]
+  status              String                  @default("trial")
+  isLibraryRestricted Boolean                 @default(false)
+  gradeCollections    BookCollectionByGrade[]
   classes          Class[]
   users            User[]
 
@@ -163,6 +164,7 @@ model Book {
   activities       UserActivity[]
   users            UserBook[]
   vocabulary       Vocabulary[]
+  assignedClasses  Class[]                     @relation("ClassBooks")
 
   @@index([grade])
   @@index([subject])
@@ -241,6 +243,7 @@ model Class {
   institution   Institution? @relation(fields: [institutionId], references: [id])
   teacher       User         @relation(fields: [teacherId], references: [id])
   students      User[]       @relation("ClassStudents")
+  assignedBooks Book[]       @relation("ClassBooks")
 
   @@index([teacherId])
   @@index([institutionId])

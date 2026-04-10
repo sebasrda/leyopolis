@@ -17,10 +17,40 @@ export async function GET(request: Request) {
     const session = await getServerSession(authOptions);
     const userRole = (session?.user as any)?.role;
     const isSuperAdmin = userRole === "SUPERADMIN";
+    const userId = (session?.user as any)?.id;
 
-    // In production, filter out demo books unless demo mode is on OR user is SuperAdmin
+    let restricted = false;
+    let assignedBookIds: string[] = [];
+
+    if (userId && !isSuperAdmin) {
+      const dbUser = await (prisma as any).user.findUnique({
+        where: { id: userId },
+        include: { 
+          institution: { select: { isLibraryRestricted: true } },
+          enrolledClasses: { include: { assignedBooks: { select: { id: true } } } }
+        }
+      });
+      if (dbUser?.institution?.isLibraryRestricted) restricted = true;
+      if (dbUser?.enrolledClasses) {
+        dbUser.enrolledClasses.forEach((cls: any) => {
+           if (cls.assignedBooks) {
+             cls.assignedBooks.forEach((b: any) => {
+               if (!assignedBookIds.includes(b.id)) assignedBookIds.push(b.id);
+             });
+           }
+        });
+      }
+    }
+
     if (!isDemoMode() && !isSuperAdmin) {
       where.isDemo = false;
+    }
+
+    // Apply strict restriction
+    if (restricted && !isSuperAdmin) {
+      where.id = { in: assignedBookIds };
+      // Opcional: si la institución tiene `gradeCollections` permitidas globales, podrían unirse aquí en el `in`, 
+      // pero requerimiento dice: "dejar limitado el colegio a los que se elijan". Usaremos las unidades asignadas por ahora.
     }
 
     const books = await (prisma as any).book.findMany({
@@ -33,11 +63,19 @@ export async function GET(request: Request) {
       orderBy: { createdAt: 'desc' },
     });
 
-    // Add quizId info
     const booksWithQuiz = books.map((b: any) => ({
       ...b,
       hasQuiz: !!b.quizId,
+      isAssigned: assignedBookIds.includes(b.id)
     }));
+
+    if (!isSuperAdmin) {
+       booksWithQuiz.sort((a: any, b: any) => {
+         if (a.isAssigned && !b.isAssigned) return -1;
+         if (!a.isAssigned && b.isAssigned) return 1;
+         return 0; 
+       });
+    }
 
     return NextResponse.json(booksWithQuiz);
   } catch (error) {

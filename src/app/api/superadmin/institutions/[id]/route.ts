@@ -50,27 +50,36 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   try {
     const session = await getServerSession(authOptions);
     const userRole = (session?.user as any)?.role;
+    const userId = (session?.user as any)?.id;
 
-    // Only SUPERADMIN can update institution settings (plan, max limits)
-    if (!session || userRole !== "SUPERADMIN") {
-      return NextResponse.json({ message: "Solo un SuperAdmin puede editar la institución" }, { status: 403 });
+    if (!session || (userRole !== "SUPERADMIN" && userRole !== "ADMIN")) {
+      return NextResponse.json({ message: "No autorizado" }, { status: 401 });
     }
 
-    const resolvedParams = await params;
-    const { id } = resolvedParams;
+    const { id } = await params;
+
+    // Security check for ADMIN (Coordinators)
+    if (userRole === "ADMIN") {
+      const dbUser = await (prisma as any).user.findUnique({ where: { id: userId }, select: { institutionId: true } });
+      if (dbUser?.institutionId !== id) {
+        return NextResponse.json({ message: "Acceso denegado a esta institución" }, { status: 403 });
+      }
+    }
 
     const body = await req.json();
-    const { name, domain, plan, maxStudents, status } = body;
+    const { name, domain, plan, maxStudents, status, isLibraryRestricted } = body;
+
+    const dataPayload: any = {};
+    if (name !== undefined) dataPayload.name = name;
+    if (domain !== undefined) dataPayload.domain = domain;
+    if (plan !== undefined) dataPayload.plan = plan;
+    if (maxStudents !== undefined) dataPayload.maxStudents = maxStudents;
+    if (status !== undefined) dataPayload.status = status;
+    if (isLibraryRestricted !== undefined) dataPayload.isLibraryRestricted = isLibraryRestricted;
 
     const updated = await (prisma as any).institution.update({
       where: { id },
-      data: {
-        name,
-        domain,
-        plan,
-        maxStudents,
-        status,
-      }
+      data: dataPayload
     });
 
     return NextResponse.json(updated);

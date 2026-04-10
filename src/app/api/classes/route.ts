@@ -40,6 +40,9 @@ export async function GET(req: Request) {
         _count: {
           select: { students: true },
         },
+        assignedBooks: {
+          select: { id: true, title: true }
+        }
       },
       orderBy: { createdAt: "desc" },
     });
@@ -57,18 +60,9 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    let { name, teacherId, subject, grade } = body;
+    let { name, teacherId, subject, grade, studentIds = [], bookIds = [] } = body;
 
     if (auth.user.role === "TEACHER") teacherId = auth.user.userId;
-
-    const classDb = prisma as unknown as {
-      class: {
-        create: (args: unknown) => Promise<unknown>;
-      };
-      user: {
-        findUnique: (args: unknown) => Promise<{ institutionId: string | null; role: string | null } | null>;
-      };
-    };
 
     const dbUser = await prisma.user.findUnique({
       where: { id: auth.user.userId },
@@ -82,13 +76,15 @@ export async function POST(req: Request) {
       );
     }
 
-    const newClass = await classDb.class.create({
+    const newClass = await prisma.class.create({
       data: {
         name,
         teacherId,
         subject,
         grade,
-        institutionId: dbUser?.institutionId || null
+        institutionId: dbUser?.institutionId || null,
+        students: studentIds.length > 0 ? { connect: studentIds.map((sid: string) => ({ id: sid })) } : undefined,
+        assignedBooks: bookIds.length > 0 ? { connect: bookIds.map((bid: string) => ({ id: bid })) } : undefined,
       },
       include: {
         teacher: { select: { id: true, name: true, email: true } },

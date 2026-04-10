@@ -16,12 +16,14 @@ import {
   UserCog,
   Trash2,
   FileText,
+  Settings,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { 
   Table, 
   TableBody, 
@@ -70,9 +72,10 @@ interface Stats {
   institution?: {
     name: string;
     status: string;
-    plan: string;
     maxStudents: number;
     endDate: string | null;
+    isLibraryRestricted?: boolean;
+    id: string;
   };
 }
 
@@ -93,6 +96,7 @@ export default function AdminDashboardPage() {
   const [newUserPassword, setNewUserPassword] = useState("");
   const [newUserRole, setNewUserRole] = useState("STUDENT");
   const [creatingUser, setCreatingUser] = useState(false);
+  const [updatingSetting, setUpdatingSetting] = useState(false);
 
   useEffect(() => {
     fetchStats();
@@ -184,6 +188,30 @@ export default function AdminDashboardPage() {
       if (res.ok) fetchStats();
       else alert("Error al eliminar");
     } catch { alert("Error de conexión"); }
+  };
+
+  const handleToggleLibrary = async (checked: boolean) => {
+    if (!stats?.institution?.id) return;
+    setUpdatingSetting(true);
+    try {
+      const res = await fetch(`/api/superadmin/institutions/${stats.institution.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isLibraryRestricted: checked }),
+      });
+      if (res.ok) {
+        setStats((prev: any) => ({
+          ...prev,
+          institution: { ...prev.institution, isLibraryRestricted: checked }
+        }));
+      } else {
+        alert("Error al actualizar configuración");
+      }
+    } catch {
+      alert("Error de conexión");
+    } finally {
+      setUpdatingSetting(false);
+    }
   };
 
   if (loading) {
@@ -281,6 +309,35 @@ export default function AdminDashboardPage() {
                   {stats.institution.endDate ? new Date(stats.institution.endDate).toLocaleDateString() : 'Ilimitado'}
                 </p>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Institution Library Config for Coordinator */}
+      {stats?.institution && (
+        <Card className="border-indigo-100 shadow-sm overflow-hidden bg-white">
+          <CardHeader className="py-4 border-b bg-gray-50/30 flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-sm font-bold flex items-center gap-2">
+                <Settings className="h-4 w-4 text-indigo-500" /> Configuración de Biblioteca Institucional
+              </CardTitle>
+            </div>
+            {updatingSetting && <Loader2 className="h-4 w-4 animate-spin text-gray-400" />}
+          </CardHeader>
+          <CardContent className="p-4 sm:p-6 space-y-4">
+            <div className="flex items-center justify-between gap-6">
+              <div className="space-y-1">
+                <p className="font-semibold text-gray-900">Restringir Biblioteca a Libros Asignados</p>
+                <p className="text-sm text-gray-500">
+                  Si se activa, tus estudiantes solo verán aquellos libros que hayan sido asignados específicamente a sus clases matriculadas.
+                </p>
+              </div>
+              <Switch 
+                checked={stats.institution.isLibraryRestricted || false} 
+                onCheckedChange={handleToggleLibrary}
+                disabled={updatingSetting}
+              />
             </div>
           </CardContent>
         </Card>

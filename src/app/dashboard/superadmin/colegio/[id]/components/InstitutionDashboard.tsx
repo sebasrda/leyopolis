@@ -8,10 +8,12 @@ import UsersTab from "./UsersTab";
 import ClassesTab from "./ClassesTab";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 
 export default function InstitutionDashboard({ institutionId }: { institutionId: string }) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [togglingLibrary, setTogglingLibrary] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -27,6 +29,26 @@ export default function InstitutionDashboard({ institutionId }: { institutionId:
       console.error(e);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleToggleLibrary = async (checked: boolean) => {
+    setTogglingLibrary(true);
+    try {
+      const res = await fetch(`/api/superadmin/institutions/${institutionId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isLibraryRestricted: checked })
+      });
+      if (res.ok) {
+        setData((prev: any) => ({ ...prev, isLibraryRestricted: checked }));
+      } else {
+        alert("Error al actualizar configuración");
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setTogglingLibrary(false);
     }
   };
 
@@ -102,7 +124,28 @@ export default function InstitutionDashboard({ institutionId }: { institutionId:
           <UsersTab institutionId={institutionId} role="TEACHER" limits={{ count: 0, max: 0 }} onUpdate={fetchData} />
         </TabsContent>
         <TabsContent value="admins">
-          <UsersTab institutionId={institutionId} role="ADMIN" limits={{ count: 0, max: 0 }} onUpdate={fetchData} />
+          <div className="space-y-6">
+            <Card className="border-none shadow-md">
+              <CardHeader className="border-b bg-gray-50/50">
+                <CardTitle>Configuración de Plataforma / Biblioteca</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-semibold text-gray-900">Limitar Biblioteca a Unidades Asignadas</h3>
+                    <p className="text-sm text-gray-500">
+                      Si se activa, los estudiantes de este colegio solo verán en su biblioteca los libros estrictamente asignados a sus clases matriculadas.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {togglingLibrary && <Loader2 className="h-4 w-4 animate-spin text-gray-400" />}
+                    <Switch checked={data?.isLibraryRestricted || false} onCheckedChange={handleToggleLibrary} disabled={togglingLibrary} />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <UsersTab institutionId={institutionId} role="ADMIN" limits={{ count: 0, max: 0 }} onUpdate={fetchData} />
+          </div>
         </TabsContent>
         <TabsContent value="classes">
           <ClassesTab institutionId={institutionId} onUpdate={fetchData} />

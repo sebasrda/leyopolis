@@ -126,7 +126,7 @@ export function WordSearchGame({ words = ["LEYOPOLIS", "LIBRO", "JUEGO"], gridSi
     const dx = x - selectionStart.x;
     const dy = y - selectionStart.y;
 
-    let newSelection: {x: number, y: number}[] = [];
+    const newSelection: {x: number, y: number}[] = [];
 
     if (dx === 0) { // Vertical
       const step = dy > 0 ? 1 : -1;

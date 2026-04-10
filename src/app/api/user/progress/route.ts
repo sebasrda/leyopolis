@@ -24,7 +24,7 @@ export async function GET() {
       });
     }
 
-    let user = await prisma.user.findUnique({
+    const user = await prisma.user.findUnique({
       where: { id: userId },
       select: { xp: true, level: true, streak: true }
     });

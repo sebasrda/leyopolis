@@ -19,12 +19,16 @@ import { Badge } from "@/components/ui/badge";
 export default function ClassesTab({ institutionId, onUpdate }: { institutionId: string, onUpdate: () => void }) {
   const [classes, setClasses] = useState<any[]>([]);
   const [teachers, setTeachers] = useState<any[]>([]);
+  const [students, setStudents] = useState<any[]>([]);
+  const [books, setBooks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
   const [createOpen, setCreateOpen] = useState(false);
   const [name, setName] = useState("");
   const [teacherId, setTeacherId] = useState("");
   const [grade, setGrade] = useState("");
+  const [studentIds, setStudentIds] = useState<string[]>([]);
+  const [bookIds, setBookIds] = useState<string[]>([]);
   const [creating, setCreating] = useState(false);
 
   useEffect(() => {
@@ -42,6 +46,14 @@ export default function ClassesTab({ institutionId, onUpdate }: { institutionId:
       const resTeachers = await fetch(`/api/superadmin/institutions/${institutionId}/users?role=TEACHER`);
       if (resTeachers.ok) setTeachers(await resTeachers.json());
       
+      // Fetch students for enrollment
+      const resStudents = await fetch(`/api/superadmin/institutions/${institutionId}/users?role=STUDENT`);
+      if (resStudents.ok) setStudents(await resStudents.json());
+
+      // Fetch books globally
+      const resBooks = await fetch(`/api/books`);
+      if (resBooks.ok) setBooks(await resBooks.json());
+      
     } catch (e) {
       console.error(e);
     } finally {
@@ -55,7 +67,7 @@ export default function ClassesTab({ institutionId, onUpdate }: { institutionId:
       const res = await fetch(`/api/superadmin/institutions/${institutionId}/classes`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, teacherId, grade }),
+        body: JSON.stringify({ name, teacherId, grade, studentIds, bookIds }),
       });
       const data = await res.json();
       if (res.ok) {
@@ -65,6 +77,8 @@ export default function ClassesTab({ institutionId, onUpdate }: { institutionId:
         setName("");
         setTeacherId("");
         setGrade("");
+        setStudentIds([]);
+        setBookIds([]);
       } else {
         alert(data.message || "Error al crear");
       }
@@ -129,7 +143,38 @@ export default function ClassesTab({ institutionId, onUpdate }: { institutionId:
                           </SelectContent>
                       </Select>
                     </div>
-                    <Button onClick={handleCreate} disabled={creating || !name || !teacherId} className="w-full mt-2">
+
+                    <div className="space-y-2">
+                      <Label>Estudiantes a Matricular</Label>
+                      <div className="border rounded-md p-2 max-h-32 overflow-y-auto space-y-1">
+                        {students.length === 0 ? <div className="text-sm text-gray-500">No hay estudiantes en este colegio</div> : students.map(s => (
+                          <label key={s.id} className="flex items-center gap-2 cursor-pointer text-sm p-1 hover:bg-gray-50 rounded">
+                            <input type="checkbox" checked={studentIds.includes(s.id)} onChange={(e) => {
+                              if (e.target.checked) setStudentIds([...studentIds, s.id]);
+                              else setStudentIds(studentIds.filter(id => id !== s.id));
+                            }} className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                            <span className="truncate">{s.name || s.email}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Unidades de Lectura (Libros Base)</Label>
+                      <div className="border rounded-md p-2 max-h-32 overflow-y-auto space-y-1">
+                        {books.length === 0 ? <div className="text-sm text-gray-500">No hay libros disponibles</div> : books.map(b => (
+                          <label key={b.id} className="flex items-center gap-2 cursor-pointer text-sm p-1 hover:bg-gray-50 rounded">
+                            <input type="checkbox" checked={bookIds.includes(b.id)} onChange={(e) => {
+                              if (e.target.checked) setBookIds([...bookIds, b.id]);
+                              else setBookIds(bookIds.filter(id => id !== b.id));
+                            }} className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                            <span className="truncate">{b.title}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    <Button onClick={handleCreate} disabled={creating || !name || !teacherId} className="w-full mt-4">
                       {creating && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
                       Crear Clase
                     </Button>

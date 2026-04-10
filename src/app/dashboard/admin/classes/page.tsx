@@ -58,9 +58,15 @@ interface UserItem {
   role: string;
 }
 
+interface BookItem {
+  id: string;
+  title: string;
+}
+
 export default function AdminClassesPage() {
   const [classes, setClasses] = useState<ClassItem[]>([]);
   const [users, setUsers] = useState<UserItem[]>([]);
+  const [books, setBooks] = useState<BookItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -71,6 +77,8 @@ export default function AdminClassesPage() {
   const [newClassSubject, setNewClassSubject] = useState("");
   const [newClassGrade, setNewClassGrade] = useState("");
   const [newClassTeacherId, setNewClassTeacherId] = useState("");
+  const [newClassStudentIds, setNewClassStudentIds] = useState<string[]>([]);
+  const [newClassBookIds, setNewClassBookIds] = useState<string[]>([]);
   const [creating, setCreating] = useState(false);
 
   // Enroll state
@@ -100,12 +108,14 @@ export default function AdminClassesPage() {
 
   const fetchAll = async () => {
     try {
-      const [classRes, usersRes] = await Promise.all([
+      const [classRes, usersRes, booksRes] = await Promise.all([
         fetch("/api/classes"),
         fetch("/api/users"),
+        fetch("/api/books"),
       ]);
       if (classRes.ok) setClasses(await classRes.json());
       if (usersRes.ok) setUsers(await usersRes.json());
+      if (booksRes.ok) setBooks(await booksRes.json());
     } catch (err) {
       console.error(err);
       setError("Error al cargar datos");
@@ -127,6 +137,8 @@ export default function AdminClassesPage() {
           teacherId: newClassTeacherId,
           subject: newClassSubject || undefined,
           grade: newClassGrade || undefined,
+          studentIds: newClassStudentIds,
+          bookIds: newClassBookIds,
         }),
       });
       if (res.ok) {
@@ -137,6 +149,8 @@ export default function AdminClassesPage() {
         setNewClassSubject("");
         setNewClassGrade("");
         setNewClassTeacherId("");
+        setNewClassStudentIds([]);
+        setNewClassBookIds([]);
         setSuccess("Clase creada exitosamente");
       } else {
         const data = await res.json();
@@ -289,16 +303,58 @@ export default function AdminClassesPage() {
                 </div>
                 <div className="space-y-2">
                   <Label>Docente Asignado *</Label>
-                  <Select value={newClassTeacherId} onValueChange={setNewClassTeacherId}>
-                    <SelectTrigger><SelectValue placeholder="Seleccionar docente" /></SelectTrigger>
-                    <SelectContent>
-                      {teachers.map(t => (
-                        <SelectItem key={t.id} value={t.id}>{t.name} ({t.email})</SelectItem>
-                      ))}
-                    </SelectContent>
                   </Select>
                 </div>
-                <Button onClick={handleCreate} disabled={creating || !newClassName || !newClassTeacherId} className="w-full">
+
+                <div className="space-y-2">
+                  <Label>Matricular Estudiantes Iniciales</Label>
+                  <div className="border rounded-md p-2 max-h-32 overflow-y-auto space-y-1">
+                    {students.length === 0 ? (
+                      <div className="text-xs text-gray-500">No hay estudiantes registrados</div>
+                    ) : (
+                      students.map(s => (
+                        <label key={s.id} className="flex items-center gap-2 cursor-pointer text-xs p-1 hover:bg-gray-50 rounded">
+                          <input 
+                            type="checkbox" 
+                            checked={newClassStudentIds.includes(s.id)} 
+                            onChange={(e) => {
+                              if (e.target.checked) setNewClassStudentIds([...newClassStudentIds, s.id]);
+                              else setNewClassStudentIds(newClassStudentIds.filter(id => id !== s.id));
+                            }} 
+                            className="rounded border-gray-300 text-indigo-600" 
+                          />
+                          <span className="truncate">{s.name || s.email}</span>
+                        </label>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Asignar Unidades de Lectura</Label>
+                  <div className="border rounded-md p-2 max-h-32 overflow-y-auto space-y-1">
+                    {books.length === 0 ? (
+                      <div className="text-xs text-gray-500">No hay libros disponibles</div>
+                    ) : (
+                      books.map(b => (
+                        <label key={b.id} className="flex items-center gap-2 cursor-pointer text-xs p-1 hover:bg-gray-50 rounded">
+                          <input 
+                            type="checkbox" 
+                            checked={newClassBookIds.includes(b.id)} 
+                            onChange={(e) => {
+                              if (e.target.checked) setNewClassBookIds([...newClassBookIds, b.id]);
+                              else setNewClassBookIds(newClassBookIds.filter(id => id !== b.id));
+                            }} 
+                            className="rounded border-gray-300 text-indigo-600" 
+                          />
+                          <span className="truncate">{b.title}</span>
+                        </label>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                <Button onClick={handleCreate} disabled={creating || !newClassName || !newClassTeacherId} className="w-full mt-4">
                   {creating ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Creando...</> : "Crear Clase"}
                 </Button>
               </div>

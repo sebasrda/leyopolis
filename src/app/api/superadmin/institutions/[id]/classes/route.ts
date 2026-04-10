@@ -62,7 +62,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     }
 
     const body = await req.json();
-    const { name, teacherId, grade, subject } = body;
+    const { name, teacherId, grade, subject, studentIds = [], bookIds = [] } = body;
 
     if (!name || !teacherId) {
         return NextResponse.json({ message: "Datos incompletos" }, { status: 400 });
@@ -81,6 +81,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         grade,
         subject,
         institutionId: id,
+        students: studentIds.length > 0 ? { connect: studentIds.map((sid: string) => ({ id: sid })) } : undefined,
+        assignedBooks: bookIds.length > 0 ? { connect: bookIds.map((bid: string) => ({ id: bid })) } : undefined,
       },
       include: {
           teacher: { select: { name: true } },

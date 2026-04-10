@@ -35,7 +35,7 @@ export async function POST(req: Request) {
     let grade = null;
     let subject = null;
     let quizFile: File | null = null;
-    let description = "Libro subido por el administrador";
+    const description = "Libro subido por el administrador";
 
     if (contentType.includes("application/json")) {
       const body = await req.json();

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Loader2, Plus, Trash2, Users } from "lucide-react";
+import { Loader2, Plus, Trash2, Users, UserPlus, FileEdit, Settings, Save } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,9 +27,19 @@ export default function ClassesTab({ institutionId, onUpdate }: { institutionId:
   const [name, setName] = useState("");
   const [teacherId, setTeacherId] = useState("");
   const [grade, setGrade] = useState("");
-  const [studentIds, setStudentIds] = useState<string[]>([]);
-  const [bookIds, setBookIds] = useState<string[]>([]);
+  const [newClassStudentIds, setNewClassStudentIds] = useState<string[]>([]);
+  const [newClassBookIds, setNewClassBookIds] = useState<string[]>([]);
   const [creating, setCreating] = useState(false);
+
+  // Edit class state
+  const [editOpen, setEditOpen] = useState(false);
+  const [editingClass, setEditingClass] = useState<any>(null);
+  const [editName, setEditName] = useState("");
+  const [editGrade, setEditGrade] = useState("");
+  const [editTeacherId, setEditTeacherId] = useState("");
+  const [editStudentIds, setEditStudentIds] = useState<string[]>([]);
+  const [editBookIds, setEditBookIds] = useState<string[]>([]);
+  const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -77,8 +87,8 @@ export default function ClassesTab({ institutionId, onUpdate }: { institutionId:
         setName("");
         setTeacherId("");
         setGrade("");
-        setStudentIds([]);
-        setBookIds([]);
+        setNewClassStudentIds([]);
+        setNewClassBookIds([]);
       } else {
         alert(data.message || "Error al crear");
       }
@@ -101,6 +111,46 @@ export default function ClassesTab({ institutionId, onUpdate }: { institutionId:
       }
     } catch (e) {
       console.error(e);
+    }
+  };
+
+  const handleEditOpen = (cls: any) => {
+    setEditingClass(cls);
+    setEditName(cls.name);
+    setEditGrade(cls.grade || "");
+    setEditTeacherId(cls.teacherId);
+    setEditStudentIds(cls.students?.map((s: any) => s.id) || []);
+    setEditBookIds(cls.assignedBooks?.map((b: any) => b.id) || []);
+    setEditOpen(true);
+  };
+
+  const handleUpdateClass = async () => {
+    if (!editingClass) return;
+    setUpdating(true);
+    try {
+      const res = await fetch(`/api/classes/${editingClass.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: editName,
+          grade: editGrade,
+          teacherId: editTeacherId,
+          studentIds: editStudentIds,
+          bookIds: editBookIds,
+        }),
+      });
+      if (res.ok) {
+        setEditOpen(false);
+        fetchData();
+        onUpdate();
+      } else {
+        const data = await res.json();
+        alert(data.message || "Error al actualizar");
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setUpdating(false);
     }
   };
 
@@ -149,9 +199,9 @@ export default function ClassesTab({ institutionId, onUpdate }: { institutionId:
                       <div className="border rounded-md p-2 max-h-32 overflow-y-auto space-y-1">
                         {students.length === 0 ? <div className="text-sm text-gray-500">No hay estudiantes en este colegio</div> : students.map(s => (
                           <label key={s.id} className="flex items-center gap-2 cursor-pointer text-sm p-1 hover:bg-gray-50 rounded">
-                            <input type="checkbox" checked={studentIds.includes(s.id)} onChange={(e) => {
-                              if (e.target.checked) setStudentIds([...studentIds, s.id]);
-                              else setStudentIds(studentIds.filter(id => id !== s.id));
+                            <input type="checkbox" checked={newClassStudentIds.includes(s.id)} onChange={(e) => {
+                              if (e.target.checked) setNewClassStudentIds([...newClassStudentIds, s.id]);
+                              else setNewClassStudentIds(newClassStudentIds.filter(id => id !== s.id));
                             }} className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
                             <span className="truncate">{s.name || s.email}</span>
                           </label>
@@ -164,9 +214,9 @@ export default function ClassesTab({ institutionId, onUpdate }: { institutionId:
                       <div className="border rounded-md p-2 max-h-32 overflow-y-auto space-y-1">
                         {books.length === 0 ? <div className="text-sm text-gray-500">No hay libros disponibles</div> : books.map(b => (
                           <label key={b.id} className="flex items-center gap-2 cursor-pointer text-sm p-1 hover:bg-gray-50 rounded">
-                            <input type="checkbox" checked={bookIds.includes(b.id)} onChange={(e) => {
-                              if (e.target.checked) setBookIds([...bookIds, b.id]);
-                              else setBookIds(bookIds.filter(id => id !== b.id));
+                            <input type="checkbox" checked={newClassBookIds.includes(b.id)} onChange={(e) => {
+                              if (e.target.checked) setNewClassBookIds([...newClassBookIds, b.id]);
+                              else setNewClassBookIds(newClassBookIds.filter(id => id !== b.id));
                             }} className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
                             <span className="truncate">{b.title}</span>
                           </label>
@@ -179,6 +229,78 @@ export default function ClassesTab({ institutionId, onUpdate }: { institutionId:
                       Crear Clase
                     </Button>
                 </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Edit Class Modal */}
+          <Dialog open={editOpen} onOpenChange={setEditOpen}>
+            <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Settings className="h-5 w-5 text-indigo-600" /> Gestionar Clase: {editName}
+                </DialogTitle>
+              </DialogHeader>
+
+              <div className="space-y-4 py-2">
+                <div className="space-y-1">
+                  <Label>Nombre de la Clase</Label>
+                  <Input value={editName} onChange={e => setEditName(e.target.value)} />
+                </div>
+                <div className="space-y-1">
+                  <Label>Grado</Label>
+                  <Input value={editGrade} onChange={e => setEditGrade(e.target.value)} />
+                </div>
+                <div className="space-y-1">
+                  <Label>Docente</Label>
+                  <Select value={editTeacherId} onValueChange={setEditTeacherId}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {teachers.map(t => <SelectItem key={t.id} value={t.id}>{t.name || t.email}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2 pt-2 border-t">
+                  <Label className="flex items-center justify-between">
+                    <span>Estudiantes Matriculados</span>
+                    <Badge variant="outline">{editStudentIds.length} seleccionados</Badge>
+                  </Label>
+                  <div className="border rounded-md p-2 max-h-40 overflow-y-auto space-y-1 bg-gray-50/50">
+                    {students.length === 0 ? <p className="text-xs text-center text-gray-500">No hay estudiantes</p> : students.map(s => (
+                      <label key={s.id} className={`flex items-center gap-2 cursor-pointer text-xs p-1.5 hover:bg-white rounded border border-transparent ${editStudentIds.includes(s.id) ? 'bg-indigo-50 border-indigo-100' : ''}`}>
+                        <input type="checkbox" checked={editStudentIds.includes(s.id)} onChange={(e) => {
+                          if (e.target.checked) setEditStudentIds([...editStudentIds, s.id]);
+                          else setEditStudentIds(editStudentIds.filter(id => id !== s.id));
+                        }} className="rounded border-gray-300 text-indigo-600" />
+                        <span className="flex-1 truncate font-medium">{s.name || s.email}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2 pt-2 border-t">
+                  <Label className="flex items-center justify-between">
+                    <span>Unidades de Lectura Asignadas</span>
+                    <Badge variant="outline">{editBookIds.length} seleccionados</Badge>
+                  </Label>
+                  <div className="border rounded-md p-2 max-h-40 overflow-y-auto space-y-1 bg-gray-50/50">
+                    {books.length === 0 ? <p className="text-xs text-center text-gray-500">No hay libros</p> : books.map(b => (
+                      <label key={b.id} className={`flex items-center gap-2 cursor-pointer text-xs p-1.5 hover:bg-white rounded border border-transparent ${editBookIds.includes(b.id) ? 'bg-indigo-50 border-indigo-100' : ''}`}>
+                        <input type="checkbox" checked={editBookIds.includes(b.id)} onChange={(e) => {
+                          if (e.target.checked) setEditBookIds([...editBookIds, b.id]);
+                          else setEditBookIds(editBookIds.filter(id => id !== b.id));
+                        }} className="rounded border-gray-300 text-indigo-600" />
+                        <span className="flex-1 truncate font-medium">{b.title}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <Button onClick={handleUpdateClass} disabled={updating} className="w-full mt-2 bg-indigo-600">
+                  {updating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+                  Guardar Cambios
+                </Button>
+              </div>
             </DialogContent>
           </Dialog>
         </div>
@@ -211,10 +333,15 @@ export default function ClassesTab({ institutionId, onUpdate }: { institutionId:
                             <Users className="h-4 w-4" /> {c._count?.students || 0}
                         </span>
                     </td>
-                    <td className="p-3 text-center">
-                      <Button variant="ghost" size="icon" className="text-red-400 hover:text-red-700 hover:bg-red-50 h-8 w-8" onClick={() => handleDelete(c.id)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                    <td className="p-3">
+                      <div className="flex items-center justify-center gap-2">
+                        <Button variant="ghost" size="icon" className="text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 h-8 w-8" onClick={() => handleEditOpen(c)}>
+                          <Settings className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="text-red-400 hover:text-red-700 hover:bg-red-50 h-8 w-8" onClick={() => handleDelete(c.id)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))

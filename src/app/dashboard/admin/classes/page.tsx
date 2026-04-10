@@ -11,6 +11,8 @@ import {
   Loader2,
   CheckCircle2,
   AlertCircle,
+  Settings,
+  Save,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -88,8 +90,16 @@ export default function AdminClassesPage() {
   const [enrolling, setEnrolling] = useState(false);
   const [studentSearch, setStudentSearch] = useState("");
 
-  // Detail view
-  const [detailClass, setDetailClass] = useState<ClassItem | null>(null);
+  // Detail/Edit view
+  const [editOpen, setEditOpen] = useState(false);
+  const [editingClass, setEditingClass] = useState<any>(null);
+  const [editName, setEditName] = useState("");
+  const [editSubject, setEditSubject] = useState("");
+  const [editGrade, setEditGrade] = useState("");
+  const [editTeacherId, setEditTeacherId] = useState("");
+  const [editStudentIds, setEditStudentIds] = useState<string[]>([]);
+  const [editBookIds, setEditBookIds] = useState<string[]>([]);
+  const [updating, setUpdating] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
 
   const teachers = users.filter(u => u.role === "TEACHER" || u.role === "COORDINATOR");
@@ -203,15 +213,58 @@ export default function AdminClassesPage() {
     }
   };
 
-  const viewDetail = async (id: string) => {
+  const handleEditOpen = async (cls: any) => {
     setDetailLoading(true);
+    setError(null);
     try {
-      const res = await fetch(`/api/classes/${id}`);
-      if (res.ok) setDetailClass(await res.json());
+      const res = await fetch(`/api/classes/${cls.id}`);
+      if (res.ok) {
+        const fullCls = await res.json();
+        setEditingClass(fullCls);
+        setEditName(fullCls.name);
+        setEditSubject(fullCls.subject || "");
+        setEditGrade(fullCls.grade || "");
+        setEditTeacherId(fullCls.teacherId);
+        setEditStudentIds(fullCls.students?.map((s: any) => s.id) || []);
+        setEditBookIds(fullCls.assignedBooks?.map((b: any) => b.id) || []);
+        setEditOpen(true);
+      }
     } catch {
-      setError("Error al cargar detalle");
+      setError("Error al cargar detalles de la clase");
     } finally {
       setDetailLoading(false);
+    }
+  };
+
+  const handleUpdate = async () => {
+    if (!editingClass) return;
+    setUpdating(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/classes/${editingClass.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: editName,
+          subject: editSubject,
+          grade: editGrade,
+          teacherId: editTeacherId,
+          studentIds: editStudentIds,
+          bookIds: editBookIds,
+        }),
+      });
+      if (res.ok) {
+        setEditOpen(false);
+        setSuccess("Clase actualizada correctamente");
+        fetchAll();
+      } else {
+        const data = await res.json();
+        setError(data.message || "Error al actualizar");
+      }
+    } catch {
+      setError("Error de conexión");
+    } finally {
+      setUpdating(false);
     }
   };
 
@@ -421,49 +474,86 @@ export default function AdminClassesPage() {
         </div>
       </div>
 
-      {/* Detail view */}
-      {detailClass && (
-        <Card className="border-indigo-200 bg-indigo-50/30">
-          <CardHeader className="flex flex-row items-start justify-between">
-            <div>
-              <CardTitle className="text-xl">{detailClass.name}</CardTitle>
-              <CardDescription>
-                Docente: {detailClass.teacher?.name} · {detailClass.subject || "Sin materia"} · {detailClass.grade || "Sin grado"}
-              </CardDescription>
+      {/* Edit/Manage Modal */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Settings className="h-5 w-5 text-indigo-600" /> Gestionar Clase: {editName}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>Nombre de la Clase</Label>
+              <Input value={editName} onChange={e => setEditName(e.target.value)} />
             </div>
-            <Button variant="ghost" size="sm" onClick={() => setDetailClass(null)}>✕</Button>
-          </CardHeader>
-          <CardContent>
-            <h4 className="font-semibold text-sm mb-2">Estudiantes ({detailClass.students?.length || 0})</h4>
-            {detailClass.students && detailClass.students.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nombre</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Acciones</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {detailClass.students.map(s => (
-                    <TableRow key={s.id}>
-                      <TableCell className="font-medium">{s.name}</TableCell>
-                      <TableCell className="text-gray-500 text-sm">{s.email}</TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700" onClick={() => removeStudent(detailClass.id, s.id)}>
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            ) : (
-              <p className="text-sm text-gray-500">No hay estudiantes matriculados.</p>
-            )}
-          </CardContent>
-        </Card>
-      )}
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Materia</Label>
+                <Input value={editSubject} onChange={e => setEditSubject(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label>Grado</Label>
+                <Input value={editGrade} onChange={e => setEditGrade(e.target.value)} />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Docente</Label>
+              <Select value={editTeacherId} onValueChange={setEditTeacherId}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {teachers.map(t => <SelectItem key={t.id} value={t.id}>{t.name} ({t.email})</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2 pt-2 border-t">
+              <Label className="flex items-center justify-between">
+                <span>Estudiantes en Clase</span>
+                <Badge variant="outline">{editStudentIds.length}</Badge>
+              </Label>
+              <div className="border rounded-md p-2 max-h-48 overflow-y-auto space-y-1 bg-gray-50/50">
+                {students.map(s => (
+                  <label key={s.id} className={`flex items-center gap-2 cursor-pointer text-xs p-1.5 hover:bg-white rounded border border-transparent ${editStudentIds.includes(s.id) ? 'bg-indigo-50 border-indigo-100' : ''}`}>
+                    <input type="checkbox" checked={editStudentIds.includes(s.id)} onChange={(e) => {
+                      if (e.target.checked) setEditStudentIds([...editStudentIds, s.id]);
+                      else setEditStudentIds(editStudentIds.filter(id => id !== s.id));
+                    }} className="rounded border-gray-300 text-indigo-600" />
+                    <span className="flex-1 truncate font-medium">{s.name}</span>
+                    <span className="text-gray-400 font-normal">{s.email}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2 pt-2 border-t">
+              <Label className="flex items-center justify-between">
+                <span>Unidades de Lectura</span>
+                <Badge variant="outline">{editBookIds.length}</Badge>
+              </Label>
+              <div className="border rounded-md p-2 max-h-48 overflow-y-auto space-y-1 bg-gray-50/50">
+                {books.map(b => (
+                  <label key={b.id} className={`flex items-center gap-2 cursor-pointer text-xs p-1.5 hover:bg-white rounded border border-transparent ${editBookIds.includes(b.id) ? 'bg-indigo-50 border-indigo-100' : ''}`}>
+                    <input type="checkbox" checked={editBookIds.includes(b.id)} onChange={(e) => {
+                      if (e.target.checked) setEditBookIds([...editBookIds, b.id]);
+                      else setEditBookIds(editBookIds.filter(id => id !== b.id));
+                    }} className="rounded border-gray-300 text-indigo-600" />
+                    <span className="flex-1 truncate font-medium">{b.title}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <Button onClick={handleUpdate} disabled={updating} className="w-full mt-2">
+              {updating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+              Guardar Cambios
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Classes Grid */}
       {classes.length === 0 ? (
@@ -500,8 +590,8 @@ export default function AdminClassesPage() {
                   </span>
                   <span className="font-bold">{cls._count?.students || 0}</span>
                 </div>
-                <Button variant="outline" className="w-full" size="sm" onClick={() => viewDetail(cls.id)}>
-                  Ver Detalles
+                <Button variant="outline" className="w-full" size="sm" onClick={() => handleEditOpen(cls)}>
+                  Gestionar Clase
                 </Button>
               </CardContent>
             </Card>

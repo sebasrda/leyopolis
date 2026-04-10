@@ -51,7 +51,7 @@ export async function PUT(
   const { id } = await params;
 
   try {
-    const { name, teacherId, subject, grade } = await req.json();
+    const { name, teacherId, subject, grade, studentIds, bookIds } = await req.json();
 
     const data: any = {};
     if (name) data.name = name;
@@ -59,12 +59,21 @@ export async function PUT(
     if (subject !== undefined) data.subject = subject;
     if (grade !== undefined) data.grade = grade;
 
+    if (studentIds && Array.isArray(studentIds)) {
+      data.students = { set: studentIds.map((sid: string) => ({ id: sid })) };
+    }
+    if (bookIds && Array.isArray(bookIds)) {
+      data.assignedBooks = { set: bookIds.map((bid: string) => ({ id: bid })) };
+    }
+
     const updated = await prisma.class.update({
       where: { id },
       data,
       include: {
         teacher: { select: { id: true, name: true, email: true } },
         _count: { select: { students: true } },
+        students: { select: { id: true } },
+        assignedBooks: { select: { id: true } },
       },
     });
 

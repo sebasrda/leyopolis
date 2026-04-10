@@ -31,6 +31,12 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         },
         _count: {
             select: { students: true }
+        },
+        students: {
+            select: { id: true }
+        },
+        assignedBooks: {
+            select: { id: true }
         }
       },
       orderBy: { createdAt: 'desc' }

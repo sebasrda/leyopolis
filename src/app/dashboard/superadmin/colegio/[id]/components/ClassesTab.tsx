@@ -116,6 +116,9 @@ export default function ClassesTab({ institutionId, onUpdate }: { institutionId:
       }
     } catch (e) {
       console.error(e);
+    }
+  };
+
   const filteredStudents = students.filter(s => 
     (s.name || s.email || "").toLowerCase().includes(studentSearch.toLowerCase())
   );

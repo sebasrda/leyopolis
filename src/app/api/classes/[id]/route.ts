@@ -44,7 +44,7 @@ export async function PUT(
 ) {
   const session = await getServerSession(authOptions);
   const userRole = (session?.user as any)?.role;
-  if (!session?.user || (userRole !== "ADMIN" && userRole !== "TEACHER")) {
+  if (!session?.user || (userRole !== "ADMIN" && userRole !== "TEACHER" && userRole !== "SUPERADMIN")) {
     return NextResponse.json({ message: "No autorizado" }, { status: 401 });
   }
 
@@ -55,7 +55,7 @@ export async function PUT(
 
     const data: any = {};
     if (name) data.name = name;
-    if (teacherId && userRole === "ADMIN") data.teacherId = teacherId;
+    if (teacherId && (userRole === "ADMIN" || userRole === "SUPERADMIN")) data.teacherId = teacherId;
     if (subject !== undefined) data.subject = subject;
     if (grade !== undefined) data.grade = grade;
 
@@ -104,7 +104,7 @@ export async function DELETE(
       return NextResponse.json({ message: "Clase no encontrada" }, { status: 404 });
     }
 
-    if (userRole !== "ADMIN" && cls.teacherId !== userId) {
+    if (userRole !== "ADMIN" && userRole !== "SUPERADMIN" && cls.teacherId !== userId) {
       return NextResponse.json({ message: "Sin permisos" }, { status: 403 });
     }
 

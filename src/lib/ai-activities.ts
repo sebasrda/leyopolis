@@ -70,29 +70,17 @@ ESQUEMA JSON:
 }
 Responde SOLO con JSON.`;
   } else {
-    prompt = `INSTRUCCIÓN SISTEMA: Eres un generador de contenido educativo de ALTA CALIDAD. 
-REGLA DE ORO: Generarás EXACTAMENTE o MÁS de 20 preguntas de opción múltiple. NUNCA generes menos de 20 preguntas.
-LIBRO: "${title}" de "${author}".
-
-INSTRUCCIONES:
-1. Analiza el texto proporcionado (si existe) o usa tus conocimientos sobre el libro.
-2. Genera un JSON con este formato:
+    prompt = `INSTRUCCIÓN SISTEMA: Eres un generador de contenido educativo RAPIDO.
+REGLA: Genera 15-20 preguntas de opción múltiple para "${title}" de "${author}".
+JSON:
 {
-  "questions": [20 o más objetos de pregunta],
-  "keywords": [15 palabras clave],
-  "memoryPairs": [10 parejas para juego de memoria],
-  "sentences": [10 frases para ordenar]
+  "questions": [15-20 objetos],
+  "keywords": [10 palabras],
+  "memoryPairs": [6 parejas],
+  "sentences": [5 frases]
 }
-
-ESPECIFICACIONES TÉCNICAS:
-- Las preguntas deben ser profundas y cubrir todo el libro.
-- Cada pregunta DEBE tener 4 opciones y 1 índice de respuesta correcta (0-3).
-- Responde UNICAMENTE con el objeto JSON. Sin lenguaje natural, sin etiquetas markdown.
-
-TEXTO DEL LIBRO (EXTRACTO):
-${finalRawText ? finalRawText.slice(0, 30000) : "No hay extracto disponible. Usa tus conocimientos generales sobre este libro."}
-
-RECUERDA: MÍNIMO 20 PREGUNTAS EN EL ARRAY "questions".`;
+No uses espacios innecesarios ni saltos de linea en el JSON final. Solo responde con el objeto JSON.
+TEXTO: ${finalRawText ? finalRawText.slice(0, 15000) : "Usa tus conocimientos sobre el libro."}`;
   }
 
   const result = await aiModel.generateContent(prompt);

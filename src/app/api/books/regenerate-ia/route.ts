@@ -30,7 +30,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Libro no encontrado" }, { status: 404 });
     }
 
-    await generateAndSaveActivities({
+    const result = await generateAndSaveActivities({
       bookId: book.id,
       title: book.title,
       author: book.author || "Autor Desconocido",
@@ -38,7 +38,10 @@ export async function POST(req: Request) {
       userId: (session.user as any).id || ""
     });
 
-    return NextResponse.json({ message: "Actividades regeneradas exitosamente" });
+    return NextResponse.json({ 
+      message: "Actividades regeneradas exitosamente",
+      activityCount: result.questions?.length || 0
+    });
   } catch (error: any) {
     console.error("Error regenerating IA activities:", error);
     return NextResponse.json({ 

@@ -133,7 +133,7 @@ export default function AdminBooksPage() {
           setUploadProgress(0);
           resetForm();
           fetchBooks();
-          setSuccess("Libro subido exitosamente con actividades IA");
+          setSuccess(`Libro subido exitosamente con actividades IA (${data.activityCount} preguntas)`);
         }, 500);
       } else {
         setError(data.message || data.error || "Error al registrar el libro en la base de datos [V3]");
@@ -236,7 +236,7 @@ export default function AdminBooksPage() {
       });
       const data = await res.json();
       if (res.ok) {
-        setSuccess("Actividades regeneradas exitosamente");
+        setSuccess(`Actividades regeneradas exitosamente (${data.activityCount} preguntas)`);
         fetchBooks();
       } else {
         setError(data.message || "Error al regenerar actividades");

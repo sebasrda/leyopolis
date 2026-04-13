@@ -199,7 +199,7 @@ export async function POST(req: Request) {
       if (!book) throw new Error("No book object available for AI generation");
       
       // Use the shared utility for all generation logic
-      await generateAndSaveActivities({
+      const result = await generateAndSaveActivities({
         bookId: book.id,
         title: title,
         author: author,
@@ -209,12 +209,20 @@ export async function POST(req: Request) {
         quizFromFile: quizFromFile
       });
 
-    } catch (innerErr) {
-      console.error("Non-critical error in AI/Activity generation:", innerErr);
-      // We don't return here, we want to return the book success
-    }
+      return NextResponse.json({ 
+        message: "Libro subido exitosamente", 
+        book, 
+        activityCount: result.questions?.length || 0 
+      });
 
-    return NextResponse.json({ message: "Libro subido exitosamente", book });
+    } catch (innerErr: any) {
+      console.error("Non-critical error in AI/Activity generation:", innerErr);
+      return NextResponse.json({ 
+        message: "Libro subido pero hubo un error en la IA", 
+        book, 
+        error: innerErr.message 
+      });
+    }
   } catch (error) {
     console.error("Global upload error:", error);
     return NextResponse.json({ message: "Error crítico al procesar subida", error: String(error) }, { status: 500 });

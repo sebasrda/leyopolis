@@ -44,36 +44,55 @@ export async function generateAndSaveActivities({
   const { GoogleGenerativeAI } = require("@google/generative-ai");
   const genAI = new GoogleGenerativeAI(apiKey);
   // Using gemini-2.0-flash which is fast
-  const aiModel = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+  const aiModel = genAI.getGenerativeModel({ 
+    model: "gemini-2.0-flash",
+    generationConfig: {
+      temperature: 0.7,
+      topP: 0.95,
+      topK: 40,
+      maxOutputTokens: 8192,
+    }
+  });
   
   let prompt = "";
   if (quizFromFile && finalRawText) {
-    prompt = `Analiza el siguiente texto de un examen/quiz y conviértelo a JSON.
-Libro: "${title}".
-EXTRAE las preguntas TAL CUAL están en el documento y formátalas en este esquema JSON:
+    prompt = `INSTRUCCIÓN SISTEMA: Actúa como un experto pedagogo. Extrae las preguntas del texto adjunto.
+REQUERIMIENTO: Formatea el contenido en un JSON estricto.
+LIBRO: "${title}".
+TEXTO: ${finalRawText.slice(0, 10000)}
+
+ESQUEMA JSON:
 {
-  "questions": [{"id": 1, "question": "pregunta textual", "options": ["A", "B", "C", "D"], "correctAnswer": 0}],
-  "keywords": ["PALABRA1", "PALABRA2"],
-  "memoryPairs": [{"character": "Nombre", "description": "Relación"}],
-  "sentences": [{"id": 1, "sentence": "Frase importante"}]
+  "questions": [{"id": 1, "question": "texto", "options": ["A", "B", "C", "D"], "correctAnswer": 0}],
+  "keywords": ["PALABRA"],
+  "memoryPairs": [{"character": "A", "description": "B"}],
+  "sentences": [{"id": 1, "sentence": "..."}]
 }
-Responde SOLO con JSON válido.
-TEXTO: ${finalRawText.slice(0, 8000)}`;
+Responde SOLO con JSON.`;
   } else {
-    prompt = `Genera un exhaustivo JSON educativo basado en el libro "${title}" de "${author}".
-Esquema estricto y obligatorio:
+    prompt = `INSTRUCCIÓN SISTEMA: Eres un generador de contenido educativo de ALTA CALIDAD. 
+REGLA DE ORO: Generarás EXACTAMENTE o MÁS de 20 preguntas de opción múltiple. NUNCA generes menos de 20 preguntas.
+LIBRO: "${title}" de "${author}".
+
+INSTRUCCIONES:
+1. Analiza el texto proporcionado (si existe) o usa tus conocimientos sobre el libro.
+2. Genera un JSON con este formato:
 {
-  "questions": [{"id": 1, "question": "pregunta", "options": ["A", "B", "C", "D"], "correctAnswer": 0}],
-  "keywords": ["PALABRA1", "PALABRA2"],
-  "memoryPairs": [{"character": "Término", "description": "Definición o Relación"}],
-  "sentences": [{"id": 1, "sentence": "Frase clave para ordenar"}]
+  "questions": [20 o más objetos de pregunta],
+  "keywords": [15 palabras clave],
+  "memoryPairs": [10 parejas para juego de memoria],
+  "sentences": [10 frases para ordenar]
 }
-REGLA CRÍTICA: Debes generar MÍNIMO 20 preguntas desafiantes sobre la lectura, 20 palabras clave relevantes, 10 parejas de memoria y 10 frases para ordenar.
-Responde SOLO con un JSON válido y bien formado. Sin markdown, sin explicaciones.`;
-    
-    if (finalRawText) {
-      prompt += `\nESTE ES UN EXTRACTO DEL LIBRO. USA ESTA INFORMACIÓN PARA GENERAR LAS PREGUNTAS:\nTEXTO: ${finalRawText.slice(0, 25000)}`;
-    }
+
+ESPECIFICACIONES TÉCNICAS:
+- Las preguntas deben ser profundas y cubrir todo el libro.
+- Cada pregunta DEBE tener 4 opciones y 1 índice de respuesta correcta (0-3).
+- Responde UNICAMENTE con el objeto JSON. Sin lenguaje natural, sin etiquetas markdown.
+
+TEXTO DEL LIBRO (EXTRACTO):
+${finalRawText ? finalRawText.slice(0, 30000) : "No hay extracto disponible. Usa tus conocimientos generales sobre este libro."}
+
+RECUERDA: MÍNIMO 20 PREGUNTAS EN EL ARRAY "questions".`;
   }
 
   const result = await aiModel.generateContent(prompt);
@@ -81,11 +100,17 @@ Responde SOLO con un JSON válido y bien formado. Sin markdown, sin explicacione
   const jsonMatch = responseText.match(/\{[\s\S]*\}/);
   finalJsonString = jsonMatch ? jsonMatch[0] : responseText;
 
-  if (!finalJsonString) {
-    throw new Error("AI returned empty response");
+  if (!finalJsonString || finalJsonString.length < 100) {
+    throw new Error("AI returned an invalid or too short response");
   }
 
   const parsedQuiz = JSON.parse(finalJsonString);
+  
+  // Validate question count
+  if (!parsedQuiz.questions || parsedQuiz.questions.length < 5) {
+     console.warn(`AI generated too few questions (${parsedQuiz.questions?.length}). Retrying with simpler prompt might be needed, but throwing for now.`);
+     throw new Error(`AI generated insufficient questions: ${parsedQuiz.questions?.length}`);
+  }
 
   // Stage 3: Clear existing AI activities for this book to avoid duplicates
   await (prisma as any).activity.deleteMany({

@@ -158,7 +158,14 @@ export async function POST(request: Request) {
       });
     }
 
-    return NextResponse.json(reading);
+    return NextResponse.json({
+      reading,
+      user: {
+        xp: user?.xp || 0,
+        level: user?.level || 1,
+        streak: user?.streak || 0
+      }
+    });
   } catch (error) {
     console.error("Reading progress error:", error);
     return NextResponse.json({ error: 'Failed to update reading' }, { status: 500 });

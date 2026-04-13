@@ -241,7 +241,16 @@ export function LearningProvider({ children }: { children: React.ReactNode }) {
                 totalPages: totalPages,
                 progress: Math.round((page / totalPages) * 100)
             })
-        }).catch(err => console.error("Failed to sync reading progress", err));
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.user) {
+                console.log("Stats synchronized:", data.user);
+                // We could dispatch a custom event here if needed, 
+                // but GamificationContext already polls which is safe.
+            }
+        })
+        .catch(err => console.error("Failed to sync reading progress", err));
     }
   };
 

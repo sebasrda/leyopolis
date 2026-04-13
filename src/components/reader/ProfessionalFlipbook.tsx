@@ -307,9 +307,35 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
     };
 
     startSession();
+    
+    // 2. Heartbeat: Update session every 30s while open
+    const heartbeatInterval = setInterval(async () => {
+      const sid = sessionIdRef.current;
+      if (sid) {
+        try {
+          const duration = sessionStartTimeRef.current 
+            ? Math.floor((new Date().getTime() - sessionStartTimeRef.current.getTime()) / 1000) 
+            : 0;
+            
+          await fetch('/api/reading-session/update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              sessionId: sid,
+              durationSeconds: duration,
+              pagesRead: pagesReadRef.current.size || (currentPageRef.current - VIRTUAL_PAGES + 1),
+              bookId
+            })
+          });
+        } catch (e) {
+          console.error("Heartbeat failed:", e);
+        }
+      }
+    }, 30000);
 
     // Cleanup: End Session on Unmount
     return () => {
+      clearInterval(heartbeatInterval);
       const sid = sessionIdRef.current;
       if (sid) {
         // We use beacon for reliability on unmount/close
@@ -320,7 +346,7 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
         const payload = JSON.stringify({
           sessionId: sid,
           durationSeconds: duration,
-          pagesRead: pagesReadRef.current.size,
+          pagesRead: pagesReadRef.current.size || (currentPageRef.current - VIRTUAL_PAGES + 1),
           progress: Math.floor((currentPageRef.current / (numPagesRef.current || 1)) * 100),
           bookId
         });

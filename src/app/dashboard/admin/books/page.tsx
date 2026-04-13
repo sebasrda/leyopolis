@@ -274,7 +274,8 @@ export default function AdminBooksPage() {
       const data = await res.json();
       
       if (!res.ok) {
-        throw new Error(data.message || data.error || "Fallo en la regeneración");
+        const detail = data.error ? `: ${data.error}` : "";
+        throw new Error(`${data.message || "Fallo en la regeneración"}${detail}`);
       }
 
       setSuccess(`¡Éxito! Se han generado ${data.activityCount} preguntas y todos los juegos interactivos.`);

@@ -258,44 +258,30 @@ export default function AdminBooksPage() {
   };
 
   const handleRegenerateIA = async (bookId: string) => {
-    if (!confirm("¿Deseas re-generar las actividades con IA? Esto reemplazará el quiz y juegos actuales.")) return;
+    if (!confirm("¿Deseas re-generar las actividades con IA? Esto reemplazará el quiz y juegos actuales (20 preguntas + 4 juegos premium).")) return;
     
     setLoading(true);
     setError(null);
-    setSuccess("Iniciando generación (Paso 1/3)...");
+    setSuccess("Generando actividades pedagógicas con IA... esto puede tardar unos 20-30 segundos.");
 
     try {
-      // Paso 1: Preguntas 1-10
-      const res1 = await fetch("/api/books/generate-chunk", {
+      const res = await fetch("/api/books/regenerate-ia", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bookId, stage: "questions-1" })
+        body: JSON.stringify({ bookId })
       });
-      if (!res1.ok) throw new Error("Fallo en Paso 1 (Preguntas 1-10)");
-      setSuccess("Generando preguntas adicionales (Paso 2/3)...");
+      
+      const data = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(data.message || data.error || "Fallo en la regeneración");
+      }
 
-      // Paso 2: Preguntas 11-20
-      const res2 = await fetch("/api/books/generate-chunk", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bookId, stage: "questions-2" })
-      });
-      if (!res2.ok) throw new Error("Fallo en Paso 2 (Preguntas 11-20)");
-      setSuccess("Generando juegos interactivos (Paso 3/3)...");
-
-      // Paso 3: Juegos
-      const res3 = await fetch("/api/books/generate-chunk", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bookId, stage: "games" })
-      });
-      if (!res3.ok) throw new Error("Fallo en Paso 3 (Juegos)");
-
-      setSuccess("¡Actividades generadas exitosamente con 20+ preguntas y juegos!");
+      setSuccess(`¡Éxito! Se han generado ${data.activityCount} preguntas y todos los juegos interactivos.`);
       fetchBooks();
     } catch (err: any) {
       console.error(err);
-      setError(err.message || "Error en la generación por partes");
+      setError(err.message || "Error en la generación con IA");
     } finally {
       setLoading(false);
     }

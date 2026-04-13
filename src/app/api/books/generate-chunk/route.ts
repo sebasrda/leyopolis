@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
       bookId,
       title: book.title,
       author: book.author || "Autor Desconocido",
-      contentUrl: book.contentUrl,
+      contentUrl: book.contentUrl || "",
       userId: session.user.id,
       stage
     });

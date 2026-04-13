@@ -41,7 +41,6 @@ export interface UserBook {
         author: string;
         coverImage: string;
         category: string;
-        totalPages?: number;
     };
     totalDuration?: number;
     pagesReached?: number;

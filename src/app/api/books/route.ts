@@ -55,7 +55,28 @@ export async function GET(request: Request) {
 
     const books = await (prisma as any).book.findMany({
       where,
-      include: {
+      select: {
+        id: true,
+        title: true,
+        author: true,
+        description: true,
+        coverImage: true,
+        category: true,
+        language: true,
+        difficulty: true,
+        format: true,
+        contentUrl: true,
+        createdAt: true,
+        updatedAt: true,
+        published: true,
+        ageRange: true,
+        grade: true,
+        isDemo: true,
+        quizId: true,
+        subject: true,
+        allowMultipleAttempts: true,
+        passScore: true,
+        displaySettings: true,
         _count: {
           select: { users: true }
         }

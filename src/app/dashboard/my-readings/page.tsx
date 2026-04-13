@@ -91,7 +91,7 @@ export default function MyReadingsPage() {
                         <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wider text-indigo-700">
                             <span>Progreso Real</span>
                             <span className="bg-white px-1.5 py-0.5 rounded border border-indigo-100">
-                                {item.pagesReached || 1} / {book.totalPages || 150} págs
+                                {item.pagesReached || 1} / {(book as any).totalPages || 150} págs
                             </span>
                         </div>
                         <div className="grid grid-cols-2 gap-2 text-[10px]">
@@ -110,10 +110,10 @@ export default function MyReadingsPage() {
                         </div>
                         
                         {/* Estimated time to finish */}
-                        {item.avgTimePerPage && book.totalPages && (book.totalPages - (item.pagesReached || 0)) > 0 && (
+                        {item.avgTimePerPage && ((book as any).totalPages || 150) && (((book as any).totalPages || 150) - (item.pagesReached || 0)) > 0 && (
                             <div className="pt-1 flex items-center justify-center gap-1.5 text-[10px] text-amber-600 font-bold">
                                 <Clock size={10} />
-                                <span>Estimado: {Math.round((item.avgTimePerPage * (book.totalPages - (item.pagesReached || 0))) / 60)} min para terminar</span>
+                                <span>Estimado: {Math.round((item.avgTimePerPage * (((book as any).totalPages || 150) - (item.pagesReached || 0))) / 60)} min para terminar</span>
                             </div>
                         )}
                     </div>

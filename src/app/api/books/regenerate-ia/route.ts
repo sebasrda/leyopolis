@@ -34,8 +34,8 @@ export async function POST(req: Request) {
       bookId: book.id,
       title: book.title,
       author: book.author || "Autor Desconocido",
-      contentUrl: book.contentUrl,
-      userId: session.user.id
+      contentUrl: book.contentUrl || "",
+      userId: (session.user as any).id || ""
     });
 
     return NextResponse.json({ message: "Actividades regeneradas exitosamente" });

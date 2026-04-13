@@ -24,7 +24,6 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
-import { toast } from "sonner";
 import { QuizGame } from "@/components/learning/games/QuizGame";
 import { MemoryGame } from "@/components/learning/games/MemoryGame";
 import { WordScrambleGame } from "@/components/learning/games/WordScrambleGame";
@@ -59,16 +58,35 @@ export default function GamesModal({ isOpen, onClose, bookTitle, bookId }: Games
       }
     } catch (err) {
       console.error("Error fetching games data:", err);
-      toast.error("Error al cargar los juegos");
     } finally {
       setLoading(false);
     }
   };
 
   const handleRegenerate = async () => {
-    toast.info("Regenerando actividades con IA...");
-    await fetchQuiz(true);
-    toast.success("Actividades actualizadas");
+    if (!bookId) return;
+    const confirm = window.confirm("¿Estás seguro? Esto reemplazará las actividades actuales con una nueva versión generada por IA (20 preguntas + juegos).");
+    if (!confirm) return;
+
+    setLoading(true);
+    try {
+      const res = await fetch("/api/books/regenerate-ia", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookId })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert("¡Actividades regeneradas con éxito!");
+        await fetchQuiz();
+      } else {
+        alert(data.message || "Error al regenerar");
+      }
+    } catch (err) {
+      console.error("Error de conexión");
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {

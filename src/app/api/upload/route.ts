@@ -8,9 +8,13 @@ import { authOptions } from "@/lib/auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 60; // Max allowed for Pro, ignored for Hobby (capped at 10s)
 
 export async function POST(req: Request) {
-  const log = (msg: string) => appendFile("upload-debug.log", `[${new Date().toISOString()}] ${msg}\n`).catch(() => {});
+  // Use /tmp for logging on Vercel
+  const logPath = process.env.VERCEL ? "/tmp/upload-debug.log" : "upload-debug.log";
+  const log = (msg: string) => appendFile(logPath, `[${new Date().toISOString()}] ${msg}\n`).catch(() => {});
+  
   await log("Iniciando POST /api/upload");
   
   const session = await getServerSession(authOptions);

@@ -82,7 +82,17 @@ export default function AdminBooksPage() {
 
     try {
       const res = await fetch("/api/upload", { method: "POST", body: formData });
-      const data = await res.json().catch(() => ({ message: "Error de formato en la respuesta del servidor" }));
+      
+      let data;
+      const contentType = res.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        data = await res.json();
+      } else {
+        const text = await res.text();
+        setError(`Error del servidor (${res.status}): ${text.slice(0, 100)}... [Revise el tamaño del PDF o contacte soporte]`);
+        setUploadProgress(0);
+        return;
+      }
 
       if (res.ok) {
         setUploadProgress(100);
@@ -94,7 +104,7 @@ export default function AdminBooksPage() {
           setSuccess("Libro subido exitosamente con actividades IA");
         }, 500);
       } else {
-        setError(data.message || data.error || "Error al subir el libro. Revisa el tamaño y formato.");
+        setError(data.message || data.error || "Error al subir el libro. Revisa el tamaño y formato [V2]");
         setUploadProgress(0);
       }
     } catch (err) {

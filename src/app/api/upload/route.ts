@@ -192,7 +192,9 @@ export async function POST(req: Request) {
         console.error("Database error creating book:", dbErr);
         return NextResponse.json({ message: "Error al registrar el libro en la base de datos", error: String(dbErr) }, { status: 500 });
       }
-      // AI Quiz & Games Generation - isolated in try-catch to not fail the whole upload
+    }
+
+    // AI Quiz & Games Generation - isolated in try-catch to not fail the whole upload
     try {
       if (!book) throw new Error("No book object available for AI generation");
       

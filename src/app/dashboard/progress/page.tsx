@@ -52,7 +52,7 @@ export default function ProgressPage() {
   }, []);
 
   // 1. Calculate Real Stats (Fallback if API fails or for immediate feedback)
-  const booksRead = stats.booksCompleted || userBooks.filter(b => b.progress >= 100).length;
+  const booksRead = stats.completedBooks || userBooks.filter(b => b.progress >= 100).length;
   const totalBooks = userBooks.length;
   
   // 2. Generate Chart Data from Real Books

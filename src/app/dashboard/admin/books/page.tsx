@@ -60,36 +60,68 @@ export default function AdminBooksPage() {
   const handleUpload = async () => {
     if (!selectedPdf) return;
     
-    // Client-side size validation (10MB)
-    if (selectedPdf.size > 10 * 1024 * 1024) {
-      setError("El archivo PDF es demasiado grande. El límite es 10MB para garantizar el procesamiento por IA.");
-      return;
-    }
-
-    setUploadProgress(10);
     setError(null);
-    const formData = new FormData();
-    formData.append("file", selectedPdf);
-    if (selectedCover) formData.append("cover", selectedCover);
-    formData.append("title", bookTitle || selectedPdf.name.replace(".pdf", ""));
-    formData.append("author", bookAuthor || "Autor Desconocido");
-    formData.append("category", bookCategory);
-    formData.append("difficulty", bookDifficulty);
-    formData.append("ageRange", bookAgeRange);
-    if (bookGrade) formData.append("grade", bookGrade);
-    if (bookSubject) formData.append("subject", bookSubject);
-    if (quizFile) formData.append("quizFile", quizFile);
+    setUploadProgress(10);
 
     try {
-      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      const { upload } = await import("@vercel/blob/client");
       
+      // Stage 1: Upload PDF directly to Blob
+      setUploadProgress(20);
+      const pdfBlob = await upload(selectedPdf.name, selectedPdf, {
+        access: 'public',
+        handleUploadUrl: '/api/upload/blob-token',
+      });
+      console.log("PDF uploaded to:", pdfBlob.url);
+
+      // Stage 2: Upload Cover if exists
+      let coverUrl = "";
+      if (selectedCover) {
+        setUploadProgress(40);
+        const coverBlob = await upload(selectedCover.name, selectedCover, {
+          access: 'public',
+          handleUploadUrl: '/api/upload/blob-token',
+        });
+        coverUrl = coverBlob.url;
+      }
+
+      // Stage 3: Upload Quiz File if exists
+      let quizUrl = "";
+      if (quizFile) {
+        setUploadProgress(50);
+        const quizBlob = await upload(quizFile.name, quizFile, {
+          access: 'public',
+          handleUploadUrl: '/api/upload/blob-token',
+        });
+        quizUrl = quizBlob.url;
+      }
+
+      // Stage 4: Send meta-data to our API
+      setUploadProgress(70);
+      const res = await fetch("/api/upload", { 
+        method: "POST", 
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: bookTitle || selectedPdf.name.replace(".pdf", ""),
+          author: bookAuthor || "Autor Desconocido",
+          category: bookCategory,
+          difficulty: bookDifficulty,
+          ageRange: bookAgeRange,
+          grade: bookGrade,
+          subject: bookSubject,
+          contentUrl: pdfBlob.url,
+          coverImage: coverUrl,
+          quizFileUrl: quizUrl,
+        }) 
+      });
+
       let data;
       const contentType = res.headers.get("content-type");
       if (contentType && contentType.includes("application/json")) {
         data = await res.json();
       } else {
         const text = await res.text();
-        setError(`Error del servidor (${res.status}): ${text.slice(0, 100)}... [Revise el tamaño del PDF o contacte soporte]`);
+        setError(`Error del servidor (${res.status}): ${text.slice(0, 100)}...`);
         setUploadProgress(0);
         return;
       }
@@ -104,13 +136,27 @@ export default function AdminBooksPage() {
           setSuccess("Libro subido exitosamente con actividades IA");
         }, 500);
       } else {
-        setError(data.message || data.error || "Error al subir el libro. Revisa el tamaño y formato [V2]");
+        setError(data.message || data.error || "Error al registrar el libro en la base de datos [V3]");
         setUploadProgress(0);
       }
-    } catch (err) {
-      setError("Error de conexión con el servidor. Verifica tu internet.");
+    } catch (err: any) {
+      console.error("Upload error:", err);
+      setError(`Error durante la subida: ${err.message || "Verifique su conexión"}`);
       setUploadProgress(0);
     }
+  };
+
+  const Kinder = {
+    grade: "K",
+    subject: "Transición"
+  };
+  const Primary = {
+    grade: "P",
+    subject: "Primaria"
+  };
+  const Secondary = {
+    grade: "S",
+    subject: "Secundaria"
   };
 
   const toggleMultipleAttempts = async (bookId: string, currentState: boolean) => {

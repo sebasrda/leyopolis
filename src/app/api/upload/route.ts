@@ -46,6 +46,9 @@ export async function POST(req: Request) {
     let subject = null;
     let quizFile: File | null = null;
     const description = "Libro subido por el administrador";
+    let rawText = "";
+    let finalJsonString = "";
+    let quizFromFile = false;
 
     if (contentType.includes("application/json")) {
       const body = await req.json();
@@ -54,16 +57,69 @@ export async function POST(req: Request) {
       category = body.category || "General";
       difficulty = body.difficulty || "Intermedio";
       ageRange = body.ageRange || null;
+      grade = body.grade || null;
+      subject = body.subject || null;
       const contentUrl = body.contentUrl || "";
       const coverImage = body.coverImage || "https://placehold.co/400x600?text=PDF";
+      const quizFileUrl = body.quizFileUrl || "";
 
-      book = await (prisma as any).book.create({
-        data: {
-          title, author, category, difficulty, ageRange,
-          language: "Español", format: "PDF", contentUrl,
-          coverImage, description
+      if (!contentUrl) {
+        return NextResponse.json({ message: "URL de contenido requerida" }, { status: 400 });
+      }
+
+      try {
+        book = await (prisma as any).book.create({
+          data: {
+            title, author, category, difficulty, ageRange, grade, subject,
+            language: "Español", format: "PDF", contentUrl,
+            coverImage, description
+          }
+        });
+
+        // For AI generation, we need to fetch the PDF content if possible
+        try {
+          const pdfRes = await fetch(contentUrl);
+          if (pdfRes.ok) {
+            const pdfBuffer = Buffer.from(await pdfRes.arrayBuffer());
+            const pdfParse = require("pdf-parse");
+            const data = await pdfParse(pdfBuffer);
+            rawText = data.text;
+          }
+        } catch (fetchErr) {
+          console.error("Error fetching PDF for AI text extraction:", fetchErr);
         }
-      });
+
+        // If a manual quiz file was uploaded (PDF/Docx/JSON)
+        if (quizFileUrl) {
+          try {
+            const qFileRes = await fetch(quizFileUrl);
+            if (qFileRes.ok) {
+              if (quizFileUrl.endsWith(".json")) {
+                finalJsonString = await qFileRes.text();
+                quizFromFile = true;
+              } else {
+                const qBuffer = Buffer.from(await qFileRes.arrayBuffer());
+                if (quizFileUrl.endsWith(".pdf")) {
+                   const pdfParse = require("pdf-parse");
+                   const qData = await pdfParse(qBuffer);
+                   rawText = qData.text; // Use this as source for AI
+                   quizFromFile = true;
+                } else if (quizFileUrl.endsWith(".docx") || quizFileUrl.endsWith(".doc")) {
+                   const mammoth = require("mammoth");
+                   const qResult = await mammoth.extractRawText({ buffer: qBuffer });
+                   rawText = qResult.value;
+                   quizFromFile = true;
+                }
+              }
+            }
+          } catch (qFetchErr) {
+            console.error("Error fetching manual quiz file:", qFetchErr);
+          }
+        }
+      } catch (dbErr) {
+        console.error("Database error creating book from URL:", dbErr);
+        return NextResponse.json({ message: "Error al registrar el libro con la URL proporcionada", error: String(dbErr) }, { status: 500 });
+      }
     } else {
       let formData;
       try {
@@ -141,12 +197,8 @@ export async function POST(req: Request) {
     try {
       if (!book) throw new Error("No book object available for AI generation");
       
-      let rawText = "";
-      let finalJsonString = "";
-      let quizFromFile = false;
-
-      // Stage 1: Text extraction from manual quiz file
-      if (quizFile && quizFile.size > 0) {
+      // Stage 1: Text extraction from manual quiz file (if not already handled via URL)
+      if (!quizFromFile && quizFile && quizFile.size > 0) {
         try {
           if (quizFile.name.endsWith(".json")) {
             finalJsonString = await quizFile.text();

@@ -231,14 +231,14 @@ export function LearningProvider({ children }: { children: React.ReactNode }) {
     }));
 
     // Sync with API
-    // Note: We need bookId (DB ID) for this API, but local readingProgress uses IDs that might be URLs or filenames.
-    // If bookId is a UUID, we can save it.
-    if (bookId.length > 10 && !bookId.includes('.')) { // Simple heuristic check for UUID vs filename
+    if (bookId.length > 10 && !bookId.includes('.')) {
         fetch('/api/user/readings', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 bookId,
+                currentPage: page,
+                totalPages: totalPages,
                 progress: Math.round((page / totalPages) * 100)
             })
         }).catch(err => console.error("Failed to sync reading progress", err));

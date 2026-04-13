@@ -230,12 +230,44 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
   // Modales
   const [showExam, setShowExam] = useState(false);
   const [showGames, setShowGames] = useState(false);
-  
   // Referencia al Tutor IA
   const aiTutorRef = useRef<AiTutorRef>(null);
   
   // Contexto de Aprendizaje
-  const { addVocabulary, addNote, updateReadingProgress } = useLearning();
+  const { addVocabulary, addNote, updateReadingProgress, userBooks } = useLearning();
+  const [initialJumpDone, setInitialJumpDone] = useState(false);
+
+  // --- AUTO-LOAD BOOKMARK ---
+  useEffect(() => {
+    if (!initialJumpDone && numPages > 0 && bookId && userBooks?.length > 0) {
+      const saved = userBooks.find(ub => ub.bookId === bookId);
+      if (saved && saved.progress > 0 && saved.progress < 100) {
+        // Estimar página basada en progreso porcentual
+        const targetPage = Math.max(1, Math.round((saved.progress / 100) * numPages)) + VIRTUAL_PAGES;
+        
+        // Esperamos a que el componente esté listo y hacemos el salto
+        const timer = setTimeout(() => {
+          if (flipBookRef.current) {
+            try {
+              if (flipBookRef.current.pageFlip().turnToPage) {
+                flipBookRef.current.pageFlip().turnToPage(targetPage - 1);
+              } else {
+                flipBookRef.current.pageFlip().flip(targetPage - 1);
+              }
+              console.log("Auto-jumped to saved page:", targetPage);
+            } catch (err) {
+              console.error("Flip transition failed:", err);
+            }
+          }
+          setInitialJumpDone(true);
+        }, 1500); 
+
+        return () => clearTimeout(timer);
+      } else {
+        setInitialJumpDone(true);
+      }
+    }
+  }, [numPages, bookId, userBooks, initialJumpDone]);
 
   // --- READING SESSION TRACKING ---
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -915,12 +947,27 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
 
             <div className="flex items-center gap-2">
                 <button 
-                  onClick={() => setShowExam(true)}
-                  className="flex flex-col items-center justify-center w-12 h-10 hover:bg-white/10 rounded-md transition-colors group relative"
-                  title="Examen"
+                  onClick={async () => {
+                    if (bookId) {
+                      const realPage = Math.max(1, currentPage - VIRTUAL_PAGES + 1);
+                      await updateReadingProgress(bookId, realPage, numPages);
+                      
+                      // Success feedback
+                      const toast = document.createElement('div');
+                      toast.className = "fixed bottom-12 left-1/2 -translate-x-1/2 bg-indigo-600 text-white px-4 py-2 rounded-full shadow-2xl text-xs font-bold z-[100] animate-bounce";
+                      toast.innerHTML = `¡Progreso guardado en página ${realPage}! 🔖`;
+                      document.body.appendChild(toast);
+                      setTimeout(() => toast.remove(), 3000);
+                    }
+                  }}
+                  className={cn(
+                    "flex flex-col items-center justify-center min-w-[60px] h-10 px-2 rounded-md transition-all gap-0.5 border shadow-sm group",
+                    isDarkMode ? "bg-indigo-900/20 border-indigo-500/30 hover:bg-indigo-900/40" : "bg-indigo-600/10 border-indigo-600/20 hover:bg-indigo-600/20"
+                  )}
+                  title="Guardar marcador"
                 >
-                    <GraduationCap size={16} className="text-indigo-400 group-hover:text-indigo-300 mb-0.5" />
-                    <span className="text-[9px] font-medium">Examen</span>
+                    <BookMarked size={16} className="text-indigo-500" />
+                    <span className="text-[9px] font-bold text-indigo-500">Marcar</span>
                 </button>
                 <button 
                   onClick={() => setShowGames(true)}
@@ -1316,7 +1363,12 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
                 if (e.key === 'Enter') {
                   const p = parseInt(goToPageInput);
                   if (!isNaN(p) && p >= 1 && p <= (numPages + VIRTUAL_PAGES)) {
-                    flipBookRef.current?.pageFlip().flip(p - 1);
+                    // Try both turnToPage and flip as fallback
+                    if (flipBookRef.current?.pageFlip().turnToPage) {
+                      flipBookRef.current.pageFlip().turnToPage(p - 1);
+                    } else {
+                      flipBookRef.current?.pageFlip().flip(p - 1);
+                    }
                     setGoToPageInput("");
                   }
                 }
@@ -1326,7 +1378,11 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
               onClick={() => {
                 const p = parseInt(goToPageInput);
                 if (!isNaN(p) && p >= 1 && p <= (numPages + VIRTUAL_PAGES)) {
-                  flipBookRef.current?.pageFlip().flip(p - 1);
+                   if (flipBookRef.current?.pageFlip().turnToPage) {
+                      flipBookRef.current.pageFlip().turnToPage(p - 1);
+                    } else {
+                      flipBookRef.current?.pageFlip().flip(p - 1);
+                    }
                   setGoToPageInput("");
                 }
               }}
@@ -1339,7 +1395,6 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
       </footer>
 
       {/* Modales */}
-      <ExamModal isOpen={showExam} onClose={() => setShowExam(false)} bookTitle={bookTitle} bookId={bookId} />
       <GamesModal isOpen={showGames} onClose={() => setShowGames(false)} bookTitle={bookTitle} bookId={bookId} />
       
       {/* AI Tutor Widget */}

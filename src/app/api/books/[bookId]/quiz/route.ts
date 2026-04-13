@@ -18,24 +18,50 @@ export async function GET(
       return NextResponse.json({ message: "Libro no encontrado" }, { status: 404 });
     }
 
-    if (!book.quizId) {
-      return NextResponse.json({ quiz: null, message: "Este libro no tiene quiz asociado" });
-    }
+    // Fetch the main quiz AND other associated activities (games)
+    const allActivities = await (prisma as any).activity.findMany({
+      where: { bookId: bookId },
+      select: { type: true, content: true, id: true, title: true }
+    });
 
-    const quiz = await (prisma as any).activity.findUnique({
-      where: { id: book.quizId },
-      select: {
-        id: true,
-        title: true,
-        description: true,
-        type: true,
-        content: true,
-        points: true,
-      },
+    let consolidatedContent: any = {
+      questions: [],
+      memoryPairs: [],
+      keywords: [],
+      sentences: []
+    };
+
+    let mainQuizId = book.quizId;
+
+    allActivities.forEach((activity: any) => {
+      try {
+        const content = typeof activity.content === 'string' ? JSON.parse(activity.content) : activity.content;
+        
+        if (activity.type === "QUIZ") {
+          consolidatedContent.questions = content.questions || [];
+          if (!mainQuizId) mainQuizId = activity.id;
+        } else if (activity.type === "MATCH") {
+          // Map "pairs" to "memoryPairs" if needed for consistency with GamesModal
+          consolidatedContent.memoryPairs = content.pairs?.map((p: any) => ({
+            character: p.word,
+            description: p.def
+          })) || [];
+        } else if (activity.type === "WORDSEARCH") {
+          consolidatedContent.keywords = content.words || [];
+        } else if (activity.type === "REORDER") {
+          consolidatedContent.sentences = content.sentences || [];
+        }
+      } catch (err) {
+        console.error("Error parsing activity content:", err);
+      }
     });
 
     return NextResponse.json({ 
-      quiz, 
+      quiz: {
+        id: mainQuizId,
+        content: consolidatedContent,
+        title: book.title
+      }, 
       allowMultipleAttempts: book.allowMultipleAttempts,
       passScore: book.passScore 
     });

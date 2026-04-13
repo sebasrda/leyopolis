@@ -134,7 +134,7 @@ export async function generateAndSaveActivities({
   const parsed = JSON.parse(finalJsonString);
   
   // Stage 1: Create or Reset Quiz
-  if (stage === "questions-1" || stage === "full") {
+  if (stage === "questions-1") {
     // Clear existing for this specific book
     await (prisma as any).activity.deleteMany({
       where: { bookId, OR: [{ title: { startsWith: "Quiz:" } }, { title: { startsWith: "Sopa de letras:" } }, { title: { startsWith: "Memoria:" } }, { title: { startsWith: "Ordenar:" } }] }
@@ -178,7 +178,7 @@ export async function generateAndSaveActivities({
   }
 
   // Stage 3: Create Games and Sync to Quiz
-  else if (stage === "games" || stage === "full") {
+  else if (stage === "games") {
     // 1. Sync game data into the main QUIZ activity (for GamesModal consumption)
     const existingQuiz = await (prisma as any).activity.findFirst({
       where: { bookId, type: "QUIZ" }

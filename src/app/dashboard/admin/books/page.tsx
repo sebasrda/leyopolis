@@ -239,7 +239,7 @@ export default function AdminBooksPage() {
         setSuccess(`Actividades regeneradas exitosamente (${data.activityCount} preguntas)`);
         fetchBooks();
       } else {
-        setError(data.message || "Error al regenerar actividades");
+        setError(data.error || data.message || "Error desconocido al regenerar actividades");
       }
     } catch {
       setError("Error de conexión");

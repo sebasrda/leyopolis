@@ -245,9 +245,19 @@ EXTRAE las preguntas TAL CUAL están en el documento y formátalas en este esque
 Responde SOLO con JSON válido.
 TEXTO: ${rawText.slice(0, 6000)}`;
           } else {
-            prompt = `Genera un JSON educativo para el libro "${title}" de "${author}".
-Esquema: { "questions": [...], "keywords": [...], "memoryPairs": [...], "sentences": [...] }.
-Genera 10 preguntas, 10 palabras clave, 6 parejas de memoria y 5 frases. Responde SOLO con JSON válido.`;
+            prompt = `Genera un exhaustivo JSON educativo basado en el libro "${title}" de "${author}".
+Esquema estricto y obligatorio:
+{
+  "questions": [{"id": 1, "question": "pregunta", "options": ["A", "B", "C", "D"], "correctAnswer": 0}],
+  "keywords": ["PALABRA1", "PALABRA2"],
+  "memoryPairs": [{"character": "Término", "description": "Definición o Relación"}],
+  "sentences": [{"id": 1, "sentence": "Frase clave para ordenar"}]
+}
+REGLA CRÍTICA: Debes generar MÍNIMO 20 preguntas desafiantes sobre la lectura, 20 palabras clave relevantes, 10 parejas de memoria y 10 frases para ordenar.
+Responde SOLO con un JSON válido y bien formado. Sin markdown, sin explicaciones.`;
+            if (rawText) {
+              prompt += `\nESTE ES UN EXTRACTO DEL LIBRO. USA ESTA INFORMACIÓN PARA GENERAR LAS PREGUNTAS:\nTEXTO: ${rawText.slice(0, 20000)}`;
+            }
           }
 
           const result = await aiModel.generateContent(prompt);

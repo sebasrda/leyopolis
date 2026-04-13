@@ -47,18 +47,33 @@ export async function generateAndSaveActivities({
     
     let extract = finalRawText ? finalRawText.slice(0, 15000) : "Sin extracto.";
 
+  // Split 'full' stage into two distinct AI calls to ensure quality and prevent truncation
+  if (stage === "full") {
+    console.log(`[AI-STATS] Starting two-phase generation for book: ${title}`);
+    try {
+      const qResult = await generateAndSaveActivities({
+        bookId, title, author, contentUrl, userId, rawText: finalRawText, stage: "questions-1"
+      });
+      console.log(`[AI-STATS] Phase 1 (Questions) complete. Questions generated: ${qResult.questions?.length || 0}`);
+      
+      const gResult = await generateAndSaveActivities({
+        bookId, title, author, contentUrl, userId, rawText: finalRawText, stage: "games"
+      });
+      console.log(`[AI-STATS] Phase 2 (Games) complete.`);
+      
+      return { ...qResult, ...gResult };
+    } catch (err) {
+      console.error("[AI-STATS] Two-phase generation failed:", err);
+      throw err;
+    }
+  }
+
   if (stage === "questions-1") {
     prompt = `Actúa como un experto pedagogo. 
     Libro: "${title}" de "${author}". 
     TEXTO: ${extract}
-    TAREA: Genera exactamente 10 preguntas de opción múltiple de alta calidad sobre el inicio y desarrollo del libro.
+    TAREA: Genera exactamente 20 preguntas de opción múltiple de alta calidad que cubran todo el contenido (inicio, nudo y desenlace).
     REGLA: Cada pregunta debe tener 4 opciones (A, B, C, D) y un índice de respuesta corecta (0-3).
-    SALIDA: Responde SOLO un JSON: {"questions": [{"question": "text", "options": ["opt0","opt1","opt2","opt3"], "correct": number}]}.`;
-  } else if (stage === "questions-2") {
-    prompt = `Actúa como un experto pedagogo. 
-    Libro: "${title}" de "${author}". 
-    TEXTO: ${extract}
-    TAREA: Genera OTRAS 10 preguntas de comprensión críticas y profundas sobre el final y temas centrales, DISTINTAS a las anteriores.
     SALIDA: Responde SOLO un JSON: {"questions": [{"question": "text", "options": ["opt0","opt1","opt2","opt3"], "correct": number}]}.`;
   } else if (stage === "games") {
     prompt = `Libro: "${title}" de "${author}". 
@@ -69,11 +84,6 @@ export async function generateAndSaveActivities({
     3. sentences: 6 frases destacadas para ordenar.
     4. statements: 10 afirmaciones sobre el libro (algunas verdaderas y otras falsas) con un campo "isTrue" (boolean).
     SALIDA: Responde SOLO un JSON: {"keywords": ["word1",...], "memoryPairs": [{"character": "X", "description": "Y"}], "sentences": ["frase1", ...], "statements": [{"text": "...", "isTrue": true/false}]}`;
-  } else {
-    // Modo Completo (incluye todo)
-    prompt = `Libro: "${title}" de "${author}". TEXTO: ${extract}
-    TAREA: Genera 20 preguntas (questions), 15 palabras clave (keywords), 8 parejas de memoria (memoryPairs) y 10 afirmaciones de Verdad/Falso (statements).
-    SALIDA: Responde SOLO un JSON con todos estos campos.`;
   }
   
   const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -126,7 +136,13 @@ export async function generateAndSaveActivities({
       data: {
         title: `Quiz: ${title}`,
         type: "QUIZ",
-        content: JSON.stringify({ questions: parsed.questions || [] }),
+        content: JSON.stringify({ 
+          questions: parsed.questions || [],
+          keywords: parsed.keywords || [],
+          memoryPairs: parsed.memoryPairs || [],
+          sentences: parsed.sentences || [],
+          statements: parsed.statements || []
+        }),
         points: 100, published: true, createdById: userId, bookId: bookId,
       },
     });
@@ -153,8 +169,30 @@ export async function generateAndSaveActivities({
     }
   }
 
-  // Stage 3: Create Games
+  // Stage 3: Create Games and Sync to Quiz
   else if (stage === "games" || stage === "full") {
+    // 1. Sync game data into the main QUIZ activity (for GamesModal consumption)
+    const existingQuiz = await (prisma as any).activity.findFirst({
+      where: { bookId, type: "QUIZ" }
+    });
+
+    if (existingQuiz) {
+      const currentContent = JSON.parse(existingQuiz.content);
+      await (prisma as any).activity.update({
+        where: { id: existingQuiz.id },
+        data: { 
+          content: JSON.stringify({ 
+            ...currentContent, 
+            keywords: parsed.keywords || currentContent.keywords || [],
+            memoryPairs: parsed.memoryPairs || currentContent.memoryPairs || [],
+            sentences: parsed.sentences || currentContent.sentences || [],
+            statements: parsed.statements || currentContent.statements || []
+          }) 
+        }
+      });
+    }
+
+    // 2. Create separate game activities (for legacy/other views)
     if (parsed.keywords?.length > 0) {
       await (prisma as any).activity.create({
         data: {

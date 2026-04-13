@@ -23,6 +23,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { motion, AnimatePresence } from "framer-motion";
+import { useSession } from "next-auth/react";
+import { toast } from "sonner";
 import { QuizGame } from "@/components/learning/games/QuizGame";
 import { MemoryGame } from "@/components/learning/games/MemoryGame";
 import { WordScrambleGame } from "@/components/learning/games/WordScrambleGame";
@@ -40,16 +42,39 @@ interface GamesModalProps {
 type GameType = "truefalse" | "memory" | "wordsearch" | "scramble" | null;
 
 export default function GamesModal({ isOpen, onClose, bookTitle, bookId }: GamesModalProps) {
+  const { data: session } = useSession();
+  const isAdmin = (session?.user as any)?.role === "ADMIN" || (session?.user as any)?.role === "SUPERADMIN";
   const [activeGame, setActiveGame] = useState<GameType>(null);
   const [quizData, setQuizData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+
+  const fetchQuiz = async (forceRegenerate = false) => {
+    if (!bookId) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/books/${bookId}/quiz${forceRegenerate ? '?regenerate=true' : ''}`);
+      const data = await res.json();
+      if (data.quiz && data.quiz.content) {
+        setQuizData(typeof data.quiz.content === 'string' ? JSON.parse(data.quiz.content) : data.quiz.content);
+      }
+    } catch (err) {
+      console.error("Error fetching games data:", err);
+      toast.error("Error al cargar los juegos");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRegenerate = async () => {
+    toast.info("Regenerando actividades con IA...");
+    await fetchQuiz(true);
+    toast.success("Actividades actualizadas");
+  };
 
   useEffect(() => {
     if (!isOpen) {
       setActiveGame(null);
     } else if (bookId) {
-      const fetchQuiz = async () => {
-        setLoading(true);
         try {
           const res = await fetch(`/api/books/${bookId}/quiz`);
           const data = await res.json();
@@ -82,9 +107,22 @@ export default function GamesModal({ isOpen, onClose, bookTitle, bookId }: Games
               <p className="text-indigo-100 text-sm">Contenido dinámico basado en tu lectura</p>
             </div>
           </div>
-          <Button variant="ghost" size="icon" onClick={onClose} className="hover:bg-white/20 text-white rounded-full h-10 w-10">
-            <X className="h-6 w-6" />
-          </Button>
+          <div className="flex items-center gap-2">
+            {isAdmin && !activeGame && (
+              <Button 
+                onClick={handleRegenerate}
+                disabled={loading}
+                variant="outline" 
+                className="bg-white/10 hover:bg-white/20 border-white/20 text-white gap-2 transition-all hover:scale-105 active:scale-95"
+              >
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
+                <span className="hidden sm:inline">Regenerar (IA)</span>
+              </Button>
+            )}
+            <Button variant="ghost" size="icon" onClick={onClose} className="hover:bg-white/20 text-white rounded-full h-10 w-10">
+              <X className="h-6 w-6" />
+            </Button>
+          </div>
         </div>
 
         <div className="flex-1 overflow-hidden bg-indigo-50/10">

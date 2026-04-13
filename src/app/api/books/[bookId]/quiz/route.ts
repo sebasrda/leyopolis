@@ -28,7 +28,8 @@ export async function GET(
       questions: [],
       memoryPairs: [],
       keywords: [],
-      sentences: []
+      sentences: [],
+      statements: []
     };
 
     let mainQuizId = book.quizId;
@@ -38,18 +39,23 @@ export async function GET(
         const content = typeof activity.content === 'string' ? JSON.parse(activity.content) : activity.content;
         
         if (activity.type === "QUIZ") {
-          consolidatedContent.questions = content.questions || [];
+          // In the new unified format, QUIZ content has everything
+          consolidatedContent.questions = content.questions || consolidatedContent.questions;
+          consolidatedContent.keywords = content.keywords || consolidatedContent.keywords;
+          consolidatedContent.memoryPairs = content.memoryPairs || consolidatedContent.memoryPairs;
+          consolidatedContent.sentences = content.sentences || consolidatedContent.sentences;
+          consolidatedContent.statements = content.statements || consolidatedContent.statements;
+          
           if (!mainQuizId) mainQuizId = activity.id;
         } else if (activity.type === "MATCH") {
-          // Map "pairs" to "memoryPairs" if needed for consistency with GamesModal
           consolidatedContent.memoryPairs = content.pairs?.map((p: any) => ({
             character: p.word,
             description: p.def
-          })) || [];
+          })) || consolidatedContent.memoryPairs;
         } else if (activity.type === "WORDSEARCH") {
-          consolidatedContent.keywords = content.words || [];
+          consolidatedContent.keywords = content.words || consolidatedContent.keywords;
         } else if (activity.type === "REORDER") {
-          consolidatedContent.sentences = content.sentences || [];
+          consolidatedContent.sentences = content.sentences || consolidatedContent.sentences;
         }
       } catch (err) {
         console.error("Error parsing activity content:", err);

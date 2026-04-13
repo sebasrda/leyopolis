@@ -22,10 +22,12 @@ export default function ProgressPage() {
   const { userBooks, vocabulary } = useLearning();
 
   const [stats, setStats] = useState({
-    totalTime: "0m",
+    totalTime: "0h 0m",
     totalPages: 0,
-    averageDailyTime: "0m",
-    booksCompleted: 0
+    averageDailyMinutes: 0,
+    completedBooks: 0,
+    totalBooks: 0,
+    totalMinutes: 0
   });
 
   useEffect(() => {
@@ -80,7 +82,6 @@ export default function ProgressPage() {
         <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
           <Target className="h-8 w-8 text-indigo-600" />
           Mi Progreso
-          <span className="text-[10px] bg-green-100 text-green-700 px-2 py-1 rounded-full font-mono ml-4">v2.1-LIVE</span>
         </h1>
         <p className="text-gray-500">Analíticas basadas en tu actividad real de lectura.</p>
       </div>
@@ -89,9 +90,9 @@ export default function ProgressPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white border-none shadow-lg">
           <CardContent className="p-6 flex flex-col items-center justify-center space-y-2">
-            <BookOpen className="h-8 w-8 opacity-80" />
-            <h3 className="text-3xl font-bold">{booksRead}</h3>
-            <p className="text-sm font-medium opacity-90">Libros leídos</p>
+            <Trophy className="h-8 w-8 opacity-80" />
+            <h3 className="text-3xl font-bold">{stats.completedBooks}</h3>
+            <p className="text-sm font-medium opacity-90">Libros completados</p>
           </CardContent>
         </Card>
         <Card className="bg-white p-6 shadow-md border-none flex flex-col items-center justify-center space-y-2">

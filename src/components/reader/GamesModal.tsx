@@ -28,7 +28,7 @@ import { MemoryGame } from "@/components/learning/games/MemoryGame";
 import { WordScrambleGame } from "@/components/learning/games/WordScrambleGame";
 import { WordSearchGame } from "@/components/learning/games/WordSearchGame";
 import { WordMatchGame } from "@/components/learning/games/WordMatchGame";
-import { CrosswordGame } from "@/components/learning/games/CrosswordGame";
+import { TrueFalseGame } from "@/components/learning/games/TrueFalseGame";
 import { EvaluationMode } from "@/components/learning/games/EvaluationMode";
 
 interface GamesModalProps {
@@ -38,7 +38,7 @@ interface GamesModalProps {
   bookId?: string;
 }
 
-type GameType = "quiz" | "memory" | "wordsearch" | "wordmatch" | "crossword" | "scramble" | null;
+type GameType = "truefalse" | "memory" | "wordsearch" | "scramble" | null;
 
 export default function GamesModal({ isOpen, onClose, bookTitle, bookId }: GamesModalProps) {
   const [activeGame, setActiveGame] = useState<GameType>(null);
@@ -97,7 +97,7 @@ export default function GamesModal({ isOpen, onClose, bookTitle, bookId }: Games
                 <Button variant="ghost" onClick={() => setActiveGame(null)}>← Menú</Button>
                 <div className="h-6 w-px bg-gray-200" />
                 <h3 className="font-bold text-lg text-indigo-900 dark:text-indigo-300">
-                  {activeGame === 'quiz' && 'Comprensión Total: El Reto'}
+                  {activeGame === 'truefalse' && 'Reto: ¿Verdad o Falso?'}
                   {activeGame === 'memory' && 'Parejas Literarias'}
                   {activeGame === 'wordsearch' && 'Busca las Palabras Clave'}
                   {activeGame === 'scramble' && 'Reordenar e Ilustrar'}
@@ -106,9 +106,9 @@ export default function GamesModal({ isOpen, onClose, bookTitle, bookId }: Games
               <div className="flex-1 overflow-y-auto p-6 flex justify-center items-center">
                 {quizData ? (
                   <>
-                    {activeGame === 'quiz' && (
-                      <QuizGame 
-                        questions={quizData.questions || []} 
+                    {activeGame === 'truefalse' && (
+                      <TrueFalseGame 
+                        statements={quizData.statements || []} 
                         onComplete={() => {}} 
                         onExit={() => setActiveGame(null)} 
                       />
@@ -151,7 +151,7 @@ export default function GamesModal({ isOpen, onClose, bookTitle, bookId }: Games
 
 function GameMenu({ onSelectGame }: { onSelectGame: (g: GameType) => void }) {
   const games = [
-    { id: "quiz", title: "Comprensión Total", description: "El gran reto de 20 preguntas.", icon: BrainCircuit, color: "bg-blue-600", gradient: "from-blue-600 to-indigo-500" },
+    { id: "truefalse", title: "Verdad o Falso", description: "Reto rápido de afirmaciones.", icon: BrainCircuit, color: "bg-orange-600", gradient: "from-orange-600 to-amber-500" },
     { id: "wordsearch", title: "Sopa de Letras", description: "Encuentra los conceptos clave.", icon: Grid3X3, color: "bg-emerald-600", gradient: "from-emerald-600 to-teal-500" },
     { id: "memory", title: "Parejas Literarias", description: "Domina los personajes y hechos.", icon: Puzzle, color: "bg-purple-600", gradient: "from-purple-600 to-pink-500" },
     { id: "scramble", title: "Ordenar Frases", description: "Reconstruye la historia.", icon: PenTool, color: "bg-amber-600", gradient: "from-amber-600 to-orange-500" },

@@ -80,14 +80,47 @@ export default function MyReadingsPage() {
                         {book.category || "General"}
                     </Badge>
                     </div>
-                    <CardContent className="p-4 space-y-3">
+                    <CardContent className="p-4 space-y-4">
                     <div>
                         <h3 className="font-bold text-gray-900 line-clamp-1" title={book.title}>{book.title}</h3>
                         <p className="text-sm text-gray-500">{book.author}</p>
                     </div>
+                    
+                    {/* Real-time Granular Stats */}
+                    <div className="bg-indigo-50/50 rounded-xl p-3 border border-indigo-100/50 space-y-2">
+                        <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wider text-indigo-700">
+                            <span>Progreso Real</span>
+                            <span className="bg-white px-1.5 py-0.5 rounded border border-indigo-100">
+                                {item.pagesReached || 1} / {book.totalPages || 150} págs
+                            </span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 text-[10px]">
+                            <div className="bg-white/60 p-1.5 rounded border border-indigo-50 overflow-hidden">
+                                <p className="text-gray-400 font-medium">Tiempo total</p>
+                                <p className="font-bold text-indigo-900 truncate">
+                                    {item.totalDuration ? Math.round(item.totalDuration / 60) : 0} min
+                                </p>
+                            </div>
+                            <div className="bg-white/60 p-1.5 rounded border border-indigo-50 overflow-hidden">
+                                <p className="text-gray-400 font-medium">Ritmo</p>
+                                <p className="font-bold text-indigo-900 truncate">
+                                    {item.avgTimePerPage ? (item.avgTimePerPage / 60).toFixed(1) : "0"} min/p
+                                </p>
+                            </div>
+                        </div>
+                        
+                        {/* Estimated time to finish */}
+                        {item.avgTimePerPage && book.totalPages && (book.totalPages - (item.pagesReached || 0)) > 0 && (
+                            <div className="pt-1 flex items-center justify-center gap-1.5 text-[10px] text-amber-600 font-bold">
+                                <Clock size={10} />
+                                <span>Estimado: {Math.round((item.avgTimePerPage * (book.totalPages - (item.pagesReached || 0))) / 60)} min para terminar</span>
+                            </div>
+                        )}
+                    </div>
+
                     <div className="space-y-1.5">
                         <div className="flex justify-between text-xs text-gray-500 font-medium">
-                        <span>Progreso</span>
+                        <span>Progreso General</span>
                         <span>{progress}%</span>
                         </div>
                         <Progress value={progress} className="h-2" />

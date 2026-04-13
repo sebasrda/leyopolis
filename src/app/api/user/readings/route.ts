@@ -29,16 +29,43 @@ async function getUserId() {
 export async function GET() {
   try {
     const userId = await getUserId();
-    const readings = await prisma.userBook.findMany({
+    
+    // 1. Get all UserBook records
+    const userBooks = await prisma.userBook.findMany({
       where: { userId },
       include: {
         book: true
       },
       orderBy: { lastRead: 'desc' }
     });
+
+    // 2. Get aggregated sessions for each book to calculate real time and page count
+    const enrichedReadings = await Promise.all(userBooks.map(async (ub) => {
+      const stats = await prisma.readingSession.aggregate({
+        where: { userId, bookId: ub.bookId },
+        _sum: {
+          durationSeconds: true,
+          pagesRead: true, // This is technically 'lastPage' in some contexts, but we'll use max as 'reached' 
+        },
+        _max: {
+          pagesRead: true
+        }
+      });
+
+      return {
+        ...ub,
+        totalDuration: stats._sum.durationSeconds || 0,
+        pagesReached: stats._max.pagesRead || 0,
+        // Calculate average time per page (approximate)
+        avgTimePerPage: (stats._max.pagesRead || 0) > 0 
+          ? (stats._sum.durationSeconds || 0) / (stats._max.pagesRead || 0)
+          : 0
+      };
+    }));
     
-    return NextResponse.json(readings);
+    return NextResponse.json(enrichedReadings);
   } catch (error) {
+    console.error("Error in GET readings:", error);
     return NextResponse.json({ error: 'Failed to fetch readings' }, { status: 500 });
   }
 }

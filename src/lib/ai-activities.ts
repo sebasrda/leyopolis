@@ -37,14 +37,14 @@ export async function generateAndSaveActivities({
     } catch (err) {
       console.error("Error fetching/parsing PDF for AI:", err);
     }
-  }
-
   const { GoogleGenerativeAI } = require("@google/generative-ai");
   const genAI = new GoogleGenerativeAI(apiKey);
 
   let prompt = "";
-  let systemContext = `Libro: "${title}" de "${author}". `;
-  let extract = finalRawText ? finalRawText.slice(0, 12000) : "Sin extracto.";
+  const finalRawText = rawText || await extractFullText(contentUrl);
+  console.log(`[AI-STATS] Book: ${title}, Extracted text length: ${finalRawText?.length || 0}`);
+  
+  let extract = finalRawText ? finalRawText.slice(0, 15000) : "Sin extracto.";
 
   if (stage === "questions-1") {
     prompt = `Actúa como un experto pedagogo. 
@@ -62,14 +62,17 @@ export async function generateAndSaveActivities({
   } else if (stage === "games") {
     prompt = `Libro: "${title}" de "${author}". 
     TEXTO: ${extract}
-    TAREA: Genera datos para 3 juegos interactivos.
+    TAREA: Genera datos para juegos interactivos Premium.
     1. keywords: 15 palabras clave importantes para una Sopa de Letras.
     2. memoryPairs: 8 parejas de (personaje/concepto y su descripción/hecho clave).
-    3. sentences: 6 frases literales o hechos clave del libro para el juego de Ordenar.
-    SALIDA: Responde SOLO un JSON: {"keywords": ["word1",...], "memoryPairs": [{"character": "X", "description": "Y"}], "sentences": ["frase1", ...]}`;
+    3. sentences: 6 frases destacadas para ordenar.
+    4. statements: 10 afirmaciones sobre el libro (algunas verdaderas y otras falsas) con un campo "isTrue" (boolean).
+    SALIDA: Responde SOLO un JSON: {"keywords": ["word1",...], "memoryPairs": [{"character": "X", "description": "Y"}], "sentences": ["frase1", ...], "statements": [{"text": "...", "isTrue": true/false}]}`;
   } else {
-    // Modo simplificado si no se especifica stage
-    prompt = `Genera un JSON completo con 20 preguntas y datos para juegos para el libro "${title}". TEXTO: ${extract}`;
+    // Modo Completo (incluye todo)
+    prompt = `Libro: "${title}" de "${author}". TEXTO: ${extract}
+    TAREA: Genera 20 preguntas (questions), 15 palabras clave (keywords), 8 parejas de memoria (memoryPairs) y 10 afirmaciones de Verdad/Falso (statements).
+    SALIDA: Responde SOLO un JSON con todos estos campos.`;
   }
   
   const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));

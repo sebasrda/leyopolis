@@ -141,6 +141,7 @@ model Book {
   difficulty       String
   format           String
   contentUrl       String
+  totalPages       Int                         @default(150)
   createdAt        DateTime                    @default(now())
   updatedAt        DateTime                    @updatedAt
   published        Boolean                     @default(true)

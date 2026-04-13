@@ -58,33 +58,38 @@ export async function GET() {
     // However, the best way is to trust the sessions for TIME and use userBooks for BOOKS COMPLETED.
     
     // For pages, let's use a hybrid approach:
-    // If sessions have 0 pages but UserBook has progress, we estimate pages as progress% * average_book_pages(200)
-    let totalPages = totalPagesFromSessions;
-    if (totalPages === 0 && userBooks.length > 0) {
-        totalPages = userBooks.reduce((acc, ub) => acc + Math.round((ub.progress / 100) * 150), 0);
-    }
+    // Aggregate stats
+    const totalSeconds = sessions.reduce((acc, s) => acc + (s.durationSeconds || 0), 0);
+    const totalPages = sessions.reduce((acc, s) => acc + (s.pagesRead || 0), 0);
+    const averageDailySeconds = sessions.length > 0 ? totalSeconds / sessions.length : 0;
+    
+    // Count unique books with sessions and merge with UserBooks
+    const booksInSessions = new Set(sessions.map(s => s.bookId));
+    const userBookIds = userBooks.map(ub => ub.bookId);
+    const allUniqueBookIds = new Set([...Array.from(booksInSessions), ...userBookIds]);
 
-    // Calculate distinct days
-    const uniqueDays = new Set(sessions.map(s => new Date(s.startTime).toDateString()));
-    const daysActive = uniqueDays.size || 1;
-    const averageDailySeconds = Math.round(totalSeconds / daysActive);
-
-    // 3. Format time
     const formatTime = (seconds: number) => {
-      const hours = Math.floor(seconds / 3600);
-      const minutes = Math.floor((seconds % 3600) / 60);
-      if (hours > 0) return `${hours}h ${minutes}m`;
-      return `${minutes}m`;
+      const hrs = Math.floor(seconds / 3600);
+      const mins = Math.floor((seconds % 3600) / 60);
+      if (hrs > 0) return `${hrs}h ${mins}m`;
+      return `${mins}m`;
     };
 
-    return NextResponse.json({
+    // Final Result Object - The single source of truth for ALL dashboards
+    const responseData = {
       totalTime: formatTime(totalSeconds),
       totalSeconds,
       totalPages,
-      averageDailyTime: formatTime(averageDailySeconds),
-      booksCompleted: completedBooks,
-      sessionsCount: sessions.length
-    });
+      averageDailyMinutes: Math.round(averageDailySeconds / 60),
+      totalMinutes: Math.round(totalSeconds / 60),
+      completedBooks: completedBooks || 0,
+      totalBooks: allUniqueBookIds.size,
+      streak: (session?.user as any)?.streak || 0,
+      level: (session?.user as any)?.level || 1,
+      xp: (session?.user as any)?.xp || 0
+    };
+
+    return NextResponse.json(responseData);
 
   } catch (error) {
     console.error("Error fetching user stats:", error);

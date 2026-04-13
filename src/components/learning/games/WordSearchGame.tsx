@@ -20,7 +20,7 @@ interface Cell {
   found: boolean;
 }
 
-export function WordSearchGame({ words = ["LEYOPOLIS", "LIBRO", "JUEGO"], gridSize = 10, onComplete, onExit }: WordSearchProps) {
+export function WordSearchGame({ words = ["LEYOPOLIS", "LIBRO", "JUEGO"], gridSize = 12, onComplete, onExit }: WordSearchProps) {
   const [grid, setGrid] = useState<Cell[][]>([]);
   const [foundWords, setFoundWords] = useState<string[]>([]);
   const [isSelecting, setIsSelecting] = useState(false);
@@ -186,18 +186,24 @@ export function WordSearchGame({ words = ["LEYOPOLIS", "LIBRO", "JUEGO"], gridSi
 
   if (gameWon) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-center p-8">
+      <div className="flex flex-col items-center justify-center h-full text-center p-4">
         <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          className="bg-white p-8 rounded-3xl shadow-xl max-w-md w-full"
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="bg-white dark:bg-gray-800 p-10 rounded-[2.5rem] shadow-2xl max-w-lg w-full border-4 border-emerald-500/20"
         >
-          <h2 className="text-3xl font-bold text-green-600 mb-4">¡Sopa Completada!</h2>
-          <div className="text-6xl mb-6">🧠</div>
-          <p className="text-gray-600 mb-8">Has encontrado todas las palabras.</p>
+          <div className="w-24 h-24 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+            <CheckCircle className="h-12 w-12 text-emerald-600" />
+          </div>
+          <h2 className="text-4xl font-extrabold text-gray-900 dark:text-white mb-2">¡Increíble!</h2>
+          <p className="text-xl text-emerald-600 font-medium mb-6">Encontraste todas las palabras</p>
+          <div className="bg-gray-50 dark:bg-gray-900/50 p-6 rounded-2xl mb-8">
+            <p className="text-sm text-gray-500 dark:text-gray-400 uppercase tracking-widest font-bold mb-1">Puntuación</p>
+            <p className="text-5xl font-black text-indigo-600">{words.length * 10}</p>
+          </div>
           <Button 
             onClick={() => onComplete(words.length * 10, words.length * 10)}
-            className="w-full bg-green-600 hover:bg-green-700 text-white text-lg py-6 rounded-xl"
+            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-xl py-8 rounded-2xl shadow-lg shadow-indigo-200 dark:shadow-none transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
             Reclamar Recompensa
           </Button>

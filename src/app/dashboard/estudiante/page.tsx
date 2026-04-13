@@ -9,7 +9,17 @@ import { Badge } from "@/components/ui/badge";
 import { BookOpen, Sparkles, Trophy } from "lucide-react";
 
 type GradeBooksResponse = { grade: string | null; books: { id: string; title: string; author: string; coverImage?: string | null }[] };
-type UserStats = { totalBooks: number; completedBooks: number; averageDailyMinutes: number; totalMinutes: number; streak: number; level: number; xp: number };
+type UserStats = { 
+  totalBooks: number; 
+  completedBooks: number; 
+  averageDailyMinutes: number; 
+  totalMinutes: number; 
+  streak: number; 
+  level: number; 
+  xp: number;
+  totalPages: number;
+  totalTime: string;
+};
 
 export default function EstudianteDashboardPage() {
   const { data: session } = useSession();
@@ -42,10 +52,8 @@ export default function EstudianteDashboardPage() {
       {loading ? (
         <Card className="border-dashed">
           <CardContent className="p-8 text-center text-gray-500">Cargando...</CardContent>
-        </Card>
-      ) : (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
             <Card className="border-none shadow-md">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-gray-500">Libros</CardTitle>
@@ -71,6 +79,25 @@ export default function EstudianteDashboardPage() {
               <CardContent className="flex items-center justify-between">
                 <div className="text-2xl font-bold">{stats?.level ?? 1}</div>
                 <Sparkles className="h-5 w-5 text-purple-600" />
+              </CardContent>
+            </Card>
+            {/* New Stats Cards */}
+            <Card className="border-none shadow-md bg-indigo-50/50">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-indigo-700">Páginas leídas</CardTitle>
+              </CardHeader>
+              <CardContent className="flex items-center justify-between">
+                <div className="text-2xl font-bold text-indigo-900">{stats?.totalPages ?? 0}</div>
+                <div className="h-8 w-8 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600">📖</div>
+              </CardContent>
+            </Card>
+            <Card className="border-none shadow-md bg-amber-50/50">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-amber-700">Tiempo de lectura</CardTitle>
+              </CardHeader>
+              <CardContent className="flex items-center justify-between">
+                <div className="text-2xl font-bold text-amber-900">{stats?.totalTime || "0m"}</div>
+                <div className="h-8 w-8 bg-amber-100 rounded-full flex items-center justify-center text-amber-600">⏱️</div>
               </CardContent>
             </Card>
           </div>

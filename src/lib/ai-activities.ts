@@ -47,17 +47,29 @@ export async function generateAndSaveActivities({
   let extract = finalRawText ? finalRawText.slice(0, 12000) : "Sin extracto.";
 
   if (stage === "questions-1") {
-    prompt = `${systemContext} Genera 10 preguntas de opción múltiple (4 opciones, index 0-3). 
-    Responde SOLO un JSON: {"questions": [...]}. No incluyas otros campos. TEXTO: ${extract}`;
+    prompt = `Actúa como un experto pedagogo. 
+    Libro: "${title}" de "${author}". 
+    TEXTO: ${extract}
+    TAREA: Genera exactamente 10 preguntas de opción múltiple de alta calidad sobre el inicio y desarrollo del libro.
+    REGLA: Cada pregunta debe tener 4 opciones (A, B, C, D) y un índice de respuesta corecta (0-3).
+    SALIDA: Responde SOLO un JSON: {"questions": [{"question": "text", "options": ["opt0","opt1","opt2","opt3"], "correct": number}]}.`;
   } else if (stage === "questions-2") {
-    prompt = `${systemContext} Genera OTRAS 10 preguntas DE COMPRENSIÓN DISTINTAS a las anteriores. 
-    Responde SOLO un JSON: {"questions": [...]}. TEXTO: ${extract}`;
+    prompt = `Actúa como un experto pedagogo. 
+    Libro: "${title}" de "${author}". 
+    TEXTO: ${extract}
+    TAREA: Genera OTRAS 10 preguntas de comprensión críticas y profundas sobre el final y temas centrales, DISTINTAS a las anteriores.
+    SALIDA: Responde SOLO un JSON: {"questions": [{"question": "text", "options": ["opt0","opt1","opt2","opt3"], "correct": number}]}.`;
   } else if (stage === "games") {
-    prompt = `${systemContext} Genera actividades lúdicas. 
-    Responde SOLO un JSON: {"keywords": [10], "memoryPairs": [{"character": "A", "description": "B"} (6)], "sentences": [5]}. TEXTO: ${extract}`;
+    prompt = `Libro: "${title}" de "${author}". 
+    TEXTO: ${extract}
+    TAREA: Genera datos para 3 juegos interactivos.
+    1. keywords: 15 palabras clave importantes para una Sopa de Letras.
+    2. memoryPairs: 8 parejas de (personaje/concepto y su descripción/hecho clave).
+    3. sentences: 6 frases literales o hechos clave del libro para el juego de Ordenar.
+    SALIDA: Responde SOLO un JSON: {"keywords": ["word1",...], "memoryPairs": [{"character": "X", "description": "Y"}], "sentences": ["frase1", ...]}`;
   } else {
-    // Full mode (risky on Hobby)
-    prompt = `Genera un JSON con {"questions": [15], "keywords": [10], "memoryPairs": [6], "sentences": [5]} para "${title}". TEXTO: ${extract}`;
+    // Modo simplificado si no se especifica stage
+    prompt = `Genera un JSON completo con 20 preguntas y datos para juegos para el libro "${title}". TEXTO: ${extract}`;
   }
   
   const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));

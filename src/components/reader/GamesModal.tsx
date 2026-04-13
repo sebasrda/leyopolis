@@ -97,11 +97,10 @@ export default function GamesModal({ isOpen, onClose, bookTitle, bookId }: Games
                 <Button variant="ghost" onClick={() => setActiveGame(null)}>← Menú</Button>
                 <div className="h-6 w-px bg-gray-200" />
                 <h3 className="font-bold text-lg text-indigo-900 dark:text-indigo-300">
-                  {activeGame === 'quiz' && 'Reto de Preguntas'}
-                  {activeGame === 'memory' && 'Parejas de Personajes'}
-                  {activeGame === 'wordsearch' && 'Busca las Palabras'}
-                  {activeGame === 'scramble' && 'Ordena la Frase'}
-                  {activeGame === 'wordmatch' && 'Relacionar Conceptos'}
+                  {activeGame === 'quiz' && 'Comprensión Total: El Reto'}
+                  {activeGame === 'memory' && 'Parejas Literarias'}
+                  {activeGame === 'wordsearch' && 'Busca las Palabras Clave'}
+                  {activeGame === 'scramble' && 'Reordenar e Ilustrar'}
                 </h3>
               </div>
               <div className="flex-1 overflow-y-auto p-6 flex justify-center items-center">
@@ -152,10 +151,10 @@ export default function GamesModal({ isOpen, onClose, bookTitle, bookId }: Games
 
 function GameMenu({ onSelectGame }: { onSelectGame: (g: GameType) => void }) {
   const games = [
-    { id: "quiz", title: "Preguntas", description: "Pon a prueba lo que leíste.", icon: BrainCircuit, color: "bg-blue-500", gradient: "from-blue-500 to-cyan-400" },
-    { id: "memory", title: "Memoria", description: "Encuentra los personajes.", icon: Puzzle, color: "bg-purple-500", gradient: "from-purple-500 to-pink-400" },
-    { id: "wordsearch", title: "Sopa de Letras", description: "Busca palabras clave.", icon: Grid3X3, color: "bg-red-500", gradient: "from-red-500 to-orange-400" },
-    { id: "scramble", title: "Ordenar", description: "Ordena frases del libro.", icon: PenTool, color: "bg-teal-500", gradient: "from-teal-500 to-green-400" },
+    { id: "quiz", title: "Comprensión Total", description: "El gran reto de 20 preguntas.", icon: BrainCircuit, color: "bg-blue-600", gradient: "from-blue-600 to-indigo-500" },
+    { id: "wordsearch", title: "Sopa de Letras", description: "Encuentra los conceptos clave.", icon: Grid3X3, color: "bg-emerald-600", gradient: "from-emerald-600 to-teal-500" },
+    { id: "memory", title: "Parejas Literarias", description: "Domina los personajes y hechos.", icon: Puzzle, color: "bg-purple-600", gradient: "from-purple-600 to-pink-500" },
+    { id: "scramble", title: "Ordenar Frases", description: "Reconstruye la historia.", icon: PenTool, color: "bg-amber-600", gradient: "from-amber-600 to-orange-500" },
   ];
 
   return (

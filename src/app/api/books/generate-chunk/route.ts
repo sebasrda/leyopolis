@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
       title: book.title,
       author: book.author || "Autor Desconocido",
       contentUrl: book.contentUrl || "",
-      userId: session.user.id,
+      userId: (session.user as any).id,
       stage
     });
 

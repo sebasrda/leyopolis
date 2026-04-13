@@ -75,18 +75,6 @@ export default function GamesModal({ isOpen, onClose, bookTitle, bookId }: Games
     if (!isOpen) {
       setActiveGame(null);
     } else if (bookId) {
-        try {
-          const res = await fetch(`/api/books/${bookId}/quiz`);
-          const data = await res.json();
-          if (data.quiz && data.quiz.content) {
-            setQuizData(typeof data.quiz.content === 'string' ? JSON.parse(data.quiz.content) : data.quiz.content);
-          }
-        } catch (err) {
-          console.error("Error fetching games data:", err);
-        } finally {
-          setLoading(false);
-        }
-      };
       fetchQuiz();
     }
   }, [isOpen, bookId]);

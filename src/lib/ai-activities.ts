@@ -1,5 +1,13 @@
 import { prisma } from "@/lib/prisma";
 
+interface GenerateActivitiesResult {
+  questions?: any[];
+  keywords?: string[];
+  memoryPairs?: any[];
+  sentences?: string[];
+  statements?: any[];
+}
+
 export async function generateAndSaveActivities({
   bookId,
   title,
@@ -18,7 +26,7 @@ export async function generateAndSaveActivities({
   rawText?: string;
   quizFromFile?: boolean;
   stage?: "full" | "questions-1" | "questions-2" | "games";
-}) {
+}): Promise<GenerateActivitiesResult> {
   let finalRawText = rawText || "";
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || "";
 

@@ -37,27 +37,13 @@ export async function GET() {
       }
     });
 
-    let totalSeconds = sessions.reduce((acc, s) => acc + s.durationSeconds, 0);
-    let totalPagesFromSessions = sessions.reduce((acc, s) => acc + s.pagesRead, 0);
-    
-    // 2. Get UserBooks to calculate estimated total pages if session data is missing
+    // 2. Get UserBooks to calculate completed count
     const userBooks = await prisma.userBook.findMany({
       where: { userId },
-      include: {
-        book: {
-          select: { title: true }
-        }
-      }
     });
 
     const completedBooks = userBooks.filter(b => b.status === "COMPLETED").length;
     
-    // Simple heuristic: if totalPagesFromSessions is 0 but we have in-progress books, 
-    // it likely means the session tracking is lagging.
-    // We don't want to double count, so we take the max of session tracking OR a very conservative estimate.
-    // However, the best way is to trust the sessions for TIME and use userBooks for BOOKS COMPLETED.
-    
-    // For pages, let's use a hybrid approach:
     // Aggregate stats
     const totalSeconds = sessions.reduce((acc, s) => acc + (s.durationSeconds || 0), 0);
     const totalPages = sessions.reduce((acc, s) => acc + (s.pagesRead || 0), 0);

@@ -24,27 +24,28 @@ export async function generateAndSaveActivities({
 
   if (!apiKey) throw new Error("Missing Gemini API Key");
 
-  // Fetch PDF text if not provided
-  if (!finalRawText && contentUrl) {
-    try {
-      const pdfRes = await fetch(contentUrl);
-      if (pdfRes.ok) {
-        const pdfBuffer = Buffer.from(await pdfRes.arrayBuffer());
-        const pdfParse = require("pdf-parse");
-        const data = await pdfParse(pdfBuffer);
-        finalRawText = data.text;
+    // Fetch PDF text if not provided
+    if (!finalRawText && contentUrl) {
+      try {
+        const pdfRes = await fetch(contentUrl);
+        if (pdfRes.ok) {
+          const pdfBuffer = Buffer.from(await pdfRes.arrayBuffer());
+          const pdfParse = require("pdf-parse");
+          const data = await pdfParse(pdfBuffer);
+          finalRawText = data.text;
+        }
+      } catch (err) {
+        console.error("Error fetching/parsing PDF for AI:", err);
       }
-    } catch (err) {
-      console.error("Error fetching/parsing PDF for AI:", err);
     }
-  const { GoogleGenerativeAI } = require("@google/generative-ai");
-  const genAI = new GoogleGenerativeAI(apiKey);
 
-  let prompt = "";
-  const finalRawText = rawText || await extractFullText(contentUrl);
-  console.log(`[AI-STATS] Book: ${title}, Extracted text length: ${finalRawText?.length || 0}`);
-  
-  let extract = finalRawText ? finalRawText.slice(0, 15000) : "Sin extracto.";
+    const { GoogleGenerativeAI } = require("@google/generative-ai");
+    const genAI = new GoogleGenerativeAI(apiKey);
+
+    let prompt = "";
+    console.log(`[AI-STATS] Book: ${title}, Extracted text length: ${finalRawText?.length || 0}`);
+    
+    let extract = finalRawText ? finalRawText.slice(0, 15000) : "Sin extracto.";
 
   if (stage === "questions-1") {
     prompt = `Actúa como un experto pedagogo. 

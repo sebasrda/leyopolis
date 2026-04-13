@@ -5,6 +5,7 @@ import { writeFile, appendFile } from "fs/promises";
 import path from "path";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { generateAndSaveActivities } from "@/lib/ai-activities";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -191,148 +192,21 @@ export async function POST(req: Request) {
         console.error("Database error creating book:", dbErr);
         return NextResponse.json({ message: "Error al registrar el libro en la base de datos", error: String(dbErr) }, { status: 500 });
       }
-    }
-
-    // AI Quiz & Games Generation - isolated in try-catch to not fail the whole upload
+      // AI Quiz & Games Generation - isolated in try-catch to not fail the whole upload
     try {
       if (!book) throw new Error("No book object available for AI generation");
       
-      // Stage 1: Text extraction from manual quiz file (if not already handled via URL)
-      if (!quizFromFile && quizFile && quizFile.size > 0) {
-        try {
-          if (quizFile.name.endsWith(".json")) {
-            finalJsonString = await quizFile.text();
-            quizFromFile = true;
-          } else {
-            const quizBuffer = Buffer.from(await quizFile.arrayBuffer());
-            if (quizFile.name.endsWith(".pdf")) {
-              const pdfParse = require("pdf-parse");
-              const data = await pdfParse(quizBuffer);
-              rawText = data.text;
-              quizFromFile = true;
-            } else if (quizFile.name.endsWith(".docx") || quizFile.name.endsWith(".doc")) {
-              const mammoth = require("mammoth");
-              const result = await mammoth.extractRawText({ buffer: quizBuffer });
-              rawText = result.value;
-              quizFromFile = true;
-            }
-          }
-        } catch (extractErr) {
-          console.error("Text extraction error from quiz file:", extractErr);
-        }
-      }
+      // Use the shared utility for all generation logic
+      await generateAndSaveActivities({
+        bookId: book.id,
+        title: title,
+        author: author,
+        contentUrl: book.contentUrl,
+        userId: session.user.id,
+        rawText: rawText,
+        quizFromFile: quizFromFile
+      });
 
-      // Stage 2: AI Generation
-      const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || "";
-      
-      if (!finalJsonString && apiKey) {
-        try {
-          const { GoogleGenerativeAI } = require("@google/generative-ai");
-          const genAI = new GoogleGenerativeAI(apiKey);
-          const aiModel = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-          
-          let prompt = "";
-          if (quizFromFile && rawText) {
-            prompt = `Analiza el siguiente texto de un examen/quiz y conviértelo a JSON.
-Libro: "${title}".
-EXTRAE las preguntas TAL CUAL están en el documento y formátalas en este esquema JSON:
-{
-  "questions": [{"id": 1, "question": "pregunta textual", "options": ["A", "B", "C", "D"], "correctAnswer": 0}],
-  "keywords": ["PALABRA1", "PALABRA2"],
-  "memoryPairs": [{"character": "Nombre", "description": "Relación"}],
-  "sentences": [{"id": 1, "sentence": "Frase importante"}]
-}
-Responde SOLO con JSON válido.
-TEXTO: ${rawText.slice(0, 6000)}`;
-          } else {
-            prompt = `Genera un exhaustivo JSON educativo basado en el libro "${title}" de "${author}".
-Esquema estricto y obligatorio:
-{
-  "questions": [{"id": 1, "question": "pregunta", "options": ["A", "B", "C", "D"], "correctAnswer": 0}],
-  "keywords": ["PALABRA1", "PALABRA2"],
-  "memoryPairs": [{"character": "Término", "description": "Definición o Relación"}],
-  "sentences": [{"id": 1, "sentence": "Frase clave para ordenar"}]
-}
-REGLA CRÍTICA: Debes generar MÍNIMO 20 preguntas desafiantes sobre la lectura, 20 palabras clave relevantes, 10 parejas de memoria y 10 frases para ordenar.
-Responde SOLO con un JSON válido y bien formado. Sin markdown, sin explicaciones.`;
-            if (rawText) {
-              prompt += `\nESTE ES UN EXTRACTO DEL LIBRO. USA ESTA INFORMACIÓN PARA GENERAR LAS PREGUNTAS:\nTEXTO: ${rawText.slice(0, 20000)}`;
-            }
-          }
-
-          const result = await aiModel.generateContent(prompt);
-          const responseText = result.response.text();
-          // Improved JSON extraction
-          const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-          finalJsonString = jsonMatch ? jsonMatch[0] : responseText;
-        } catch (aiErr: any) {
-          console.error("Gemini API Error during upload:", aiErr.message);
-        }
-      }
-      
-      // Fallback if still empty
-      if (!finalJsonString) {
-        const fallbackJson = {
-          questions: [{ id: 1, question: `¿De qué trata el libro "${title}"?`, options: ["Varias temáticas", "No se especifica", "Ficción", "Realidad"], correctAnswer: 0 }],
-          keywords: ["LECTURA", "LIBRO", "EDUCACION"],
-          memoryPairs: [{ character: "Protagonista", description: "Personaje principal" }],
-          sentences: [{ id: 1, sentence: "La lectura enriquece el alma." }]
-        };
-        finalJsonString = JSON.stringify(fallbackJson);
-      }
-
-      // Stage 3: Database Persistence for Activities
-      if (finalJsonString) {
-        let parsedQuiz;
-        try {
-          parsedQuiz = JSON.parse(finalJsonString);
-        } catch (pErr) {
-          console.error("JSON parse error for AI response:", pErr);
-          throw pErr;
-        }
-        
-        const quiz = await (prisma as any).activity.create({
-          data: {
-            title: `Quiz: ${title}`,
-            description: quizFromFile ? `Examen para "${title}"` : `Quiz generado por IA para "${title}"`,
-            type: "QUIZ",
-            content: JSON.stringify(parsedQuiz),
-            points: 100,
-            published: true,
-            createdById: session.user.id,
-            bookId: book.id,
-          },
-        });
-        await (prisma as any).book.update({ where: { id: book.id }, data: { quizId: quiz.id } });
-
-        // Games
-        if (parsedQuiz.keywords?.length > 0) {
-          await (prisma as any).activity.create({
-            data: {
-              title: `Sopa de letras: ${title}`, type: "WORDSEARCH", 
-              content: JSON.stringify({ words: parsedQuiz.keywords.slice(0, 10), gridSize: 12 }),
-              points: 50, published: true, createdById: session.user.id, bookId: book.id,
-            },
-          });
-        }
-        if (parsedQuiz.memoryPairs?.length > 0) {
-          await (prisma as any).activity.create({
-            data: {
-              title: `Memoria: ${title}`, type: "MATCH",
-              content: JSON.stringify({ pairs: parsedQuiz.memoryPairs.map((p: any, i: number) => ({ id: i+1, word: p.character, def: p.description })) }),
-              points: 50, published: true, createdById: session.user.id, bookId: book.id,
-            },
-          });
-        }
-        if (parsedQuiz.sentences?.length > 0) {
-          await (prisma as any).activity.create({
-            data: {
-              title: `Ordenar: ${title}`, type: "REORDER", content: JSON.stringify({ sentences: parsedQuiz.sentences }),
-              points: 50, published: true, createdById: session.user.id, bookId: book.id,
-            },
-          });
-        }
-      }
     } catch (innerErr) {
       console.error("Non-critical error in AI/Activity generation:", innerErr);
       // We don't return here, we want to return the book success

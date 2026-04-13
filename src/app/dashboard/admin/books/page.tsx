@@ -223,6 +223,31 @@ export default function AdminBooksPage() {
     }
   };
 
+  const handleRegenerateIA = async (bookId: string) => {
+    if (!confirm("¿Deseas re-generar las actividades con IA? Esto reemplazará el quiz y juegos actuales.")) return;
+    
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/books/regenerate-ia", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookId })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setSuccess("Actividades regeneradas exitosamente");
+        fetchBooks();
+      } else {
+        setError(data.message || "Error al regenerar actividades");
+      }
+    } catch {
+      setError("Error de conexión");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const filteredBooks = books.filter(book => 
     book.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     book.author?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -293,6 +318,7 @@ export default function AdminBooksPage() {
                     <option value="3-5">3-5</option>
                     <option value="6-8">6-8</option>
                     <option value="9-12">9-12</option>
+                    <option value="13-15">13-15</option>
                     <option value="16+">16+</option>
                   </select>
                 </div>
@@ -430,7 +456,15 @@ export default function AdminBooksPage() {
                       >
                         {uploadingQuizFor === book.id ? <Loader2 className="h-5 w-5 animate-spin" /> : <Upload className="h-5 w-5" />}
                       </Button>
-                      <Button variant="ghost" size="icon" className="text-red-400 hover:text-red-700 hover:bg-red-50 rounded-full" onClick={() => handleDelete(book.id)}>
+                        <Button
+                          variant="ghost" size="icon"
+                          className="text-purple-400 hover:text-purple-700 hover:bg-purple-50 rounded-full"
+                          title="Re-generar Actividades IA"
+                          onClick={() => handleRegenerateIA(book.id)}
+                        >
+                          <Sparkles className="h-5 w-5" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="text-red-400 hover:text-red-700 hover:bg-red-50 rounded-full" onClick={() => handleDelete(book.id)}>
                         <Trash2 className="h-5 w-5" />
                       </Button>
                     </div>

@@ -1,17 +1,22 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/access";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { generateAndSaveActivities } from "@/lib/ai-activities";
 
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ bookId: string }> }
 ) {
   const { bookId } = await params;
+  const { searchParams } = new URL(req.url);
+  const shouldRegenerate = searchParams.get("regenerate") === "true";
 
   try {
     const book = await (prisma as any).book.findUnique({
       where: { id: bookId },
-      select: { quizId: true, title: true, allowMultipleAttempts: true, passScore: true },
+      select: { id: true, quizId: true, title: true, author: true, contentUrl: true, allowMultipleAttempts: true, passScore: true },
     });
 
     if (!book) {
@@ -19,10 +24,33 @@ export async function GET(
     }
 
     // Fetch the main quiz AND other associated activities (games)
-    const allActivities = await (prisma as any).activity.findMany({
+    let allActivities = await (prisma as any).activity.findMany({
       where: { bookId: bookId },
       select: { type: true, content: true, id: true, title: true }
     });
+
+    // INTELLIGENT AUTO-GENERATION:
+    // If no activities exist OR we explicitly requested regeneration
+    if (allActivities.length === 0 || shouldRegenerate) {
+      const session = await getServerSession(authOptions);
+      if (session?.user) {
+        console.log(`[AI-INTEL] Proactive generation triggered for book: ${book.title}`);
+        await generateAndSaveActivities({
+          bookId: book.id,
+          title: book.title,
+          author: book.author || "Autor Desconocido",
+          contentUrl: book.contentUrl || "",
+          userId: (session.user as any).id || "",
+          stage: "full"
+        });
+        
+        // Refresh allActivities after generation
+        allActivities = await (prisma as any).activity.findMany({
+          where: { bookId: bookId },
+          select: { type: true, content: true, id: true, title: true }
+        });
+      }
+    }
 
     let consolidatedContent: any = {
       questions: [],

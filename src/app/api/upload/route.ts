@@ -188,6 +188,17 @@ export async function POST(req: Request) {
             coverImage: coverUrl, description
           }
         });
+
+        // Extract text from buffer for immediate AI generation
+        try {
+          const pdfParse = require("pdf-parse");
+          const data = await pdfParse(buffer);
+          rawText = data.text;
+          await log(`Texto extraído exitosamente: ${rawText.length} caracteres`);
+        } catch (parseErr) {
+          console.error("Error parsing PDF text during upload:", parseErr);
+          await log("Error extrayendo texto del PDF");
+        }
       } catch (dbErr) {
         console.error("Database error creating book:", dbErr);
         return NextResponse.json({ message: "Error al registrar el libro en la base de datos", error: String(dbErr) }, { status: 500 });

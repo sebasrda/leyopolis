@@ -231,7 +231,7 @@ export function LearningProvider({ children }: { children: React.ReactNode }) {
     }));
 
     // Sync with API
-    if (bookId.length > 10 && !bookId.includes('.')) {
+    if (bookId) {
         fetch('/api/user/readings', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

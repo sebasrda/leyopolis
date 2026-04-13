@@ -80,6 +80,7 @@ export default function ProgressPage() {
         <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
           <Target className="h-8 w-8 text-indigo-600" />
           Mi Progreso
+          <span className="text-[10px] bg-green-100 text-green-700 px-2 py-1 rounded-full font-mono ml-4">v2.1-LIVE</span>
         </h1>
         <p className="text-gray-500">Analíticas basadas en tu actividad real de lectura.</p>
       </div>

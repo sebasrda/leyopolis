@@ -51,6 +51,7 @@ export default function ReaderPage({ params }: { params: Promise<{ bookId: strin
       <ProfessionalFlipbook 
         pdfUrl={pdfUrl}
         bookTitle={bookDetails?.title || titleParam || "Libro"}
+        author={bookDetails?.author}
         bookId={bookId}
         quizId={bookDetails?.quizId}
       />

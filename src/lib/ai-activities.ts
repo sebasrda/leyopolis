@@ -7,7 +7,8 @@ export async function generateAndSaveActivities({
   contentUrl,
   userId,
   rawText,
-  quizFromFile = false
+  quizFromFile = false,
+  stage = "full"
 }: {
   bookId: string;
   title: string;
@@ -16,16 +17,14 @@ export async function generateAndSaveActivities({
   userId: string;
   rawText?: string;
   quizFromFile?: boolean;
+  stage?: "full" | "questions-1" | "questions-2" | "games";
 }) {
   let finalRawText = rawText || "";
-  let finalJsonString = "";
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || "";
 
-  if (!apiKey) {
-    throw new Error("Missing Gemini API Key");
-  }
+  if (!apiKey) throw new Error("Missing Gemini API Key");
 
-  // Stage 1: If no rawText provided, try to fetch it from contentUrl
+  // Fetch PDF text if not provided
   if (!finalRawText && contentUrl) {
     try {
       const pdfRes = await fetch(contentUrl);
@@ -40,130 +39,133 @@ export async function generateAndSaveActivities({
     }
   }
 
-  // Stage 2: AI Generation
   const { GoogleGenerativeAI } = require("@google/generative-ai");
   const genAI = new GoogleGenerativeAI(apiKey);
-  // Using gemini-2.0-flash which is fast
-  const aiModel = genAI.getGenerativeModel({ 
-    model: "gemini-2.0-flash",
-    generationConfig: {
-      temperature: 0.7,
-      topP: 0.95,
-      topK: 40,
-      maxOutputTokens: 8192,
-    }
-  });
-  
-  let prompt = "";
-  if (quizFromFile && finalRawText) {
-    prompt = `INSTRUCCIÓN SISTEMA: Actúa como un experto pedagogo. Extrae las preguntas del texto adjunto.
-REQUERIMIENTO: Formatea el contenido en un JSON estricto.
-LIBRO: "${title}".
-TEXTO: ${finalRawText.slice(0, 10000)}
 
-ESQUEMA JSON:
-{
-  "questions": [{"id": 1, "question": "texto", "options": ["A", "B", "C", "D"], "correctAnswer": 0}],
-  "keywords": ["PALABRA"],
-  "memoryPairs": [{"character": "A", "description": "B"}],
-  "sentences": [{"id": 1, "sentence": "..."}]
-}
-Responde SOLO con JSON.`;
+  let prompt = "";
+  let systemContext = `Libro: "${title}" de "${author}". `;
+  let extract = finalRawText ? finalRawText.slice(0, 12000) : "Sin extracto.";
+
+  if (stage === "questions-1") {
+    prompt = `${systemContext} Genera 10 preguntas de opción múltiple (4 opciones, index 0-3). 
+    Responde SOLO un JSON: {"questions": [...]}. No incluyas otros campos. TEXTO: ${extract}`;
+  } else if (stage === "questions-2") {
+    prompt = `${systemContext} Genera OTRAS 10 preguntas DE COMPRENSIÓN DISTINTAS a las anteriores. 
+    Responde SOLO un JSON: {"questions": [...]}. TEXTO: ${extract}`;
+  } else if (stage === "games") {
+    prompt = `${systemContext} Genera actividades lúdicas. 
+    Responde SOLO un JSON: {"keywords": [10], "memoryPairs": [{"character": "A", "description": "B"} (6)], "sentences": [5]}. TEXTO: ${extract}`;
   } else {
-    prompt = `INSTRUCCIÓN SISTEMA: Eres un generador de contenido educativo RAPIDO.
-REGLA: Genera 15-20 preguntas de opción múltiple para "${title}" de "${author}".
-JSON:
-{
-  "questions": [15-20 objetos],
-  "keywords": [10 palabras],
-  "memoryPairs": [6 parejas],
-  "sentences": [5 frases]
-}
-No uses espacios innecesarios ni saltos de linea en el JSON final. Solo responde con el objeto JSON.
-TEXTO: ${finalRawText ? finalRawText.slice(0, 15000) : "Usa tus conocimientos sobre el libro."}`;
+    // Full mode (risky on Hobby)
+    prompt = `Genera un JSON con {"questions": [15], "keywords": [10], "memoryPairs": [6], "sentences": [5]} para "${title}". TEXTO: ${extract}`;
+  }
+  
+  const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+  
+  let result;
+  let lastError;
+  const models = ["gemini-2.0-flash", "gemini-1.5-flash"];
+  
+  for (const modelName of models) {
+    const aiModel = genAI.getGenerativeModel({ 
+      model: modelName,
+      generationConfig: { temperature: 0.7, maxOutputTokens: 2048 }
+    });
+
+    for (let i = 0; i < 3; i++) { // Máximo 3 reintentos por modelo
+      try {
+        result = await aiModel.generateContent(prompt);
+        if (result) break;
+      } catch (err: any) {
+        lastError = err;
+        const errMsg = err.message || "";
+        if (errMsg.includes("429") || errMsg.includes("Too Many Requests") || errMsg.includes("quota")) {
+          console.log(`Límite de cuota alcanzado para ${modelName}, reintentando en 3s... (Intento ${i+1}/3)`);
+          await sleep(3000);
+          continue;
+        }
+        throw err;
+      }
+    }
+    if (result) break;
   }
 
-  const result = await aiModel.generateContent(prompt);
+  if (!result) {
+    throw new Error(`Cuota de IA agotada tras varios reintentos: ${lastError?.message || "Error desconocido"}`);
+  }
+
   const responseText = result.response.text();
   const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-  finalJsonString = jsonMatch ? jsonMatch[0] : responseText;
-
-  if (!finalJsonString || finalJsonString.length < 100) {
-    throw new Error("AI returned an invalid or too short response");
-  }
-
-  const parsedQuiz = JSON.parse(finalJsonString);
+  const finalJsonString = jsonMatch ? jsonMatch[0] : responseText;
+  const parsed = JSON.parse(finalJsonString);
   
-  // Validate question count
-  if (!parsedQuiz.questions || parsedQuiz.questions.length < 5) {
-     console.warn(`AI generated too few questions (${parsedQuiz.questions?.length}). Retrying with simpler prompt might be needed, but throwing for now.`);
-     throw new Error(`AI generated insufficient questions: ${parsedQuiz.questions?.length}`);
-  }
+  // Stage 1: Create or Reset Quiz
+  if (stage === "questions-1" || stage === "full") {
+    // Clear existing for this specific book
+    await (prisma as any).activity.deleteMany({
+      where: { bookId, OR: [{ title: { startsWith: "Quiz:" } }, { title: { startsWith: "Sopa de letras:" } }, { title: { startsWith: "Memoria:" } }, { title: { startsWith: "Ordenar:" } }] }
+    });
 
-  // Stage 3: Clear existing AI activities for this book to avoid duplicates
-  await (prisma as any).activity.deleteMany({
-    where: {
-      bookId,
-      title: { startsWith: "Quiz:" }
+    const quiz = await (prisma as any).activity.create({
+      data: {
+        title: `Quiz: ${title}`,
+        type: "QUIZ",
+        content: JSON.stringify({ questions: parsed.questions || [] }),
+        points: 100, published: true, createdById: userId, bookId: bookId,
+      },
+    });
+
+    await (prisma as any).book.update({
+      where: { id: bookId },
+      data: { quizId: quiz.id }
+    });
+  } 
+  
+  // Stage 2: Append Questions
+  else if (stage === "questions-2") {
+    const existingQuiz = await (prisma as any).activity.findFirst({
+      where: { bookId, type: "QUIZ" }
+    });
+
+    if (existingQuiz) {
+      const currentContent = JSON.parse(existingQuiz.content);
+      const newQuestions = [...(currentContent.questions || []), ...(parsed.questions || [])];
+      await (prisma as any).activity.update({
+        where: { id: existingQuiz.id },
+        data: { content: JSON.stringify({ ...currentContent, questions: newQuestions }) }
+      });
     }
-  });
-  await (prisma as any).activity.deleteMany({
-    where: {
-      bookId,
-      OR: [
-        { title: { startsWith: "Sopa de letras:" } },
-        { title: { startsWith: "Memoria:" } },
-        { title: { startsWith: "Ordenar:" } }
-      ]
+  }
+
+  // Stage 3: Create Games
+  else if (stage === "games" || stage === "full") {
+    if (parsed.keywords?.length > 0) {
+      await (prisma as any).activity.create({
+        data: {
+          title: `Sopa de letras: ${title}`, type: "WORDSEARCH", 
+          content: JSON.stringify({ words: parsed.keywords, gridSize: 12 }),
+          points: 50, published: true, createdById: userId, bookId: bookId,
+        },
+      });
     }
-  });
-
-  // Stage 4: Create new ones
-  const quiz = await (prisma as any).activity.create({
-    data: {
-      title: `Quiz: ${title}`,
-      description: quizFromFile ? `Examen para "${title}"` : `Quiz generado por IA para "${title}"`,
-      type: "QUIZ",
-      content: JSON.stringify(parsedQuiz),
-      points: 100,
-      published: true,
-      createdById: userId,
-      bookId: bookId,
-    },
-  });
-
-  await (prisma as any).book.update({
-    where: { id: bookId },
-    data: { quizId: quiz.id }
-  });
-
-  // Games
-  if (parsedQuiz.keywords?.length > 0) {
-    await (prisma as any).activity.create({
-      data: {
-        title: `Sopa de letras: ${title}`, type: "WORDSEARCH", 
-        content: JSON.stringify({ words: parsedQuiz.keywords.slice(0, 15), gridSize: 12 }),
-        points: 50, published: true, createdById: userId, bookId: bookId,
-      },
-    });
-  }
-  if (parsedQuiz.memoryPairs?.length > 0) {
-    await (prisma as any).activity.create({
-      data: {
-        title: `Memoria: ${title}`, type: "MATCH",
-        content: JSON.stringify({ pairs: parsedQuiz.memoryPairs.map((p: any, i: number) => ({ id: i+1, word: p.character, def: p.description })) }),
-        points: 50, published: true, createdById: userId, bookId: bookId,
-      },
-    });
-  }
-  if (parsedQuiz.sentences?.length > 0) {
-    await (prisma as any).activity.create({
-      data: {
-        title: `Ordenar: ${title}`, type: "REORDER", content: JSON.stringify({ sentences: parsedQuiz.sentences }),
-        points: 50, published: true, createdById: userId, bookId: bookId,
-      },
-    });
+    if (parsed.memoryPairs?.length > 0) {
+      await (prisma as any).activity.create({
+        data: {
+          title: `Memoria: ${title}`, type: "MATCH",
+          content: JSON.stringify({ pairs: parsed.memoryPairs.map((p: any, i: number) => ({ id: i+1, word: p.character, def: p.description })) }),
+          points: 50, published: true, createdById: userId, bookId: bookId,
+        },
+      });
+    }
+    if (parsed.sentences?.length > 0) {
+      await (prisma as any).activity.create({
+        data: {
+          title: `Ordenar: ${title}`, type: "REORDER", content: JSON.stringify({ sentences: parsed.sentences }),
+          points: 50, published: true, createdById: userId, bookId: bookId,
+        },
+      });
+    }
   }
 
-  return parsedQuiz;
+  return parsed;
 }

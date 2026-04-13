@@ -28,6 +28,7 @@ interface ProfessionalFlipbookProps {
   initialPage?: number;
   bookId?: string;
   quizId?: string;
+  author?: string;
 }
 
 // Interfaz para la selección de texto
@@ -190,7 +191,7 @@ const PageComponent = forwardRef<HTMLDivElement, {
 });
 PageComponent.displayName = "PageComponent";
 
-export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", bookId, quizId }: ProfessionalFlipbookProps) {
+export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", author, bookId, quizId }: ProfessionalFlipbookProps) {
   const [numPages, setNumPages] = useState<number>(0);
   const [pageWidth, setPageWidth] = useState<number>(0);
   const [pageHeight, setPageHeight] = useState<number>(0);
@@ -201,6 +202,10 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", book
   const [isDarkMode, setIsDarkMode] = useState(false); // Nuevo estado para modo oscuro
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
+  const [goToPageInput, setGoToPageInput] = useState("");
+  
+  // Offset for Virtual Pages (Cover + Credits)
+  const VIRTUAL_PAGES = 2;
   const { i18n: uiI18n } = useTranslation();
   const { data: session } = useSession();
   const userRole = (session?.user as any)?.role || "STUDENT"; // Fallback a STUDENT si no hay sesión
@@ -911,7 +916,7 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", book
             <div className="flex items-center gap-2">
                 <button 
                   onClick={() => setShowExam(true)}
-                  className="flex flex-col items-center justify-center w-12 h-10 hover:bg-white/10 rounded-md transition-colors group"
+                  className="flex flex-col items-center justify-center w-12 h-10 hover:bg-white/10 rounded-md transition-colors group relative"
                   title="Examen"
                 >
                     <GraduationCap size={16} className="text-indigo-400 group-hover:text-indigo-300 mb-0.5" />
@@ -919,20 +924,23 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", book
                 </button>
                 <button 
                   onClick={() => setShowGames(true)}
-                  className="flex flex-col items-center justify-center w-12 h-10 hover:bg-white/10 rounded-md transition-colors group"
-                  title="Juegos"
+                  className={cn(
+                    "flex flex-col items-center justify-center min-w-[60px] h-10 px-2 rounded-md transition-all gap-0.5 border shadow-sm group",
+                    isDarkMode ? "bg-pink-900/20 border-pink-500/30 hover:bg-pink-900/40" : "bg-pink-600/10 border-pink-600/20 hover:bg-pink-600/20"
+                  )}
+                  title="Zona Interactiva"
                 >
-                    <Gamepad2 size={16} className="text-pink-400 group-hover:text-pink-300 mb-0.5" />
-                    <span className="text-[9px] font-medium">Juegos</span>
+                    <Gamepad2 size={16} className="text-pink-500 animate-pulse" />
+                    <span className="text-[9px] font-bold text-pink-500">Juegos</span>
                 </button>
                 {quizId && (
                   <Link href={`/dashboard/quiz/${quizId}`}>
                     <button 
-                      className="ml-2 flex items-center justify-center h-10 px-3 bg-green-600 hover:bg-green-500 rounded-md transition-colors gap-1.5 border-2 border-green-400 shadow-sm group"
-                      title="Hacer Quiz"
+                      className="ml-2 flex items-center justify-center h-10 px-3 bg-indigo-600 hover:bg-indigo-500 rounded-md transition-all gap-1.5 border-2 border-indigo-400 shadow-md group animate-bounce"
+                      title="Hacer Quiz de 20 preguntas"
                     >
                         <Sparkles size={14} className="text-white" />
-                        <span className="text-xs font-bold text-white">Hacer Quiz</span>
+                        <span className="text-xs font-bold text-white uppercase tracking-tighter">Hacer Quiz</span>
                     </button>
                   </Link>
                 )}
@@ -1083,8 +1091,10 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", book
                             setTextSelection(null);
                             
                             // Save progress if bookId is available
+                            // Adjusted for virtual pages
                             if (bookId) {
-                                updateReadingProgress(bookId, newPage + 1, numPages);
+                                const realPage = Math.max(1, newPage - VIRTUAL_PAGES + 1);
+                                updateReadingProgress(bookId, realPage, numPages);
                             }
                         }}
                         flippingTime={1000}
@@ -1100,8 +1110,52 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", book
                         drawShadow={true}
                         style={{}} 
                     >
+                        {/* PÁGINA 1: PORTADA ESTANDARIZADA */}
+                        <div className="demoPage">
+                          <div className={cn("w-full h-full flex flex-col items-center justify-center p-12 text-center relative overflow-hidden", isDarkMode ? "bg-indigo-950 text-white" : "bg-indigo-600 text-white")}>
+                            <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent" />
+                            <div className="relative z-10 space-y-8">
+                                <div className="w-24 h-24 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center mx-auto mb-6 border border-white/30">
+                                  <Library size={48} className="text-yellow-300" />
+                                </div>
+                                <h1 className="text-4xl font-bold tracking-tight leading-tight">{bookTitle}</h1>
+                                <div className="h-1 w-24 bg-yellow-400 mx-auto" />
+                                <p className="text-xl font-medium opacity-90">{author || "Autor Desconocido"}</p>
+                                <div className="pt-20">
+                                  <div className="text-sm font-bold tracking-[0.2em] uppercase opacity-60">LEYOPOLIS</div>
+                                  <div className="text-[10px] opacity-40 mt-1">Plataforma de Lectura Inteligente</div>
+                                </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* PÁGINA 2: CRÉDITOS */}
+                        <div className="demoPage">
+                          <div className={cn("w-full h-full p-16 flex flex-col justify-between border-l", isDarkMode ? "bg-black text-gray-400 border-gray-800" : "bg-white text-gray-600 border-gray-100")}>
+                            <div className="space-y-12">
+                                <h2 className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">Créditos y Derechos</h2>
+                                <div className="space-y-6 text-sm leading-relaxed">
+                                  <p>Este libro es parte del catálogo digital de **Leyopolis**, diseñado para fomentar el hábito de la lectura mediante herramientas de Inteligencia Artificial.</p>
+                                  <div>
+                                    <p className="font-bold text-gray-900 dark:text-gray-100 mb-1">Obra original:</p>
+                                    <p>{bookTitle} por {author || "Autor Desconocido"}</p>
+                                  </div>
+                                  <div>
+                                    <p className="font-bold text-gray-900 dark:text-gray-100 mb-1">Personalización IA:</p>
+                                    <p>Actividades, quizzes y juegos generados por el motor de razonamiento de Leyopolis.</p>
+                                  </div>
+                                </div>
+                            </div>
+                            <div className="pt-10 border-t border-gray-100 dark:border-gray-800">
+                                <p className="text-[10px] text-center italic">Queda prohibida la reproducción total o parcial de este contenido sin autorización expresa de los titulares de los derechos.</p>
+                                <p className="text-[10px] text-center mt-4 font-bold">© 2026 LEYOPOLIS. Todos los derechos reservados.</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* PÁGINAS DEL PDF (Originales) */}
                         {Array.from(new Array(numPages), (_, index) => (
-                        <div key={index} className="demoPage" style={{ width: pageWidth * scale, height: pageHeight * scale }}>
+                        <div key={index + VIRTUAL_PAGES} className="demoPage" style={{ width: pageWidth * scale, height: pageHeight * scale }}>
                                 <PageComponent 
                                 pageNumber={index + 1}
                                 width={pageWidth}
@@ -1237,9 +1291,52 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", book
       </div>
       
       {/* Footer Info */}
-      <div className="h-8 bg-[#1c1c1c] flex items-center justify-center text-xs text-gray-500 border-t border-white/10 shrink-0">
-        Páginas {currentPage + 1} - {Math.min(currentPage + 2, numPages)} de {numPages}
-      </div>
+      <footer className={cn("h-10 text-xs flex items-center justify-between px-6 border-t font-medium transition-colors duration-300", isDarkMode ? "bg-gray-900 border-gray-800 text-gray-500" : "bg-[#1c1c1c] border-white/5 text-gray-400")}>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-1.5">
+            <span className="opacity-60">Visualizando:</span>
+            <span className={cn("px-2 py-0.5 rounded-full", isDarkMode ? "bg-gray-800 text-gray-300" : "bg-white/10 text-white")}>
+              Páginas {currentPage + 1} - {Math.min(currentPage + 2, numPages + VIRTUAL_PAGES)} de {numPages + VIRTUAL_PAGES}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <span className="opacity-60">Ir a página:</span>
+          <div className="flex items-center">
+            <input 
+              type="number" 
+              min={1} 
+              max={numPages + VIRTUAL_PAGES}
+              className={cn("w-16 h-7 px-2 text-center bg-transparent border rounded-l-md outline-none transition-colors", isDarkMode ? "border-gray-700 focus:border-indigo-500" : "border-white/20 focus:border-indigo-400")}
+              placeholder="#"
+              value={goToPageInput}
+              onChange={(e) => setGoToPageInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  const p = parseInt(goToPageInput);
+                  if (!isNaN(p) && p >= 1 && p <= (numPages + VIRTUAL_PAGES)) {
+                    flipBookRef.current?.pageFlip().flip(p - 1);
+                    setGoToPageInput("");
+                  }
+                }
+              }}
+            />
+            <button 
+              onClick={() => {
+                const p = parseInt(goToPageInput);
+                if (!isNaN(p) && p >= 1 && p <= (numPages + VIRTUAL_PAGES)) {
+                  flipBookRef.current?.pageFlip().flip(p - 1);
+                  setGoToPageInput("");
+                }
+              }}
+              className={cn("h-7 px-2 rounded-r-md flex items-center justify-center transition-colors", isDarkMode ? "bg-gray-800 hover:bg-indigo-900" : "bg-indigo-600 hover:bg-indigo-500")}
+            >
+              <ArrowRight size={14} className="text-white" />
+            </button>
+          </div>
+        </div>
+      </footer>
 
       {/* Modales */}
       <ExamModal isOpen={showExam} onClose={() => setShowExam(false)} bookTitle={bookTitle} bookId={bookId} />

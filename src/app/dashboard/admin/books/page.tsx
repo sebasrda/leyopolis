@@ -127,14 +127,48 @@ export default function AdminBooksPage() {
       }
 
       if (res.ok) {
-        setUploadProgress(100);
-        setTimeout(() => {
+        const bookData = data;
+        setUploadProgress(80);
+        setSuccess("Libro registrado. Generando actividades (Paso 1/3)...");
+
+        try {
+          // Trigger sequences
+          await fetch("/api/books/generate-chunk", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ bookId: bookData.book.id, stage: "questions-1" })
+          });
+          setSuccess("Generando actividades (Paso 2/3)...");
+          
+          await fetch("/api/books/generate-chunk", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ bookId: bookData.book.id, stage: "questions-2" })
+          });
+          setSuccess("Generando actividades (Paso 3/3)...");
+
+          await fetch("/api/books/generate-chunk", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ bookId: bookData.book.id, stage: "games" })
+          });
+
+          setUploadProgress(100);
+          setTimeout(() => {
+            setUploadOpen(false);
+            setUploadProgress(0);
+            resetForm();
+            fetchBooks();
+            setSuccess(`¡Libro subido y 20+ preguntas generadas con éxito!`);
+          }, 500);
+        } catch (genErr) {
+          console.error("AI Generation error after upload:", genErr);
           setUploadOpen(false);
           setUploadProgress(0);
           resetForm();
           fetchBooks();
-          setSuccess(`Libro subido exitosamente con actividades IA (${data.activityCount} preguntas)`);
-        }, 500);
+          setError("El libro se subió, pero hubo un error generando las actividades. Prueba 'Re-generar' manualmente.");
+        }
       } else {
         setError(data.message || data.error || "Error al registrar el libro en la base de datos [V3]");
         setUploadProgress(0);
@@ -228,21 +262,40 @@ export default function AdminBooksPage() {
     
     setLoading(true);
     setError(null);
+    setSuccess("Iniciando generación (Paso 1/3)...");
+
     try {
-      const res = await fetch("/api/books/regenerate-ia", {
+      // Paso 1: Preguntas 1-10
+      const res1 = await fetch("/api/books/generate-chunk", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bookId })
+        body: JSON.stringify({ bookId, stage: "questions-1" })
       });
-      const data = await res.json();
-      if (res.ok) {
-        setSuccess(`Actividades regeneradas exitosamente (${data.activityCount} preguntas)`);
-        fetchBooks();
-      } else {
-        setError(data.error || data.message || "Error desconocido al regenerar actividades");
-      }
-    } catch {
-      setError("Error de conexión");
+      if (!res1.ok) throw new Error("Fallo en Paso 1 (Preguntas 1-10)");
+      setSuccess("Generando preguntas adicionales (Paso 2/3)...");
+
+      // Paso 2: Preguntas 11-20
+      const res2 = await fetch("/api/books/generate-chunk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookId, stage: "questions-2" })
+      });
+      if (!res2.ok) throw new Error("Fallo en Paso 2 (Preguntas 11-20)");
+      setSuccess("Generando juegos interactivos (Paso 3/3)...");
+
+      // Paso 3: Juegos
+      const res3 = await fetch("/api/books/generate-chunk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookId, stage: "games" })
+      });
+      if (!res3.ok) throw new Error("Fallo en Paso 3 (Juegos)");
+
+      setSuccess("¡Actividades generadas exitosamente con 20+ preguntas y juegos!");
+      fetchBooks();
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || "Error en la generación por partes");
     } finally {
       setLoading(false);
     }

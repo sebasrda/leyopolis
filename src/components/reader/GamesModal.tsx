@@ -27,7 +27,6 @@ import { QuizGame } from "@/components/learning/games/QuizGame";
 import { MemoryGame } from "@/components/learning/games/MemoryGame";
 import { WordScrambleGame } from "@/components/learning/games/WordScrambleGame";
 import { WordSearchGame } from "@/components/learning/games/WordSearchGame";
-import { WordMatchGame } from "@/components/learning/games/WordMatchGame";
 import { TrueFalseGame } from "@/components/learning/games/TrueFalseGame";
 import { EvaluationMode } from "@/components/learning/games/EvaluationMode";
 
@@ -132,7 +131,6 @@ export default function GamesModal({ isOpen, onClose, bookTitle, bookId }: Games
                         onExit={() => setActiveGame(null)}
                       />
                     )}
-                    {activeGame === 'wordmatch' && <WordMatchGame />}
                   </>
                 ) : (
                   <div className="text-center">

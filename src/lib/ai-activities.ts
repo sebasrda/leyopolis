@@ -57,6 +57,10 @@ export async function generateAndSaveActivities({
       }
     }
 
+    if (!finalRawText || finalRawText.length < 50) {
+      throw new Error("No se pudo extraer texto legible del PDF. Verifique que el archivo no sea una imagen escaneada o esté protegido.");
+    }
+
     const { GoogleGenerativeAI } = require("@google/generative-ai");
     const genAI = new GoogleGenerativeAI(apiKey);
 

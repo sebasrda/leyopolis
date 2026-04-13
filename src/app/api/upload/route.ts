@@ -203,9 +203,9 @@ export async function POST(req: Request) {
         bookId: book.id,
         title: title,
         author: author,
-        contentUrl: book.contentUrl,
-        userId: session.user.id,
-        rawText: rawText,
+        contentUrl: book.contentUrl || "",
+        userId: (session.user as any).id || "",
+        rawText: rawText || "",
         quizFromFile: quizFromFile
       });
 

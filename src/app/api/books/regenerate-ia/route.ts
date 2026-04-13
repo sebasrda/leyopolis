@@ -4,6 +4,10 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { generateAndSaveActivities } from "@/lib/ai-activities";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+export const maxDuration = 60;
+
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user) {

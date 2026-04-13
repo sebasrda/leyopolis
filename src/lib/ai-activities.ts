@@ -35,12 +35,22 @@ export async function generateAndSaveActivities({
     // Fetch PDF text if not provided
     if (!finalRawText && contentUrl) {
       try {
-        const pdfRes = await fetch(contentUrl);
+        let absoluteUrl = contentUrl;
+        if (contentUrl.startsWith("/")) {
+          const baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000";
+          absoluteUrl = `${baseUrl}${contentUrl}`;
+        }
+        
+        console.log(`[AI-STATS] Fetching PDF from: ${absoluteUrl}`);
+        const pdfRes = await fetch(absoluteUrl);
         if (pdfRes.ok) {
           const pdfBuffer = Buffer.from(await pdfRes.arrayBuffer());
           const pdfParse = require("pdf-parse");
           const data = await pdfParse(pdfBuffer);
           finalRawText = data.text;
+          console.log(`[AI-STATS] Extracted ${finalRawText.length} chars from PDF.`);
+        } else {
+          console.error(`[AI-STATS] Failed to fetch PDF: ${pdfRes.status} ${pdfRes.statusText}`);
         }
       } catch (err) {
         console.error("Error fetching/parsing PDF for AI:", err);

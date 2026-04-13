@@ -121,6 +121,12 @@ export default function AdminDashboardPage() {
 
   const handleFileUpload = async () => {
     if (!selectedFile) return;
+    
+    if (selectedFile.size > 10 * 1024 * 1024) {
+      alert("El archivo es demasiado grande (máximo 10MB).");
+      return;
+    }
+
     setUploadProgress(10);
     const formData = new FormData();
     formData.append("file", selectedFile);
@@ -131,6 +137,8 @@ export default function AdminDashboardPage() {
 
     try {
       const response = await fetch("/api/upload", { method: "POST", body: formData });
+      const data = await response.json().catch(() => ({ message: "Error de formato en respuesta del servidor" }));
+      
       if (response.ok) {
         setUploadProgress(100);
         setTimeout(() => {
@@ -139,13 +147,12 @@ export default function AdminDashboardPage() {
           fetchStats();
         }, 500);
       } else {
-        const err = await response.json().catch(() => null);
-        alert(err?.message || "Error al subir el libro.");
+        alert(data.message || data.error || "Error al subir el libro. Revisa el tamaño del PDF.");
         setUploadProgress(0);
       }
     } catch (error) {
       console.error(error);
-      alert("Error de conexión.");
+      alert("Error de conexión al intentar subir el libro.");
       setUploadProgress(0);
     }
   };

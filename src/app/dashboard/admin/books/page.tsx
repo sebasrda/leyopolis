@@ -59,6 +59,13 @@ export default function AdminBooksPage() {
 
   const handleUpload = async () => {
     if (!selectedPdf) return;
+    
+    // Client-side size validation (10MB)
+    if (selectedPdf.size > 10 * 1024 * 1024) {
+      setError("El archivo PDF es demasiado grande. El límite es 10MB para garantizar el procesamiento por IA.");
+      return;
+    }
+
     setUploadProgress(10);
     setError(null);
     const formData = new FormData();
@@ -75,6 +82,8 @@ export default function AdminBooksPage() {
 
     try {
       const res = await fetch("/api/upload", { method: "POST", body: formData });
+      const data = await res.json().catch(() => ({ message: "Error de formato en la respuesta del servidor" }));
+
       if (res.ok) {
         setUploadProgress(100);
         setTimeout(() => {
@@ -85,12 +94,11 @@ export default function AdminBooksPage() {
           setSuccess("Libro subido exitosamente con actividades IA");
         }, 500);
       } else {
-        const err = await res.json().catch(() => null);
-        setError(err?.message || "Error al subir el libro");
+        setError(data.message || data.error || "Error al subir el libro. Revisa el tamaño y formato.");
         setUploadProgress(0);
       }
     } catch (err) {
-      setError("Error de conexión");
+      setError("Error de conexión con el servidor. Verifica tu internet.");
       setUploadProgress(0);
     }
   };

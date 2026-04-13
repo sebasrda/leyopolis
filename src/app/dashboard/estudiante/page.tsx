@@ -52,6 +52,8 @@ export default function EstudianteDashboardPage() {
       {loading ? (
         <Card className="border-dashed">
           <CardContent className="p-8 text-center text-gray-500">Cargando...</CardContent>
+        </Card>
+      ) : (
         <>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
             <Card className="border-none shadow-md">

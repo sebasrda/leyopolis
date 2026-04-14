@@ -13,7 +13,10 @@ export default function AdminSettingsPage() {
     platformName: "LEYÓPOLIS",
     welcomeMessage: "Bienvenido a tu plataforma de lectura inteligente",
     registrationEnabled: "true",
-    maintenanceMode: "false"
+    maintenanceMode: "false",
+    GOOGLE_API_KEY: "",
+    OPENAI_API_KEY: "",
+    OPENROUTER_API_KEY: ""
   });
   const [loading, setLoading] = useState(false);
 
@@ -76,6 +79,54 @@ export default function AdminSettingsPage() {
             <Button onClick={handleSave} disabled={loading}>
               {loading ? "Guardando..." : "Guardar Cambios"}
             </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Configuración de Inteligencia Artificial</CardTitle>
+            <CardDescription>Gestiona las llaves de API para la generación de contenido (Quizzes y Juegos).</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-2">
+              <Label htmlFor="openrouter-key">OpenRouter API Key (Recomendado)</Label>
+              <Input 
+                id="openrouter-key"
+                type="password"
+                placeholder="sk-or-v1-..."
+                value={settings.OPENROUTER_API_KEY}
+                onChange={(e) => setSettings({...settings, OPENROUTER_API_KEY: e.target.value})}
+              />
+              <p className="text-xs text-gray-500 italic">Usado como proveedor principal de alta fiabilidad.</p>
+            </div>
+            
+            <div className="grid gap-2 pt-2">
+              <Label htmlFor="gemini-key">Google Gemini API Key</Label>
+              <Input 
+                id="gemini-key"
+                type="password"
+                placeholder="AIzaSy..."
+                value={settings.GOOGLE_API_KEY}
+                onChange={(e) => setSettings({...settings, GOOGLE_API_KEY: e.target.value})}
+              />
+            </div>
+            
+            <div className="grid gap-2 pt-2">
+              <Label htmlFor="openai-key">OpenAI API Key</Label>
+              <Input 
+                id="openai-key"
+                type="password"
+                placeholder="sk-..."
+                value={settings.OPENAI_API_KEY}
+                onChange={(e) => setSettings({...settings, OPENAI_API_KEY: e.target.value})}
+              />
+            </div>
+
+            <div className="pt-2">
+              <Button onClick={handleSave} disabled={loading} className="w-full sm:w-auto">
+                {loading ? "Guardando..." : "Guardar Llaves de IA"}
+              </Button>
+            </div>
           </CardContent>
         </Card>
 

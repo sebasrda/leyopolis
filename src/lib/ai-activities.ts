@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { generateWithOpenAI } from "./ai/openai";
+import { generateWithOpenRouter } from "./ai/openrouter";
 
 interface GenerateActivitiesResult {
   questions?: any[];
@@ -29,19 +30,25 @@ export async function generateAndSaveActivities({
   stage?: "full" | "questions-1" | "questions-2" | "games";
 }): Promise<GenerateActivitiesResult> {
   let finalRawText = rawText || "";
-  const rawGeminiKey = (process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY || "").trim();
-  const rawOpenaiKey = (process.env.OPENAI_API_KEY || "").trim();
   
-  // Force-strip any accidental wrapping quotes
-  const geminiKey = rawGeminiKey.replace(/^["']|["']$/g, '');
-  const openaiKey = rawOpenaiKey.replace(/^["']|["']$/g, '');
+  // 1. Fetch keys from Database (SystemSetting) or Environment
+  const settings = await prisma.systemSetting.findMany();
+  const settingsMap = settings.reduce((acc: Record<string, string>, curr) => {
+    acc[curr.key] = curr.value;
+    return acc;
+  }, {} as Record<string, string>);
 
-  if (!geminiKey && !openaiKey) {
-    throw new Error("No se encontraron llaves de API (Gemini u OpenAI).");
+  const sanitize = (key?: string) => (key || "").trim().replace(/^["']|["']$/g, '');
+
+  const geminiKey = sanitize(settingsMap.GOOGLE_API_KEY || process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY);
+  const openaiKey = sanitize(settingsMap.OPENAI_API_KEY || process.env.OPENAI_API_KEY);
+  const openrouterKey = sanitize(settingsMap.OPENROUTER_API_KEY || process.env.OPENROUTER_API_KEY);
+
+  if (!geminiKey && !openaiKey && !openrouterKey) {
+    throw new Error("No se encontraron llaves de IA configuradas (Gemini, OpenAI u OpenRouter).");
   }
 
-  console.log(`[AI-STATS] Using Gemini Key: ${geminiKey ? geminiKey.substring(0, 10) + "..." : "NONE"}`);
-  console.log(`[AI-STATS] Using OpenAI Key: ${openaiKey ? openaiKey.substring(0, 10) + "..." : "NONE"}`);
+  console.log(`[AI-STATS] Credenciales: Gemini(${geminiKey ? 'OK' : 'X'}), OpenAI(${openaiKey ? 'OK' : 'X'}), OpenRouter(${openrouterKey ? 'OK' : 'X'})`);
 
     // Fetch PDF text if not provided
     if (!finalRawText && contentUrl) {
@@ -201,12 +208,22 @@ export async function generateAndSaveActivities({
     }
   }
 
-  // SECONDARY ATTEMPT: OpenAI (as fallback or if Gemini failed)
+  // SECONDARY ATTEMPT: OpenRouter (Higher reliability)
+  if (!result && openrouterKey) {
+    console.log(`[AI-STATS] Intentando con OpenRouter para: ${title}`);
+    try {
+      parsedJson = await generateWithOpenRouter(prompt, openrouterKey, "google/gemini-2.0-flash-001");
+      result = { source: "openrouter" };
+    } catch (err: any) {
+      lastError = err;
+      console.error("[AI-STATS] OpenRouter falló:", err.message);
+    }
+  }
+
+  // TERTIARY ATTEMPT: OpenAI (Legacy fallback)
   if (!result && openaiKey) {
     console.log(`[AI-STATS] Intentando fallback con OpenAI para: ${title}`);
     try {
-      // NOTE: We don't send pdfDataPart to OpenAI here as it requires a different API structure, 
-      // but for questions/JSON it excels with the 'extract' text.
       parsedJson = await generateWithOpenAI(prompt, "gpt-4o-mini");
       result = { source: "openai" };
     } catch (err: any) {
@@ -216,11 +233,11 @@ export async function generateAndSaveActivities({
   }
 
   if (!result || !parsedJson) {
-    const errorPrefix = `Error en Generación IA (Gemini+OpenAI): `;
-    const errorBody = lastError?.message || "Sin respuesta";
+    const errorPrefix = `Error en Generación IA (Híbrida): `;
+    const errorBody = lastError?.message || "Sin respuesta de ningún proveedor";
     
     if (errorBody.includes("429") || errorBody.includes("quota")) {
-      throw new Error(`${errorPrefix} Límite de cuota alcanzado en tus llaves Gratuitas. Por favor, espera 60 segundos antes de intentar de nuevo o añade crédito a tus cuentas.`);
+      throw new Error(`${errorPrefix} Límite de cuota alcanzado. Por favor, revisa tus llaves en la configuración o espera unos minutos.`);
     }
     
     throw new Error(`${errorPrefix} ${errorBody}`);

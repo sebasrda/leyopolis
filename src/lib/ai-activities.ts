@@ -197,7 +197,14 @@ export async function generateAndSaveActivities({
   }
 
   if (!result || !parsedJson) {
-    throw new Error(`Error en Generación IA (Gemini+OpenAI): ${lastError?.message || "Sin respuesta"}`);
+    const errorPrefix = `Error en Generación IA (Gemini+OpenAI): `;
+    const errorBody = lastError?.message || "Sin respuesta";
+    
+    if (errorBody.includes("429") || errorBody.includes("quota")) {
+      throw new Error(`${errorPrefix} Límite de cuota alcanzado en tus llaves Gratuitas. Por favor, espera 60 segundos antes de intentar de nuevo o añade crédito a tus cuentas.`);
+    }
+    
+    throw new Error(`${errorPrefix} ${errorBody}`);
   }
 
   const parsed = parsedJson;

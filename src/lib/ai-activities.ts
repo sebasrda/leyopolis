@@ -29,12 +29,19 @@ export async function generateAndSaveActivities({
   stage?: "full" | "questions-1" | "questions-2" | "games";
 }): Promise<GenerateActivitiesResult> {
   let finalRawText = rawText || "";
-  const geminiKey = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY || "";
-  const openaiKey = process.env.OPENAI_API_KEY || "";
+  const rawGeminiKey = (process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY || "").trim();
+  const rawOpenaiKey = (process.env.OPENAI_API_KEY || "").trim();
+  
+  // Force-strip any accidental wrapping quotes
+  const geminiKey = rawGeminiKey.replace(/^["']|["']$/g, '');
+  const openaiKey = rawOpenaiKey.replace(/^["']|["']$/g, '');
 
   if (!geminiKey && !openaiKey) {
     throw new Error("No se encontraron llaves de API (Gemini u OpenAI).");
   }
+
+  console.log(`[AI-STATS] Using Gemini Key: ${geminiKey ? geminiKey.substring(0, 10) + "..." : "NONE"}`);
+  console.log(`[AI-STATS] Using OpenAI Key: ${openaiKey ? openaiKey.substring(0, 10) + "..." : "NONE"}`);
 
     // Fetch PDF text if not provided
     if (!finalRawText && contentUrl) {

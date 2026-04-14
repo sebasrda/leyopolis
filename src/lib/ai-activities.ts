@@ -158,11 +158,13 @@ export async function generateAndSaveActivities({
         lastError = err;
         const errMsg = err.message || "";
         if (errMsg.includes("429") || errMsg.includes("Too Many Requests") || errMsg.includes("quota")) {
-          console.log(`Límite de cuota alcanzado para ${modelName}, reintentando en 10s... (Intento ${i+1}/3)`);
+          console.log(`[AI-STATS] Límite de cuota alcanzado para ${modelName}, reintentando en 10s... (Intento ${i+1}/3)`);
           await sleep(10000);
           continue;
         }
-        throw err;
+        // If it's a 404 or other model-specific error, don't throw, just try next model
+        console.warn(`[AI-STATS] Modelo ${modelName} falló (${lastError?.message || "Error"}), probando siguiente...`);
+        break; 
       }
     }
     if (result) break;

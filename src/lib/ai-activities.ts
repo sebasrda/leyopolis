@@ -145,6 +145,7 @@ export async function generateAndSaveActivities({
   }
   
   const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+  // Production Sync Trigger: Ensure Vercel re-builds with latest Environment Variables
   
   let result;
   let parsedJson;

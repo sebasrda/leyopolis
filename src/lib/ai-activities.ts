@@ -57,18 +57,43 @@ export async function generateAndSaveActivities({
       }
     }
 
-    if (!finalRawText || finalRawText.length < 50) {
-      throw new Error("No se pudo extraer texto legible del PDF. Verifique que el archivo no sea una imagen escaneada o esté protegido.");
-    }
-
     const { GoogleGenerativeAI } = require("@google/generative-ai");
     const genAI = new GoogleGenerativeAI(apiKey);
 
-    let prompt = "";
-    console.log(`[AI-STATS] Book: ${title}, Extracted text length: ${finalRawText?.length || 0}`);
-    
-    let extract = finalRawText ? finalRawText.slice(0, 15000) : "Sin extracto.";
+    let pdfDataPart: any = null;
+    let isMultimodal = false;
 
+    if (!finalRawText || finalRawText.length < 50) {
+      console.log(`[AI-STATS] Text extraction failed or too short. Falling back to Multimodal PDF analysis for: ${title}`);
+      try {
+        let absoluteUrl = contentUrl;
+        if (contentUrl.startsWith("/")) {
+          const baseUrl = process.env.NEXTAUTH_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+          absoluteUrl = `${baseUrl}${contentUrl}`;
+        }
+        const pdfRes = await fetch(absoluteUrl);
+        if (pdfRes.ok) {
+          const buffer = await pdfRes.arrayBuffer();
+          pdfDataPart = {
+            inlineData: {
+              data: Buffer.from(buffer).toString("base64"),
+              mimeType: "application/pdf"
+            }
+          };
+          isMultimodal = true;
+        }
+      } catch (err) {
+        console.error("[AI-STATS] Failed to prepare multimodal part:", err);
+      }
+    }
+
+    // If both failed, we still have title/author but it's risky. 
+    // But let's let Gemini try if we at least have a title.
+    const extract = finalRawText ? finalRawText.slice(0, 15000) : "Contenido no extraíble directamente, analice el PDF adjunto si está disponible.";
+
+    let prompt = "";
+    console.log(`[AI-STATS] Book: ${title}, Extracted text length: ${finalRawText?.length || 0}, Multimodal: ${isMultimodal}`);
+    
   // Split 'full' stage into two distinct AI calls to ensure quality and prevent truncation
   if (stage === "full") {
     console.log(`[AI-STATS] Starting two-phase generation for book: ${title}`);
@@ -93,13 +118,13 @@ export async function generateAndSaveActivities({
   if (stage === "questions-1") {
     prompt = `Actúa como un experto pedagogo. 
     Libro: "${title}" de "${author}". 
-    TEXTO: ${extract}
+    CONTEXTO: ${extract}
     TAREA: Genera exactamente 20 preguntas de opción múltiple de alta calidad que cubran todo el contenido (inicio, nudo y desenlace).
     REGLA: Cada pregunta debe tener 4 opciones (A, B, C, D) y un índice de respuesta corecta (0-3).
     SALIDA: Responde SOLO un JSON: {"questions": [{"question": "text", "options": ["opt0","opt1","opt2","opt3"], "correct": number}]}.`;
   } else if (stage === "games") {
     prompt = `Libro: "${title}" de "${author}". 
-    TEXTO: ${extract}
+    CONTEXTO: ${extract}
     TAREA: Genera datos para juegos interactivos Premium.
     1. keywords: 15 palabras clave importantes para una Sopa de Letras.
     2. memoryPairs: 8 parejas de (personaje/concepto y su descripción/hecho clave).
@@ -122,14 +147,19 @@ export async function generateAndSaveActivities({
 
     for (let i = 0; i < 3; i++) { // Máximo 3 reintentos por modelo
       try {
-        result = await aiModel.generateContent(prompt);
+        const contentParts: any[] = [prompt];
+        if (isMultimodal && pdfDataPart) {
+          contentParts.push(pdfDataPart);
+        }
+        
+        result = await aiModel.generateContent(contentParts);
         if (result) break;
       } catch (err: any) {
         lastError = err;
         const errMsg = err.message || "";
         if (errMsg.includes("429") || errMsg.includes("Too Many Requests") || errMsg.includes("quota")) {
-          console.log(`Límite de cuota alcanzado para ${modelName}, reintentando en 3s... (Intento ${i+1}/3)`);
-          await sleep(3000);
+          console.log(`Límite de cuota alcanzado para ${modelName}, reintentando en 10s... (Intento ${i+1}/3)`);
+          await sleep(10000);
           continue;
         }
         throw err;
@@ -139,7 +169,7 @@ export async function generateAndSaveActivities({
   }
 
   if (!result) {
-    throw new Error(`Cuota de IA agotada tras varios reintentos: ${lastError?.message || "Error desconocido"}`);
+    throw new Error(`Error en Generación IA: ${lastError?.message || "Sin respuesta"}`);
   }
 
   const responseText = result.response.text();

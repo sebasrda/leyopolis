@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { CheckCircle } from 'lucide-react';
+import { CheckCircle, Grid3X3, HelpCircle } from 'lucide-react';
 
 interface WordSearchProps {
   words: string[]; // Words to find
@@ -30,10 +30,13 @@ export function WordSearchGame({ words = ["LEYOPOLIS", "LIBRO", "JUEGO"], gridSi
 
   // Initialize Grid
   useEffect(() => {
-    initializeGrid();
-  }, []);
+    if (words && words.length > 0) {
+      initializeGrid();
+    }
+  }, [words]);
 
   const initializeGrid = () => {
+    if (!words || words.length === 0) return;
     // 1. Create empty grid
     const newGrid: Cell[][] = Array(gridSize).fill(null).map((_, y) => 
       Array(gridSize).fill(null).map((_, x) => ({
@@ -208,6 +211,17 @@ export function WordSearchGame({ words = ["LEYOPOLIS", "LIBRO", "JUEGO"], gridSi
             Reclamar Recompensa
           </Button>
         </motion.div>
+      </div>
+    );
+  }
+
+  if (!grid || grid.length === 0 || !words || words.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center p-12 text-center h-full w-full">
+        <div className="bg-white dark:bg-gray-800 p-8 rounded-[2rem] shadow-xl border-2 border-indigo-50 dark:border-indigo-900/20 max-w-md">
+          <Grid3X3 className="h-12 w-12 text-indigo-400 mx-auto mb-4 opacity-50" />
+          <p className="text-gray-500 dark:text-gray-400 italic">No se pudo generar la sopa de letras para este libro.</p>
+        </div>
       </div>
     );
   }

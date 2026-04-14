@@ -30,21 +30,26 @@ export function MemoryGame({ pairs, onComplete }: MemoryGameProps) {
 
     // Initialize Game
     useEffect(() => {
+        if (!pairs || pairs.length === 0) return;
+        
         const newCards: MemoryCard[] = [];
-        pairs.forEach((pair, index) => {
-            // Card 1: Character
+        // Only take up to 8 pairs to keep it manageable and fit the UI stats
+        const validatedPairs = pairs.slice(0, 8);
+        
+        validatedPairs.forEach((pair, index) => {
+            // Card 1: Character (ensure content is not empty)
             newCards.push({
                 id: index * 2,
-                content: pair.character,
+                content: pair.character || `Personaje ${index + 1}`,
                 type: 'character',
                 matchId: index,
                 isFlipped: false,
                 isMatched: false
             });
-            // Card 2: Description
+            // Card 2: Description (ensure content is not empty)
             newCards.push({
                 id: index * 2 + 1,
-                content: pair.description,
+                content: pair.description || `Hecho clave ${index + 1}`,
                 type: 'description',
                 matchId: index,
                 isFlipped: false,
@@ -139,6 +144,16 @@ export function MemoryGame({ pairs, onComplete }: MemoryGameProps) {
         onComplete(finalScore, 1000);
     };
 
+    if (!pairs || pairs.length === 0) {
+        return (
+            <div className="flex flex-col items-center justify-center p-12 text-center h-full">
+                <div className="bg-white p-8 rounded-3xl shadow-lg border-2 border-indigo-50">
+                    <p className="text-gray-500 italic">No hay suficientes parejas literarias para este libro.</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="flex flex-col items-center w-full h-full p-4">
             {/* Header */}
@@ -178,8 +193,8 @@ export function MemoryGame({ pairs, onComplete }: MemoryGameProps) {
                             </div>
 
                             {/* Back (Visible) */}
-                            <div className="absolute inset-0 backface-hidden rotate-y-180 flex items-center justify-center p-2 bg-white rounded-xl">
-                                <span className={`text-sm md:text-base font-medium ${card.isMatched ? 'text-green-600' : 'text-gray-800'}`}>
+                            <div className="absolute inset-0 backface-hidden rotate-y-180 flex items-center justify-center p-3 bg-white rounded-xl border border-gray-100 shadow-inner">
+                                <span className={`text-xs sm:text-sm md:text-base font-bold leading-tight break-words max-w-full ${card.isMatched ? 'text-green-600' : 'text-indigo-900'}`}>
                                     {card.content}
                                 </span>
                             </div>

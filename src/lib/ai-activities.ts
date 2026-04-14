@@ -143,11 +143,17 @@ export async function generateAndSaveActivities({
   } else if (stage === "games") {
     prompt = `Libro: "${title}" de "${author}". 
     CONTEXTO: ${extract}
-    TAREA: Genera datos para juegos interactivos Premium.
-    1. keywords: 15 palabras clave importantes para una Sopa de Letras.
-    2. memoryPairs: 8 parejas de (personaje/concepto y su descripción/hecho clave).
-    3. sentences: 6 frases destacadas para ordenar.
+    TAREA: Genera datos para juegos interactivos Premium de alta calidad pedagógica.
+    
+    INSTRUCCIONES DE CALIDAD:
+    1. keywords: 15 palabras clave únicas e importantes (mínimo 4 letras, máximo 12).
+    2. memoryPairs: 8 parejas ÚNICAS y DISTINTAS. 
+       - "character": Nombre del personaje o concepto (máximo 3 palabras).
+       - "description": Hecho clave o descripción clara (máximo 12 palabras).
+       - REGLA: No generes descripciones genéricas. Deben ser específicas al libro.
+    3. sentences: 6 frases CORTAS y SIGNIFICATIVAS extraídas o basadas en el libro para reordenar (entre 5 y 10 palabras por frase).
     4. statements: 10 afirmaciones sobre el libro (algunas verdaderas y otras falsas) con un campo "isTrue" (boolean).
+    
     SALIDA: Responde SOLO un JSON: {"keywords": ["word1",...], "memoryPairs": [{"character": "X", "description": "Y"}], "sentences": ["frase1", ...], "statements": [{"text": "...", "isTrue": true/false}]}`;
   }
   

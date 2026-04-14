@@ -28,17 +28,27 @@ export function WordScrambleGame({ sentences, onComplete, onExit }: WordScramble
 
   // Initialize first sentence
   useEffect(() => {
-    loadSentence(0);
-  }, []);
+    if (sentences && sentences.length > 0) {
+      loadSentence(0);
+    }
+  }, [sentences]);
 
   const loadSentence = (index: number) => {
+    if (!sentences || sentences.length === 0) return;
+    
     if (index >= sentences.length) {
       setGameFinished(true);
       onComplete(score, sentences.length);
       return;
     }
 
-    const sentence = sentences[index].sentence;
+    const currentSentenceObj = sentences[index];
+    if (!currentSentenceObj || !currentSentenceObj.sentence) {
+       console.error("[SCRAMBLE] Invalid sentence object at index", index);
+       return;
+    }
+
+    const sentence = currentSentenceObj.sentence;
     // Remove punctuation for easier matching if needed, but keeping it adds challenge
     const words = sentence.split(' ');
     
@@ -112,6 +122,17 @@ export function WordScrambleGame({ sentences, onComplete, onExit }: WordScramble
             Volver al Hub
           </Button>
         </motion.div>
+      </div>
+    );
+  }
+
+  if (!sentences || sentences.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center p-12 text-center h-full">
+        <div className="bg-white dark:bg-gray-800 p-8 rounded-[2rem] shadow-xl border-2 border-indigo-50 dark:border-indigo-900/20">
+          <HelpCircle className="h-12 w-12 text-indigo-400 mx-auto mb-4" />
+          <p className="text-gray-500 dark:text-gray-400 italic">No hay frases para ordenar disponibles para este libro.</p>
+        </div>
       </div>
     );
   }

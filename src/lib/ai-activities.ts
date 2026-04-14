@@ -142,8 +142,8 @@ export async function generateAndSaveActivities({
   let result;
   let parsedJson;
   let lastError;
-  // Updated list based on diagnostic: 2.5 and 2.0 are clearly available in v1/v1beta
-  const geminiModels = ["gemini-2.0-flash", "gemini-2.5-flash", "gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.5-flash-8b"];
+  // Use the futuristic/experimental IDs found in the diagnostic for this specific key
+  const geminiModels = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-2.5-pro", "gemini-1.5-flash", "gemini-1.5-pro"];
   
   // PRIMARY ATTEMPT: Gemini
   if (genAI) {

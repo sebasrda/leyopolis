@@ -132,26 +132,18 @@ export default function AdminBooksPage() {
         setSuccess("Libro registrado. Generando actividades (Paso 1/3)...");
 
         try {
-          // Trigger sequences
-          await fetch("/api/books/generate-chunk", {
+          // Trigger the unified, hybrid AI generation (replacing the old 3-step sequence)
+          const genRes = await fetch("/api/books/regenerate-ia", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ bookId: bookData.book.id, stage: "questions-1" })
+            body: JSON.stringify({ bookId: bookData.book.id })
           });
-          setSuccess("Generando actividades (Paso 2/3)...");
           
-          await fetch("/api/books/generate-chunk", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ bookId: bookData.book.id, stage: "questions-2" })
-          });
-          setSuccess("Generando actividades (Paso 3/3)...");
+          const genData = await genRes.json();
 
-          await fetch("/api/books/generate-chunk", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ bookId: bookData.book.id, stage: "games" })
-          });
+          if (!genRes.ok) {
+            throw new Error(genData.message || "Error en la generación automática de IA");
+          }
 
           setUploadProgress(100);
           setTimeout(() => {
@@ -159,15 +151,15 @@ export default function AdminBooksPage() {
             setUploadProgress(0);
             resetForm();
             fetchBooks();
-            setSuccess(`¡Libro subido y 20+ preguntas generadas con éxito!`);
+            setSuccess(`¡Éxito! Libro subido y ${genData.activityCount} actividades generadas.`);
           }, 500);
-        } catch (genErr) {
+        } catch (genErr: any) {
           console.error("AI Generation error after upload:", genErr);
           setUploadOpen(false);
           setUploadProgress(0);
           resetForm();
           fetchBooks();
-          setError("El libro se subió, pero hubo un error generando las actividades. Prueba 'Re-generar' manualmente.");
+          setError(`El libro se subió, pero hubo un error de IA: ${genErr.message || "Prueba Regenerar manualmente"}`);
         }
       } else {
         setError(data.message || data.error || "Error al registrar el libro en la base de datos [V3]");

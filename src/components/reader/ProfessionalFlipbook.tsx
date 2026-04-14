@@ -20,8 +20,8 @@ import 'react-pdf/dist/Page/TextLayer.css';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 
 // Configurar worker de PDF.js
-// Configurar worker de PDF.js de forma más robusta
-pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.mjs`;
+// Configurar worker de PDF.js (Revertido a unpkg para máxima compatibilidad con v10)
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 interface ProfessionalFlipbookProps {
   pdfUrl: string;

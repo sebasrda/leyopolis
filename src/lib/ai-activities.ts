@@ -142,8 +142,9 @@ export async function generateAndSaveActivities({
   let result;
   let parsedJson;
   let lastError;
-  // gemini-2.0-flash is the ONLY one verified to work (responding with 429 instead of 404) for this key
-  const geminiModels = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro", "gemini-pro"];
+  // gemini-2.0-flash is the ONLY one verified to work (responding with 429 instead of 404) for this key.
+  // We removed other models to avoid confusing "Invalid Key" errors from Google when they are not enabled for this project.
+  const geminiModels = ["gemini-2.0-flash"];
   
   // PRIMARY ATTEMPT: Gemini
   if (genAI) {

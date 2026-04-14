@@ -17,7 +17,9 @@ import {
   Trash2,
   FileText,
   Settings,
+  Sparkles,
 } from "lucide-react";
+import { SuggestedReadingsDialog } from "@/components/dashboard/teacher/SuggestedReadingsDialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -101,9 +103,12 @@ export default function AdminDashboardPage() {
   const [newUserRole, setNewUserRole] = useState("STUDENT");
   const [creatingUser, setCreatingUser] = useState(false);
   const [updatingSetting, setUpdatingSetting] = useState(false);
+  const [isSuggestedOpen, setIsSuggestedOpen] = useState(false);
+  const [adminClasses, setAdminClasses] = useState<{id:string;name:string}[]>([]);
 
   useEffect(() => {
     fetchStats();
+    fetch("/api/teacher/classes").then(r => r.ok ? r.json() : []).then(setAdminClasses).catch(() => {});
   }, []);
 
   const fetchStats = async () => {
@@ -501,6 +506,12 @@ export default function AdminDashboardPage() {
               <CardTitle>Acciones Rápidas</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
+              <Button 
+                className="w-full justify-start gap-2 bg-indigo-500 hover:bg-indigo-600 text-white"
+                onClick={() => setIsSuggestedOpen(true)}
+              >
+                <Sparkles className="h-4 w-4" /> Lecturas Sugeridas
+              </Button>
               <Button className="w-full justify-start gap-2 bg-indigo-600 hover:bg-indigo-700 text-white" asChild>
                 <Link href="/dashboard/admin/classes"><Plus className="h-4 w-4" /> Crear Nueva Clase</Link>
               </Button>
@@ -509,6 +520,13 @@ export default function AdminDashboardPage() {
               </Button>
             </CardContent>
           </Card>
+
+          <SuggestedReadingsDialog
+            isOpen={isSuggestedOpen}
+            onClose={() => setIsSuggestedOpen(false)}
+            onSuccess={() => {}}
+            classes={adminClasses}
+          />
         </div>
       </div>
     </div>

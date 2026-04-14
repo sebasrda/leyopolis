@@ -1,5 +1,12 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, BookOpen, Globe, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
+
+const FEATURED_BOOKS = [
+  { title: "Las Voces del Rio", cover: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ1_uH6Nb8piMiAIarFdq2hkQlOQ0fCTLcSHQ&s" },
+  { title: "El Mapa de los Mundos Perdidos", cover: "https://m.media-amazon.com/images/I/81Q9MeLSqPL._AC_UF1000,1000_QL80_.jpg" },
+  { title: "La Casa del Viento", cover: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRdSwCNpCvomf2X0Y_A8WXEyT7ZEkidAH8EZg&s" },
+  { title: "El Código Invisible", cover: "https://m.media-amazon.com/images/I/71fajb4AMWL._AC_UF1000,1000_QL80_.jpg" },
+];
 
 export default function Hero() {
   return (
@@ -34,25 +41,32 @@ export default function Hero() {
             </Button>
           </div>
         </div>
+
+        {/* Book Covers Preview */}
         <div className="mx-auto mt-16 flex max-w-2xl sm:mt-24 lg:ml-10 lg:mr-0 lg:mt-0 lg:max-w-none lg:flex-none xl:ml-32">
           <div className="max-w-3xl flex-none sm:max-w-5xl lg:max-w-none">
-            <div className="-m-2 rounded-xl bg-gray-900/5 p-2 ring-1 ring-inset ring-gray-900/10 lg:-m-4 lg:rounded-2xl lg:p-4">
-              <div className="rounded-md bg-white shadow-2xl ring-1 ring-gray-900/10 p-8 min-w-[400px] min-h-[500px] flex flex-col justify-center items-center text-center space-y-6">
-                <Sparkles className="h-16 w-16 text-indigo-600" />
-                <h3 className="text-2xl font-semibold">Lector Inteligente IA</h3>
-                <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                  <div className="w-2/3 h-full bg-indigo-600"></div>
+            <div className="-m-2 rounded-xl bg-gradient-to-br from-indigo-50/80 to-purple-50/80 p-4 ring-1 ring-inset ring-indigo-200/50">
+              <div className="flex flex-col items-center gap-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <Sparkles className="h-4 w-4 text-indigo-500" />
+                  <span className="text-xs font-semibold text-indigo-600 uppercase tracking-wider">Unidades Destacadas</span>
                 </div>
-                <div className="grid grid-cols-2 gap-4 w-full text-sm">
-                  <div className="p-4 bg-indigo-50 rounded-lg flex flex-col items-center gap-2">
-                    <Globe className="h-5 w-5 text-indigo-600" />
-                    <span>Traducción Real</span>
-                  </div>
-                  <div className="p-4 bg-indigo-50 rounded-lg flex flex-col items-center gap-2">
-                    <BookOpen className="h-5 w-5 text-indigo-600" />
-                    <span>Modo Bilingüe</span>
-                  </div>
+                <div className="grid grid-cols-2 gap-3">
+                  {FEATURED_BOOKS.map((book) => (
+                    <a key={book.title} href="/login" className="group relative overflow-hidden rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 w-[160px] h-[210px] block">
+                      <img
+                        src={book.cover}
+                        alt={book.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        onError={(e) => { (e.target as HTMLImageElement).src = `https://placehold.co/160x210/6366f1/white?text=${encodeURIComponent(book.title.slice(0,15))}`; }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-2">
+                        <p className="text-white text-[10px] font-semibold leading-tight line-clamp-2">{book.title}</p>
+                      </div>
+                    </a>
+                  ))}
                 </div>
+                <p className="text-xs text-gray-400 mt-1">Más de 50 unidades disponibles</p>
               </div>
             </div>
           </div>

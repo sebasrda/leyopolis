@@ -8,6 +8,7 @@ export async function GET() {
   const session = await getServerSession(authOptions);
   
   const userRole = (session?.user as any)?.role;
+  const userId = (session?.user as any)?.id;
   const allowed = ["ADMIN", "SUPERADMIN"];
   
   if (!session?.user || !allowed.includes(userRole)) {
@@ -15,7 +16,20 @@ export async function GET() {
   }
 
   try {
+    // Superadmin sees everyone; institutional admins see only their institution's users
+    let institutionFilter: any = {};
+    if (userRole === "ADMIN") {
+      const callerUser = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { institutionId: true }
+      });
+      if (callerUser?.institutionId) {
+        institutionFilter = { institutionId: callerUser.institutionId };
+      }
+    }
+
     const users = await prisma.user.findMany({
+      where: institutionFilter,
       select: {
         id: true,
         name: true,
@@ -32,9 +46,7 @@ export async function GET() {
       orderBy: { createdAt: 'desc' }
     });
     
-    // Add virtual status field
     const usersWithStatus = users.map(u => ({ ...u, status: "Activo" }));
-
     return NextResponse.json(usersWithStatus);
   } catch (error) {
     return NextResponse.json({ message: "Error fetching users" }, { status: 500 });

@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,6 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 
 export default function AdminSettingsPage() {
+  const { data: session } = useSession();
+  const isSuperAdmin = (session?.user as any)?.role === "SUPERADMIN";
   const [settings, setSettings] = useState({
     platformName: "LEYÓPOLIS",
     welcomeMessage: "Bienvenido a tu plataforma de lectura inteligente",
@@ -82,6 +85,8 @@ export default function AdminSettingsPage() {
           </CardContent>
         </Card>
 
+        {/* AI Config — SUPERADMIN ONLY */}
+        {isSuperAdmin && (
         <Card>
           <CardHeader>
             <CardTitle>Configuración de Inteligencia Artificial</CardTitle>
@@ -129,6 +134,7 @@ export default function AdminSettingsPage() {
             </div>
           </CardContent>
         </Card>
+        )}
 
         <Card>
           <CardHeader>

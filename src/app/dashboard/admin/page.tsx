@@ -55,6 +55,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 
 interface Stats {
   totalUsers: number;
@@ -81,6 +82,8 @@ interface Stats {
 }
 
 export default function AdminDashboardPage() {
+  const { data: session } = useSession();
+  const isSuperAdmin = (session?.user as any)?.role === "SUPERADMIN";
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -322,8 +325,8 @@ export default function AdminDashboardPage() {
         </Card>
       )}
 
-      {/* Institution Library Config for Coordinator */}
-      {stats?.institution && (
+      {/* Institution Library Config - SUPERADMIN ONLY */}
+      {stats?.institution && isSuperAdmin && (
         <Card className="border-indigo-100 shadow-sm overflow-hidden bg-white">
           <CardHeader className="py-4 border-b bg-gray-50/30 flex flex-row items-center justify-between">
             <div>

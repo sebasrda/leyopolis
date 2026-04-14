@@ -150,19 +150,20 @@ export async function generateAndSaveActivities({
   let result;
   let parsedJson;
   let lastError;
-  // gemini-2.0-flash is the ONLY one verified to work (responding with 429 instead of 404) for this key.
-  // We removed other models to avoid confusing "Invalid Key" errors from Google when they are not enabled for this project.
-  const geminiModels = ["gemini-2.0-flash"];
+  // Use a tiered list of models. If one is 429 (quota) or 404 (not found), we pivot.
+  const geminiModels = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-flash-8b"];
   
   // PRIMARY ATTEMPT: Gemini
   if (genAI) {
     for (const modelName of geminiModels) {
+      console.log(`[AI-STATS] Intentando con modelo: ${modelName}`);
       const aiModel = genAI.getGenerativeModel({ 
         model: modelName,
         generationConfig: { temperature: 0.7, maxOutputTokens: 2048 }
       });
 
-      for (let i = 0; i < 3; i++) {
+      // Increased retries and backoff for Free Tier resilience
+      for (let i = 0; i < 4; i++) {
         try {
           const contentParts: any[] = [prompt];
           if (isMultimodal && pdfDataPart) {
@@ -178,12 +179,21 @@ export async function generateAndSaveActivities({
         } catch (err: any) {
           lastError = err;
           const errMsg = err.message || "";
+          
+          // Detect Quota (RPM or RPD)
           if (errMsg.includes("429") || errMsg.includes("Too Many Requests") || errMsg.includes("quota")) {
-            console.log(`[AI-STATS] Cuota Gemini agotada (${modelName}), reintentando...`);
-            await sleep(5000);
+            const isDaily = errMsg.toLowerCase().includes("day") || errMsg.toLowerCase().includes("limit");
+            if (isDaily) {
+              console.warn(`[AI-STATS] Límite DIARIO alcanzado para ${modelName}. Probando siguiente modelo...`);
+              break; // Stop retrying THIS model, try the next one in the list
+            }
+            console.log(`[AI-STATS] Límite por minuto alcanzado (${modelName}), esperando 15s... (Intento ${i+1}/4)`);
+            await sleep(15000);
             continue;
           }
-          console.warn(`[AI-STATS] Gemini ${modelName} falló: ${lastError?.message}.`);
+          
+          // Detect Model Not Found (404) or other errors
+          console.warn(`[AI-STATS] Gemini ${modelName} falló: ${lastError?.message}. Probando siguiente modelo...`);
           break; 
         }
       }

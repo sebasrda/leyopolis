@@ -5,7 +5,7 @@ import { generateWithOpenRouter } from "./ai/openrouter";
 interface GenerateActivitiesResult {
   questions?: any[];
   keywords?: string[];
-  memoryPairs?: any[];
+  timelineEvents?: string[];
   sentences?: string[];
   statements?: any[];
 }
@@ -147,14 +147,11 @@ export async function generateAndSaveActivities({
     
     INSTRUCCIONES DE CALIDAD:
     1. keywords: 15 palabras clave únicas e importantes (mínimo 4 letras, máximo 12).
-    2. memoryPairs: 8 parejas ÚNICAS y DISTINTAS. 
-       - "character": Nombre del personaje o concepto (máximo 3 palabras).
-       - "description": Hecho clave o descripción clara (máximo 12 palabras).
-       - REGLA: No generes descripciones genéricas. Deben ser específicas al libro.
+    2. timelineEvents: Una lista de exactamente 6 eventos CRUCIALES del libro en ESTRICTO ORDEN CRONOLÓGICO (desde el inicio hasta el desenlace). Cada evento debe ser una frase clara (máximo 15 palabras).
     3. sentences: 6 frases CORTAS y SIGNIFICATIVAS extraídas o basadas en el libro para reordenar (entre 5 y 10 palabras por frase).
     4. statements: 10 afirmaciones sobre el libro (algunas verdaderas y otras falsas) con un campo "isTrue" (boolean).
     
-    SALIDA: Responde SOLO un JSON: {"keywords": ["word1",...], "memoryPairs": [{"character": "X", "description": "Y"}], "sentences": ["frase1", ...], "statements": [{"text": "...", "isTrue": true/false}]}`;
+    SALIDA: Responde SOLO un JSON: {"keywords": ["word1",...], "timelineEvents": ["evento1", "evento2", ...], "sentences": ["frase1", ...], "statements": [{"text": "...", "isTrue": true/false}]}`;
   }
   
   const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -265,7 +262,7 @@ export async function generateAndSaveActivities({
         content: JSON.stringify({ 
           questions: parsed.questions || [],
           keywords: parsed.keywords || [],
-          memoryPairs: parsed.memoryPairs || [],
+          timelineEvents: parsed.timelineEvents || [],
           sentences: parsed.sentences || [],
           statements: parsed.statements || []
         }),
@@ -310,7 +307,7 @@ export async function generateAndSaveActivities({
           content: JSON.stringify({ 
             ...currentContent, 
             keywords: parsed.keywords || currentContent.keywords || [],
-            memoryPairs: parsed.memoryPairs || currentContent.memoryPairs || [],
+            timelineEvents: parsed.timelineEvents || currentContent.timelineEvents || [],
             sentences: parsed.sentences || currentContent.sentences || [],
             statements: parsed.statements || currentContent.statements || []
           }) 
@@ -328,11 +325,11 @@ export async function generateAndSaveActivities({
         },
       });
     }
-    if (parsed.memoryPairs?.length > 0) {
+    if (parsed.timelineEvents?.length > 0) {
       await (prisma as any).activity.create({
         data: {
-          title: `Memoria: ${title}`, type: "MATCH",
-          content: JSON.stringify({ pairs: parsed.memoryPairs.map((p: any, i: number) => ({ id: i+1, word: p.character, def: p.description })) }),
+          title: `Cronología: ${title}`, type: "MATCH", // Reusing MATCH for simplicity in legacy
+          content: JSON.stringify({ events: parsed.timelineEvents }),
           points: 50, published: true, createdById: userId, bookId: bookId,
         },
       });

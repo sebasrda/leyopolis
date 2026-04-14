@@ -25,7 +25,7 @@ import { Progress } from "@/components/ui/progress";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
 import { QuizGame } from "@/components/learning/games/QuizGame";
-import { MemoryGame } from "@/components/learning/games/MemoryGame";
+import { TimelineGame } from "@/components/learning/games/TimelineGame";
 import { WordScrambleGame } from "@/components/learning/games/WordScrambleGame";
 import { WordSearchGame } from "@/components/learning/games/WordSearchGame";
 import { TrueFalseGame } from "@/components/learning/games/TrueFalseGame";
@@ -38,7 +38,7 @@ interface GamesModalProps {
   bookId?: string;
 }
 
-type GameType = "truefalse" | "memory" | "wordsearch" | "scramble" | null;
+type GameType = "truefalse" | "timeline" | "wordsearch" | "scramble" | null;
 
 export default function GamesModal({ isOpen, onClose, bookTitle, bookId }: GamesModalProps) {
   const { data: session } = useSession();
@@ -141,7 +141,7 @@ export default function GamesModal({ isOpen, onClose, bookTitle, bookId }: Games
                 <div className="h-6 w-px bg-gray-200" />
                 <h3 className="font-bold text-lg text-indigo-900 dark:text-indigo-300">
                   {activeGame === 'truefalse' && 'Reto: ¿Verdad o Falso?'}
-                  {activeGame === 'memory' && 'Parejas Literarias'}
+                  {activeGame === 'timeline' && 'Cronología Literaria'}
                   {activeGame === 'wordsearch' && 'Busca las Palabras Clave'}
                   {activeGame === 'scramble' && 'Reordenar e Ilustrar'}
                 </h3>
@@ -156,9 +156,9 @@ export default function GamesModal({ isOpen, onClose, bookTitle, bookId }: Games
                         onExit={() => setActiveGame(null)} 
                       />
                     )}
-                    {activeGame === 'memory' && (
-                      <MemoryGame 
-                        pairs={quizData.memoryPairs || []} 
+                    {activeGame === 'timeline' && (
+                      <TimelineGame 
+                        events={quizData.timelineEvents || []} 
                         onComplete={() => {}} 
                       />
                     )}
@@ -195,7 +195,7 @@ function GameMenu({ onSelectGame }: { onSelectGame: (g: GameType) => void }) {
   const games = [
     { id: "truefalse", title: "Verdad o Falso", description: "Reto rápido de afirmaciones.", icon: BrainCircuit, color: "bg-orange-600", gradient: "from-orange-600 to-amber-500" },
     { id: "wordsearch", title: "Sopa de Letras", description: "Encuentra los conceptos clave.", icon: Grid3X3, color: "bg-emerald-600", gradient: "from-emerald-600 to-teal-500" },
-    { id: "memory", title: "Parejas Literarias", description: "Domina los personajes y hechos.", icon: Puzzle, color: "bg-purple-600", gradient: "from-purple-600 to-pink-500" },
+    { id: "timeline", title: "Cronología", description: "Ordena los hechos de la historia.", icon: History, color: "bg-purple-600", gradient: "from-purple-600 to-pink-500" },
     { id: "scramble", title: "Ordenar Frases", description: "Reconstruye la historia.", icon: PenTool, color: "bg-amber-600", gradient: "from-amber-600 to-orange-500" },
   ];
 

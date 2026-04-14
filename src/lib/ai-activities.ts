@@ -112,7 +112,7 @@ export async function generateAndSaveActivities({
   
   let result;
   let lastError;
-  const models = ["gemini-2.0-flash", "gemini-1.5-flash"];
+  const models = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.5-flash-8b", "gemini-pro"];
   
   for (const modelName of models) {
     const aiModel = genAI.getGenerativeModel({ 

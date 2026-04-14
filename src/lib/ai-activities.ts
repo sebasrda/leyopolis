@@ -142,8 +142,8 @@ export async function generateAndSaveActivities({
   let result;
   let parsedJson;
   let lastError;
-  // Use the futuristic/experimental IDs found in the diagnostic for this specific key
-  const geminiModels = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-2.5-pro", "gemini-1.5-flash", "gemini-1.5-pro"];
+  // gemini-2.0-flash is the ONLY one verified to work (responding with 429 instead of 404) for this key
+  const geminiModels = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro", "gemini-pro"];
   
   // PRIMARY ATTEMPT: Gemini
   if (genAI) {

@@ -4,10 +4,15 @@
 import { useState, useEffect } from "react";
 import { Search, BookOpen, Clock, SlidersHorizontal, Sparkles, Loader2, AlertCircle, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -62,6 +67,7 @@ export default function LibraryPage() {
           image: b.coverImage || `https://placehold.co/400x600?text=${encodeURIComponent(b.title)}`,
           readTime: b.readTime || "—",
           fileUrl: b.contentUrl,
+          description: b.description || "Este libro aún no tiene una sipnosis disponible.",
         }));
         setBooks(formattedBooks);
       } else {
@@ -227,6 +233,28 @@ export default function LibraryPage() {
                   </div>
                   <div className="flex items-center gap-2 mt-auto pt-2 text-xs text-gray-400 flex-wrap">
                     <span className="bg-indigo-100 px-2 py-1 rounded-md text-indigo-700 font-medium">{book.difficulty}</span>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-7 px-2 text-[10px] text-indigo-600 hover:text-indigo-700 hover:bg-indigo-100 font-bold ml-1 border border-indigo-200"
+                        >
+                          Ver Sipnosis
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-[425px]">
+                        <DialogHeader>
+                          <DialogTitle className="flex items-center gap-2">
+                            <Sparkles className="h-4 w-4 text-indigo-500" />
+                            Sipnosis: {book.title}
+                          </DialogTitle>
+                        </DialogHeader>
+                        <div className="py-4 text-sm leading-relaxed text-gray-600 italic border-l-4 border-indigo-500 pl-4 bg-indigo-50/30 rounded-r-lg">
+                          "{book.description}"
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                     <span className="flex items-center gap-1 ml-auto"><Clock size={12} /> {book.readTime}</span>
                   </div>
                 </CardContent>
@@ -282,6 +310,28 @@ export default function LibraryPage() {
                   </div>
                   <div className="flex items-center gap-2 mt-auto pt-2 text-xs text-gray-400 flex-wrap">
                     <span className="bg-gray-100 px-2 py-1 rounded-md text-gray-600 font-medium">{book.difficulty}</span>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-7 px-2 text-[10px] text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 font-bold ml-1 border border-indigo-100"
+                        >
+                          Sipnosis
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-[425px]">
+                        <DialogHeader>
+                          <DialogTitle className="flex items-center gap-2 text-indigo-900">
+                            <BookOpen className="h-4 w-4 text-indigo-500" />
+                            Sipnosis: {book.title}
+                          </DialogTitle>
+                        </DialogHeader>
+                        <div className="py-4 text-sm leading-relaxed text-gray-600 italic border-l-4 border-indigo-500 pl-4 bg-indigo-50/30 rounded-r-lg">
+                          "{book.description}"
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                     {book.subject && <span className="bg-blue-50 px-2 py-1 rounded-md text-blue-600 font-medium">{book.subject}</span>}
                     <span className="flex items-center gap-1 ml-auto"><Clock size={12} /> {book.readTime}</span>
                   </div>

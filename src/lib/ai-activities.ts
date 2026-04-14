@@ -8,6 +8,7 @@ interface GenerateActivitiesResult {
   timelineEvents?: string[];
   sentences?: string[];
   statements?: any[];
+  synopsis?: string;
 }
 
 export async function generateAndSaveActivities({
@@ -139,7 +140,7 @@ export async function generateAndSaveActivities({
     CONTEXTO: ${extract}
     TAREA: Genera exactamente 20 preguntas de opción múltiple de alta calidad que cubran todo el contenido (inicio, nudo y desenlace).
     REGLA: Cada pregunta debe tener 4 opciones (A, B, C, D) y un índice de respuesta corecta (0-3).
-    SALIDA: Responde SOLO un JSON: {"questions": [{"question": "text", "options": ["opt0","opt1","opt2","opt3"], "correct": number}]}.`;
+    SALIDA: Responde SOLO un JSON: {"questions": [{"question": "text", "options": ["opt0","opt1","opt2","opt3"], "correct": number}], "synopsis": "un resumen pedagógico breve y atractivo del libro en máximo 150 palabras"}.`;
   } else if (stage === "games") {
     prompt = `Libro: "${title}" de "${author}". 
     CONTEXTO: ${extract}
@@ -272,7 +273,10 @@ export async function generateAndSaveActivities({
 
     await (prisma as any).book.update({
       where: { id: bookId },
-      data: { quizId: quiz.id }
+      data: { 
+        quizId: quiz.id,
+        description: parsed.synopsis || undefined 
+      }
     });
   } 
   

@@ -37,6 +37,7 @@ export default function AdminBooksPage() {
   const [bookAgeRange, setBookAgeRange] = useState("9-12");
   const [bookGrade, setBookGrade] = useState("");
   const [bookSubject, setBookSubject] = useState("");
+  const [bookDescription, setBookDescription] = useState("");
   const [quizFile, setQuizFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadingQuizFor, setUploadingQuizFor] = useState<string | null>(null);
@@ -112,6 +113,7 @@ export default function AdminBooksPage() {
           contentUrl: pdfBlob.url,
           coverImage: coverUrl,
           quizFileUrl: quizUrl,
+          description: bookDescription || "",
         }) 
       });
 
@@ -210,6 +212,7 @@ export default function AdminBooksPage() {
     setBookDifficulty("Intermedio");
     setBookGrade("");
     setBookSubject("");
+    setBookDescription("");
     setQuizFile(null);
   };
 
@@ -280,10 +283,23 @@ export default function AdminBooksPage() {
     }
   };
 
-  const filteredBooks = books.filter(book => 
-    book.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    book.author?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const [selectedGradeFilter, setSelectedGradeFilter] = useState("Todos");
+  const [manualGradeFilter, setManualGradeFilter] = useState("");
+
+  const filteredBooks = books.filter(book => {
+    const matchesSearch = book.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         book.author?.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    let matchesGrade = true;
+    if (selectedGradeFilter !== "Todos") {
+      matchesGrade = book.grade === selectedGradeFilter;
+    }
+    if (manualGradeFilter && matchesGrade) {
+      matchesGrade = book.grade?.toLowerCase().includes(manualGradeFilter.toLowerCase());
+    }
+    
+    return matchesSearch && matchesGrade;
+  });
 
   return (
     <div className="space-y-6">
@@ -356,6 +372,16 @@ export default function AdminBooksPage() {
                 </div>
               </div>
 
+              <div className="space-y-1">
+                <Label>Sipnosis (Opcional - La IA generará una si se deja vacío)</Label>
+                <textarea 
+                  className="w-full min-h-[60px] p-2 border rounded-md text-sm outline-none focus:ring-1 focus:ring-indigo-500" 
+                  placeholder="Resumen del libro..." 
+                  value={bookDescription} 
+                  onChange={e => setBookDescription(e.target.value)} 
+                />
+              </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <Label>Grado</Label>
@@ -407,7 +433,30 @@ export default function AdminBooksPage() {
           <Search className="h-4 w-4 text-gray-400" />
           <Input placeholder="Buscar por título o autor..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
+           <Select value={selectedGradeFilter} onValueChange={setSelectedGradeFilter}>
+             <SelectTrigger className="w-[140px] h-9">
+               <SelectValue placeholder="Filtrar por Grado" />
+             </SelectTrigger>
+             <SelectContent>
+               <SelectItem value="Todos">Todos los grados</SelectItem>
+               <SelectItem value="6to">Grado 6to</SelectItem>
+               <SelectItem value="7mo">Grado 7mo</SelectItem>
+               <SelectItem value="8vo">Grado 8vo</SelectItem>
+               <SelectItem value="9no">Grado 9no</SelectItem>
+               <SelectItem value="10mo">Grado 10mo</SelectItem>
+               <SelectItem value="11vo">Grado 11vo</SelectItem>
+             </SelectContent>
+           </Select>
+           <div className="relative w-[120px]">
+              <Search className="absolute left-2 top-2.5 h-3 w-3 text-gray-400" />
+              <Input 
+                placeholder="Manual..." 
+                className="pl-7 h-9 text-xs" 
+                value={manualGradeFilter} 
+                onChange={e => setManualGradeFilter(e.target.value)} 
+              />
+           </div>
            <Badge variant="outline" className="bg-indigo-50 text-indigo-700">Total: {filteredBooks.length}</Badge>
         </div>
       </div>

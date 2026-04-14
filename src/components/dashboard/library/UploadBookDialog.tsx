@@ -29,7 +29,9 @@ export function UploadBookDialog({ onSuccess }: UploadBookDialogProps) {
         category: 'Literatura',
         difficulty: 'Intermedio',
         coverImage: '',
-        contentUrl: '' // For now, we'll just paste a URL or use a placeholder
+        contentUrl: '',
+        description: '',
+        grade: ''
     });
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -56,7 +58,9 @@ export function UploadBookDialog({ onSuccess }: UploadBookDialogProps) {
                     category: 'Literatura',
                     difficulty: 'Intermedio',
                     coverImage: '',
-                    contentUrl: ''
+                    contentUrl: '',
+                    description: '',
+                    grade: ''
                 });
                 onSuccess();
             }
@@ -139,6 +143,27 @@ export function UploadBookDialog({ onSuccess }: UploadBookDialogProps) {
                                 </SelectContent>
                             </Select>
                         </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="grade">Grado</Label>
+                        <Input 
+                            id="grade" 
+                            placeholder="Ej. 6to"
+                            value={formData.grade}
+                            onChange={(e) => setFormData({...formData, grade: e.target.value})}
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="description">Sipnosis (Opcional - La IA generará una si se deja vacío)</Label>
+                        <textarea 
+                            id="description" 
+                            className="w-full min-h-[80px] p-2 border rounded-md text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                            placeholder="Breve resumen del libro..."
+                            value={formData.description}
+                            onChange={(e) => setFormData({...formData, description: e.target.value})}
+                        />
                     </div>
 
                     <div className="space-y-2">

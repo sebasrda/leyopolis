@@ -46,7 +46,7 @@ export async function POST(req: Request) {
     let grade = null;
     let subject = null;
     let quizFile: File | null = null;
-    const description = "Libro subido por el administrador";
+    let description = "";
     let rawText = "";
     let finalJsonString = "";
     let quizFromFile = false;
@@ -63,6 +63,7 @@ export async function POST(req: Request) {
       const contentUrl = body.contentUrl || "";
       const coverImage = body.coverImage || "https://placehold.co/400x600?text=PDF";
       const quizFileUrl = body.quizFileUrl || "";
+      description = body.description || "";
 
       if (!contentUrl) {
         return NextResponse.json({ message: "URL de contenido requerida" }, { status: 400 });
@@ -140,6 +141,7 @@ export async function POST(req: Request) {
       grade = formData.get("grade") as string || null;
       subject = formData.get("subject") as string || null;
       quizFile = formData.get("quizFile") as File | null;
+      description = formData.get("description") as string || "";
 
       if (!file) return NextResponse.json({ message: "Archivo PDF requerido" }, { status: 400 });
 

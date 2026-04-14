@@ -62,6 +62,7 @@ export default function AdminBooksPage() {
   const [bookGrade, setBookGrade] = useState("");
   const [bookSubject, setBookSubject] = useState("");
   const [bookDescription, setBookDescription] = useState("");
+  const [synopsisFile, setSynopsisFile] = useState<File | null>(null);
   const [quizFile, setQuizFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadingQuizFor, setUploadingQuizFor] = useState<string | null>(null);
@@ -267,6 +268,7 @@ export default function AdminBooksPage() {
     setBookGrade("");
     setBookSubject("");
     setBookDescription("");
+    setSynopsisFile(null);
     setQuizFile(null);
   };
 
@@ -525,12 +527,47 @@ export default function AdminBooksPage() {
                   <Label>
                     Sipnosis (Opcional - La IA generará una si se deja vacío)
                   </Label>
-                  <textarea
-                    className="w-full min-h-[60px] p-2 border rounded-md text-sm outline-none focus:ring-1 focus:ring-indigo-500"
-                    placeholder="Resumen del libro..."
-                    value={bookDescription}
-                    onChange={(e) => setBookDescription(e.target.value)}
-                  />
+                  <div className="flex flex-col gap-2">
+                    <textarea
+                      className="w-full min-h-[60px] p-2 border rounded-md text-sm outline-none focus:ring-1 focus:ring-indigo-500"
+                      placeholder="Resumen del libro..."
+                      value={bookDescription}
+                      onChange={(e) => setBookDescription(e.target.value)}
+                    />
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="file"
+                        accept=".pdf,.docx,.txt"
+                        className="hidden"
+                        id="admin-synopsis-upload"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            setSynopsisFile(file);
+                            setBookDescription(
+                              `[Extrayendo del archivo: ${file.name}] ... (El sistema procesará este documento para generar la mejor sipnosis)`
+                            );
+                          }
+                        }}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="w-full border-dashed text-xs h-8"
+                        onClick={() =>
+                          document
+                            .getElementById("admin-synopsis-upload")
+                            ?.click()
+                        }
+                      >
+                        <Upload className="h-3 w-3 mr-2" />
+                        {synopsisFile
+                          ? `Archivo: ${synopsisFile.name}`
+                          : "Subir archivo de sipnosis (PDF/Word)"}
+                      </Button>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">

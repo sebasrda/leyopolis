@@ -55,6 +55,7 @@ export async function GET(
     let consolidatedContent: any = {
       questions: [],
       memoryPairs: [],
+      timelineEvents: [],
       keywords: [],
       sentences: [],
       statements: []
@@ -71,15 +72,21 @@ export async function GET(
           consolidatedContent.questions = content.questions || consolidatedContent.questions;
           consolidatedContent.keywords = content.keywords || consolidatedContent.keywords;
           consolidatedContent.memoryPairs = content.memoryPairs || consolidatedContent.memoryPairs;
+          consolidatedContent.timelineEvents = content.timelineEvents || consolidatedContent.timelineEvents;
           consolidatedContent.sentences = content.sentences || consolidatedContent.sentences;
           consolidatedContent.statements = content.statements || consolidatedContent.statements;
           
           if (!mainQuizId) mainQuizId = activity.id;
         } else if (activity.type === "MATCH") {
-          consolidatedContent.memoryPairs = content.pairs?.map((p: any) => ({
-            character: p.word,
-            description: p.def
-          })) || consolidatedContent.memoryPairs;
+          // Check if it's the new Timeline format (events) or legacy Memory (pairs)
+          if (content.events) {
+            consolidatedContent.timelineEvents = content.events || consolidatedContent.timelineEvents;
+          } else if (content.pairs) {
+            consolidatedContent.memoryPairs = content.pairs?.map((p: any) => ({
+              character: p.word,
+              description: p.def
+            })) || consolidatedContent.memoryPairs;
+          }
         } else if (activity.type === "WORDSEARCH") {
           consolidatedContent.keywords = content.words || consolidatedContent.keywords;
         } else if (activity.type === "REORDER") {

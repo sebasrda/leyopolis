@@ -263,7 +263,7 @@ export async function generateAndSaveActivities({
           questions: parsed.questions || [],
           keywords: parsed.keywords || [],
           timelineEvents: parsed.timelineEvents || [],
-          sentences: parsed.sentences || [],
+          sentences: (parsed.sentences || []).map((s: string, i: number) => ({ id: i, sentence: s })),
           statements: parsed.statements || []
         }),
         points: 100, published: true, createdById: userId, bookId: bookId,

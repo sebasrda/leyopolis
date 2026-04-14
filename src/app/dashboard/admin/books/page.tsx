@@ -461,6 +461,7 @@ export default function AdminBooksPage() {
           </DialogContent>
         </Dialog>
       </div>
+    </div>
 
       <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm">
         <div className="flex items-center gap-2 max-w-sm w-full">

@@ -28,7 +28,7 @@ export async function generateAndSaveActivities({
   userId: string;
   rawText?: string;
   quizFromFile?: boolean;
-  stage?: "full" | "questions-1" | "questions-2" | "games";
+  stage?: "full" | "questions-1" | "questions-2" | "games" | "synopsis";
 }): Promise<GenerateActivitiesResult> {
   let finalRawText = rawText || "";
   
@@ -153,6 +153,13 @@ export async function generateAndSaveActivities({
     4. statements: 10 afirmaciones sobre el libro (algunas verdaderas y otras falsas) con un campo "isTrue" (boolean).
     
     SALIDA: Responde SOLO un JSON: {"keywords": ["word1",...], "timelineEvents": ["evento1", "evento2", ...], "sentences": ["frase1", ...], "statements": [{"text": "...", "isTrue": true/false}]}`;
+  } else if (stage === "synopsis") {
+    prompt = `Actúa como un experto pedagogo y crítico literario. 
+    Libro: "${title}" de "${author}". 
+    CONTEXTO: ${extract}
+    TAREA: Genera un resumen pedagógico breve, atractivo y profesional del libro.
+    REGLA: Máximo 150 palabras. Debe resaltar el valor educativo y los temas principales.
+    SALIDA: Responde SOLO un JSON: {"synopsis": "texto del resumen"}`;
   }
   
   const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -346,6 +353,14 @@ export async function generateAndSaveActivities({
         },
       });
     }
+  }
+
+  // Stage: Synopsis Only (Non-destructive)
+  else if (stage === "synopsis") {
+    await (prisma as any).book.update({
+      where: { id: bookId },
+      data: { description: parsed.synopsis || undefined }
+    });
   }
 
   return parsed;

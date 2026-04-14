@@ -283,6 +283,30 @@ export default function AdminBooksPage() {
     }
   };
 
+  const handleBulkSynopsisFix = async () => {
+    if (!confirm("¿Deseas generar sipnosis para todos los libros que no tienen una? Esto usará IA y puede tomar varios minutos. No se borrarán tus quizzes actuales.")) return;
+    
+    setLoading(true);
+    setSuccess("Iniciando sincronización masiva de sipnosis... Por favor, no cierres esta ventana.");
+    setError(null);
+
+    try {
+      const res = await fetch("/api/admin/bulk-synopsis-fix", { method: "POST" });
+      const data = await res.json();
+      
+      if (res.ok) {
+        setSuccess(`¡Sincronización completada! ${data.successCount} libros actualizados.`);
+        fetchBooks();
+      } else {
+        setError(data.message || "Error en la sincronización masiva");
+      }
+    } catch (err: any) {
+      setError("Error de conexión al sincronizar: " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const [selectedGradeFilter, setSelectedGradeFilter] = useState("Todos");
   const [manualGradeFilter, setManualGradeFilter] = useState("");
 
@@ -321,10 +345,20 @@ export default function AdminBooksPage() {
           <p className="text-gray-500">Administra libros, exámenes y juegos interactivos.</p>
         </div>
         
-        <Dialog open={uploadOpen} onOpenChange={setUploadOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-indigo-600 hover:bg-indigo-500 gap-2"><Plus className="h-4 w-4" /> Nuevo Libro</Button>
-          </DialogTrigger>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Button 
+            variant="outline" 
+            className="border-indigo-200 text-indigo-600 hover:bg-indigo-50 gap-2"
+            onClick={handleBulkSynopsisFix}
+            disabled={loading}
+          >
+            <Sparkles className="h-4 w-4" /> Sincronizar Catálogo
+          </Button>
+
+          <Dialog open={uploadOpen} onOpenChange={setUploadOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-indigo-600 hover:bg-indigo-500 gap-2"><Plus className="h-4 w-4" /> Nuevo Libro</Button>
+            </DialogTrigger>
           <DialogContent className="sm:max-w-[520px]">
             <DialogHeader>
               <DialogTitle>Subir Nuevo Libro</DialogTitle>

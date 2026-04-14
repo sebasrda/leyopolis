@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { generateWithOpenAI } from "./ai/openai";
 
 interface GenerateActivitiesResult {
   questions?: any[];
@@ -28,16 +29,19 @@ export async function generateAndSaveActivities({
   stage?: "full" | "questions-1" | "questions-2" | "games";
 }): Promise<GenerateActivitiesResult> {
   let finalRawText = rawText || "";
-  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || "";
+  const geminiKey = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY || "";
+  const openaiKey = process.env.OPENAI_API_KEY || "";
 
-  if (!apiKey) throw new Error("Missing Gemini API Key");
+  if (!geminiKey && !openaiKey) {
+    throw new Error("No se encontraron llaves de API (Gemini u OpenAI).");
+  }
 
     // Fetch PDF text if not provided
     if (!finalRawText && contentUrl) {
       try {
         let absoluteUrl = contentUrl;
         if (contentUrl.startsWith("/")) {
-          const baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000";
+          const baseUrl = process.env.NEXTAUTH_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
           absoluteUrl = `${baseUrl}${contentUrl}`;
         }
         
@@ -58,7 +62,7 @@ export async function generateAndSaveActivities({
     }
 
     const { GoogleGenerativeAI } = require("@google/generative-ai");
-    const genAI = new GoogleGenerativeAI(apiKey);
+    const genAI = geminiKey ? new GoogleGenerativeAI(geminiKey) : null;
 
     let pdfDataPart: any = null;
     let isMultimodal = false;
@@ -136,48 +140,66 @@ export async function generateAndSaveActivities({
   const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
   
   let result;
+  let parsedJson;
   let lastError;
-  const models = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.5-flash-8b", "gemini-pro"];
+  const geminiModels = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.5-flash-8b", "gemini-pro"];
   
-  for (const modelName of models) {
-    const aiModel = genAI.getGenerativeModel({ 
-      model: modelName,
-      generationConfig: { temperature: 0.7, maxOutputTokens: 2048 }
-    });
+  // PRIMARY ATTEMPT: Gemini
+  if (genAI) {
+    for (const modelName of geminiModels) {
+      const aiModel = genAI.getGenerativeModel({ 
+        model: modelName,
+        generationConfig: { temperature: 0.7, maxOutputTokens: 2048 }
+      });
 
-    for (let i = 0; i < 3; i++) { // Máximo 3 reintentos por modelo
-      try {
-        const contentParts: any[] = [prompt];
-        if (isMultimodal && pdfDataPart) {
-          contentParts.push(pdfDataPart);
+      for (let i = 0; i < 3; i++) {
+        try {
+          const contentParts: any[] = [prompt];
+          if (isMultimodal && pdfDataPart) {
+            contentParts.push(pdfDataPart);
+          }
+          
+          const geminiResult = await aiModel.generateContent(contentParts);
+          const responseText = geminiResult.response.text();
+          const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+          parsedJson = JSON.parse(jsonMatch ? jsonMatch[0] : responseText);
+          result = geminiResult;
+          break;
+        } catch (err: any) {
+          lastError = err;
+          const errMsg = err.message || "";
+          if (errMsg.includes("429") || errMsg.includes("Too Many Requests") || errMsg.includes("quota")) {
+            console.log(`[AI-STATS] Cuota Gemini agotada (${modelName}), reintentando...`);
+            await sleep(5000);
+            continue;
+          }
+          console.warn(`[AI-STATS] Gemini ${modelName} falló: ${lastError?.message}.`);
+          break; 
         }
-        
-        result = await aiModel.generateContent(contentParts);
-        if (result) break;
-      } catch (err: any) {
-        lastError = err;
-        const errMsg = err.message || "";
-        if (errMsg.includes("429") || errMsg.includes("Too Many Requests") || errMsg.includes("quota")) {
-          console.log(`[AI-STATS] Límite de cuota alcanzado para ${modelName}, reintentando en 10s... (Intento ${i+1}/3)`);
-          await sleep(10000);
-          continue;
-        }
-        // If it's a 404 or other model-specific error, don't throw, just try next model
-        console.warn(`[AI-STATS] Modelo ${modelName} falló (${lastError?.message || "Error"}), probando siguiente...`);
-        break; 
       }
+      if (result) break;
     }
-    if (result) break;
   }
 
-  if (!result) {
-    throw new Error(`Error en Generación IA: ${lastError?.message || "Sin respuesta"}`);
+  // SECONDARY ATTEMPT: OpenAI (as fallback or if Gemini failed)
+  if (!result && openaiKey) {
+    console.log(`[AI-STATS] Intentando fallback con OpenAI para: ${title}`);
+    try {
+      // NOTE: We don't send pdfDataPart to OpenAI here as it requires a different API structure, 
+      // but for questions/JSON it excels with the 'extract' text.
+      parsedJson = await generateWithOpenAI(prompt, "gpt-4o-mini");
+      result = { source: "openai" };
+    } catch (err: any) {
+      lastError = err;
+      console.error("[AI-STATS] Fallback OpenAI falló:", err.message);
+    }
   }
 
-  const responseText = result.response.text();
-  const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-  const finalJsonString = jsonMatch ? jsonMatch[0] : responseText;
-  const parsed = JSON.parse(finalJsonString);
+  if (!result || !parsedJson) {
+    throw new Error(`Error en Generación IA (Gemini+OpenAI): ${lastError?.message || "Sin respuesta"}`);
+  }
+
+  const parsed = parsedJson;
   
   // Stage 1: Create or Reset Quiz
   if (stage === "questions-1") {

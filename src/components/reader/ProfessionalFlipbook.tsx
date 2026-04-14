@@ -20,7 +20,8 @@ import 'react-pdf/dist/Page/TextLayer.css';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 
 // Configurar worker de PDF.js
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+// Configurar worker de PDF.js de forma más robusta
+pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.mjs`;
 
 interface ProfessionalFlipbookProps {
   pdfUrl: string;
@@ -550,16 +551,21 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
 
   // 1. Cargar documento y obtener dimensiones originales
   const onDocumentLoadSuccess = async (pdf: any) => {
-    setPdfDocument(pdf); // Guardar referencia al objeto PDF cargado
-    setNumPages(pdf.numPages);
     try {
       const page = await pdf.getPage(1);
       const viewport = page.getViewport({ scale: 1 });
       setPageWidth(viewport.width);
       setPageHeight(viewport.height);
+      
+      // Capturar numPages y el documento referenciado
+      setNumPages(pdf.numPages);
+      setPdfDocument(pdf);
       setLoading(false);
+      console.log(`[PDF-READER] Document loaded successfully: ${pdf.numPages} pages.`);
     } catch (error) {
-      console.error("Error loading page dimensions:", error);
+      console.error("Error loading page contents:", error);
+      // Intentar al menos guardar el conteo básico
+      setNumPages(pdf.numPages || 0);
       setLoading(false);
     }
   };
@@ -1165,9 +1171,11 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
                             
                             // Save progress if bookId is available
                             // Adjusted for virtual pages
+                            // Adjusted for virtual pages
                             if (bookId) {
+                                const total = numPages + VIRTUAL_PAGES;
                                 const realPage = Math.max(1, newPage - VIRTUAL_PAGES + 1);
-                                updateReadingProgress(bookId, realPage, numPages);
+                                updateReadingProgress(bookId, realPage, total);
                             }
                         }}
                         flippingTime={1000}
@@ -1369,7 +1377,11 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
           <div className="flex items-center gap-1.5">
             <span className="opacity-60">Visualizando:</span>
             <span className={cn("px-2 py-0.5 rounded-full", isDarkMode ? "bg-gray-800 text-gray-300" : "bg-white/10 text-white")}>
-              Páginas {currentPage + 1} - {Math.min(currentPage + 2, numPages + VIRTUAL_PAGES)} de {numPages + VIRTUAL_PAGES}
+              {loading || numPages === 0 ? (
+                <span className="flex items-center gap-1 animate-pulse"><Loader2 size={10} className="animate-spin" /> Sincronizando páginas...</span>
+              ) : (
+                <>Páginas {currentPage + 1} - {Math.min(currentPage + 2, numPages + VIRTUAL_PAGES)} de {numPages + VIRTUAL_PAGES}</>
+              )}
             </span>
           </div>
         </div>

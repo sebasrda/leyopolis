@@ -18,6 +18,20 @@ const GRADE_MAP: Record<string, string> = {
   "11": "11vo", "11o": "11vo", "11vo": "11vo", "once": "11vo"
 };
 
+const REVERSE_MAP: Record<string, string[]> = {
+  "1ro": ["1ro", "1", "1o", "primero"],
+  "2do": ["2do", "2", "2o", "segundo"],
+  "3ro": ["3ro", "3", "3o", "tercero"],
+  "4to": ["4to", "4", "4o", "cuarto"],
+  "5to": ["5to", "5", "5o", "quinto"],
+  "6to": ["6to", "6", "6o", "sexto"],
+  "7mo": ["7mo", "7", "7o", "septimo", "séptimo"],
+  "8vo": ["8vo", "8", "8o", "octavo"],
+  "9no": ["9no", "9", "9o", "noveno"],
+  "10mo": ["10mo", "10", "10o", "decimo", "décimo"],
+  "11vo": ["11vo", "11", "11o", "once"]
+};
+
 /**
  * Normalizes a grade input string to its standard short format.
  * Returns the original input if no mapping is found.
@@ -32,6 +46,18 @@ export function normalizeGrade(input: string | null | undefined): string {
     .replace(/grado\s+/i, "");      // Remove "grado " prefix
     
   return GRADE_MAP[cleanInput] || input;
+}
+
+/**
+ * Returns a list of all known variants for a given grade string.
+ * Used for database queries to ensure all formats are caught.
+ */
+export function getGradeVariants(input: string | null | undefined): string[] {
+  const norm = normalizeGrade(input);
+  const variants = REVERSE_MAP[norm] || [norm];
+  // Add original input just in case
+  if (input && !variants.includes(input)) variants.push(input);
+  return variants;
 }
 
 export const DISPLAY_GRADES = [

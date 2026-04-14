@@ -4,7 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { isDemoMode } from "@/lib/access";
 
-import { normalizeGrade } from '@/lib/grades';
+import { normalizeGrade, getGradeVariants } from '@/lib/grades';
 
 export async function GET(request: Request) {
   try {
@@ -14,8 +14,10 @@ export async function GET(request: Request) {
 
     const where: any = {};
     if (grade) {
-      const normalized = normalizeGrade(grade);
-      where.grade = normalized;
+      const variants = getGradeVariants(grade);
+      where.OR = variants.map(v => ({
+        grade: { equals: v, mode: 'insensitive' }
+      }));
     }
     if (subject) where.subject = subject;
 

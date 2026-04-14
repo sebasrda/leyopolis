@@ -16,7 +16,8 @@ import {
   GraduationCap,
   Grid3X3,
   PenTool,
-  Loader2
+  Loader2,
+  History as HistoryIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -195,7 +196,7 @@ function GameMenu({ onSelectGame }: { onSelectGame: (g: GameType) => void }) {
   const games = [
     { id: "truefalse", title: "Verdad o Falso", description: "Reto rápido de afirmaciones.", icon: BrainCircuit, color: "bg-orange-600", gradient: "from-orange-600 to-amber-500" },
     { id: "wordsearch", title: "Sopa de Letras", description: "Encuentra los conceptos clave.", icon: Grid3X3, color: "bg-emerald-600", gradient: "from-emerald-600 to-teal-500" },
-    { id: "timeline", title: "Cronología", description: "Ordena los hechos de la historia.", icon: History, color: "bg-purple-600", gradient: "from-purple-600 to-pink-500" },
+    { id: "timeline", title: "Cronología", description: "Ordena los hechos de la historia.", icon: HistoryIcon, color: "bg-purple-600", gradient: "from-purple-600 to-pink-500" },
     { id: "scramble", title: "Ordenar Frases", description: "Reconstruye la historia.", icon: PenTool, color: "bg-amber-600", gradient: "from-amber-600 to-orange-500" },
   ];
 

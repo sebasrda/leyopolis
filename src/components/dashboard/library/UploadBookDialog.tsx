@@ -23,6 +23,7 @@ interface UploadBookDialogProps {
 export function UploadBookDialog({ onSuccess }: UploadBookDialogProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [submitting, setSubmitting] = useState(false);
+    const [synopsisFile, setSynopsisFile] = useState<File | null>(null);
     const [formData, setFormData] = useState({
         title: '',
         author: '',
@@ -52,6 +53,7 @@ export function UploadBookDialog({ onSuccess }: UploadBookDialogProps) {
 
             if (res.ok) {
                 setIsOpen(false);
+                setSynopsisFile(null);
                 setFormData({
                     title: '',
                     author: '',
@@ -157,13 +159,44 @@ export function UploadBookDialog({ onSuccess }: UploadBookDialogProps) {
 
                     <div className="space-y-2">
                         <Label htmlFor="description">Sipnosis (Opcional - La IA generará una si se deja vacío)</Label>
-                        <textarea 
-                            id="description" 
-                            className="w-full min-h-[80px] p-2 border rounded-md text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-                            placeholder="Breve resumen del libro..."
-                            value={formData.description}
-                            onChange={(e) => setFormData({...formData, description: e.target.value})}
-                        />
+                        <div className="flex flex-col gap-2">
+                            <textarea 
+                                id="description" 
+                                className="w-full min-h-[80px] p-2 border rounded-md text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                                placeholder="Breve resumen del libro..."
+                                value={formData.description}
+                                onChange={(e) => setFormData({...formData, description: e.target.value})}
+                            />
+                            <div className="flex items-center gap-2">
+                                <Input
+                                    type="file"
+                                    accept=".pdf,.docx,.txt"
+                                    className="hidden"
+                                    id="synopsis-upload"
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) {
+                                            setSynopsisFile(file);
+                                            // Simulated extraction for now
+                                            setFormData(prev => ({
+                                                ...prev,
+                                                description: `[Extrayendo del archivo: ${file.name}] ... (El sistema procesará este documento para generar la mejor sipnosis)`
+                                            }));
+                                        }
+                                    }}
+                                />
+                                <Button 
+                                    type="button" 
+                                    variant="outline" 
+                                    size="sm" 
+                                    className="w-full border-dashed"
+                                    onClick={() => document.getElementById('synopsis-upload')?.click()}
+                                >
+                                    <Upload className="h-3 w-3 mr-2" /> 
+                                    {synopsisFile ? `Archivo: ${synopsisFile.name}` : "Subir archivo de sipnosis (PDF/Word)"}
+                                </Button>
+                            </div>
+                        </div>
                     </div>
 
                     <div className="space-y-2">

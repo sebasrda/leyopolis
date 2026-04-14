@@ -4,6 +4,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { isDemoMode } from "@/lib/access";
 
+import { normalizeGrade } from '@/lib/grades';
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -11,7 +13,10 @@ export async function GET(request: Request) {
     const subject = searchParams.get("subject");
 
     const where: any = {};
-    if (grade) where.grade = grade;
+    if (grade) {
+      const normalized = normalizeGrade(grade);
+      where.grade = normalized;
+    }
     if (subject) where.subject = subject;
 
     const session = await getServerSession(authOptions);

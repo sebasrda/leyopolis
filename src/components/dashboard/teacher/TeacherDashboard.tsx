@@ -21,6 +21,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { CreateAssignmentDialog } from './CreateAssignmentDialog';
+import { SuggestedReadingsDialog } from './SuggestedReadingsDialog';
 
 import Link from 'next/link';
 
@@ -40,6 +41,7 @@ export default function TeacherDashboard() {
     const [isCreating, setIsCreating] = useState(false);
     const [newClassName, setNewClassName] = useState('');
     const [isAssignmentDialogOpen, setIsAssignmentDialogOpen] = useState(false);
+    const [isSuggestedDialogOpen, setIsSuggestedDialogOpen] = useState(false);
     const [eduOverview, setEduOverview] = useState<{
         counts: { courses: number; activities: number; videos: number; attempts7d: number };
         dashboardStats?: { totalStudents: number; activeReadings: number; averageComprehension: number };
@@ -110,6 +112,14 @@ export default function TeacherDashboard() {
                     <p className="text-gray-500">Gestiona tus aulas y asignaciones de lectura.</p>
                 </div>
                 <div className="flex gap-3">
+                    <Button 
+                        variant="outline" 
+                        className="gap-2 border-indigo-200 text-indigo-700 hover:bg-indigo-50"
+                        onClick={() => setIsSuggestedDialogOpen(true)}
+                    >
+                        <Sparkles size={18} className="text-indigo-500" />
+                        Lecturas Sugeridas
+                    </Button>
                     <Button variant="outline" className="gap-2">
                         <BarChart3 size={18} />
                         Reporte General
@@ -123,6 +133,16 @@ export default function TeacherDashboard() {
                     </Button>
                 </div>
             </div>
+
+            <SuggestedReadingsDialog 
+                isOpen={isSuggestedDialogOpen}
+                onClose={() => setIsSuggestedDialogOpen(false)}
+                onSuccess={() => {
+                    fetchClasses();
+                    fetchEduOverview();
+                }}
+                classes={classes}
+            />
 
             <CreateAssignmentDialog 
                 isOpen={isAssignmentDialogOpen}

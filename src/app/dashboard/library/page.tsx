@@ -25,9 +25,10 @@ import {
 import { UploadBookDialog } from "@/components/dashboard/library/UploadBookDialog";
 import { useSession } from "next-auth/react";
 
+import { DISPLAY_GRADES, GRADE_TO_STANDARD, normalizeGrade } from "@/lib/grades";
+
 const categories = ["Todos", "Infantil", "Académico", "Literatura", "Ciencia", "Historia", "General"];
 const difficulties = ["Todos", "Principiante", "Intermedio", "Avanzado"];
-const grades = ["Todos", "1ro", "2do", "3ro", "4to", "5to", "6to", "7mo", "8vo", "9no", "10mo", "11vo"];
 const subjects = ["Todos", "Español", "Ciencias", "Matemáticas", "Historia", "Inglés", "Arte"];
 
 export default function LibraryPage() {
@@ -48,7 +49,10 @@ export default function LibraryPage() {
     setError(null);
     try {
       const params = new URLSearchParams();
-      if (selectedGrade !== "Todos") params.set("grade", selectedGrade);
+      if (selectedGrade !== "Todos") {
+        const standardGrade = GRADE_TO_STANDARD[selectedGrade] || selectedGrade;
+        params.set("grade", standardGrade);
+      }
       if (selectedSubject !== "Todos") params.set("subject", selectedSubject);
       
       const res = await fetch(`/api/books?${params.toString()}`);
@@ -142,7 +146,7 @@ export default function LibraryPage() {
 
         <Select value={selectedGrade} onValueChange={setSelectedGrade}>
           <SelectTrigger className="w-[110px] h-9"><SelectValue placeholder="Grado" /></SelectTrigger>
-          <SelectContent>{grades.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}</SelectContent>
+          <SelectContent>{DISPLAY_GRADES.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}</SelectContent>
         </Select>
 
         <Select value={selectedSubject} onValueChange={setSelectedSubject}>

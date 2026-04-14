@@ -6,7 +6,8 @@ import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BarChart3, BookOpen, Users } from "lucide-react";
+import { BarChart3, BookOpen, Users, Sparkles } from "lucide-react";
+import { SuggestedReadingsDialog } from "@/components/dashboard/teacher/SuggestedReadingsDialog";
 
 type Overview = {
   counts: {
@@ -35,17 +36,21 @@ export default function CoordinadorDashboardPage() {
     students: { id: string; name: string | null; email: string | null; grade: string | null; avgProgress: number }[];
     teachers: { id: string; name: string | null; email: string | null; role: string }[];
   } | null>(null);
+  const [classes, setClasses] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isSuggestedOpen, setIsSuggestedOpen] = useState(false);
 
   useEffect(() => {
     if (!session) return;
     Promise.all([
       fetch("/api/coordinator/overview").then((r) => (r.ok ? r.json() : null)),
       fetch("/api/coordinator/users").then((r) => (r.ok ? r.json() : null)),
+      fetch("/api/teacher/classes").then((r) => (r.ok ? r.json() : [])),
     ])
-      .then(([o, u]) => {
+      .then(([o, u, c]) => {
         setOverview(o);
         setUsers(u);
+        setClasses(c);
       })
       .finally(() => setLoading(false));
   }, [session]);
@@ -134,17 +139,34 @@ export default function CoordinadorDashboardPage() {
                   <div className="text-sm text-gray-500">Quiz promedio</div>
                   <div className="font-bold text-emerald-700">{overview?.counts.avgQuiz ?? 0}</div>
                 </div>
-                <div className="flex gap-2">
-                  <Button asChild className="flex-1 bg-indigo-600 hover:bg-indigo-700">
-                    <Link href="/dashboard/activities">Actividades</Link>
+                <div className="flex flex-col gap-2">
+                  <Button 
+                    className="w-full bg-indigo-600 hover:bg-indigo-700 gap-2"
+                    onClick={() => setIsSuggestedOpen(true)}
+                  >
+                    <Sparkles className="h-4 w-4" /> Lecturas Sugeridas
                   </Button>
-                  <Button asChild variant="outline" className="flex-1">
-                    <Link href="/dashboard/courses">Cursos</Link>
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button asChild variant="outline" className="flex-1">
+                      <Link href="/dashboard/activities">Actividades</Link>
+                    </Button>
+                    <Button asChild variant="outline" className="flex-1">
+                      <Link href="/dashboard/courses">Cursos</Link>
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
           </div>
+
+          <SuggestedReadingsDialog 
+            isOpen={isSuggestedOpen}
+            onClose={() => setIsSuggestedOpen(false)}
+            onSuccess={() => {
+              // Refresh overview if needed
+            }}
+            classes={classes}
+          />
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card className="border-none shadow-md">

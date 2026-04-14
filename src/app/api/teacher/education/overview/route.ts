@@ -9,25 +9,43 @@ const DEMO_USER_ID = "clt_demo_user_001";
 export async function GET() {
   const user = await getUserIdAndRole();
   if (!user) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-  if (user.role !== "ADMIN" && user.role !== "TEACHER") {
+  if (!["ADMIN", "TEACHER", "COORDINATOR", "SUPERADMIN"].includes(user.role)) {
     return NextResponse.json({ message: "Forbidden" }, { status: 403 });
   }
 
+  const dbUser = await prisma.user.findUnique({
+    where: { id: user.userId },
+    select: { institutionId: true }
+  });
+
   const teacherId = user.userId;
-  const whereTeacher = user.role === "ADMIN" ? {} : { teacherId };
-  const whereCreator = user.role === "ADMIN" ? {} : { createdById: teacherId };
+  const instId = dbUser?.institutionId;
+
+  // For SUPERADMIN or ADMIN with no institution, we might want global, but usually they belong to an inst.
+  const whereTeacher: any = user.role === "SUPERADMIN" ? {} : { institutionId: instId };
+  if (user.role === "TEACHER") whereTeacher.teacherId = teacherId;
+
+  const whereCreator: any = user.role === "SUPERADMIN" ? {} : { createdBy: { institutionId: instId } };
+  if (user.role === "TEACHER") whereCreator.createdById = teacherId;
 
   const [courses, activities, videos, attempts7d] = await prisma.$transaction([
     eduDb.course.count({ where: whereTeacher }),
     (prisma as any).activity.count({ where: whereCreator }),
     eduDb.video.count({ where: whereTeacher }),
     eduDb.activityAttempt.count({
-      where: { createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) }, userId: { not: DEMO_USER_ID } },
+      where: { 
+        createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) }, 
+        userId: { not: DEMO_USER_ID },
+        user: instId ? { institutionId: instId } : {}
+      },
     }),
   ]);
 
   const latestAttempts = await eduDb.activityAttempt.findMany({
-    where: { userId: { not: DEMO_USER_ID } },
+    where: { 
+      userId: { not: DEMO_USER_ID },
+      user: instId ? { institutionId: instId } : {}
+    },
     orderBy: { createdAt: "desc" },
     take: 10,
     include: {
@@ -37,7 +55,9 @@ export async function GET() {
   });
 
   const filtered =
-    user.role === "ADMIN" ? latestAttempts : latestAttempts.filter((a: any) => a.activity.createdById === teacherId);
+    ["ADMIN", "COORDINATOR", "SUPERADMIN"].includes(user.role) 
+      ? latestAttempts 
+      : latestAttempts.filter((a: any) => a.activity.createdById === teacherId);
 
   // Calcular métricas reales del Dashboard
   const classesWithStudents = await prisma.class.findMany({
@@ -56,7 +76,11 @@ export async function GET() {
   });
 
   const allAttempts = await eduDb.activityAttempt.findMany({
-    where: { activity: whereCreator, userId: { not: DEMO_USER_ID } },
+    where: { 
+      activity: whereCreator, 
+      userId: { not: DEMO_USER_ID },
+      user: instId ? { institutionId: instId } : {}
+    },
     select: { score: true }
   });
   

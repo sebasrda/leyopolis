@@ -102,15 +102,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [stableRole, setStableRole] = useState<"STUDENT" | "TEACHER" | "COORDINATOR" | "ADMIN" | "SUPERADMIN">("STUDENT");
-  const role = stableRole;
+  const role = session?.user?.role || stableRole;
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     const nextRole = session?.user?.role as any;
-    if (nextRole) setStableRole(nextRole);
-  }, [session?.user?.role]);
+    if (nextRole && nextRole !== stableRole) {
+      setStableRole(nextRole);
+    }
+  }, [session?.user?.role, stableRole]);
 
   const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && searchQuery.trim()) {
@@ -235,13 +237,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <Button variant="ghost" className="flex items-center gap-3 px-2 hover:bg-gray-100 rounded-full">
                   <Avatar className="h-8 w-8 ring-2 ring-indigo-50">
                     <AvatarImage src={session?.user?.image || ""} />
-                    <AvatarFallback className="bg-indigo-100 text-indigo-700 font-bold">
-                      {session?.user?.name?.charAt(0) || "U"}
+                    <AvatarFallback className={`text-indigo-700 font-bold ${status === "loading" ? "bg-gray-200 animate-pulse" : "bg-indigo-100"}`}>
+                      {status === "loading" ? "" : (session?.user?.name?.charAt(0) || "U")}
                     </AvatarFallback>
                   </Avatar>
                   <div className="hidden md:block text-left">
-                    <p className="text-sm font-semibold text-gray-900">{session?.user?.name || "Usuario"}</p>
-                    <p className="text-xs text-gray-500 capitalize">{role.toLowerCase()}</p>
+                    {status === "loading" ? (
+                      <div className="flex flex-col gap-1.5 justify-center py-1">
+                        <div className="h-3.5 w-24 bg-gray-200 animate-pulse rounded"></div>
+                        <div className="h-2.5 w-16 bg-gray-100 animate-pulse rounded"></div>
+                      </div>
+                    ) : (
+                      <>
+                        <p className="text-sm font-semibold text-gray-900">{session?.user?.name || "Usuario"}</p>
+                        <p className="text-xs text-gray-500 capitalize">{session?.user?.role?.toLowerCase() || role.toLowerCase()}</p>
+                      </>
+                    )}
                   </div>
                 </Button>
               </DropdownMenuTrigger>

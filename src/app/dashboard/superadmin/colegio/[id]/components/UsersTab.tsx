@@ -13,6 +13,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { format } from "date-fns";
 
 export default function UsersTab({ institutionId, role, limits, onUpdate }: { institutionId: string, role: string, limits: { count: number, max: number }, onUpdate: () => void }) {
   const [users, setUsers] = useState<any[]>([]);
@@ -21,6 +29,7 @@ export default function UsersTab({ institutionId, role, limits, onUpdate }: { in
   const [createOpen, setCreateOpen] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [licenseType, setLicenseType] = useState("MENSUAL");
   const [creating, setCreating] = useState(false);
   const [newCredentials, setNewCredentials] = useState<{email: string, pass: string} | null>(null);
 
@@ -48,7 +57,7 @@ export default function UsersTab({ institutionId, role, limits, onUpdate }: { in
       const res = await fetch(`/api/superadmin/institutions/${institutionId}/users`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, role }),
+        body: JSON.stringify({ name, email, role, licenseType }),
       });
       const data = await res.json();
       if (res.ok) {
@@ -125,6 +134,20 @@ export default function UsersTab({ institutionId, role, limits, onUpdate }: { in
                     <Label>Email</Label>
                     <Input type="email" placeholder="correo@ejemplo.com" value={email} onChange={e => setEmail(e.target.value)} />
                     </div>
+                    <div className="space-y-2">
+                      <Label>Tipo de Licencia</Label>
+                      <Select value={licenseType} onValueChange={setLicenseType}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecciona una licencia" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="MENSUAL">Mensual (30 días)</SelectItem>
+                          <SelectItem value="TRIMESTRAL">Trimestral (90 días)</SelectItem>
+                          <SelectItem value="ANUAL">Anual (365 días)</SelectItem>
+                          <SelectItem value="ACTIVATED">Permanente / Activa</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                     <Button onClick={handleCreate} disabled={creating || !name || !email} className="w-full mt-2">
                     {creating && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
                     Crear (Clave Automática)
@@ -147,19 +170,28 @@ export default function UsersTab({ institutionId, role, limits, onUpdate }: { in
               <tr>
                 <th className="p-3 font-medium text-gray-500">Nombre</th>
                 <th className="p-3 font-medium text-gray-500">Email</th>
+                <th className="p-3 font-medium text-gray-500">Licencia</th>
                 <th className="p-3 font-medium text-gray-500 text-center">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y">
               {loading ? (
-                <tr><td colSpan={3} className="p-8 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto text-indigo-400" /></td></tr>
+                <tr><td colSpan={4} className="p-8 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto text-indigo-400" /></td></tr>
               ) : users.length === 0 ? (
-                <tr><td colSpan={3} className="p-8 text-center text-gray-500">No hay {roleName.toLowerCase()} registrados.</td></tr>
+                <tr><td colSpan={4} className="p-8 text-center text-gray-500">No hay {roleName.toLowerCase()} registrados.</td></tr>
               ) : (
                 users.map(u => (
                   <tr key={u.id} className="hover:bg-gray-50">
                     <td className="p-3 font-medium text-gray-900">{u.name || "Sin nombre"}</td>
                     <td className="p-3 text-gray-500">{u.email}</td>
+                    <td className="p-3">
+                      <span className="inline-flex items-center px-2 py-1 rounded-md bg-indigo-50 text-indigo-700 text-xs font-semibold">
+                        {u.licenseType === "DEMO" ? "Demo" : u.licenseType === "MENSUAL" ? "Mensual" : u.licenseType === "TRIMESTRAL" ? "Trimestral" : u.licenseType === "ANUAL" ? "Anual" : "Permanente"}
+                      </span>
+                      {u.expiresAt && (
+                        <span className="block text-xs text-gray-400 mt-1">Expira: {format(new Date(u.expiresAt), "dd/MM/yyyy")}</span>
+                      )}
+                    </td>
                     <td className="p-3 text-center">
                       <Button variant="ghost" size="icon" className="text-red-400 hover:text-red-700 hover:bg-red-50 h-8 w-8" onClick={() => handleDelete(u.id)}>
                         <Trash2 className="h-4 w-4" />

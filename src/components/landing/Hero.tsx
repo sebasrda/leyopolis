@@ -6,31 +6,31 @@ import { useState, useEffect } from "react";
 
 const FEATURED_BOOKS = [
   {
-    title: "Las Voces del Río",
+    title: "Las Voces del Rio",
     author: "S.R.",
     grade: "Séptimo",
-    cover: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ1_uH6Nb8piMiAIarFdq2hkQlOQ0fCTLcSHQ&s",
+    cover: "https://ltmdzlvporv0h72p.public.blob.vercel-storage.com/2f4a6d9a-6ef7-4751-b3c8-a4572e8358b0-elYYR9hNUJBAkNBb9odksng2VDPTZd.jpg",
     color: "from-emerald-500 to-teal-700",
   },
   {
     title: "El Mapa de los Mundos Perdidos",
     author: "S.R.",
     grade: "Sexto",
-    cover: "https://m.media-amazon.com/images/I/81Q9MeLSqPL._AC_UF1000,1000_QL80_.jpg",
+    cover: "https://ltmdzlvporv0h72p.public.blob.vercel-storage.com/0001-6553237420666217310-MsJfXL9YV7hL6aHAWwYISXEHBblIdO.png",
     color: "from-indigo-500 to-purple-700",
   },
   {
-    title: "La Casa del Viento",
+    title: "La casa del Viento",
     author: "S.R.",
     grade: "Sexto",
-    cover: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRdSwCNpCvomf2X0Y_A8WXEyT7ZEkidAH8EZg&s",
+    cover: "https://ltmdzlvporv0h72p.public.blob.vercel-storage.com/0001-1513709435283797622-fnQCsaKOHo0dUqVpmavnrz8m1vSuI3.png",
     color: "from-rose-500 to-pink-700",
   },
   {
-    title: "El Código Invisible",
+    title: "El código Invisible",
     author: "S.R.",
-    grade: "Octavo",
-    cover: "https://m.media-amazon.com/images/I/71fajb4AMWL._AC_UF1000,1000_QL80_.jpg",
+    grade: "Sexto",
+    cover: "https://ltmdzlvporv0h72p.public.blob.vercel-storage.com/0001-6794180000099523340-rlWAjGhrau36JxBHg4Py5BX0E02kxh.png",
     color: "from-amber-500 to-orange-700",
   },
 ];
@@ -106,7 +106,7 @@ export default function Hero() {
               className="group relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 px-8 py-4 text-base font-bold text-white shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 transition-all duration-300 hover:scale-105"
             >
               <span className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-fuchsia-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              <span className="relative">Comenzar gratis</span>
+              <span className="relative">Empezar ahora</span>
               <ArrowRight className="relative h-4 w-4 group-hover:translate-x-1 transition-transform" />
             </a>
             <a

@@ -27,6 +27,7 @@ const PUBLIC_PATHS = [
   "/precios",
   "/api/auth",
   "/api/register",
+  "/expired",
 ];
 
 export async function middleware(request: NextRequest) {
@@ -55,6 +56,12 @@ export async function middleware(request: NextRequest) {
   }
 
   if (!token) return NextResponse.next();
+
+  if (token.expiresAt && new Date() > new Date(token.expiresAt as string)) {
+    if (pathname !== "/expired") {
+      return NextResponse.redirect(new URL("/expired", request.url));
+    }
+  }
 
   const role = (token.role as string) || "STUDENT";
 

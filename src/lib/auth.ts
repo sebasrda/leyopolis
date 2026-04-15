@@ -62,6 +62,10 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Contraseña incorrecta");
         }
 
+        if (user.expiresAt && new Date() > user.expiresAt) {
+          throw new Error("Su licencia o periodo de prueba ha expirado");
+        }
+
         const role =
           user.role === "SUPERADMIN" || user.role === "STUDENT" || user.role === "TEACHER" || user.role === "COORDINATOR" || user.role === "ADMIN"
             ? user.role
@@ -73,6 +77,7 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           image: user.image,
           role,
+          expiresAt: user.expiresAt,
         };
       },
     }),
@@ -85,13 +90,15 @@ export const authOptions: NextAuthOptions = {
           token.role = role;
         }
         token.id = user.id;
+        token.expiresAt = (user as any).expiresAt;
       }
       if (token.id && !token.role) {
-        const dbUser = await prisma.user.findUnique({ where: { id: String(token.id) }, select: { role: true } });
+        const dbUser = await prisma.user.findUnique({ where: { id: String(token.id) }, select: { role: true, expiresAt: true } });
         const role = dbUser?.role;
         if (role === "SUPERADMIN" || role === "STUDENT" || role === "TEACHER" || role === "COORDINATOR" || role === "ADMIN") {
           token.role = role;
         }
+        token.expiresAt = dbUser?.expiresAt;
       }
       return token;
     },

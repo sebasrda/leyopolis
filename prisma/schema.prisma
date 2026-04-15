@@ -24,6 +24,8 @@ model User {
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
   isDemo            Boolean            @default(false)
+  licenseType       String             @default("DEMO")
+  expiresAt         DateTime?
   accounts          Account[]
   createdActivities Activity[]
   activityAttempts  ActivityAttempt[]

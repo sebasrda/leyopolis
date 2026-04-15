@@ -10,19 +10,29 @@ const demoBooks = [
     id: "isla-del-tesoro",
     title: "La isla del tesoro",
     author: "Robert Louis Stevenson",
+    cover: "https://ltmdzlvporv0h72p.public.blob.vercel-storage.com/books/1775527512036-f76ba8919e2df-cover-Captura_de_pantalla_2026-04-06_195549-S1VOh4VtgvdJnrmyYMgdvxeH4ias0o.png",
     pdfUrl: "/books/La_isla_del_tesoro_-_Robert_Louis_Stevenson.pdf",
   },
   {
     id: "vuelta-al-mundo-80-dias",
     title: "La vuelta al mundo en 80 días",
     author: "Julio Verne",
+    cover: "https://ltmdzlvporv0h72p.public.blob.vercel-storage.com/books/1775527443333-b2d8922b84d5f-cover-Captura_de_pantalla_2026-04-06_195306-W84AfrG1xGH2GWykK2CS58CNEulzyt.png",
     pdfUrl: "/books/La_vuelta_al_mundo_en_ochenta_dias-Verne_Julio.pdf",
   },
   {
     id: "libro-de-la-selva",
     title: "El libro de la selva",
     author: "Rudyard Kipling",
+    cover: "https://ltmdzlvporv0h72p.public.blob.vercel-storage.com/books/1775527375278-d6f200b3c0e6d8-cover-Captura_de_pantalla_2026-04-06_195240-mFRPPYxIGwEkP1IJ5MqBrmvdUblWwh.png",
     pdfUrl: "/books/El_libro_de_la_selva-GrupoRodes.pdf",
+  },
+  {
+    id: "anaconda",
+    title: "Anaconda",
+    author: "Horacio Quiroga",
+    cover: "https://ltmdzlvporv0h72p.public.blob.vercel-storage.com/books/1775527307897-8940850d2bade8-cover-Captura_de_pantalla_2026-04-06_194418-tcGztLDnKK2c1nvjQieiO3EWw1YOl0.png",
+    pdfUrl: "/books/anaconda.pdf",
   },
 ];
 
@@ -107,18 +117,27 @@ export default function DemoPage() {
           <p className="text-sm text-gray-500">
             Demo incluye: 1 colegio, 2 clases, 2 docentes, 10 estudiantes de ejemplo.
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {demoBooks.map((book) => (
-              <Card key={book.id} className="border-none shadow-md overflow-hidden">
-                <CardContent className="p-6 space-y-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <h3 className="font-bold text-gray-900">{book.title}</h3>
-                      <p className="text-sm text-gray-500">{book.author}</p>
-                    </div>
-                    <BookOpen className="h-5 w-5 text-indigo-600 shrink-0" />
+              <Card key={book.id} className="border-none shadow-md overflow-hidden group flex flex-col">
+                <div className="relative aspect-[2/3] overflow-hidden bg-gray-100">
+                  <img
+                    src={book.cover}
+                    alt={book.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    onError={(e) => {
+                      const t = e.target as HTMLImageElement;
+                      t.style.display = "none";
+                      t.parentElement!.style.background = "linear-gradient(135deg, #4f46e5, #7c3aed)";
+                    }}
+                  />
+                </div>
+                <CardContent className="p-4 space-y-3 flex-1 flex flex-col">
+                  <div className="flex-1">
+                    <h3 className="font-bold text-gray-900 text-sm line-clamp-2">{book.title}</h3>
+                    <p className="text-xs text-gray-500 mt-1">{book.author}</p>
                   </div>
-                  <Button asChild className="w-full bg-indigo-600 hover:bg-indigo-500">
+                  <Button asChild size="sm" className="w-full bg-indigo-600 hover:bg-indigo-500 text-xs">
                     <a href={`/demo/reader/${book.id}`}>Abrir lector demo</a>
                   </Button>
                 </CardContent>
@@ -127,27 +146,24 @@ export default function DemoPage() {
           </div>
         </div>
 
-        {/* Demo credentials */}
-        <Card className="border-indigo-200 bg-indigo-50/50">
-          <CardContent className="p-6">
-            <h3 className="font-bold text-indigo-900 mb-3">Credenciales Demo</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-              <div className="bg-white p-3 rounded-lg border">
-                <Badge className="mb-2">Admin</Badge>
-                <p>admin@demo.leyopolis.com</p>
-                <p className="text-gray-500">demo123</p>
-              </div>
-              <div className="bg-white p-3 rounded-lg border">
-                <Badge variant="secondary" className="mb-2">Docente</Badge>
-                <p>docente1@demo.leyopolis.com</p>
-                <p className="text-gray-500">demo123</p>
-              </div>
-              <div className="bg-white p-3 rounded-lg border">
-                <Badge variant="outline" className="mb-2">Estudiante</Badge>
-                <p>estudiante1@demo.leyopolis.com</p>
-                <p className="text-gray-500">demo123</p>
-              </div>
+        {/* Contact section – replaces credentials */}
+        <Card className="border-indigo-200 bg-gradient-to-br from-indigo-50 to-purple-50">
+          <CardContent className="p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            <div>
+              <h3 className="font-bold text-indigo-900 text-lg mb-2">
+                ¿Te interesa Leyópolis para tu institución?
+              </h3>
+              <p className="text-sm text-indigo-700 max-w-lg">
+                Escríbenos y con gusto te hacemos una demostración personalizada, resolvemos tus dudas o te
+                acompañamos en el proceso de registro para tu colegio.
+              </p>
             </div>
+            <a
+              href="mailto:sebasrda@gmail.com?subject=Inter%C3%A9s%20en%20Ley%C3%B3polis&body=Hola%2C%20me%20gustar%C3%ADa%20obtener%20m%C3%A1s%20informaci%C3%B3n%20sobre%20Ley%C3%B3polis%20para%20mi%20instituci%C3%B3n."
+              className="flex-shrink-0 inline-flex items-center gap-2 rounded-full bg-indigo-600 px-7 py-3 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors shadow-lg shadow-indigo-200"
+            >
+              ✉️ Escribirnos al correo
+            </a>
           </CardContent>
         </Card>
       </div>

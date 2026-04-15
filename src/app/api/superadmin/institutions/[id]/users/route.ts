@@ -48,6 +48,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         grade: true,
         lastActive: true,
         createdAt: true,
+        licenseType: true,
+        expiresAt: true,
       },
       orderBy: { createdAt: 'desc' }
     });
@@ -79,7 +81,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     }
 
     const body = await req.json();
-    const { name, email, role, grade } = body;
+    const { name, email, role, grade, licenseType } = body;
 
     // Check limit if student
     if (role === "STUDENT") {
@@ -99,6 +101,19 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const plainPassword = generatePassword(6);
     const hashedPassword = await bcrypt.hash(plainPassword, 10);
 
+    let expiresAt: Date | null = null;
+    let finalLicenseType = licenseType || "ACTIVATED";
+
+    if (licenseType === "MENSUAL") {
+      expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    } else if (licenseType === "TRIMESTRAL") {
+      expiresAt = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
+    } else if (licenseType === "ANUAL") {
+      expiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
+    } else if (licenseType === "DEMO") {
+      expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    }
+
     const newUser = await (prisma as any).user.create({
       data: {
         name,
@@ -107,12 +122,16 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         role: role || "STUDENT",
         grade,
         institutionId: id,
+        licenseType: finalLicenseType,
+        ...(expiresAt && { expiresAt }),
       },
       select: {
           id: true,
           name: true,
           email: true,
           role: true,
+          licenseType: true,
+          expiresAt: true,
       }
     });
 

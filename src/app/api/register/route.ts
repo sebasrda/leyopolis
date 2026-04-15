@@ -50,6 +50,8 @@ export async function POST(req: Request) {
         : "STUDENT";
     const gradeValue = typeof grade === "string" ? grade.trim() : undefined;
 
+    const expiresAtDate = new Date(Date.now() + 24 * 60 * 60 * 1000); // 1 day demo
+
     const user = await userDb.user.create({
       data: {
         name,
@@ -58,6 +60,8 @@ export async function POST(req: Request) {
         role: normalizedRole,
         grade: gradeValue,
         institutionId: institution?.id ?? undefined,
+        licenseType: "DEMO",
+        expiresAt: expiresAtDate,
       },
     });
 

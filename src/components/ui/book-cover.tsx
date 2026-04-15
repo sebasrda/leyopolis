@@ -18,13 +18,8 @@ export function BookCover({
 }: BookCoverProps) {
     return (
         <div className={cn("relative overflow-hidden bg-gray-100 flex items-center justify-center", aspectRatio, className)}>
-            {/* Blurred Background Layer - eliminates empty space for mismatched aspect ratios */}
-            <img 
-                src={src} 
-                alt="" 
-                className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-40 scale-115 pointer-events-none"
-            />
-            
+            {/* Fondo sólido simple para portadas que no llenan el aspecto */}
+            <div className="absolute inset-0 w-full h-full bg-[#1A1E2E] opacity-5 pointer-events-none" />
             {/* Contained Main Image - ensures the image is shown "completa" as requested */}
             <img 
                 src={src} 

@@ -703,32 +703,64 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []); // Empty dependency array as nextFlip/prevFlip use refs
 
+  // Helper: Extract text from a single PDF page
+  const extractPageText = async (pageNum: number): Promise<string> => {
+    if (!pdfDocument || pageNum < 1 || pageNum > pdfDocument.numPages) return "";
+    try {
+      const page = await pdfDocument.getPage(pageNum);
+      const textContent = await page.getTextContent();
+      // Reconstruct text preserving paragraph structure
+      const items = textContent.items as any[];
+      if (!items.length) return "";
+      
+      let result = "";
+      let lastY: number | null = null;
+      for (const item of items) {
+        if (lastY !== null && Math.abs(item.transform[5] - lastY) > 5) {
+          // Different vertical position = likely new line
+          result += "\n";
+        } else if (result.length > 0 && !result.endsWith(" ") && !result.endsWith("\n")) {
+          result += " ";
+        }
+        result += item.str;
+        lastY = item.transform[5];
+      }
+      return result.trim();
+    } catch (e) {
+      console.error(`Error extracting text from page ${pageNum}`, e);
+      return "";
+    }
+  };
+
+  // Extract text from BOTH visible pages (spread) when the page changes
+  const extractVisiblePagesText = async (): Promise<string> => {
+    if (!pdfDocument) return "";
+    
+    const leftPageNum = currentPage + 1;
+    const rightPageNum = isSinglePage ? 0 : currentPage + 2;
+    
+    const leftText = await extractPageText(leftPageNum);
+    const rightText = rightPageNum > 0 ? await extractPageText(rightPageNum) : "";
+    
+    const combined = [leftText, rightText].filter(Boolean).join("\n\n---\n\n");
+    return combined;
+  };
+
   // Actualizar el contenido de texto cuando cambia la página
   useEffect(() => {
     let isMounted = true;
     const fetchPageText = async () => {
-        // Verificar rango válido y existencia del documento
         if (!pdfDocument || !pdfDocument.numPages) return;
         
-        try {
-            const pageNum = currentPage + 1;
-            if (pageNum > pdfDocument.numPages || pageNum < 1) return;
-
-            const page = await pdfDocument.getPage(pageNum);
-            const textContent = await page.getTextContent();
-            
-            if (isMounted) {
-                const textItems = textContent.items.map((item: any) => item.str).join(' ');
-                setCurrentTextContent(textItems || "");
-            }
-        } catch (e) {
-            console.error("Error extracting text on page change", e);
+        const text = await extractVisiblePagesText();
+        if (isMounted) {
+            setCurrentTextContent(text);
         }
     };
     
     fetchPageText();
     return () => { isMounted = false; };
-  }, [currentPage, pdfDocument]);
+  }, [currentPage, pdfDocument, isSinglePage]);
 
   // Servicio de Traducción con Gemini API
   const handleTranslate = async (lang: string, force: boolean = false) => {
@@ -743,21 +775,15 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
     if (!bilingual) setTranslationSource(null);
     
     try {
-        // 1. Get text content from current page
+        // 1. Get text content from BOTH visible pages
         let textToTranslate = currentTextContent;
         
         if (!textToTranslate && pdfDocument) {
-            try {
-                // Try to extract text from current page(s)
-                const pageNum = currentPage + 1;
-                const page = await pdfDocument.getPage(pageNum);
-                const textContent = await page.getTextContent();
-                const textItems = textContent.items.map((item: any) => item.str).join(' ');
-                textToTranslate = textItems || `[Contenido de la página ${pageNum} del libro ${bookTitle}]`;
-                setCurrentTextContent(textToTranslate); // Cache it
-            } catch (e) {
-                console.error("Error extracting text", e);
-                textToTranslate = `[Texto de la página ${currentPage + 1}]`;
+            textToTranslate = await extractVisiblePagesText();
+            if (textToTranslate) {
+                setCurrentTextContent(textToTranslate);
+            } else {
+                textToTranslate = `[Contenido de las páginas ${currentPage + 1}-${currentPage + 2} del libro ${bookTitle}]`;
             }
         }
 
@@ -1289,7 +1315,7 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
                     drag
                     dragMomentum={false}
                     className={cn(
-                        "absolute bottom-4 right-4 z-50 w-96 md:w-[450px] max-h-[60%] rounded-xl shadow-2xl border flex flex-col overflow-hidden",
+                        "absolute bottom-4 right-4 z-50 w-[500px] md:w-[600px] max-h-[75%] rounded-xl shadow-2xl border flex flex-col overflow-hidden",
                         isDarkMode ? "bg-gray-900 border-gray-700 shadow-black/50" : "bg-white border-gray-200 shadow-xl"
                     )}
                 >

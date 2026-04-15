@@ -115,7 +115,7 @@ function heuristicTranslate(text: string, targetLanguage: string) {
 }
 
 async function googleTranslate(text: string, targetIso: string) {
-  const maxChunk = 1800;
+  const maxChunk = 4500;
   const chunks: string[] = [];
   for (let i = 0; i < text.length; i += maxChunk) chunks.push(text.slice(i, i + maxChunk));
 
@@ -168,7 +168,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing text or targetLanguage" }, { status: 400 });
     }
 
-    const maxChars = 20000;
+    const maxChars = 50000;
     const safeText = text.length > maxChars ? text.slice(0, maxChars) : text;
 
     const key = cacheKey(safeText, target.isoCandidates[0] || target.prompt);
@@ -203,13 +203,25 @@ export async function POST(req: Request) {
     let translation = "";
     let quotaExceeded = false;
 
-    const modelsToTry = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-flash-latest"];
+    const modelsToTry = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"];
 
     for (const modelName of modelsToTry) {
       try {
         const model = genAI.getGenerativeModel({ model: modelName });
-        const clippedText = safeText.length > 8000 ? `${safeText.slice(0, 8000)}\n\n[...truncated]` : safeText;
-        const prompt = `Translate the following text into ${target.prompt}. Preserve meaning and formatting. Return only the translation.\n\n${clippedText}`;
+        const prompt = `You are a world-class professional literary translator. Translate the following text into ${target.prompt}.
+
+CRITICAL RULES:
+- Translate the COMPLETE text. Do NOT skip, summarize, or truncate any part.
+- Preserve ALL paragraphs, line breaks, and formatting exactly as they appear.
+- Maintain the author's literary style, tone, and voice.
+- Use natural, fluent ${target.prompt} — not literal word-by-word translation.
+- Preserve proper nouns (names of people, places) as-is unless they have a well-known translation.
+- If you see a "---" separator, it indicates a page break. Keep the separator in the output.
+- Return ONLY the translated text. No comments, no explanations, no preamble.
+
+TEXT TO TRANSLATE:
+
+${safeText}`;
         const result = await model.generateContent(prompt);
         translation = result.response.text();
         if (translation) break;

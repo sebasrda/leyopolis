@@ -76,7 +76,7 @@ export default function MyReadingsPage() {
                     <Badge className="absolute top-2 right-2 bg-indigo-600/90 hover:bg-indigo-700">
                         {book.category || "General"}
                     </Badge>
-                    </div>
+
                     <CardContent className="p-4 space-y-4">
                     <div>
                         <h3 className="font-bold text-gray-900 line-clamp-1" title={book.title}>{book.title}</h3>

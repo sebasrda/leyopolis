@@ -231,7 +231,7 @@ export default function LibraryPage() {
                       </Link>
                     )}
                   </div>
-                </div>
+
                 
                 <CardContent className="p-4 flex-1 flex flex-col gap-2">
                   <div>
@@ -308,7 +308,7 @@ export default function LibraryPage() {
                       </Link>
                     )}
                   </div>
-                </div>
+
                 
                 <CardContent className="p-4 flex-1 flex flex-col gap-2">
                   <div>

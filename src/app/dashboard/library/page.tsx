@@ -217,20 +217,19 @@ export default function LibraryPage() {
                     <div className="absolute top-2 right-2 flex flex-col gap-1">
                       <Badge className="bg-indigo-600 text-white shadow-sm backdrop-blur-sm border-none">Unidad Oficial</Badge>
                     </div>
-                  </BookCover>
-                  
-                  <div className="absolute inset-0 bg-indigo-900/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center p-6 gap-3">
-                    <Link href={`/dashboard/reader/${book.id}?title=${encodeURIComponent(book.title)}`} className="w-full">
-                      <Button className="w-full bg-white text-indigo-900 hover:bg-indigo-50 font-bold">Leer Ahora</Button>
-                    </Link>
-                    {book.hasQuiz && book.quizId && (
-                      <Link href={`/dashboard/quiz/${book.quizId}`} className="w-full">
-                        <Button variant="outline" className="w-full border-white text-white hover:bg-white/10">
-                          <Sparkles className="h-4 w-4 mr-2" /> Hacer Quiz
-                        </Button>
+                    <div className="absolute inset-0 bg-indigo-900/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center p-6 gap-3">
+                      <Link href={`/dashboard/reader/${book.id}?title=${encodeURIComponent(book.title)}`} className="w-full">
+                        <Button className="w-full bg-white text-indigo-900 hover:bg-indigo-50 font-bold">Leer Ahora</Button>
                       </Link>
-                    )}
-                  </div>
+                      {book.hasQuiz && book.quizId && (
+                        <Link href={`/dashboard/quiz/${book.quizId}`} className="w-full">
+                          <Button variant="outline" className="w-full border-white text-white hover:bg-white/10">
+                            <Sparkles className="h-4 w-4 mr-2" /> Hacer Quiz
+                          </Button>
+                        </Link>
+                      )}
+                    </div>
+                  </BookCover>
 
                 
                 <CardContent className="p-4 flex-1 flex flex-col gap-2">
@@ -294,20 +293,19 @@ export default function LibraryPage() {
                         <Badge variant="secondary" className="bg-indigo-600/80 text-white text-xs backdrop-blur-sm">{book.grade}</Badge>
                       </div>
                     )}
-                  </BookCover>
-                  
-                  <div className="absolute inset-0 bg-indigo-900/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center p-6 gap-3">
-                    <Link href={`/dashboard/reader/${book.id}?title=${encodeURIComponent(book.title)}`} className="w-full">
-                      <Button className="w-full bg-white text-indigo-900 hover:bg-indigo-50 font-bold">Leer Ahora</Button>
-                    </Link>
-                    {book.hasQuiz && book.quizId && (
-                      <Link href={`/dashboard/quiz/${book.quizId}`} className="w-full">
-                        <Button variant="outline" className="w-full border-white text-white hover:bg-white/10">
-                          <Sparkles className="h-4 w-4 mr-2" /> Hacer Quiz
-                        </Button>
+                    <div className="absolute inset-0 bg-indigo-900/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center p-6 gap-3">
+                      <Link href={`/dashboard/reader/${book.id}?title=${encodeURIComponent(book.title)}`} className="w-full">
+                        <Button className="w-full bg-white text-indigo-900 hover:bg-indigo-50 font-bold">Leer Ahora</Button>
                       </Link>
-                    )}
-                  </div>
+                      {book.hasQuiz && book.quizId && (
+                        <Link href={`/dashboard/quiz/${book.quizId}`} className="w-full">
+                          <Button variant="outline" className="w-full border-white text-white hover:bg-white/10">
+                            <Sparkles className="h-4 w-4 mr-2" /> Hacer Quiz
+                          </Button>
+                        </Link>
+                      )}
+                    </div>
+                  </BookCover>
 
                 
                 <CardContent className="p-4 flex-1 flex flex-col gap-2">

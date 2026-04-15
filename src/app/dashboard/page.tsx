@@ -116,26 +116,27 @@ export default function DashboardPage() {
                         <Card key={item.id || book.id} className="group relative overflow-hidden border-none shadow-md hover:shadow-xl transition-all">
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                         <CardContent className="p-0 relative">
-                            <BookCover src={bookImage} alt={bookTitle} aspectRatio="aspect-[3/4]" />
-                            <div className="absolute bottom-0 left-0 right-0 p-4 z-20 text-white transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
-                            <Badge className="mb-2 bg-indigo-600 border-none">{bookCategory}</Badge>
-                            <h3 className="font-bold text-lg leading-tight mb-1 line-clamp-1">{bookTitle}</h3>
-                            <p className="text-sm text-gray-300 mb-4">{bookAuthor}</p>
-                            <div className="flex items-center gap-3">
-                                <Link href={`/dashboard/reader/${book.id}?title=${encodeURIComponent(bookTitle)}`} className="w-full">
-                                    <Button size="sm" className="bg-white text-indigo-900 hover:bg-gray-100 font-bold w-full">
-                                    <Play className="h-4 w-4 mr-2 fill-indigo-900" /> Leer ahora
-                                    </Button>
-                                </Link>
-                                <div className="flex-1">
-                                <div className="flex justify-between text-[10px] mb-1">
-                                    <span>Progreso</span>
-                                    <span>{item.progress}%</span>
+                            <BookCover src={bookImage} alt={bookTitle} aspectRatio="aspect-[3/4]">
+                                <div className="absolute bottom-0 left-0 right-0 p-4 z-20 text-white transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                                <Badge className="mb-2 bg-indigo-600 border-none">{bookCategory}</Badge>
+                                <h3 className="font-bold text-lg leading-tight mb-1 line-clamp-1">{bookTitle}</h3>
+                                <p className="text-sm text-gray-300 mb-4">{bookAuthor}</p>
+                                <div className="flex items-center gap-3">
+                                    <Link href={`/dashboard/reader/${book.id}?title=${encodeURIComponent(bookTitle)}`} className="w-full">
+                                        <Button size="sm" className="bg-white text-indigo-900 hover:bg-gray-100 font-bold w-full">
+                                        <Play className="h-4 w-4 mr-2 fill-indigo-900" /> Leer ahora
+                                        </Button>
+                                    </Link>
+                                    <div className="flex-1">
+                                    <div className="flex justify-between text-[10px] mb-1">
+                                        <span>Progreso</span>
+                                        <span>{item.progress}%</span>
+                                    </div>
+                                    <Progress value={item.progress} className="h-1 bg-white/20" />
+                                    </div>
                                 </div>
-                                <Progress value={item.progress} className="h-1 bg-white/20" />
                                 </div>
-                            </div>
-                            </div>
+                            </BookCover>
                         </CardContent>
                         </Card>
                     );

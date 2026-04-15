@@ -61,21 +61,21 @@ export default function MyReadingsPage() {
 
                 return (
                 <Card key={item.id} className="group overflow-hidden border-none shadow-md hover:shadow-xl transition-all duration-300">
-                    <BookCover src={image} alt={book.title} />
-
-                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3 p-4">
-                        <Link href={`/dashboard/reader/${book.id}?title=${encodeURIComponent(book.title)}`}>
-                        <Button className="bg-white text-indigo-900 hover:bg-indigo-50 font-bold w-full">
-                            <PlayCircle className="h-4 w-4 mr-2" /> Continuar
-                        </Button>
-                        </Link>
-                        <div className="text-white text-sm font-medium">
-                        Última vez: {lastRead}
+                    <BookCover src={image} alt={book.title}>
+                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3 p-4">
+                            <Link href={`/dashboard/reader/${book.id}?title=${encodeURIComponent(book.title)}`}>
+                            <Button className="bg-white text-indigo-900 hover:bg-indigo-50 font-bold w-full">
+                                <PlayCircle className="h-4 w-4 mr-2" /> Continuar
+                            </Button>
+                            </Link>
+                            <div className="text-white text-sm font-medium">
+                            Última vez: {lastRead}
+                            </div>
                         </div>
-                    </div>
-                    <Badge className="absolute top-2 right-2 bg-indigo-600/90 hover:bg-indigo-700">
-                        {book.category || "General"}
-                    </Badge>
+                        <Badge className="absolute top-2 right-2 bg-indigo-600/90 hover:bg-indigo-700">
+                            {book.category || "General"}
+                        </Badge>
+                    </BookCover>
 
                     <CardContent className="p-4 space-y-4">
                     <div>

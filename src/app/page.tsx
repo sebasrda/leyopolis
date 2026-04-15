@@ -1,129 +1,349 @@
 import Hero from "@/components/landing/Hero";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { BookOpen, Globe, Sparkles } from "lucide-react";
+import { BookOpen, Globe, Sparkles, Shield, Zap, BarChart3, Users, GraduationCap, CheckCircle2 } from "lucide-react";
+
+const FEATURES = [
+  {
+    icon: Sparkles,
+    color: "from-indigo-500 to-purple-600",
+    bg: "bg-indigo-500/10",
+    border: "border-indigo-500/20",
+    title: "IA Pedagógica",
+    desc: "Genera quizzes, juegos y actividades de comprensión automáticamente al subir un libro.",
+  },
+  {
+    icon: Globe,
+    color: "from-cyan-500 to-blue-600",
+    bg: "bg-cyan-500/10",
+    border: "border-cyan-500/20",
+    title: "Traducción en Tiempo Real",
+    desc: "Traduce páginas completas y frases seleccionadas directamente en el lector, en +40 idiomas.",
+  },
+  {
+    icon: BarChart3,
+    color: "from-emerald-500 to-teal-600",
+    bg: "bg-emerald-500/10",
+    border: "border-emerald-500/20",
+    title: "Analytics en Tiempo Real",
+    desc: "Supervisa el progreso de cada estudiante, comprensión promedio y lecturas activas desde tu panel.",
+  },
+  {
+    icon: Shield,
+    color: "from-amber-500 to-orange-600",
+    bg: "bg-amber-500/10",
+    border: "border-amber-500/20",
+    title: "Control Institucional",
+    desc: "Gestiona colegios, clases, docentes y estudiantes con roles diferenciados y permisos seguros.",
+  },
+  {
+    icon: Zap,
+    color: "from-rose-500 to-pink-600",
+    bg: "bg-rose-500/10",
+    border: "border-rose-500/20",
+    title: "Gamificación",
+    desc: "Sistema de XP, niveles y logros que motiva a los estudiantes a leer más y mejor.",
+  },
+  {
+    icon: BookOpen,
+    color: "from-violet-500 to-fuchsia-600",
+    bg: "bg-violet-500/10",
+    border: "border-violet-500/20",
+    title: "Biblioteca Digital",
+    desc: "Carga de PDFs ilimitados con portada, sipnosis IA, filtros por grado y asignación directa.",
+  },
+];
+
+const PLANS = [
+  {
+    name: "Básico",
+    price: "Gratis",
+    period: "",
+    desc: "Para explorar la plataforma",
+    highlight: false,
+    features: ["Hasta 3 libros", "Quizzes básicos", "1 clase", "Soporte email"],
+  },
+  {
+    name: "Institución",
+    price: "$99",
+    period: "/mes",
+    desc: "Para colegios en crecimiento",
+    highlight: true,
+    features: ["Libros ilimitados", "IA completa + Juegos", "Clases ilimitadas", "Analytics avanzados", "Soporte prioritario", "Panel coordinador"],
+  },
+  {
+    name: "Enterprise",
+    price: "A medida",
+    period: "",
+    desc: "Para grandes redes educativas",
+    highlight: false,
+    features: ["Todo Institución", "Multi-colegio", "SLA garantizado", "Integración LMS", "Onboarding dedicado"],
+  },
+];
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-white">
-      <nav className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+    <main className="min-h-screen bg-[#0a0a1a] text-white">
+      {/* NAV */}
+      <nav className="fixed top-0 z-50 w-full border-b border-white/5 bg-[#0a0a1a]/80 backdrop-blur-xl">
         <div className="container mx-auto flex h-16 items-center justify-between px-6">
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded bg-indigo-600 flex items-center justify-center">
-              <span className="text-white font-bold text-xl">L</span>
+          <div className="flex items-center gap-2.5">
+            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+              <span className="text-white font-black text-lg">L</span>
             </div>
-            <span className="text-2xl font-bold tracking-tight text-indigo-900">LEYÓPOLIS</span>
+            <span className="text-xl font-black tracking-tight text-white">LEYÓPOLIS</span>
           </div>
-          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600">
-            <a href="#caracteristicas" className="hover:text-indigo-600">Características</a>
-            <a href="#biblioteca" className="hover:text-indigo-600">Biblioteca</a>
+          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-400">
+            <a href="#features" className="hover:text-white transition-colors">Características</a>
+            <a href="#precios" className="hover:text-white transition-colors">Precios</a>
+            <a href="#biblioteca" className="hover:text-white transition-colors">Biblioteca</a>
           </div>
-          <div className="flex items-center gap-4">
-            <a href="/login" className="text-sm font-medium text-gray-600 hover:text-indigo-600">Iniciar sesión</a>
-            <a href="/register" className="rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500">
+          <div className="flex items-center gap-3">
+            <a href="/login" className="text-sm font-medium text-gray-300 hover:text-white transition-colors px-4 py-2">
+              Iniciar sesión
+            </a>
+            <a
+              href="/register"
+              className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-2 text-sm font-bold text-white shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:scale-105 transition-all duration-200"
+            >
               Registrarse
+              <span className="text-indigo-300">→</span>
             </a>
           </div>
         </div>
       </nav>
-      <Hero />
 
-      <section id="caracteristicas" className="border-t bg-gray-50 scroll-mt-20">
-        <div className="container mx-auto px-6 py-16">
-          <div className="max-w-3xl">
-            <h2 className="text-3xl font-bold tracking-tight text-gray-900">Características</h2>
-            <p className="mt-3 text-gray-600">
-              Todo lo que ya existe en la plataforma, listo para usarse desde el primer día.
+      {/* HERO */}
+      <div className="pt-16">
+        <Hero />
+      </div>
+
+      {/* FEATURES */}
+      <section id="features" className="relative py-32 scroll-mt-20">
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] rounded-full bg-indigo-600/5 blur-[80px]" />
+        </div>
+        <div className="relative container mx-auto px-6">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 rounded-full bg-indigo-500/10 border border-indigo-500/20 px-4 py-1.5 text-sm font-semibold text-indigo-300 mb-6">
+              <Sparkles className="h-3.5 w-3.5" />
+              Por qué Leyópolis
+            </div>
+            <h2 className="text-4xl sm:text-5xl font-black text-white">
+              Todo lo que tu institución
+              <br />
+              <span className="bg-gradient-to-r from-indigo-400 to-fuchsia-400 bg-clip-text text-transparent">
+                necesita en un lugar
+              </span>
+            </h2>
+            <p className="mt-4 text-gray-400 max-w-2xl mx-auto">
+              Desde la carga del libro hasta el análisis de comprensión, Leyópolis cubre todo el ciclo pedagógico con inteligencia artificial integrada.
             </p>
           </div>
 
-          <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="border-none shadow-md">
-              <CardContent className="p-6 space-y-3">
-                <div className="h-10 w-10 bg-indigo-100 rounded-lg flex items-center justify-center">
-                  <Globe className="h-5 w-5 text-indigo-600" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {FEATURES.map((f) => (
+              <div
+                key={f.title}
+                className={`group relative rounded-2xl ${f.bg} ${f.border} border p-6 hover:bg-white/5 transition-all duration-300 hover:-translate-y-1`}
+              >
+                <div className={`inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${f.color} mb-4 shadow-lg`}>
+                  <f.icon className="h-6 w-6 text-white" />
                 </div>
-                <h3 className="font-bold text-gray-900">Traducción en tiempo real</h3>
-                <p className="text-sm text-gray-500">
-                  Traduce páginas completas y frases seleccionadas directamente en el lector.
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="border-none shadow-md">
-              <CardContent className="p-6 space-y-3">
-                <div className="h-10 w-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                  <Sparkles className="h-5 w-5 text-purple-600" />
-                </div>
-                <h3 className="font-bold text-gray-900">Tutor IA integrado</h3>
-                <p className="text-sm text-gray-500">
-                  Pregunta por la página actual y recibe apoyo inmediato dentro del lector.
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="border-none shadow-md">
-              <CardContent className="p-6 space-y-3">
-                <div className="h-10 w-10 bg-emerald-100 rounded-lg flex items-center justify-center">
-                  <BookOpen className="h-5 w-5 text-emerald-600" />
-                </div>
-                <h3 className="font-bold text-gray-900">Modo bilingüe</h3>
-                <p className="text-sm text-gray-500">
-                  Visualiza texto original y traducido lado a lado mientras lees.
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="mt-10">
-            <Button asChild className="bg-indigo-600 hover:bg-indigo-500">
-              <a href="/demo">Probar demo</a>
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      <section id="biblioteca" className="border-t bg-white scroll-mt-20">
-        <div className="container mx-auto px-6 py-16">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-            <div className="max-w-3xl">
-              <h2 className="text-3xl font-bold tracking-tight text-gray-900">Biblioteca</h2>
-              <p className="mt-3 text-gray-600">
-                Explora libros y abre el lector inteligente sin registrarte usando la demo.
-              </p>
-            </div>
-            <Button asChild variant="outline" className="border-indigo-200 text-indigo-600 hover:bg-indigo-50">
-              <a href="/biblioteca">Ver biblioteca</a>
-            </Button>
-          </div>
-
-          <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[
-              { id: "isla-del-tesoro", title: "La isla del tesoro", author: "Robert Louis Stevenson" },
-              { id: "vuelta-al-mundo-80-dias", title: "La vuelta al mundo en 80 días", author: "Julio Verne" },
-              { id: "libro-de-la-selva", title: "El libro de la selva", author: "Rudyard Kipling" },
-            ].map((b) => (
-              <Card key={b.id} className="border-none shadow-md overflow-hidden">
-                <CardContent className="p-6 space-y-3">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <h3 className="font-bold text-gray-900">{b.title}</h3>
-                      <p className="text-sm text-gray-500">{b.author}</p>
-                    </div>
-                    <BookOpen className="h-5 w-5 text-indigo-600 shrink-0" />
-                  </div>
-                  <Button asChild className="w-full bg-indigo-600 hover:bg-indigo-500">
-                    <a href={`/demo/reader/${b.id}`}>Abrir en demo</a>
-                  </Button>
-                </CardContent>
-              </Card>
+                <h3 className="text-lg font-bold text-white mb-2">{f.title}</h3>
+                <p className="text-sm text-gray-400 leading-relaxed">{f.desc}</p>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
+      {/* SOCIAL PROOF BANNER */}
+      <section className="py-16 border-y border-white/5 bg-white/[0.02]">
+        <div className="container mx-auto px-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+            {[
+              { n: "500+", label: "Estudiantes activos" },
+              { n: "50+", label: "Unidades pedagógicas" },
+              { n: "IA 24/7", label: "Tutor disponible" },
+              { n: "99.9%", label: "Uptime garantizado" },
+            ].map((s) => (
+              <div key={s.label}>
+                <div className="text-4xl font-black bg-gradient-to-r from-indigo-400 to-fuchsia-400 bg-clip-text text-transparent">
+                  {s.n}
+                </div>
+                <div className="text-sm text-gray-500 mt-1">{s.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
-      <footer className="border-t py-12">
-        <div className="container mx-auto px-6 text-center text-sm text-gray-500">
-          <p>© 2026 LEYÓPOLIS. Todos los derechos reservados.</p>
+      {/* FOR WHO */}
+      <section className="py-32">
+        <div className="container mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl sm:text-5xl font-black text-white">
+              Diseñado para{" "}
+              <span className="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+                cada actor
+              </span>
+              {" "}educativo
+            </h2>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6">
+            {[
+              {
+                icon: GraduationCap,
+                role: "Estudiantes",
+                color: "from-indigo-500 to-purple-600",
+                perks: ["Lee con tutor IA integrado", "Gana XP y sube de nivel", "Completa quizzes automáticos", "Traduce en tiempo real"],
+              },
+              {
+                icon: Users,
+                role: "Docentes",
+                color: "from-emerald-500 to-teal-600",
+                perks: ["Asigna lecturas por curso", "Monitorea comprensión en vivo", "Recibe lecturas sugeridas por IA", "Genera reportes en un clic"],
+              },
+              {
+                icon: Shield,
+                role: "Administradores",
+                color: "from-amber-500 to-orange-600",
+                perks: ["Gestiona toda la institución", "Control de acceso por roles", "Métricas institucionales", "Biblioteca restringida o abierta"],
+              },
+            ].map((r) => (
+              <div
+                key={r.role}
+                className="rounded-2xl bg-white/[0.03] border border-white/[0.07] p-8 hover:bg-white/[0.06] transition-all duration-300"
+              >
+                <div className={`inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${r.color} mb-6 shadow-xl`}>
+                  <r.icon className="h-7 w-7 text-white" />
+                </div>
+                <h3 className="text-2xl font-black text-white mb-4">{r.role}</h3>
+                <ul className="space-y-3">
+                  {r.perks.map((p) => (
+                    <li key={p} className="flex items-start gap-2 text-sm text-gray-400">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-400 mt-0.5 shrink-0" />
+                      {p}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* PRICING */}
+      <section id="precios" className="py-32 scroll-mt-20 relative">
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute left-1/2 bottom-0 -translate-x-1/2 w-[600px] h-[300px] rounded-full bg-purple-600/10 blur-[80px]" />
+        </div>
+        <div className="relative container mx-auto px-6">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 rounded-full bg-purple-500/10 border border-purple-500/20 px-4 py-1.5 text-sm font-semibold text-purple-300 mb-6">
+              <Zap className="h-3.5 w-3.5" />
+              Planes simples, sin sorpresas
+            </div>
+            <h2 className="text-4xl sm:text-5xl font-black text-white">
+              Elige tu plan
+            </h2>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {PLANS.map((plan) => (
+              <div
+                key={plan.name}
+                className={`relative rounded-2xl p-8 transition-all duration-300 hover:-translate-y-1 ${
+                  plan.highlight
+                    ? "bg-gradient-to-b from-indigo-600/20 to-purple-600/20 border-2 border-indigo-500/50 shadow-2xl shadow-indigo-500/20"
+                    : "bg-white/[0.03] border border-white/[0.07]"
+                }`}
+              >
+                {plan.highlight && (
+                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 px-4 py-1 text-xs font-bold text-white shadow-lg">
+                      <Star className="h-3 w-3 fill-white" /> Más popular
+                    </span>
+                  </div>
+                )}
+                <div className="mb-6">
+                  <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-2">{plan.name}</h3>
+                  <div className="flex items-end gap-1">
+                    <span className="text-5xl font-black text-white">{plan.price}</span>
+                    {plan.period && <span className="text-gray-500 mb-2">{plan.period}</span>}
+                  </div>
+                  <p className="text-sm text-gray-500 mt-1">{plan.desc}</p>
+                </div>
+                <ul className="space-y-3 mb-8">
+                  {plan.features.map((f) => (
+                    <li key={f} className="flex items-center gap-2 text-sm text-gray-300">
+                      <CheckCircle2 className="h-4 w-4 text-indigo-400 shrink-0" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <a
+                  href="/register"
+                  className={`block w-full text-center rounded-xl py-3 text-sm font-bold transition-all duration-200 ${
+                    plan.highlight
+                      ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:opacity-90 shadow-lg shadow-indigo-500/30"
+                      : "bg-white/5 text-white border border-white/10 hover:bg-white/10"
+                  }`}
+                >
+                  Comenzar ahora
+                </a>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA FINAL */}
+      <section className="py-32">
+        <div className="container mx-auto px-6 text-center">
+          <div className="relative max-w-3xl mx-auto">
+            <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 blur-2xl" />
+            <div className="relative rounded-3xl bg-gradient-to-br from-indigo-600/10 to-purple-600/10 border border-indigo-500/20 p-16 backdrop-blur-sm">
+              <div className="h-16 w-16 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-2xl shadow-indigo-500/40">
+                <Sparkles className="h-8 w-8 text-white" />
+              </div>
+              <h2 className="text-4xl sm:text-5xl font-black text-white mb-4">
+                ¿Listo para transformar<br />tu institución?
+              </h2>
+              <p className="text-gray-400 mb-10 max-w-lg mx-auto">
+                Únete a las instituciones que ya usan Leyópolis para empoderar a sus estudiantes con IA educativa de vanguardia.
+              </p>
+              <div className="flex flex-wrap justify-center gap-4">
+                <a
+                  href="/register"
+                  className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 px-8 py-4 text-base font-bold text-white shadow-xl shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:scale-105 transition-all duration-300"
+                >
+                  Empezar ahora — Es gratis
+                </a>
+                <a
+                  href="/login"
+                  className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-8 py-4 text-base font-semibold text-white hover:bg-white/10 transition-all duration-200"
+                >
+                  Ya tengo cuenta
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer className="border-t border-white/5 py-12">
+        <div className="container mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+              <span className="text-white font-black text-sm">L</span>
+            </div>
+            <span className="font-black text-white">LEYÓPOLIS</span>
+          </div>
+          <p className="text-sm text-gray-600">© 2026 LEYÓPOLIS. Todos los derechos reservados.</p>
+          <div className="flex gap-6 text-sm text-gray-600">
+            <a href="/login" className="hover:text-gray-400 transition-colors">Iniciar sesión</a>
+            <a href="/register" className="hover:text-gray-400 transition-colors">Registrarse</a>
+          </div>
         </div>
       </footer>
     </main>

@@ -11,6 +11,7 @@ import { useSession } from "next-auth/react";
 import { useGamification } from "@/context/GamificationContext";
 import { useLearning } from "@/context/LearningContext";
 import { MyAssignments } from "@/components/dashboard/student/MyAssignments";
+import { BookCover } from "@/components/ui/book-cover";
 import Link from "next/link";
 
 interface Book {
@@ -114,12 +115,8 @@ export default function DashboardPage() {
                     return (
                         <Card key={item.id || book.id} className="group relative overflow-hidden border-none shadow-md hover:shadow-xl transition-all">
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                        <CardContent className="p-0 relative aspect-[3/4]">
-                            <img 
-                            src={bookImage} 
-                            alt={bookTitle} 
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                            />
+                        <CardContent className="p-0 relative">
+                            <BookCover src={bookImage} alt={bookTitle} aspectRatio="aspect-[3/4]" />
                             <div className="absolute bottom-0 left-0 right-0 p-4 z-20 text-white transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
                             <Badge className="mb-2 bg-indigo-600 border-none">{bookCategory}</Badge>
                             <h3 className="font-bold text-lg leading-tight mb-1 line-clamp-1">{bookTitle}</h3>

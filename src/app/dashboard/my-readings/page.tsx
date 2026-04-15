@@ -10,6 +10,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { BookOpen, Clock, Star, Bookmark, BookMarked, Brain, History, PlayCircle, MoreVertical, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useLearning } from "@/context/LearningContext";
+import { BookCover } from "@/components/ui/book-cover";
 
 export default function MyReadingsPage() {
   const { vocabulary, notes, deleteNote, toggleVocabularyMastery, userBooks } = useLearning();
@@ -60,12 +61,8 @@ export default function MyReadingsPage() {
 
                 return (
                 <Card key={item.id} className="group overflow-hidden border-none shadow-md hover:shadow-xl transition-all duration-300">
-                    <div className="relative aspect-[2/3] overflow-hidden">
-                    <img 
-                        src={image} 
-                        alt={book.title} 
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
+                    <BookCover src={image} alt={book.title} />
+
                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3 p-4">
                         <Link href={`/dashboard/reader/${book.id}?title=${encodeURIComponent(book.title)}`}>
                         <Button className="bg-white text-indigo-900 hover:bg-indigo-50 font-bold w-full">
@@ -167,7 +164,7 @@ export default function MyReadingsPage() {
                     
                     return (
                     <div key={item.id} className="flex items-start gap-4 p-4 rounded-lg hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-100">
-                        <img src={image} alt={book.title} className="w-16 h-24 object-cover rounded-md shadow-sm" />
+                        <BookCover src={image} alt={book.title} className="w-16 h-24 shrink-0 shadow-sm rounded-md" />
                         <div className="flex-1 space-y-1">
                         <div className="flex justify-between items-start">
                             <h3 className="font-bold text-gray-900">{book.title}</h3>

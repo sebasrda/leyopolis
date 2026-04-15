@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { UploadBookDialog } from "@/components/dashboard/library/UploadBookDialog";
 import { useSession } from "next-auth/react";
+import { BookCover } from "@/components/ui/book-cover";
 
 import { DISPLAY_GRADES, GRADE_TO_STANDARD, normalizeGrade } from "@/lib/grades";
 
@@ -211,12 +212,12 @@ export default function LibraryPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {assignedBooksList.map((book) => (
               <Card key={book.id} className="group overflow-hidden border border-indigo-100 shadow-lg shadow-indigo-100/50 hover:shadow-xl hover:shadow-indigo-200 transition-all duration-300 flex flex-col h-full bg-indigo-50/20 ring-1 ring-indigo-50">
-                <div className="relative aspect-[2/3] overflow-hidden bg-gray-100">
-                  <img src={book.image} alt={book.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-purple-500"></div>
-                  <div className="absolute top-2 right-2 flex flex-col gap-1">
-                    <Badge className="bg-indigo-600 text-white shadow-sm backdrop-blur-sm border-none">Unidad Oficial</Badge>
-                  </div>
+                  <BookCover src={book.image} alt={book.title}>
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-purple-500"></div>
+                    <div className="absolute top-2 right-2 flex flex-col gap-1">
+                      <Badge className="bg-indigo-600 text-white shadow-sm backdrop-blur-sm border-none">Unidad Oficial</Badge>
+                    </div>
+                  </BookCover>
                   
                   <div className="absolute inset-0 bg-indigo-900/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center p-6 gap-3">
                     <Link href={`/dashboard/reader/${book.id}?title=${encodeURIComponent(book.title)}`} className="w-full">
@@ -279,21 +280,21 @@ export default function LibraryPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {otherBooksList.map((book) => (
               <Card key={book.id} className="group overflow-hidden border-none shadow-md hover:shadow-xl transition-all duration-300 flex flex-col h-full">
-                <div className="relative aspect-[2/3] overflow-hidden bg-gray-100">
-                  <img src={book.image} alt={book.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                  <div className="absolute top-2 right-2 flex flex-col gap-1">
-                    <Badge className="bg-white/90 text-indigo-900 hover:bg-white shadow-sm backdrop-blur-sm">{book.category}</Badge>
-                    {book.hasQuiz && (
-                      <Badge className="bg-green-500/90 text-white hover:bg-green-600 shadow-sm backdrop-blur-sm flex items-center gap-1">
-                        <CheckCircle className="h-3 w-3" /> Quiz
-                      </Badge>
-                    )}
-                  </div>
-                  {book.grade && (
-                    <div className="absolute top-2 left-2">
-                      <Badge variant="secondary" className="bg-indigo-600/80 text-white text-xs backdrop-blur-sm">{book.grade}</Badge>
+                  <BookCover src={book.image} alt={book.title}>
+                    <div className="absolute top-2 right-2 flex flex-col gap-1">
+                      <Badge className="bg-white/90 text-indigo-900 hover:bg-white shadow-sm backdrop-blur-sm">{book.category}</Badge>
+                      {book.hasQuiz && (
+                        <Badge className="bg-green-500/90 text-white hover:bg-green-600 shadow-sm backdrop-blur-sm flex items-center gap-1">
+                          <CheckCircle className="h-3 w-3" /> Quiz
+                        </Badge>
+                      )}
                     </div>
-                  )}
+                    {book.grade && (
+                      <div className="absolute top-2 left-2">
+                        <Badge variant="secondary" className="bg-indigo-600/80 text-white text-xs backdrop-blur-sm">{book.grade}</Badge>
+                      </div>
+                    )}
+                  </BookCover>
                   
                   <div className="absolute inset-0 bg-indigo-900/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center p-6 gap-3">
                     <Link href={`/dashboard/reader/${book.id}?title=${encodeURIComponent(book.title)}`} className="w-full">

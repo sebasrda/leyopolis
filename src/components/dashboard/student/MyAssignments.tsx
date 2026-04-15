@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { BookOpen, Calendar, CheckCircle2, PlayCircle, Clock } from "lucide-react";
 import Link from 'next/link';
 import { cn } from "@/lib/utils";
+import { BookCover } from "@/components/ui/book-cover";
 
 interface Assignment {
     id: string;
@@ -99,13 +100,11 @@ export function MyAssignments() {
                     
                     return (
                         <div key={assignment.id} className="group flex items-start gap-4 p-4 rounded-xl border bg-white hover:border-indigo-200 hover:shadow-md transition-all">
-                            <div className="relative w-16 h-24 shrink-0 rounded-md overflow-hidden shadow-sm">
-                                <img 
-                                    src={assignment.book.coverImage || "https://placehold.co/400x600?text=Libro"} 
-                                    alt={assignment.book.title}
-                                    className="w-full h-full object-cover"
-                                />
-                            </div>
+                            <BookCover 
+                                src={assignment.book.coverImage || "https://placehold.co/400x600?text=Libro"} 
+                                alt={assignment.book.title}
+                                className="w-16 h-24 shrink-0 rounded-md shadow-sm"
+                            />
                             
                             <div className="flex-1 min-w-0 space-y-2">
                                 <div className="flex justify-between items-start">

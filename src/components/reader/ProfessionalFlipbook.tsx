@@ -738,11 +738,11 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
   const extractVisiblePagesText = async (): Promise<string> => {
     if (!pdfDocument) return "";
     
-    const leftPageNum = currentPage + 1;
-    const rightPageNum = isSinglePage ? 0 : currentPage + 2;
+    const leftPageNum = currentPage - VIRTUAL_PAGES + 1;
+    const rightPageNum = isSinglePage ? 0 : currentPage - VIRTUAL_PAGES + 2;
     
-    const leftText = await extractPageText(leftPageNum);
-    const rightText = rightPageNum > 0 ? await extractPageText(rightPageNum) : "";
+    const leftText = leftPageNum >= 1 && leftPageNum <= pdfDocument.numPages ? await extractPageText(leftPageNum) : "";
+    const rightText = rightPageNum >= 1 && rightPageNum <= pdfDocument.numPages ? await extractPageText(rightPageNum) : "";
     
     const combined = [leftText, rightText].filter(Boolean).join("\n\n---\n\n");
     return combined;
@@ -785,7 +785,9 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
             if (textToTranslate) {
                 setCurrentTextContent(textToTranslate);
             } else {
-                textToTranslate = `[Contenido de las páginas ${currentPage + 1}-${currentPage + 2} del libro ${bookTitle}]`;
+                const leftReal = currentPage - VIRTUAL_PAGES + 1;
+                const rightReal = isSinglePage ? leftReal : leftReal + 1;
+                textToTranslate = `[Contenido de las páginas ${leftReal}-${rightReal} del libro ${bookTitle}]`;
             }
         }
 

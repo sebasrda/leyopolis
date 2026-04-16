@@ -358,14 +358,14 @@ export default function AdminBooksPage() {
   const handleBulkSynopsisFix = async () => {
     if (
       !confirm(
-        "¿Deseas generar sipnosis para todos los libros que no tienen una? Esto usará IA y puede tomar varios minutos. No se borrarán tus quizzes actuales.",
+        "¿Deseas generar sinopsis para todos los libros que no tienen una? Esto usará IA y puede tomar varios minutos. No se borrarán tus quizzes actuales.",
       )
     )
       return;
 
     setLoading(true);
     setSuccess(
-      "Iniciando sincronización masiva de sipnosis... Por favor, no cierres esta ventana.",
+      "Iniciando sincronización masiva de sinopsis... Por favor, no cierres esta ventana.",
     );
     setError(null);
 
@@ -525,7 +525,7 @@ export default function AdminBooksPage() {
 
                 <div className="space-y-1">
                   <Label>
-                    Sipnosis (Opcional - La IA generará una si se deja vacío)
+                    Sinopsis (Opcional - La IA generará una si se deja vacío)
                   </Label>
                   <div className="flex flex-col gap-2">
                     <textarea
@@ -545,7 +545,7 @@ export default function AdminBooksPage() {
                           if (file) {
                             setSynopsisFile(file);
                             setBookDescription(
-                              `[Extrayendo del archivo: ${file.name}] ... (El sistema procesará este documento para generar la mejor sipnosis)`
+                              `[Extrayendo del archivo: ${file.name}] ... (El sistema procesará este documento para generar la mejor sinopsis)`
                             );
                           }
                         }}
@@ -564,7 +564,7 @@ export default function AdminBooksPage() {
                         <Upload className="h-3 w-3 mr-2" />
                         {synopsisFile
                           ? `Archivo: ${synopsisFile.name}`
-                          : "Subir archivo de sipnosis (PDF/Word)"}
+                          : "Subir archivo de sinopsis (PDF/Word)"}
                       </Button>
                     </div>
                   </div>

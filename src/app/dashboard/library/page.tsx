@@ -74,7 +74,7 @@ export default function LibraryPage() {
           image: b.coverImage || `https://placehold.co/400x600?text=${encodeURIComponent(b.title)}`,
           readTime: b.readTime || "—",
           fileUrl: b.contentUrl,
-          description: b.description || "Este libro aún no tiene una sipnosis disponible.",
+          description: b.description || "Este libro aún no tiene una sinopsis disponible.",
         }));
         setBooks(formattedBooks);
       } else {
@@ -246,14 +246,14 @@ export default function LibraryPage() {
                           size="sm" 
                           className="h-7 px-2 text-[10px] text-indigo-600 hover:text-indigo-700 hover:bg-indigo-100 font-bold ml-1 border border-indigo-200"
                         >
-                          Ver Sipnosis
+                          Ver Sinopsis
                         </Button>
                       </DialogTrigger>
                       <DialogContent className="sm:max-w-[425px]">
                         <DialogHeader>
                           <DialogTitle className="flex items-center gap-2">
                             <Sparkles className="h-4 w-4 text-indigo-500" />
-                            Sipnosis: {book.title}
+                            Sinopsis: {book.title}
                           </DialogTitle>
                         </DialogHeader>
                         <div className="py-4 text-sm leading-relaxed text-gray-600 italic border-l-4 border-indigo-500 pl-4 bg-indigo-50/30 rounded-r-lg">
@@ -322,14 +322,14 @@ export default function LibraryPage() {
                           size="sm" 
                           className="h-7 px-2 text-[10px] text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 font-bold ml-1 border border-indigo-100"
                         >
-                          Sipnosis
+                          Sinopsis
                         </Button>
                       </DialogTrigger>
                       <DialogContent className="sm:max-w-[425px]">
                         <DialogHeader>
                           <DialogTitle className="flex items-center gap-2 text-indigo-900">
                             <BookOpen className="h-4 w-4 text-indigo-500" />
-                            Sipnosis: {book.title}
+                            Sinopsis: {book.title}
                           </DialogTitle>
                         </DialogHeader>
                         <div className="py-4 text-sm leading-relaxed text-gray-600 italic border-l-4 border-indigo-500 pl-4 bg-indigo-50/30 rounded-r-lg">

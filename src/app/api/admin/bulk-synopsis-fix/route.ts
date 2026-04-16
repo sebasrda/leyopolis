@@ -35,7 +35,7 @@ export async function POST(req: Request) {
     });
 
     if (booksToFix.length === 0) {
-      return NextResponse.json({ message: "No se encontraron libros que necesiten limpieza de sipnosis" });
+      return NextResponse.json({ message: "No se encontraron libros que necesiten limpieza de sinopsis" });
     }
 
     const results = [];
@@ -44,7 +44,7 @@ export async function POST(req: Request) {
     // 2. Process each book with stage: "synopsis" (non-destructive)
     for (const book of booksToFix) {
       try {
-        console.log(`[BULK-FIX] Procesando sipnosis para: ${book.title}`);
+        console.log(`[BULK-FIX] Procesando sinopsis para: ${book.title}`);
         await generateAndSaveActivities({
           bookId: book.id,
           title: book.title,

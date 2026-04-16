@@ -51,7 +51,7 @@ const FEATURES = [
     bg: "bg-violet-500/10",
     border: "border-violet-500/20",
     title: "Biblioteca Digital",
-    desc: "Carga de PDFs ilimitados con portada, sipnosis IA, filtros por grado y asignación directa.",
+    desc: "Carga de PDFs ilimitados con portada, sinopsis IA, filtros por grado y asignación directa.",
   },
 ];
 

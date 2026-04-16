@@ -158,7 +158,7 @@ export function UploadBookDialog({ onSuccess }: UploadBookDialogProps) {
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="description">Sipnosis (Opcional - La IA generará una si se deja vacío)</Label>
+                        <Label htmlFor="description">Sinopsis (Opcional - La IA generará una si se deja vacío)</Label>
                         <div className="flex flex-col gap-2">
                             <textarea 
                                 id="description" 
@@ -180,7 +180,7 @@ export function UploadBookDialog({ onSuccess }: UploadBookDialogProps) {
                                             // Simulated extraction for now
                                             setFormData(prev => ({
                                                 ...prev,
-                                                description: `[Extrayendo del archivo: ${file.name}] ... (El sistema procesará este documento para generar la mejor sipnosis)`
+                                                description: `[Extrayendo del archivo: ${file.name}] ... (El sistema procesará este documento para generar la mejor sinopsis)`
                                             }));
                                         }
                                     }}
@@ -193,7 +193,7 @@ export function UploadBookDialog({ onSuccess }: UploadBookDialogProps) {
                                     onClick={() => document.getElementById('synopsis-upload')?.click()}
                                 >
                                     <Upload className="h-3 w-3 mr-2" /> 
-                                    {synopsisFile ? `Archivo: ${synopsisFile.name}` : "Subir archivo de sipnosis (PDF/Word)"}
+                                    {synopsisFile ? `Archivo: ${synopsisFile.name}` : "Subir archivo de sinopsis (PDF/Word)"}
                                 </Button>
                             </div>
                         </div>

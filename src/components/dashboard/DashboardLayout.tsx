@@ -205,7 +205,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Demo Banner — shown at top for DEMO users */}
         <DemoBanner />
 
-        {/* Top Bar */}}
+        {/* Top Bar */}
         <header className="h-16 bg-white border-b px-8 flex items-center justify-between shadow-sm z-10">
           <div className="flex-1 max-w-xl">
             <div className="relative">

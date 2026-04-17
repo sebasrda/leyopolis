@@ -14,6 +14,9 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 import { 
   Table, 
   TableBody, 
@@ -133,6 +136,7 @@ export default function AdminUsersPage() {
               <TableHead>Usuario</TableHead>
               <TableHead>Colegio / Grado</TableHead>
               <TableHead>Rol</TableHead>
+              <TableHead>Licencia</TableHead>
               <TableHead>Progreso (XP/Lvl)</TableHead>
               <TableHead>Última Actividad</TableHead>
               <TableHead>Acciones</TableHead>
@@ -157,6 +161,21 @@ export default function AdminUsersPage() {
                   <Badge variant={user.role === "SUPERADMIN" ? "default" : user.role === "ADMIN" ? "outline" : user.role === "TEACHER" ? "secondary" : "outline"} className={user.role === "SUPERADMIN" ? "bg-purple-600" : ""}>
                     {user.role}
                   </Badge>
+                </TableCell>
+                <TableCell>
+                  <div className="flex flex-col gap-1">
+                    <Badge variant="outline" className={cn(
+                        "w-fit text-[10px] uppercase",
+                        user.licenseType === "DEMO" ? "bg-amber-50 text-amber-700 border-amber-200" : "bg-green-50 text-green-700 border-green-200"
+                    )}>
+                        {user.licenseType === "DEMO" ? "Prueba (Demo)" : user.licenseType || "Periodo Activo"}
+                    </Badge>
+                    {user.expiresAt && (
+                        <span className="text-[10px] text-gray-400">
+                          Expira: {format(new Date(user.expiresAt), "dd MMM yyyy", { locale: es })}
+                        </span>
+                    )}
+                  </div>
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-col">

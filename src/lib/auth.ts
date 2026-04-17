@@ -77,6 +77,7 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           image: user.image,
           role,
+          licenseType: user.licenseType,
           expiresAt: user.expiresAt,
         };
       },
@@ -90,14 +91,16 @@ export const authOptions: NextAuthOptions = {
           token.role = role;
         }
         token.id = user.id;
+        token.licenseType = (user as any).licenseType;
         token.expiresAt = (user as any).expiresAt;
       }
       if (token.id && !token.role) {
-        const dbUser = await prisma.user.findUnique({ where: { id: String(token.id) }, select: { role: true, expiresAt: true } });
+        const dbUser = await prisma.user.findUnique({ where: { id: String(token.id) }, select: { role: true, licenseType: true, expiresAt: true } });
         const role = dbUser?.role;
         if (role === "SUPERADMIN" || role === "STUDENT" || role === "TEACHER" || role === "COORDINATOR" || role === "ADMIN") {
           token.role = role;
         }
+        token.licenseType = dbUser?.licenseType;
         token.expiresAt = dbUser?.expiresAt;
       }
       return token;
@@ -106,6 +109,8 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         if (token.role) session.user.role = token.role;
         if (token.id) session.user.id = token.id;
+        (session.user as any).licenseType = token.licenseType;
+        (session.user as any).expiresAt = token.expiresAt;
       }
       return session;
     },

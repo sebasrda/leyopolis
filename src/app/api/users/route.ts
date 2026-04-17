@@ -36,6 +36,8 @@ export async function GET() {
         email: true,
         role: true,
         grade: true,
+        licenseType: true,
+        expiresAt: true,
         xp: true,
         level: true,
         lastActive: true,

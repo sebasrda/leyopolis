@@ -38,6 +38,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import dynamic from 'next/dynamic';
 import { LanguageSelector } from "@/components/i18n/LanguageSelector";
+import { DemoBanner } from "@/components/dashboard/DemoBanner";
 
 const FloatingAiTutor = dynamic(() => import("@/components/dashboard/FloatingAiTutor").then((m) => m.FloatingAiTutor), {
   ssr: false,
@@ -201,7 +202,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Bar */}
+        {/* Demo Banner — shown at top for DEMO users */}
+        <DemoBanner />
+
+        {/* Top Bar */}}
         <header className="h-16 bg-white border-b px-8 flex items-center justify-between shadow-sm z-10">
           <div className="flex-1 max-w-xl">
             <div className="relative">
@@ -220,13 +224,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {role === "SUPERADMIN" && (
                 <Badge className="bg-purple-100 text-purple-700 border-purple-200 hover:bg-purple-100">
                   ⚡ Súper Admin
-                </Badge>
-            )}
-
-            {(session?.user as any)?.licenseType === "DEMO" && (
-                <Badge className="bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-100 px-3 cursor-pointer" title="Modo Prueba. Limitado a 2 lecturas y 24 horas.">
-                  <Bot className="h-3 w-3 mr-1" />
-                  Modo Prueba
                 </Badge>
             )}
 

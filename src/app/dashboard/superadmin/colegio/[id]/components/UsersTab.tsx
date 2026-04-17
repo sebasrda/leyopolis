@@ -91,8 +91,8 @@ export default function UsersTab({ institutionId, role, limits, onUpdate }: { in
     }
   };
 
-  const roleName = role === "STUDENT" ? "Estudiantes" : role === "TEACHER" ? "Docentes" : "Administradores";
-  const roleSingular = role === "STUDENT" ? "Estudiante" : role === "TEACHER" ? "Docente" : "Administrador";
+  const roleName = role === "STUDENT" ? "Estudiantes" : role === "TEACHER" ? "Docentes" : role === "COORDINATOR" ? "Coordinadores" : "Administradores";
+  const roleSingular = role === "STUDENT" ? "Estudiante" : role === "TEACHER" ? "Docente" : role === "COORDINATOR" ? "Coordinador" : "Administrador";
 
   return (
     <Card className="border-none shadow-md">

@@ -79,6 +79,7 @@ export default function InstitutionDashboard({ institutionId }: { institutionId:
           <TabsTrigger value="students" className="data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700">Estudiantes</TabsTrigger>
           <TabsTrigger value="teachers" className="data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700">Docentes</TabsTrigger>
           <TabsTrigger value="admins" className="data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700">Administración</TabsTrigger>
+          <TabsTrigger value="coordinators" className="data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700">Coordinadores</TabsTrigger>
           <TabsTrigger value="classes" className="data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700">Clases</TabsTrigger>
         </TabsList>
 
@@ -146,6 +147,9 @@ export default function InstitutionDashboard({ institutionId }: { institutionId:
             </Card>
             <UsersTab institutionId={institutionId} role="ADMIN" limits={{ count: 0, max: 0 }} onUpdate={fetchData} />
           </div>
+        </TabsContent>
+        <TabsContent value="coordinators">
+          <UsersTab institutionId={institutionId} role="COORDINATOR" limits={{ count: 0, max: 0 }} onUpdate={fetchData} />
         </TabsContent>
         <TabsContent value="classes">
           <ClassesTab institutionId={institutionId} onUpdate={fetchData} />

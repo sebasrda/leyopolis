@@ -1229,16 +1229,25 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
                         <div className="demoPage">
                           <div className={cn("w-full h-full flex flex-col items-center justify-center p-12 text-center relative overflow-hidden", isDarkMode ? "bg-indigo-950 text-white" : "bg-indigo-600 text-white")}>
                             <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent" />
-                            <div className="relative z-10 space-y-8">
-                                <div className="w-24 h-24 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center mx-auto mb-6 border border-white/30">
-                                  <Library size={48} className="text-yellow-300" />
+                            <div className="relative z-10 space-y-8 flex flex-col items-center w-full">
+                                <div className="mx-auto mb-6 flex justify-center">
+                                  <img 
+                                    src="/leyopolis-logo.png" 
+                                    alt="Leyópolis Logo" 
+                                    className="w-32 h-auto object-contain drop-shadow-2xl" 
+                                  />
                                 </div>
-                                <h1 className="text-4xl font-bold tracking-tight leading-tight">{bookTitle}</h1>
-                                <div className="h-1 w-24 bg-yellow-400 mx-auto" />
-                                <p className="text-xl font-medium opacity-90">{author || "Autor Desconocido"}</p>
-                                <div className="pt-20">
-                                  <div className="text-sm font-bold tracking-[0.2em] uppercase opacity-60">LEYOPOLIS</div>
-                                  <div className="text-[10px] opacity-40 mt-1">Plataforma de Lectura Inteligente</div>
+                                <h1 className="text-4xl font-bold tracking-tight leading-tight px-4">{bookTitle}</h1>
+                                <div className="h-1 w-24 bg-yellow-400 mx-auto rounded-full" />
+                                <p className="text-xl font-medium opacity-90 px-4">{author || "Autor Desconocido"}</p>
+                                <div className="pt-16 flex flex-col items-center">
+                                  <div className="text-sm font-bold tracking-[0.2em] uppercase opacity-80">LEYOPOLIS</div>
+                                  <div className="text-[10px] opacity-60 mt-1 mb-4">Plataforma de Lectura Inteligente</div>
+                                  <img 
+                                    src="/rodes-logo.png" 
+                                    alt="Grupo Rodes Logo" 
+                                    className="w-24 h-auto object-contain opacity-90 hover:scale-105 transition-transform" 
+                                  />
                                 </div>
                             </div>
                           </div>

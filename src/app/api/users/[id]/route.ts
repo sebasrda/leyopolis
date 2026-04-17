@@ -8,7 +8,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   const session = await getServerSession(authOptions);
   const { id } = await params;
 
-  const currentRole = (session.user as any).role;
+  const currentRole = (session?.user as any)?.role;
   if (!session || !session.user || (currentRole !== "ADMIN" && currentRole !== "SUPERADMIN")) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
@@ -49,7 +49,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
   const session = await getServerSession(authOptions);
   const { id } = await params;
 
-  const currentRole = (session.user as any).role;
+  const currentRole = (session?.user as any)?.role;
   if (!session || !session.user || (currentRole !== "ADMIN" && currentRole !== "SUPERADMIN")) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }

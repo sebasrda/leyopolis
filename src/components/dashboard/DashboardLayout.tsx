@@ -223,6 +223,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </Badge>
             )}
 
+            {(session?.user as any)?.licenseType === "DEMO" && (
+                <Badge className="bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-100 px-3 cursor-pointer" title="Modo Prueba. Limitado a 2 lecturas y 24 horas.">
+                  <Bot className="h-3 w-3 mr-1" />
+                  Modo Prueba
+                </Badge>
+            )}
+
             <Button variant="ghost" size="icon" className="relative text-gray-500 hover:text-indigo-600">
               <Bell className="h-5 w-5" />
               <span className="absolute top-2 right-2 h-2 w-2 bg-red-500 rounded-full border-2 border-white"></span>
@@ -275,8 +282,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         </main>
       </div>
-      {/* Only show floating AI for non-students and non-reader pages */}
-      {!pathname.includes("/reader/") && role !== "STUDENT" && (
+      {/* Only show floating AI for non-students, non-demos, and non-reader pages */}
+      {!pathname.includes("/reader/") && role !== "STUDENT" && (session?.user as any)?.licenseType !== "DEMO" && (
         <FloatingAiTutor role={role as any} />
       )}
     </div>

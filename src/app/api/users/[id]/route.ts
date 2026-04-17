@@ -8,16 +8,35 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   const session = await getServerSession(authOptions);
   const { id } = await params;
 
-  if (!session || !session.user || (session.user as any).role !== "ADMIN") {
+  const currentRole = (session.user as any).role;
+  if (!session || !session.user || (currentRole !== "ADMIN" && currentRole !== "SUPERADMIN")) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
   try {
-    const { role } = await req.json();
+    const { role, licenseType } = await req.json();
+    
+    let updateData: any = {};
+    if (role) updateData.role = role;
+    
+    if (licenseType) {
+        updateData.licenseType = licenseType;
+        if (licenseType === "MENSUAL") {
+            updateData.expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+        } else if (licenseType === "TRIMESTRAL") {
+            updateData.expiresAt = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
+        } else if (licenseType === "ANUAL") {
+            updateData.expiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
+        } else if (licenseType === "DEMO") {
+            updateData.expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+        } else {
+            updateData.expiresAt = null; // PERMANENTE / ACTIVATED
+        }
+    }
     
     await prisma.user.update({
       where: { id },
-      data: { role }
+      data: updateData
     });
 
     return NextResponse.json({ message: "User updated" });
@@ -30,7 +49,8 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
   const session = await getServerSession(authOptions);
   const { id } = await params;
 
-  if (!session || !session.user || (session.user as any).role !== "ADMIN") {
+  const currentRole = (session.user as any).role;
+  if (!session || !session.user || (currentRole !== "ADMIN" && currentRole !== "SUPERADMIN")) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 

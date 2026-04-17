@@ -982,7 +982,7 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
                     onTranslate={handleTranslateSelection}
                     onSaveVocab={handleSaveVocab}
                     onNote={handleNote}
-                    hideAi={userRole === "STUDENT"}
+                    hideAi={userRole === "STUDENT" || (session?.user as any)?.licenseType === "DEMO"}
                     onClose={() => {
                         setTextSelection(null);
                         window.getSelection()?.removeAllRanges();
@@ -1511,7 +1511,7 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
       <GamesModal isOpen={showGames} onClose={() => setShowGames(false)} bookTitle={bookTitle} bookId={bookId} />
       
       {/* AI Tutor Widget */}
-      {session?.user?.role !== "STUDENT" && (
+      {session?.user?.role !== "STUDENT" && (session?.user as any)?.licenseType !== "DEMO" && (
         <div className="absolute bottom-6 left-6 z-[60]">
             <AiTutorWidget 
                 ref={aiTutorRef}

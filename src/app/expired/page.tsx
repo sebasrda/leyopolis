@@ -22,6 +22,7 @@ export default function ExpiredPage() {
             <li>Contacta al administrador de tu institución.</li>
             <li>Revisa tu correo para información de renovación.</li>
             <li>Adquiere una licencia desde el departamento de coordinación.</li>
+            <li>Escríbenos al correo <strong>consultor.it@gruporodes.com.co</strong> para más información.</li>
           </ul>
         </div>
 

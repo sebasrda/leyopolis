@@ -59,7 +59,7 @@ export default function LibraryPage() {
       const res = await fetch(`/api/books?${params.toString()}`);
       if (res.ok) {
         const data = await res.json();
-        const formattedBooks = data.map((b: any) => ({
+        let formattedBooks = data.map((b: any) => ({
           id: b.id,
           title: b.title,
           author: b.author,
@@ -76,6 +76,17 @@ export default function LibraryPage() {
           fileUrl: b.contentUrl,
           description: b.description || "Este libro aún no tiene una sinopsis disponible.",
         }));
+        
+        if ((session?.user as any)?.licenseType === "DEMO") {
+          const grouped: Record<string, any[]> = {};
+          for (const b of formattedBooks) {
+            const g = b.grade || "General";
+            if (!grouped[g]) grouped[g] = [];
+            if (grouped[g].length < 2) grouped[g].push(b);
+          }
+          formattedBooks = Object.values(grouped).flat();
+        }
+
         setBooks(formattedBooks);
       } else {
         setError("Error al cargar libros");

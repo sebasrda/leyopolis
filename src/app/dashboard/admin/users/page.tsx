@@ -69,7 +69,7 @@ export default function AdminUsersPage() {
   };
 
   const handleRoleChange = async (id: string, currentRole: string) => {
-    const newRole = currentRole === "ADMIN" ? "STUDENT" : "ADMIN"; // Simple toggle for now, or use a modal
+    const newRole = currentRole === "ADMIN" ? "STUDENT" : "ADMIN"; // Simple toggle for now
     if (!confirm(`¿Cambiar rol a ${newRole}?`)) return;
     
     try {
@@ -83,6 +83,23 @@ export default function AdminUsersPage() {
       }
     } catch (e) {
       alert("Error");
+    }
+  };
+
+  const handleLicenseChange = async (id: string, newLicense: string) => {
+    if (!confirm(`¿Cambiar licencia a ${newLicense}?`)) return;
+    
+    try {
+      const res = await fetch(`/api/users/${id}`, { 
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ licenseType: newLicense })
+      });
+      if (res.ok) {
+        fetchUsers();
+      }
+    } catch (e) {
+      alert("Error al actualizar licencia");
     }
   };
 
@@ -165,7 +182,13 @@ export default function AdminUsersPage() {
                       <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem className="gap-2" onClick={() => handleRoleChange(user.id, user.role)}>
-                        <UserCog className="h-4 w-4" /> Cambiar Rol
+                        <UserCog className="h-4 w-4" /> Alternar Rol (Admin/Estudiante)
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="gap-2 text-indigo-600" onClick={() => handleLicenseChange(user.id, "ACTIVATED")}>
+                        <Shield className="h-4 w-4" /> Hacer Permanente
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="gap-2 text-amber-600" onClick={() => handleLicenseChange(user.id, "DEMO")}>
+                        <Shield className="h-4 w-4" /> Hacer Demo
                       </DropdownMenuItem>
                       <DropdownMenuItem className="gap-2 text-red-600" onClick={() => handleDelete(user.id)}>
                         <Trash2 className="h-4 w-4" /> Eliminar

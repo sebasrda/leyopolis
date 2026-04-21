@@ -13,6 +13,9 @@ import {
   Sparkles,
   Image as ImageIcon,
   Upload,
+  Headphones,
+  Volume2,
+  X as XIcon,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -67,6 +70,10 @@ export default function AdminBooksPage() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadingQuizFor, setUploadingQuizFor] = useState<string | null>(null);
   const quizInputRef = useRef<HTMLInputElement>(null);
+
+  // Audio states
+  const [uploadingAudioFor, setUploadingAudioFor] = useState<string | null>(null);
+  const [audioProgress, setAudioProgress] = useState<string>("");
 
   useEffect(() => {
     fetchBooks();
@@ -352,6 +359,93 @@ export default function AdminBooksPage() {
       setError(err.message || "Error en la generación con IA");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGenerateSelWorkshop = async (bookId: string) => {
+    if (!confirm("¿Deseas generar el Taller ODS CON SEL interactivo (50 preguntas) para este libro?")) return;
+
+    setLoading(true);
+    setError(null);
+    setSuccess("Generando taller ODS SEL con IA... esto puede tardar entre 20 y 60 segundos.");
+
+    try {
+      const res = await fetch(`/api/books/${bookId}/sel-workshop`, {
+        method: "POST"
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || data.error || "Fallo en la generación SEL");
+      }
+
+      setSuccess(`¡Éxito! Se han generado ${data.count} preguntas interactivas ODS SEL.`);
+      fetchBooks();
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || "Error en la generación del taller SEL");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // --- AUDIO UPLOAD HANDLER ---
+  const handleAudioUpload = async (bookId: string, file: File) => {
+    setUploadingAudioFor(bookId);
+    setAudioProgress("Subiendo audio...");
+    setError(null);
+
+    try {
+      // 1. Upload audio to Blob
+      const { upload } = await import("@vercel/blob/client");
+      setAudioProgress("Subiendo a la nube...");
+      const audioBlob = await upload(file.name, file, {
+        access: "public",
+        handleUploadUrl: "/api/upload/blob-token",
+      });
+
+      // 2. Process with AI (Whisper + alignment)
+      setAudioProgress("Procesando con IA (Whisper)... esto puede tardar 30-60s");
+      const res = await fetch(`/api/books/${bookId}/audio`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ audioUrl: audioBlob.url }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || "Error al procesar audio");
+      }
+
+      setSuccess(
+        `¡Audio sincronizado! ${data.stats?.wordsTranscribed} palabras en ${data.stats?.pagesAligned} páginas.`
+      );
+      fetchBooks();
+    } catch (err: any) {
+      console.error("Audio upload error:", err);
+      setError(`Error de audio: ${err.message || "Verifica tu conexión"}`);
+    } finally {
+      setUploadingAudioFor(null);
+      setAudioProgress("");
+    }
+  };
+
+  const handleDeleteAudio = async (bookId: string) => {
+    if (!confirm("¿Eliminar el audio de este libro?")) return;
+    try {
+      const res = await fetch(`/api/books/${bookId}/audio`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setSuccess("Audio eliminado correctamente");
+        fetchBooks();
+      } else {
+        const data = await res.json();
+        setError(data.message || "Error al eliminar audio");
+      }
+    } catch {
+      setError("Error de conexión al eliminar audio");
     }
   };
 
@@ -708,6 +802,8 @@ export default function AdminBooksPage() {
               <TableHead>Libro</TableHead>
               <TableHead>Grado/Materia</TableHead>
               <TableHead>IA Activa</TableHead>
+              <TableHead>Taller SEL</TableHead>
+              <TableHead>Audio</TableHead>
               <TableHead>Reintentos</TableHead>
               <TableHead>Acciones</TableHead>
             </TableRow>
@@ -715,7 +811,7 @@ export default function AdminBooksPage() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-20">
+                <TableCell colSpan={8} className="text-center py-20">
                   <Loader2 className="h-10 w-10 animate-spin text-indigo-600 mx-auto mb-4" />
                   <p className="text-gray-500">Cargando biblioteca...</p>
                 </TableCell>
@@ -723,7 +819,7 @@ export default function AdminBooksPage() {
             ) : filteredBooks.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={6}
+                  colSpan={8}
                   className="text-center py-20 text-gray-400"
                 >
                   No se encontraron libros en el catálogo.
@@ -774,6 +870,43 @@ export default function AdminBooksPage() {
                     </Badge>
                   </TableCell>
                   <TableCell>
+                    <Badge
+                      className={
+                        book.selWorkshopId
+                          ? "bg-blue-500/10 text-blue-600 border-blue-200"
+                          : "bg-gray-100 text-gray-400"
+                      }
+                    >
+                      <Sparkles className="h-3 w-3 mr-1" />{" "}
+                      {book.selWorkshopId ? "Activo" : "No"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {uploadingAudioFor === book.id ? (
+                      <div className="flex flex-col items-center gap-1">
+                        <Loader2 className="h-4 w-4 animate-spin text-amber-500" />
+                        <span className="text-[9px] text-amber-600 max-w-[80px] text-center">{audioProgress}</span>
+                      </div>
+                    ) : book.audioUrl ? (
+                      <div className="flex items-center gap-1">
+                        <Badge className="bg-amber-500/10 text-amber-600 border-amber-200">
+                          <Volume2 className="h-3 w-3 mr-1" /> 🔊
+                        </Badge>
+                        <button
+                          onClick={() => handleDeleteAudio(book.id)}
+                          className="text-red-400 hover:text-red-600 p-0.5 rounded transition-colors"
+                          title="Eliminar audio"
+                        >
+                          <XIcon className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ) : (
+                      <Badge className="bg-gray-100 text-gray-400">
+                        Sin audio
+                      </Badge>
+                    )}
+                  </TableCell>
+                  <TableCell>
                     <div className="flex items-center gap-2">
                       <Switch
                         checked={book.allowMultipleAttempts}
@@ -791,6 +924,37 @@ export default function AdminBooksPage() {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
+                      {/* Audio Upload Input */}
+                      <input
+                        type="file"
+                        accept="audio/mpeg,audio/wav,audio/mp4,audio/ogg,.mp3,.wav,.m4a,.ogg"
+                        className="hidden"
+                        id={`audio-upload-${book.id}`}
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (f) handleAudioUpload(book.id, f);
+                          e.target.value = "";
+                        }}
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-amber-400 hover:text-amber-700 hover:bg-amber-50 rounded-full"
+                        title={book.audioUrl ? "Reemplazar audio" : "Subir audio (MP3/WAV)"}
+                        disabled={uploadingAudioFor === book.id}
+                        onClick={() =>
+                          document
+                            .getElementById(`audio-upload-${book.id}`)
+                            ?.click()
+                        }
+                      >
+                        {uploadingAudioFor === book.id ? (
+                          <Loader2 className="h-5 w-5 animate-spin" />
+                        ) : (
+                          <Headphones className="h-5 w-5" />
+                        )}
+                      </Button>
+                      {/* Quiz Upload Input */}
                       <input
                         type="file"
                         accept=".pdf,.doc,.docx,.json,.txt"
@@ -828,6 +992,15 @@ export default function AdminBooksPage() {
                         onClick={() => handleRegenerateIA(book.id)}
                       >
                         <Sparkles className="h-5 w-5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-blue-400 hover:text-blue-700 hover:bg-blue-50 rounded-full"
+                        title="Generar Taller ODS SEL (50P)"
+                        onClick={() => handleGenerateSelWorkshop(book.id)}
+                      >
+                        <Library className="h-5 w-5" />
                       </Button>
                       <Button
                         variant="ghost"

@@ -80,10 +80,12 @@ export async function GET(request: Request) {
         grade: true,
         isDemo: true,
         quizId: true,
+        selWorkshopId: true,
         subject: true,
         allowMultipleAttempts: true,
         passScore: true,
         displaySettings: true,
+        audioUrl: true,
         _count: {
           select: { users: true }
         }

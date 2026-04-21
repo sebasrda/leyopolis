@@ -15,6 +15,7 @@ model User {
   image             String?
   password          String?
   role              String             @default("STUDENT")
+  isActive          Boolean            @default(true)
   institutionId     String?
   grade             String?
   xp                Int                @default(0)
@@ -150,10 +151,13 @@ model Book {
   grade            String?
   isDemo           Boolean                     @default(false)
   quizId           String?
+  selWorkshopId    String?
   subject          String?
   allowMultipleAttempts Boolean           @default(false)
   passScore        Int                         @default(60)
   displaySettings  String?                     // JSON: {"scale":1,"offsetX":0,"offsetY":0}
+  audioUrl         String?                     // URL del audio en Vercel Blob Storage
+  audioSyncMap     String?                     // JSON: {pages: [{pageNum, words: [{word, start, end}]}]}
   linkedActivities Activity[]
   assignments      Assignment[]
   gradeCollections BookCollectionByGradeBook[]

@@ -84,7 +84,6 @@ const adminItems = [
   { icon: Users, label: "Usuarios", href: "/dashboard/admin/users" },
   { icon: GraduationCap, label: "Clases y Docentes", href: "/dashboard/admin/classes" },
   { icon: Library, label: "Biblioteca Local", href: "/dashboard/library" },
-  { icon: Settings, label: "Configuración", href: "/dashboard/admin/settings" },
 ];
 
 // Super Admin sidebar
@@ -145,8 +144,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className="p-6 flex items-center justify-between">
           {!collapsed && (
             <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded bg-white flex items-center justify-center">
-                <span className="text-indigo-900 font-bold text-xl">L</span>
+              <div className="h-10 w-10 flex items-center justify-center overflow-hidden rounded-lg bg-white p-1">
+                <img src="/leyopolis-logo.png" alt="Leyópolis Logo" className="h-full w-full object-contain" />
               </div>
               <span className="text-xl font-bold tracking-tight">LEYÓPOLIS</span>
             </div>

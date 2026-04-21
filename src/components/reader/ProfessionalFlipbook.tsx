@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect, useCallback, forwardRef } from 'rea
 import { Document, Page, pdfjs } from 'react-pdf';
 import HTMLFlipBook from 'react-pageflip';
 import Link from 'next/link';
-import { Loader2, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Maximize, Minimize, Type, ScanLine, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Save, Moon, Sun, Languages, Gamepad2, GraduationCap, X, BookMarked, MessageSquare, Search, Highlighter, Sparkles, Library } from 'lucide-react';
+import { Loader2, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Maximize, Minimize, Type, ScanLine, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Save, Moon, Sun, Languages, Gamepad2, GraduationCap, X, BookMarked, MessageSquare, Search, Highlighter, Sparkles, Library, Headphones, Volume2, Pause, Play, SkipForward } from 'lucide-react';
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import ExamModal from './ExamModal';
 import GamesModal from './GamesModal';
@@ -29,7 +29,10 @@ interface ProfessionalFlipbookProps {
   initialPage?: number;
   bookId?: string;
   quizId?: string;
+  selWorkshopId?: string;
   author?: string;
+  audioUrl?: string;
+  audioSyncMap?: string;
 }
 
 // Interfaz para la selección de texto
@@ -192,7 +195,15 @@ const PageComponent = forwardRef<HTMLDivElement, {
 });
 PageComponent.displayName = "PageComponent";
 
-export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", author, bookId, quizId }: ProfessionalFlipbookProps) {
+// Helper: format seconds to MM:SS
+function formatTime(seconds: number): string {
+  if (!seconds || isNaN(seconds)) return "0:00";
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs.toString().padStart(2, "0")}`;
+}
+
+export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", author, bookId, quizId, selWorkshopId, audioUrl, audioSyncMap }: ProfessionalFlipbookProps) {
   const [numPages, setNumPages] = useState<number>(0);
   const [pageWidth, setPageWidth] = useState<number>(0);
   const [pageHeight, setPageHeight] = useState<number>(0);
@@ -239,6 +250,209 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
   // Contexto de Aprendizaje
   const { addVocabulary, addNote, updateReadingProgress, userBooks } = useLearning();
   const [initialJumpDone, setInitialJumpDone] = useState(false);
+
+  // ============ AUDIO STATE ============
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const [audioCurrentTime, setAudioCurrentTime] = useState(0);
+  const [audioDuration, setAudioDuration] = useState(0);
+  const [audioSpeed, setAudioSpeed] = useState(1);
+  const [audioVolume, setAudioVolume] = useState(1);
+  const [showAudioPlayer, setShowAudioPlayer] = useState(false);
+  const [activeWordIndex, setActiveWordIndex] = useState(-1);
+  const [activeAudioPage, setActiveAudioPage] = useState(-1);
+  const audioSyncRef = useRef(false); // Prevent loops between page-sync and audio-sync
+  const parsedSyncMap = useRef<any>(null);
+
+  // Parse sync map once
+  useEffect(() => {
+    if (audioSyncMap) {
+      try {
+        parsedSyncMap.current = JSON.parse(audioSyncMap);
+        console.log(`[AUDIO] Sync map loaded: ${parsedSyncMap.current?.pages?.length} pages`);
+      } catch (e) {
+        console.error('[AUDIO] Failed to parse sync map:', e);
+        parsedSyncMap.current = null;
+      }
+    } else {
+      parsedSyncMap.current = null;
+    }
+  }, [audioSyncMap]);
+
+  // Show audio player if audioUrl is available
+  useEffect(() => {
+    if (audioUrl) {
+      setShowAudioPlayer(true);
+    }
+  }, [audioUrl]);
+
+  // Audio playback controls
+  const toggleAudioPlayback = useCallback(() => {
+    if (!audioRef.current) return;
+    if (isAudioPlaying) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play();
+    }
+    setIsAudioPlaying(!isAudioPlaying);
+  }, [isAudioPlaying]);
+
+  const seekAudio = useCallback((time: number) => {
+    if (!audioRef.current) return;
+    audioRef.current.currentTime = time;
+    setAudioCurrentTime(time);
+  }, []);
+
+  const changeSpeed = useCallback(() => {
+    const speeds = [0.5, 0.75, 1, 1.25, 1.5, 2];
+    const currentIdx = speeds.indexOf(audioSpeed);
+    const nextIdx = (currentIdx + 1) % speeds.length;
+    const newSpeed = speeds[nextIdx];
+    setAudioSpeed(newSpeed);
+    if (audioRef.current) audioRef.current.playbackRate = newSpeed;
+  }, [audioSpeed]);
+
+  // requestAnimationFrame loop for audio sync + highlighting
+  useEffect(() => {
+    if (!audioUrl || !isAudioPlaying) return;
+
+    let animFrameId: number;
+
+    const syncLoop = () => {
+      if (!audioRef.current || !parsedSyncMap.current) {
+        animFrameId = requestAnimationFrame(syncLoop);
+        return;
+      }
+
+      const currentTime = audioRef.current.currentTime;
+      setAudioCurrentTime(currentTime);
+
+      const syncMap = parsedSyncMap.current;
+      const pages = syncMap.pages || [];
+
+      // Find which page the audio is on
+      let foundPage = -1;
+      let foundWordIdx = -1;
+
+      for (let p = 0; p < pages.length; p++) {
+        const page = pages[p];
+        if (currentTime >= page.startTime && currentTime <= page.endTime + 0.5) {
+          foundPage = p;
+          // Find active word within this page
+          for (let w = 0; w < page.words.length; w++) {
+            if (currentTime >= page.words[w].start && currentTime <= page.words[w].end) {
+              foundWordIdx = w;
+              break;
+            }
+            // If between words, use the last word we passed
+            if (currentTime > page.words[w].end) {
+              foundWordIdx = w;
+            }
+          }
+          break;
+        }
+      }
+
+      setActiveWordIndex(foundWordIdx);
+
+      // Auto-advance page if audio moved to a new page
+      if (foundPage >= 0 && foundPage !== activeAudioPage) {
+        setActiveAudioPage(foundPage);
+        const targetPageNum = pages[foundPage].pageNum; // 1-based PDF page
+        const flipbookPage = targetPageNum - 1 + VIRTUAL_PAGES; // Adjust for virtual pages
+        const currentFlipbookPage = currentPage;
+
+        // Only auto-flip if different from current page
+        if (Math.abs(flipbookPage - currentFlipbookPage) >= 1 && !audioSyncRef.current) {
+          audioSyncRef.current = true;
+          if (flipBookRef.current) {
+            try {
+              if (flipBookRef.current.pageFlip().turnToPage) {
+                flipBookRef.current.pageFlip().turnToPage(flipbookPage);
+              } else {
+                flipBookRef.current.pageFlip().flip(flipbookPage);
+              }
+            } catch (e) {
+              console.error('[AUDIO] Page flip error:', e);
+            }
+          }
+          setTimeout(() => { audioSyncRef.current = false; }, 1500);
+        }
+      }
+
+      // Inject highlight styles into the text layer
+      applyWordHighlight(foundPage, foundWordIdx);
+
+      animFrameId = requestAnimationFrame(syncLoop);
+    };
+
+    animFrameId = requestAnimationFrame(syncLoop);
+    return () => cancelAnimationFrame(animFrameId);
+  }, [audioUrl, isAudioPlaying, activeAudioPage, currentPage]);
+
+  // Sync audio to page when user manually changes page
+  useEffect(() => {
+    if (!parsedSyncMap.current || !audioRef.current || audioSyncRef.current) return;
+    if (!isAudioPlaying && !audioRef.current.currentTime) return;
+
+    const realPageNum = Math.max(1, currentPage - VIRTUAL_PAGES + 1);
+    const pages = parsedSyncMap.current.pages || [];
+    const targetPage = pages.find((p: any) => p.pageNum === realPageNum);
+
+    if (targetPage && targetPage.startTime !== undefined) {
+      const timeDiff = Math.abs(audioRef.current.currentTime - targetPage.startTime);
+      // Only seek if significantly different (avoid micro-adjustments)
+      if (timeDiff > 2) {
+        audioRef.current.currentTime = targetPage.startTime;
+        setAudioCurrentTime(targetPage.startTime);
+      }
+    }
+  }, [currentPage]);
+
+  // Apply yellow highlight to the active word in the text layer
+  const applyWordHighlight = useCallback((pageIndex: number, wordIndex: number) => {
+    // Remove previous highlights
+    const prevHighlights = document.querySelectorAll('.audio-word-highlight');
+    prevHighlights.forEach(el => {
+      (el as HTMLElement).style.backgroundColor = 'transparent';
+      el.classList.remove('audio-word-highlight');
+    });
+
+    if (pageIndex < 0 || wordIndex < 0 || !parsedSyncMap.current) return;
+
+    const page = parsedSyncMap.current.pages[pageIndex];
+    if (!page || !page.words[wordIndex]) return;
+
+    const targetWord = page.words[wordIndex].word.trim().toLowerCase();
+
+    // Find text layer spans in the currently visible page(s)
+    const textLayers = document.querySelectorAll('.react-pdf__Page__textContent span');
+    let wordCounter = 0;
+    let found = false;
+
+    textLayers.forEach(span => {
+      const spanText = (span as HTMLElement).textContent || '';
+      const spanWords = spanText.split(/\s+/).filter(w => w.length > 0);
+
+      for (let i = 0; i < spanWords.length; i++) {
+        if (wordCounter === wordIndex) {
+          // This span contains our target word
+          // Apply highlight to the entire span (simplification)
+          (span as HTMLElement).style.backgroundColor = '#FFE066';
+          (span as HTMLElement).style.borderRadius = '2px';
+          (span as HTMLElement).style.transition = 'background-color 0.15s ease';
+          span.classList.add('audio-word-highlight');
+          found = true;
+          break;
+        }
+        wordCounter++;
+      }
+
+      if (!found && spanWords.length > 0) {
+        // wordCounter already incremented in loop
+      }
+    });
+  }, []);
 
   // --- AUTO-LOAD BOOKMARK ---
   useEffect(() => {
@@ -1057,6 +1271,17 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
                     </button>
                   </Link>
                 )}
+                {selWorkshopId && (
+                  <Link href={`/dashboard/quiz/${selWorkshopId}`}>
+                    <button 
+                      className="ml-2 flex items-center justify-center h-10 px-3 bg-blue-600 hover:bg-blue-500 rounded-md transition-all gap-1.5 border-2 border-blue-400 shadow-md group"
+                      title="Hacer Taller Interactivo ODS - SEL"
+                    >
+                        <Library size={14} className="text-white" />
+                        <span className="text-xs font-bold text-white uppercase tracking-tighter">ODS & SEL</span>
+                    </button>
+                  </Link>
+                )}
             </div>
         </div>
         
@@ -1445,6 +1670,134 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
         </AnimatePresence>
 
       </div>
+
+      {/* ============ AUDIO PLAYER BAR ============ */}
+      {showAudioPlayer && audioUrl && (
+        <>
+          <audio
+            ref={audioRef}
+            src={audioUrl}
+            preload="metadata"
+            onLoadedMetadata={(e) => {
+              setAudioDuration((e.target as HTMLAudioElement).duration);
+            }}
+            onEnded={() => setIsAudioPlaying(false)}
+            onPlay={() => setIsAudioPlaying(true)}
+            onPause={() => setIsAudioPlaying(false)}
+          />
+          <div className={cn(
+            "h-14 flex items-center gap-3 px-4 border-t backdrop-blur-xl z-50 transition-colors duration-300 shrink-0",
+            isDarkMode 
+              ? "bg-gray-900/95 border-gray-800 text-gray-200" 
+              : "bg-gradient-to-r from-amber-950/95 via-gray-900/95 to-amber-950/95 border-amber-900/30 text-white"
+          )}>
+            {/* Play/Pause */}
+            <button
+              onClick={toggleAudioPlayback}
+              className={cn(
+                "w-10 h-10 rounded-full flex items-center justify-center transition-all shrink-0",
+                isAudioPlaying
+                  ? "bg-amber-500 text-white shadow-lg shadow-amber-500/30 hover:bg-amber-400"
+                  : "bg-white/10 text-amber-400 hover:bg-amber-500/20 border border-amber-500/30"
+              )}
+              title={isAudioPlaying ? "Pausar" : "Reproducir"}
+            >
+              {isAudioPlaying ? <Pause size={18} /> : <Play size={18} className="ml-0.5" />}
+            </button>
+
+            {/* Progress Bar */}
+            <div className="flex-1 flex items-center gap-2 min-w-0">
+              <span className="text-[10px] font-mono opacity-70 shrink-0 w-10 text-right">
+                {formatTime(audioCurrentTime)}
+              </span>
+              <div 
+                className="flex-1 h-1.5 bg-white/10 rounded-full cursor-pointer relative group"
+                onClick={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const ratio = (e.clientX - rect.left) / rect.width;
+                  seekAudio(ratio * audioDuration);
+                }}
+              >
+                <div 
+                  className="h-full bg-gradient-to-r from-amber-400 to-amber-500 rounded-full relative transition-all"
+                  style={{ width: `${audioDuration > 0 ? (audioCurrentTime / audioDuration) * 100 : 0}%` }}
+                >
+                  <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-amber-400 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
+              </div>
+              <span className="text-[10px] font-mono opacity-70 shrink-0 w-10">
+                {formatTime(audioDuration)}
+              </span>
+            </div>
+
+            {/* Speed Control */}
+            <button
+              onClick={changeSpeed}
+              className="px-2 py-1 text-[11px] font-bold bg-white/10 hover:bg-white/20 rounded-md transition-colors shrink-0 min-w-[40px] text-center border border-white/5"
+              title="Cambiar velocidad"
+            >
+              {audioSpeed}x
+            </button>
+
+            {/* Volume */}
+            <div className="hidden sm:flex items-center gap-1.5 shrink-0">
+              <Volume2 size={14} className="opacity-60" />
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value={audioVolume}
+                onChange={(e) => {
+                  const vol = parseFloat(e.target.value);
+                  setAudioVolume(vol);
+                  if (audioRef.current) audioRef.current.volume = vol;
+                }}
+                className="w-16 h-1 accent-amber-400 cursor-pointer"
+              />
+            </div>
+
+            {/* Audio indicator */}
+            <div className="hidden md:flex items-center gap-1.5 shrink-0">
+              <Headphones size={14} className="text-amber-400" />
+              <span className="text-[10px] font-medium text-amber-400/80">Audiolibro</span>
+            </div>
+
+            {/* Close */}
+            <button
+              onClick={() => {
+                if (audioRef.current) {
+                  audioRef.current.pause();
+                  audioRef.current.currentTime = 0;
+                }
+                setIsAudioPlaying(false);
+                setShowAudioPlayer(false);
+                setActiveWordIndex(-1);
+                // Clean up highlights
+                document.querySelectorAll('.audio-word-highlight').forEach(el => {
+                  (el as HTMLElement).style.backgroundColor = 'transparent';
+                  el.classList.remove('audio-word-highlight');
+                });
+              }}
+              className="p-1.5 hover:bg-white/10 rounded-full transition-colors shrink-0 opacity-60 hover:opacity-100"
+              title="Cerrar reproductor"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        </>
+      )}
+
+      {/* Floating "Open Audio" button if audio is available but player is closed */}
+      {audioUrl && !showAudioPlayer && (
+        <button
+          onClick={() => setShowAudioPlayer(true)}
+          className="fixed bottom-20 right-6 z-50 w-12 h-12 rounded-full bg-amber-500 text-white shadow-lg shadow-amber-500/30 flex items-center justify-center hover:bg-amber-400 transition-all hover:scale-110"
+          title="Abrir reproductor de audio"
+        >
+          <Headphones size={22} />
+        </button>
+      )}
       
       {/* Footer Info */}
       <footer className={cn("h-10 text-xs flex items-center justify-between px-6 border-t font-medium transition-colors duration-300", isDarkMode ? "bg-gray-900 border-gray-800 text-gray-500" : "bg-[#1c1c1c] border-white/5 text-gray-400")}>

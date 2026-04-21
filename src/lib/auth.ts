@@ -53,6 +53,10 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Usuario no encontrado");
         }
 
+        if (user.isActive === false) {
+          throw new Error("Su cuenta ha sido suspendida. Contacte con un administrador.");
+        }
+
         const isPasswordCorrect = await bcrypt.compare(
           credentials.password,
           user.password

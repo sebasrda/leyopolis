@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { generateAndSaveActivities } from "@/lib/ai-activities";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -30,6 +31,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ bookId:
 
     let rawText = "";
     let finalJsonString = "";
+    let parsedQuiz: any = null;
 
     // Extract text from uploaded quiz file
     if (quizFile.name.endsWith(".json")) {
@@ -52,68 +54,35 @@ export async function POST(req: Request, { params }: { params: Promise<{ bookId:
       }
     }
 
-    // Use AI to convert to structured JSON
-    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || "";
+    // Use the central AI coordinator with Triple AI fallback and robust extraction
     if (!finalJsonString && rawText) {
-      if (apiKey) {
-        try {
-          const { GoogleGenerativeAI } = require("@google/generative-ai");
-          const genAI = new GoogleGenerativeAI(apiKey);
-          const aiModel = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-
-          const prompt = `Analiza el siguiente texto de un examen/quiz y conviértelo a JSON.
-El texto proviene de un archivo subido como evaluación del libro "${book.title}" de "${book.author}".
-EXTRAE las preguntas TAL CUAL están en el documento y formátalas en este esquema JSON:
-{
-  "questions": [{"id": 1, "question": "pregunta textual", "options": ["A", "B", "C", "D"], "correctAnswer": 0}],
-  "keywords": ["PALABRA1", "PALABRA2"],
-  "memoryPairs": [{"character": "Nombre", "description": "Relación"}],
-  "sentences": [{"id": 1, "sentence": "Frase importante"}]
-}
-Si las preguntas no tienen opciones, inventa 4 opciones con 1 correcta.
-También genera 8 palabras clave, 6 parejas de memoria y 5 frases.
-Responde SOLO con JSON válido, sin markdown.
-
-TEXTO DEL EXAMEN:
-"""
-${rawText.slice(0, 8000)}
-"""`;
-
-          const result = await aiModel.generateContent(prompt);
-          finalJsonString = result.response.text().replace(/```json|```/g, "").trim();
-        } catch (aiErr: any) {
-          console.error("Gemini API Error:", aiErr.message);
-        }
-      }
-
-      // Fallback if AI fails (e.g., API key revoked)
-      if (!finalJsonString) {
-        console.log("Using generic fallback quiz extractor due to AI failure.");
-        const lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 10);
-        const questions = lines.slice(0, 10).map((q, i) => ({
-          id: i + 1,
-          question: q.length > 100 ? q.substring(0, 100) + '...' : q,
-          options: ["Opción A (Correcta)", "Opción B", "Opción C", "Opción D"],
-          correctAnswer: 0
-        }));
+      console.log(`[AI-QUIZ] Processing manual quiz with hybrid AI for: ${book.title}`);
+      try {
+        const result = await generateAndSaveActivities({
+          bookId: book.id,
+          title: book.title,
+          author: book.author || "Autor Desconocido",
+          contentUrl: "", // We use rawText directly
+          userId: (session.user as any).id,
+          rawText: rawText,
+          stage: "manual-quiz"
+        });
         
-        const fallbackJson = {
-          questions: questions.length > 0 ? questions : [
-            { id: 1, question: `Pregunta sobre el documento subido de ${book.title}`, options: ["Verdadero", "Falso", "No se sabe", "Quizás"], correctAnswer: 0 }
-          ],
-          keywords: ["LECTURA", "DOCUMENTO", "EXAMEN", "PRUEBA", "LIBRO", "PROFESOR"],
-          memoryPairs: [{ character: "Documento", description: "Archivo subido por profesor" }],
-          sentences: [{ id: 1, sentence: "El profesor ha subido un documento de evaluación." }]
-        };
-        finalJsonString = JSON.stringify(fallbackJson);
+        parsedQuiz = result;
+      } catch (aiErr: any) {
+        console.error("[AI-QUIZ] All AI providers failed for manual quiz:", aiErr);
+        return NextResponse.json({ 
+          message: "No se pudo procesar el archivo. La IA no logró extraer las preguntas con coherencia.",
+          error: aiErr.message 
+        }, { status: 500 });
       }
+    } else if (finalJsonString) {
+      parsedQuiz = JSON.parse(finalJsonString);
     }
 
-    if (!finalJsonString) {
-      return NextResponse.json({ message: "No se pudo procesar el archivo de quiz" }, { status: 400 });
+    if (!parsedQuiz || !parsedQuiz.questions) {
+      return NextResponse.json({ message: "No se encontró un cuestionario válido en el archivo." }, { status: 400 });
     }
-
-    const parsedQuiz = JSON.parse(finalJsonString);
 
     // Delete old quiz and games if they exist
     if (book.quizId) {
@@ -130,7 +99,7 @@ ${rawText.slice(0, 8000)}
         content: JSON.stringify(parsedQuiz),
         points: 100,
         published: true,
-        createdById: session.user.id,
+        createdById: (session.user as any).id,
         bookId: book.id,
       },
     });
@@ -142,7 +111,7 @@ ${rawText.slice(0, 8000)}
         data: {
           title: `Sopa de letras: ${book.title}`, description: `Palabras clave de "${book.title}"`,
           type: "WORDSEARCH", content: JSON.stringify({ words: parsedQuiz.keywords.slice(0, 10), gridSize: 12 }),
-          points: 50, published: true, createdById: session.user.id, bookId: book.id,
+          points: 50, published: true, createdById: (session.user as any).id, bookId: book.id,
         },
       });
     }
@@ -151,7 +120,7 @@ ${rawText.slice(0, 8000)}
         data: {
           title: `Memoria: ${book.title}`, description: `Personajes de "${book.title}"`,
           type: "MATCH", content: JSON.stringify({ pairs: parsedQuiz.memoryPairs.map((p: any, i: number) => ({ id: i+1, word: p.character, def: p.description })) }),
-          points: 50, published: true, createdById: session.user.id, bookId: book.id,
+          points: 50, published: true, createdById: (session.user as any).id, bookId: book.id,
         },
       });
     }

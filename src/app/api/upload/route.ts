@@ -207,35 +207,12 @@ export async function POST(req: Request) {
       }
     }
 
-    // AI Quiz & Games Generation - isolated in try-catch to not fail the whole upload
-    try {
-      if (!book) throw new Error("No book object available for AI generation");
-      
-      // Use the shared utility for all generation logic
-      const result = await generateAndSaveActivities({
-        bookId: book.id,
-        title: title,
-        author: author,
-        contentUrl: book.contentUrl || "",
-        userId: (session.user as any).id || "",
-        rawText: rawText || "",
-        quizFromFile: quizFromFile
-      });
-
-      return NextResponse.json({ 
-        message: "Libro subido exitosamente", 
-        book, 
-        activityCount: result.questions?.length || 0 
-      });
-
-    } catch (innerErr: any) {
-      console.error("Non-critical error in AI/Activity generation:", innerErr);
-      return NextResponse.json({ 
-        message: "Libro subido pero hubo un error en la IA", 
-        book, 
-        error: innerErr.message 
-      });
-    }
+    // AI Generation is now handled separately by the frontend calling /api/books/regenerate-ia 
+    // to avoid timeouts and race conditions in the upload endpoint.
+    return NextResponse.json({ 
+      message: "Libro subido exitosamente. Generando actividades...", 
+      book 
+    });
   } catch (error) {
     console.error("Global upload error:", error);
     return NextResponse.json({ message: "Error crítico al procesar subida", error: String(error) }, { status: 500 });

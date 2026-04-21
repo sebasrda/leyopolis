@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { generateWithOpenAI } from "./ai/openai";
 import { generateWithOpenRouter } from "./ai/openrouter";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 interface GenerateActivitiesResult {
   questions?: any[];
@@ -28,7 +29,7 @@ export async function generateAndSaveActivities({
   userId: string;
   rawText?: string;
   quizFromFile?: boolean;
-  stage?: "full" | "questions-1" | "questions-2" | "games" | "synopsis";
+  stage?: "full" | "questions-1" | "questions-2" | "games-all" | "games-1" | "games-2" | "games" | "synopsis" | "sel-workshop" | "sel-part-1" | "sel-part-2" | "manual-quiz";
 }): Promise<GenerateActivitiesResult> {
   let finalRawText = rawText || "";
   
@@ -44,12 +45,13 @@ export async function generateAndSaveActivities({
   const geminiKey = sanitize(settingsMap.GOOGLE_API_KEY || process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY);
   const openaiKey = sanitize(settingsMap.OPENAI_API_KEY || process.env.OPENAI_API_KEY);
   const openrouterKey = sanitize(settingsMap.OPENROUTER_API_KEY || process.env.OPENROUTER_API_KEY);
+  const anthropicKey = sanitize(settingsMap.ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY);
 
-  if (!geminiKey && !openaiKey && !openrouterKey) {
-    throw new Error("No se encontraron llaves de IA configuradas (Gemini, OpenAI u OpenRouter).");
+  if (!geminiKey && !openaiKey && !openrouterKey && !anthropicKey) {
+    throw new Error("No se encontraron llaves de IA configuradas (Gemini, OpenAI, OpenRouter o Anthropic).");
   }
 
-  console.log(`[AI-STATS] Credenciales: Gemini(${geminiKey ? 'OK' : 'X'}), OpenAI(${openaiKey ? 'OK' : 'X'}), OpenRouter(${openrouterKey ? 'OK' : 'X'})`);
+  console.log(`[AI-STATS] Credenciales: Gemini(${geminiKey ? 'OK' : 'X'}), OpenAI(${openaiKey ? 'OK' : 'X'}), OpenRouter(${openrouterKey ? 'OK' : 'X'}), Anthropic(${anthropicKey ? 'OK' : 'X'})`);
 
     // Fetch PDF text if not provided
     if (!finalRawText && contentUrl) {
@@ -76,14 +78,13 @@ export async function generateAndSaveActivities({
       }
     }
 
-    const { GoogleGenerativeAI } = require("@google/generative-ai");
     const genAI = geminiKey ? new GoogleGenerativeAI(geminiKey) : null;
 
     let pdfDataPart: any = null;
     let isMultimodal = false;
 
     if (!finalRawText || finalRawText.length < 50) {
-      console.log(`[AI-STATS] Text extraction failed or too short. Falling back to Multimodal PDF analysis for: ${title}`);
+      console.log(`[AI-STATS] No se pudo extraer texto o es muy corto (${finalRawText?.length || 0} chars). Intentando Multimodal para: ${title}`);
       try {
         let absoluteUrl = contentUrl;
         if (contentUrl.startsWith("/")) {
@@ -102,7 +103,7 @@ export async function generateAndSaveActivities({
           isMultimodal = true;
         }
       } catch (err) {
-        console.error("[AI-STATS] Failed to prepare multimodal part:", err);
+        console.error("[AI-STATS] Error al preparar parte multimodal:", err);
       }
     }
 
@@ -123,7 +124,7 @@ export async function generateAndSaveActivities({
       console.log(`[AI-STATS] Phase 1 (Questions) complete. Questions generated: ${qResult.questions?.length || 0}`);
       
       const gResult = await generateAndSaveActivities({
-        bookId, title, author, contentUrl, userId, rawText: finalRawText, stage: "games"
+        bookId, title, author, contentUrl, userId, rawText: finalRawText, stage: "games-all"
       });
       console.log(`[AI-STATS] Phase 2 (Games) complete.`);
       
@@ -134,25 +135,111 @@ export async function generateAndSaveActivities({
     }
   }
 
+  // Orchestrate games generation in two parts
+  if (stage === "games-all") {
+    console.log(`[AI-STATS] Starting two-phase games generation for: ${title}`);
+    try {
+      const g1 = await generateAndSaveActivities({
+        bookId, title, author, contentUrl, userId, rawText: finalRawText, stage: "games-1"
+      });
+      const g2 = await generateAndSaveActivities({
+        bookId, title, author, contentUrl, userId, rawText: finalRawText, stage: "games-2"
+      });
+      return { ...g1, ...g2 };
+    } catch (err) {
+      console.error("[AI-STATS] Games-all generation failed:", err);
+      throw err;
+    }
+  }
+
+  // Unified ODS SEL stage: split into two parts of 25 questions each
+  if (stage === "sel-workshop") {
+    console.log(`[AI-STATS] Starting two-phase SEL workshop generation for: ${title}`);
+    try {
+      const part1 = await generateAndSaveActivities({
+        bookId, title, author, contentUrl, userId, rawText: finalRawText, stage: "sel-part-1"
+      });
+      console.log(`[AI-STATS] SEL Part 1 complete. Questions: ${part1.questions?.length}`);
+      
+      const part2 = await generateAndSaveActivities({
+        bookId, title, author, contentUrl, userId, rawText: finalRawText, stage: "sel-part-2"
+      });
+      console.log(`[AI-STATS] SEL Part 2 complete. Questions: ${part2.questions?.length}`);
+      
+      return { 
+        questions: [...(part1.questions || []), ...(part2.questions || [])]
+      };
+    } catch (err) {
+      console.error("[AI-STATS] ODS SEL generation failed:", err);
+      throw err;
+    }
+  }
+
   if (stage === "questions-1") {
-    prompt = `Actúa como un experto pedagogo. 
+    prompt = `Actúa como un experto pedagogo de élite. 
     Libro: "${title}" de "${author}". 
     CONTEXTO: ${extract}
-    TAREA: Genera exactamente 20 preguntas de opción múltiple de alta calidad que cubran todo el contenido (inicio, nudo y desenlace).
-    REGLA: Cada pregunta debe tener 4 opciones (A, B, C, D) y un índice de respuesta corecta (0-3).
-    SALIDA: Responde SOLO un JSON: {"questions": [{"question": "text", "options": ["opt0","opt1","opt2","opt3"], "correct": number}], "synopsis": "un resumen pedagógico breve y atractivo del libro en máximo 150 palabras"}.`;
-  } else if (stage === "games") {
+    
+    TAREA: Genera EXACTAMENTE 20 preguntas de opción múltiple de alta calidad y precisión sobre la trama, personajes y temas del libro.
+    REGLA 1: Cada pregunta DEBE tener 4 opciones (A, B, C, D) y un índice de respuesta correcta 'correctAnswer' (0-3).
+    REGLA 2: No uses NUNCA placeholders como "Opción A", "Respuesta Correcta" o similares. Genera contenido real y desafiante.
+    REGLA 3: Cubre todo el libro (inicio, nudo y desenlace).
+    
+    SALIDA: Responde SOLO un JSON: {
+      "questions": [{"question": "texto de la pregunta", "options": ["opcion0","opcion1","opcion2","opcion3"], "correctAnswer": número}], 
+      "synopsis": "un resumen pedagógico profundo y atractivo en máximo 150 palabras"
+    }.`;
+  } else if (stage === "manual-quiz") {
+    prompt = `Actúa como un asistente pedagógico experto. 
+    El profesor ha subido un documento con una evaluación para el libro "${title}".
+    
+    TAREA: Analiza el texto del profesor y extráelo fielmente a formato JSON.
+    INSTRUCCIONES CRÍTICAS:
+    1. IDENTIFICA las respuestas correctas si están marcadas en el texto (ej: negrita, "(X)", "Correcta", o una clave de respuesta al final).
+    2. Si el profesor no incluyó la respuesta correcta, ANALIZA el contenido y márcala tú basándote en la lógica.
+    3. Si el profesor subió menos de 20 preguntas, COMPLETA el quiz hasta llegar a 20 manteniendo el estilo del profesor.
+    4. Genera también datos para juegos (keywords, memoryPairs, sentences).
+    
+    SALIDA: Responde SOLO un JSON: {
+      "questions": [{"question": "texto", "options": ["opt0","opt1","opt2","opt3"], "correctAnswer": index}],
+      "keywords": ["PALABRA1", ...],
+      "memoryPairs": [{"character": "Nombre", "description": "Relación"}],
+      "sentences": [{"id": 1, "sentence": "Frase para ordenar"}]
+    }
+    
+    ORDEN: No uses placeholders. Sé preciso.
+    TEXTO DEL PROFESOR:
+    """
+    ${extract}
+    """`;
+  } else if (stage === "games-1") {
     prompt = `Libro: "${title}" de "${author}". 
     CONTEXTO: ${extract}
-    TAREA: Genera datos para juegos interactivos Premium de alta calidad pedagógica.
+    TAREA: Genera datos para juegos interactivos literarios (Parte 1).
     
-    INSTRUCCIONES DE CALIDAD:
+    INSTRUCCIONES:
     1. keywords: 15 palabras clave únicas e importantes (mínimo 4 letras, máximo 12).
-    2. timelineEvents: Una lista de exactamente 6 eventos CRUCIALES del libro en ESTRICTO ORDEN CRONOLÓGICO (desde el inicio hasta el desenlace). Cada evento debe ser una frase clara (máximo 15 palabras).
-    3. sentences: 6 frases CORTAS y SIGNIFICATIVAS extraídas o basadas en el libro para reordenar (entre 5 y 10 palabras por frase).
-    4. statements: 10 afirmaciones sobre el libro (algunas verdaderas y otras falsas) con un campo "isTrue" (boolean).
+    2. timelineEvents: Una lista de exactamente 6 eventos CRUCIALES del libro en ESTRICTO ORDEN CRONOLÓGICO. Cada evento debe ser una frase clara (máximo 15 palabras).
     
-    SALIDA: Responde SOLO un JSON: {"keywords": ["word1",...], "timelineEvents": ["evento1", "evento2", ...], "sentences": ["frase1", ...], "statements": [{"text": "...", "isTrue": true/false}]}`;
+    SALIDA: Responde SOLO un JSON: {"keywords": ["word1",...], "timelineEvents": ["evento1", "evento2", ...]}`;
+  } else if (stage === "games-2") {
+    prompt = `Libro: "${title}" de "${author}". 
+    CONTEXTO: ${extract}
+    TAREA: Genera datos para juegos interactivos literarios (Parte 2).
+    
+    INSTRUCCIONES:
+    1. sentences: 6 frases CORTAS y SIGNIFICATIVAS extraídas o basadas en el libro para reordenar (entre 5 y 10 palabras por frase).
+    2. statements: 10 afirmaciones sobre el libro (algunas verdaderas y otras falsas) con un campo "isTrue" (boolean).
+    
+    SALIDA: Responde SOLO un JSON: {"sentences": ["frase1", ...], "statements": [{"text": "...", "isTrue": true/false}]}`;
+  } else if (stage === "games" || (stage as any) === "games-all") {
+    // Stage 'games' is now deprecated but kept for safety, redirecting to games-all logic if called directly
+    // but the orchestration is handled in the if statement above. 
+    // This prompt is a backup.
+    prompt = `Libro: "${title}" de "${author}". 
+    CONTEXTO: ${extract}
+    TAREA: Genera datos para juegos interactivos (Keywords, Timeline, Sentences, Statements).
+    SALIDA: Responde SOLO un JSON con los 4 campos mencionados.`;
   } else if (stage === "synopsis") {
     prompt = `Actúa como un experto pedagogo y crítico literario. 
     Libro: "${title}" de "${author}". 
@@ -160,14 +247,26 @@ export async function generateAndSaveActivities({
     TAREA: Genera un resumen pedagógico breve, atractivo y profesional del libro.
     REGLA: Máximo 150 palabras. Debe resaltar el valor educativo y los temas principales.
     SALIDA: Responde SOLO un JSON: {"synopsis": "texto del resumen"}`;
+  } else if (stage === "sel-part-1" || stage === "sel-part-2") {
+    const partNum = stage === "sel-part-1" ? "1" : "2";
+    prompt = `Actúa como un experto pedagogo enfocado en Aprendizaje Socioemocional (SEL) y los Objetivos de Desarrollo Sostenible (ODS).
+    Libro: "${title}" de "${author}".
+    CONTEXTO: ${extract}
+    
+    TAREA: Genera la PARTE ${partNum} de un taller interactivo. Necesito exactamente 25 preguntas de opción múltiple.
+    ENFOQUE: Las preguntas deben evaluar o explorar las emociones de los personajes (SEL), resolución de conflictos, autoconocimiento, conciencia social y los retos vinculados a los ODS (ej. igualdad, paz, medio ambiente, equidad). 
+    Deben ser creativas y pedagógicas.
+    
+    REGLA: Cada pregunta debe tener 4 opciones (A, B, C, D) y un índice de respuesta correcta (0-3).
+    SALIDA: Responde SOLO un JSON: {"questions": [{"question": "text", "options": ["opt0","opt1","opt2","opt3"], "correctAnswer": number}]}`;
   }
   
   const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
   // Production Sync Trigger: Ensure Vercel re-builds with latest Environment Variables
   
-  let result;
-  let parsedJson;
-  let lastError;
+  let result: any;
+  let parsedJson: any;
+  let lastError: any;
   // Use a tiered list of models. If one is 429 (quota) or 404 (not found), we pivot.
   const geminiModels = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-flash-8b"];
   
@@ -190,10 +289,22 @@ export async function generateAndSaveActivities({
           
           const geminiResult = await aiModel.generateContent(contentParts);
           const responseText = geminiResult.response.text();
+          
+          // Better JSON detection
           const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-          parsedJson = JSON.parse(jsonMatch ? jsonMatch[0] : responseText);
-          result = geminiResult;
-          break;
+          if (jsonMatch) {
+            try {
+              parsedJson = JSON.parse(jsonMatch[0]);
+              result = geminiResult;
+              break;
+            } catch (pErr) {
+              console.error("[AI-STATS] Gemini devolvió un JSON inválido, reintentando...", pErr);
+              lastError = pErr;
+            }
+          } else {
+            console.warn("[AI-STATS] No se encontró bloque JSON en la respuesta de Gemini.");
+            lastError = new Error("No JSON block found in response");
+          }
         } catch (err: any) {
           lastError = err;
           const errMsg = err.message || "";
@@ -231,7 +342,44 @@ export async function generateAndSaveActivities({
     }
   }
 
-  // TERTIARY ATTEMPT: OpenAI (Legacy fallback)
+  // TERTIARY ATTEMPT: Anthropic/Claude (via OpenAI-compatible API)
+  if (!result && anthropicKey) {
+    console.log(`[AI-STATS] Intentando con Anthropic Claude para: ${title}`);
+    try {
+      const { OpenAI: OpenAIClient } = await import("openai");
+      const anthropicClient = new OpenAIClient({
+        apiKey: anthropicKey,
+        baseURL: "https://api.anthropic.com/v1/",
+        defaultHeaders: {
+          "anthropic-version": "2023-06-01",
+          "x-api-key": anthropicKey,
+        }
+      });
+      
+      const response = await anthropicClient.chat.completions.create({
+        model: "claude-sonnet-4-20250514",
+        messages: [
+          { role: "system", content: "Actúas como un experto pedagogo que genera contenido educativo en JSON estricto para una plataforma de lectura infantil." },
+          { role: "user", content: prompt }
+        ],
+        max_tokens: 4096,
+      });
+      
+      const content = response.choices[0]?.message?.content;
+      if (content) {
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          parsedJson = JSON.parse(jsonMatch[0]);
+          result = { source: "anthropic" };
+        }
+      }
+    } catch (err: any) {
+      lastError = err;
+      console.error("[AI-STATS] Anthropic Claude falló:", err.message);
+    }
+  }
+
+  // QUATERNARY ATTEMPT: OpenAI (Legacy fallback)
   if (!result && openaiKey) {
     console.log(`[AI-STATS] Intentando fallback con OpenAI para: ${title}`);
     try {
@@ -252,6 +400,17 @@ export async function generateAndSaveActivities({
     }
     
     throw new Error(`${errorPrefix} ${errorBody}`);
+  }
+
+  // DATA NORMALIZATION: Ensure all questions use 'correctAnswer' (UI standard)
+  if (parsedJson.questions && Array.isArray(parsedJson.questions)) {
+    parsedJson.questions = parsedJson.questions.map((q: any) => {
+      // Handle 'correct' -> 'correctAnswer' rename if AI slips up
+      if (q.correct !== undefined && q.correctAnswer === undefined) {
+        q.correctAnswer = q.correct;
+      }
+      return q;
+    });
   }
 
   const parsed = parsedJson;
@@ -304,7 +463,7 @@ export async function generateAndSaveActivities({
   }
 
   // Stage 3: Create Games and Sync to Quiz
-  else if (stage === "games") {
+  else if (stage === "games" || (stage as any) === "games-all" || stage === "games-1" || stage === "games-2") {
     // 1. Sync game data into the main QUIZ activity (for GamesModal consumption)
     const existingQuiz = await (prisma as any).activity.findFirst({
       where: { bookId, type: "QUIZ" }
@@ -312,22 +471,23 @@ export async function generateAndSaveActivities({
 
     if (existingQuiz) {
       const currentContent = JSON.parse(existingQuiz.content);
+      const updatedContent = { 
+        ...currentContent, 
+        keywords: (parsed.keywords && parsed.keywords.length > 0) ? parsed.keywords : currentContent.keywords || [],
+        timelineEvents: (parsed.timelineEvents && parsed.timelineEvents.length > 0) ? parsed.timelineEvents : currentContent.timelineEvents || [],
+        sentences: (parsed.sentences && parsed.sentences.length > 0) ? (parsed.sentences || []).map((s: string, i: number) => ({ id: i, sentence: s })) : currentContent.sentences || [],
+        statements: (parsed.statements && parsed.statements.length > 0) ? parsed.statements : currentContent.statements || []
+      };
+
       await (prisma as any).activity.update({
         where: { id: existingQuiz.id },
-        data: { 
-          content: JSON.stringify({ 
-            ...currentContent, 
-            keywords: parsed.keywords || currentContent.keywords || [],
-            timelineEvents: parsed.timelineEvents || currentContent.timelineEvents || [],
-            sentences: parsed.sentences || currentContent.sentences || [],
-            statements: parsed.statements || currentContent.statements || []
-          }) 
-        }
+        data: { content: JSON.stringify(updatedContent) }
       });
     }
 
-    // 2. Create separate game activities (for legacy/other views)
+    // 2. Create/Update separate game activities (for legacy/other views)
     if (parsed.keywords?.length > 0) {
+      await (prisma as any).activity.deleteMany({ where: { bookId, type: "WORDSEARCH" } });
       await (prisma as any).activity.create({
         data: {
           title: `Sopa de letras: ${title}`, type: "WORDSEARCH", 
@@ -337,15 +497,17 @@ export async function generateAndSaveActivities({
       });
     }
     if (parsed.timelineEvents?.length > 0) {
+      await (prisma as any).activity.deleteMany({ where: { bookId, type: "MATCH", title: { startsWith: "Cronología" } } });
       await (prisma as any).activity.create({
         data: {
-          title: `Cronología: ${title}`, type: "MATCH", // Reusing MATCH for simplicity in legacy
+          title: `Cronología: ${title}`, type: "MATCH",
           content: JSON.stringify({ events: parsed.timelineEvents }),
           points: 50, published: true, createdById: userId, bookId: bookId,
         },
       });
     }
     if (parsed.sentences?.length > 0) {
+      await (prisma as any).activity.deleteMany({ where: { bookId, type: "REORDER" } });
       await (prisma as any).activity.create({
         data: {
           title: `Ordenar: ${title}`, type: "REORDER", content: JSON.stringify({ sentences: parsed.sentences }),

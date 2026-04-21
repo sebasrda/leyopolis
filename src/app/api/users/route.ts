@@ -41,6 +41,7 @@ export async function GET() {
         xp: true,
         level: true,
         lastActive: true,
+        isActive: true,
         institution: {
           select: { name: true }
         }
@@ -48,8 +49,7 @@ export async function GET() {
       orderBy: { createdAt: 'desc' }
     });
     
-    const usersWithStatus = users.map(u => ({ ...u, status: "Activo" }));
-    return NextResponse.json(usersWithStatus);
+    return NextResponse.json(users);
   } catch (error) {
     return NextResponse.json({ message: "Error fetching users" }, { status: 500 });
   }

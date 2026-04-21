@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,7 +12,14 @@ import { Switch } from "@/components/ui/switch";
 
 export default function AdminSettingsPage() {
   const { data: session } = useSession();
+  const router = useRouter();
   const isSuperAdmin = (session?.user as any)?.role === "SUPERADMIN";
+
+  useEffect(() => {
+    if (session && !isSuperAdmin) {
+      router.replace("/dashboard");
+    }
+  }, [session, isSuperAdmin, router]);
   const [settings, setSettings] = useState({
     platformName: "LEYÓPOLIS",
     welcomeMessage: "Bienvenido a tu plataforma de lectura inteligente",
@@ -19,7 +27,8 @@ export default function AdminSettingsPage() {
     maintenanceMode: "false",
     GOOGLE_API_KEY: "",
     OPENAI_API_KEY: "",
-    OPENROUTER_API_KEY: ""
+    OPENROUTER_API_KEY: "",
+    ANTHROPIC_API_KEY: ""
   });
   const [loading, setLoading] = useState(false);
 
@@ -103,6 +112,18 @@ export default function AdminSettingsPage() {
                 onChange={(e) => setSettings({...settings, OPENROUTER_API_KEY: e.target.value})}
               />
               <p className="text-xs text-gray-500 italic">Usado como proveedor principal de alta fiabilidad.</p>
+            </div>
+
+            <div className="grid gap-2 pt-2">
+              <Label htmlFor="anthropic-key">Anthropic (Claude) API Key</Label>
+              <Input 
+                id="anthropic-key"
+                type="password"
+                placeholder="sk-ant-api03-..."
+                value={settings.ANTHROPIC_API_KEY}
+                onChange={(e) => setSettings({...settings, ANTHROPIC_API_KEY: e.target.value})}
+              />
+              <p className="text-xs text-gray-500 italic">Claude complementa a las demás IAs para procesamiento de audio y tareas avanzadas de razonamiento.</p>
             </div>
             
             <div className="grid gap-2 pt-2">

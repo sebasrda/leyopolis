@@ -54,6 +54,9 @@ export default function ReaderPage({ params }: { params: Promise<{ bookId: strin
         author={bookDetails?.author}
         bookId={bookId}
         quizId={bookDetails?.quizId}
+        selWorkshopId={bookDetails?.selWorkshopId}
+        audioUrl={bookDetails?.audioUrl}
+        audioSyncMap={bookDetails?.audioSyncMap}
       />
     </div>
   );

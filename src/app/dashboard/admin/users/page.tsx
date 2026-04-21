@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -8,12 +7,16 @@ import {
   Search, 
   Shield, 
   UserCog, 
-  Trash2 
+  Trash2,
+  Lock,
+  UserX,
+  UserCheck
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -33,11 +36,25 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export default function AdminUsersPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Password Reset Modal State
+  const [passModalOpen, setPassModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [changingPass, setChangingPass] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -64,15 +81,65 @@ export default function AdminUsersPage() {
       if (res.ok) {
         setUsers(users.filter(u => u.id !== id));
       } else {
-        alert("Error al eliminar");
+        const err = await res.json();
+        alert(`Error al eliminar: ${err.message || "error desconocido"}`);
       }
     } catch (e) {
       alert("Error de conexión");
     }
   };
 
+  const handleStatusToggle = async (user: any) => {
+    const newStatus = !user.isActive;
+    const action = newStatus ? "Activar" : "Suspender";
+    if (!confirm(`¿${action} la cuenta de ${user.name}?`)) return;
+
+    try {
+      const res = await fetch(`/api/users/${user.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive: newStatus })
+      });
+      if (res.ok) {
+        fetchUsers();
+      } else {
+        const err = await res.json();
+        alert(`Error: ${err.message}`);
+      }
+    } catch (e) {
+      alert("Error al actualizar estado");
+    }
+  };
+
+  const handlePasswordChange = async () => {
+    if (!newPassword || newPassword.length < 6) {
+      alert("La contraseña debe tener al menos 6 caracteres");
+      return;
+    }
+    setChangingPass(true);
+    try {
+      const res = await fetch(`/api/users/${selectedUser.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: newPassword })
+      });
+      if (res.ok) {
+        alert("Contraseña actualizada correctamente");
+        setPassModalOpen(false);
+        setNewPassword("");
+      } else {
+        const err = await res.json();
+        alert(`Error: ${err.message}`);
+      }
+    } catch (e) {
+      alert("Error al cambiar contraseña");
+    } finally {
+      setChangingPass(false);
+    }
+  };
+
   const handleRoleChange = async (id: string, currentRole: string) => {
-    const newRole = currentRole === "ADMIN" ? "STUDENT" : "ADMIN"; // Simple toggle for now
+    const newRole = currentRole === "ADMIN" ? "STUDENT" : "ADMIN";
     if (!confirm(`¿Cambiar rol a ${newRole}?`)) return;
     
     try {
@@ -136,10 +203,11 @@ export default function AdminUsersPage() {
               <TableHead>Usuario</TableHead>
               <TableHead>Colegio / Grado</TableHead>
               <TableHead>Rol</TableHead>
+              <TableHead>Estado</TableHead>
               <TableHead>Licencia</TableHead>
-              <TableHead>Progreso (XP/Lvl)</TableHead>
+              <TableHead>Progreso</TableHead>
               <TableHead>Última Actividad</TableHead>
-              <TableHead>Acciones</TableHead>
+              <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -147,7 +215,7 @@ export default function AdminUsersPage() {
               <TableRow key={user.id}>
                 <TableCell>
                   <div className="flex flex-col">
-                    <span className="font-medium">{user.name}</span>
+                    <span className={cn("font-medium", !user.isActive && "text-gray-400 line-through")}>{user.name}</span>
                     <span className="text-xs text-gray-500">{user.email}</span>
                   </div>
                 </TableCell>
@@ -160,6 +228,11 @@ export default function AdminUsersPage() {
                 <TableCell>
                   <Badge variant={user.role === "SUPERADMIN" ? "default" : user.role === "ADMIN" ? "outline" : user.role === "TEACHER" ? "secondary" : "outline"} className={user.role === "SUPERADMIN" ? "bg-purple-600" : ""}>
                     {user.role}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <Badge variant={user.isActive ? "outline" : "destructive"} className={cn(user.isActive ? "bg-green-50 text-green-700 border-green-200" : "bg-red-50 text-red-700 border-red-200")}>
+                    {user.isActive ? "Activo" : "Suspendido"}
                   </Badge>
                 </TableCell>
                 <TableCell>
@@ -190,27 +263,49 @@ export default function AdminUsersPage() {
                     {user.lastActive ? new Date(user.lastActive).toLocaleDateString() : "N/A"}
                   </span>
                 </TableCell>
-                <TableCell>
+                <TableCell className="text-right">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="icon">
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                    <DropdownMenuContent align="end" className="w-56">
+                      <DropdownMenuLabel>Acciones de Usuario</DropdownMenuLabel>
                       <DropdownMenuSeparator />
+                      
                       <DropdownMenuItem className="gap-2" onClick={() => handleRoleChange(user.id, user.role)}>
-                        <UserCog className="h-4 w-4" /> Alternar Rol (Admin/Estudiante)
+                        <UserCog className="h-4 w-4" /> Alternar Rol (Admin/Est.)
                       </DropdownMenuItem>
+
+                      <DropdownMenuItem className="gap-2" onClick={() => {
+                        setSelectedUser(user);
+                        setPassModalOpen(true);
+                      }}>
+                        <Lock className="h-4 w-4" /> Cambiar Contraseña
+                      </DropdownMenuItem>
+
+                      <DropdownMenuSeparator />
+                      <DropdownMenuLabel>Licencia y Estado</DropdownMenuLabel>
+
+                      <DropdownMenuItem className={cn("gap-2", user.isActive ? "text-amber-600" : "text-green-600")} onClick={() => handleStatusToggle(user)}>
+                        {user.isActive ? (
+                          <><UserX className="h-4 w-4" /> Suspender Acceso</>
+                        ) : (
+                          <><UserCheck className="h-4 w-4" /> Reactivar Acceso</>
+                        )}
+                      </DropdownMenuItem>
+
                       <DropdownMenuItem className="gap-2 text-indigo-600" onClick={() => handleLicenseChange(user.id, "ACTIVATED")}>
                         <Shield className="h-4 w-4" /> Hacer Permanente
                       </DropdownMenuItem>
                       <DropdownMenuItem className="gap-2 text-amber-600" onClick={() => handleLicenseChange(user.id, "DEMO")}>
                         <Shield className="h-4 w-4" /> Hacer Demo
                       </DropdownMenuItem>
+                      
+                      <DropdownMenuSeparator />
                       <DropdownMenuItem className="gap-2 text-red-600" onClick={() => handleDelete(user.id)}>
-                        <Trash2 className="h-4 w-4" /> Eliminar
+                        <Trash2 className="h-4 w-4" /> Eliminar Permanentemente
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -220,6 +315,36 @@ export default function AdminUsersPage() {
           </TableBody>
         </Table>
       </Card>
+
+      {/* Password Reset Modal */}
+      <Dialog open={passModalOpen} onOpenChange={setPassModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cambiar Contraseña</DialogTitle>
+            <DialogDescription>
+              Asigna una nueva clave para el usuario <strong>{selectedUser?.name}</strong>.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="password">Nueva Contraseña</Label>
+              <Input 
+                id="password" 
+                type="password" 
+                placeholder="Mínimo 6 caracteres"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPassModalOpen(false)}>Cancelar</Button>
+            <Button onClick={handlePasswordChange} disabled={changingPass}>
+              {changingPass ? "Actualizando..." : "Guardar Contraseña"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

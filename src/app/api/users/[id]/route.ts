@@ -1,23 +1,46 @@
-
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import bcrypt from "bcryptjs";
 
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions);
   const { id } = await params;
 
   const currentRole = (session?.user as any)?.role;
+  const callerId = (session?.user as any)?.id;
+
   if (!session || !session.user || (currentRole !== "ADMIN" && currentRole !== "SUPERADMIN")) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
   try {
-    const { role, licenseType } = await req.json();
+    const { role, licenseType, isActive, password } = await req.json();
     
+    // Security Scoping: ADMINs can only modify users in their own institution
+    if (currentRole === "ADMIN") {
+      const callerUser = await prisma.user.findUnique({
+        where: { id: callerId },
+        select: { institutionId: true }
+      });
+      const targetUser = await prisma.user.findUnique({
+        where: { id },
+        select: { institutionId: true }
+      });
+
+      if (!callerUser?.institutionId || callerUser.institutionId !== targetUser?.institutionId) {
+        return NextResponse.json({ message: "No puedes gestionar usuarios fuera de tu institución" }, { status: 403 });
+      }
+    }
+
     let updateData: any = {};
     if (role) updateData.role = role;
+    if (typeof isActive === "boolean") updateData.isActive = isActive;
+    
+    if (password) {
+      updateData.password = await bcrypt.hash(password, 10);
+    }
     
     if (licenseType) {
         updateData.licenseType = licenseType;
@@ -41,6 +64,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
     return NextResponse.json({ message: "User updated" });
   } catch (error) {
+    console.error("Error updating user:", error);
     return NextResponse.json({ message: "Error updating user" }, { status: 500 });
   }
 }

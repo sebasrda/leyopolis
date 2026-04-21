@@ -27,7 +27,13 @@ export async function POST(request: Request): Promise<NextResponse> {
             'image/png', 
             'image/webp',
             'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
-            'application/json'
+            'application/json',
+            'audio/mpeg',       // .mp3
+            'audio/wav',        // .wav
+            'audio/x-wav',      // .wav alternativo
+            'audio/mp4',        // .m4a
+            'audio/x-m4a',      // .m4a alternativo
+            'audio/ogg',        // .ogg
           ],
           tokenPayload: JSON.stringify({
             userId: session.user.id,

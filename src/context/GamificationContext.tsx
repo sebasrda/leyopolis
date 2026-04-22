@@ -129,7 +129,7 @@ export function GamificationProvider({ children }: { children: React.ReactNode }
                 const data = await res.json();
                 setProgress(prev => {
                     // Only update if changed to avoid re-renders
-                    if (data.xp !== prev.xp || data.level !== prev.level) {
+                    if (data.xp !== prev.xp || data.level !== prev.level || data.streak !== prev.streakDays) {
                         return {
                             ...prev,
                             xp: data.xp,

@@ -211,7 +211,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </Avatar>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-white truncate">
-                  {status === "loading" ? "..." : (session?.user?.name || "Estudiante")}
+                  {session?.user?.name || "Estudiante"}
                 </p>
                 <p className="text-xs text-slate-400">Estudiante</p>
               </div>

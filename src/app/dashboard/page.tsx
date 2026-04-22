@@ -190,17 +190,17 @@ export default function DashboardPage() {
             <h2 className="text-base font-bold text-white mb-3">Continúa tu aventura</h2>
 
             {heroBookData ? (
-              <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-[#1a2235] to-[#0f1623] border border-white/10 h-[200px] flex items-center gap-6 px-6">
+              <div className="relative rounded-2xl overflow-hidden bg-[#0f1623] border border-white/10 h-[260px] flex items-center gap-8 px-8 group">
                 {/* Adventure Landscape Background */}
                 <div
-                  className="absolute inset-0 opacity-40 bg-cover bg-center mix-blend-screen"
+                  className="absolute inset-0 opacity-60 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
                   style={{ backgroundImage: `url(${currentLandscape})` }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-r from-[#0f1623]/90 via-[#0f1623]/70 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-r from-[#0f1623] via-[#0f1623]/40 to-transparent" />
 
                 {/* Book Cover */}
                 <div className="relative z-10 shrink-0">
-                  <div className="w-28 h-40 rounded-lg overflow-hidden shadow-2xl ring-1 ring-white/10" style={{ perspective: "600px" }}>
+                  <div className="w-32 h-44 rounded-lg overflow-hidden shadow-2xl ring-1 ring-white/20 transition-transform duration-300 group-hover:-translate-y-1" style={{ perspective: "1000px" }}>
                     {heroBookData.coverImage ? (
                       <img
                         src={heroBookData.coverImage}

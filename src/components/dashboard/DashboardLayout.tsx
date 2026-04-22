@@ -199,21 +199,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </Button>
         </div>
 
-        {/* Student Profile Block */}
-        {isStudent && !collapsed && (
+        {/* User Profile Block */}
+        {!collapsed && (
           <div className="px-4 py-4 border-b border-white/5">
             <div className="flex items-center gap-3 mb-3">
               <Avatar className="h-10 w-10 ring-2 ring-indigo-500/40">
                 <AvatarImage src={session?.user?.image || defaultAvatar} />
                 <AvatarFallback className="bg-indigo-600 text-white text-sm font-bold">
-                  {session?.user?.name?.charAt(0) || "E"}
+                  {session?.user?.name?.charAt(0) || "U"}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-white truncate">
-                  {session?.user?.name || "Estudiante"}
+                  {session?.user?.name || "Usuario"}
                 </p>
-                <p className="text-xs text-slate-400">Estudiante</p>
+                <p className="text-xs text-slate-400 capitalize">{role.toLowerCase()}</p>
               </div>
             </div>
 
@@ -239,13 +239,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         )}
 
-        {/* Collapsed student avatar */}
-        {isStudent && collapsed && (
+        {/* Collapsed avatar */}
+        {collapsed && (
           <div className="px-3 py-3 flex justify-center border-b border-white/5">
             <Avatar className="h-9 w-9 ring-2 ring-indigo-500/40">
               <AvatarImage src={session?.user?.image || defaultAvatar} />
               <AvatarFallback className="bg-indigo-600 text-white text-xs font-bold">
-                {session?.user?.name?.charAt(0) || "E"}
+                {session?.user?.name?.charAt(0) || "U"}
               </AvatarFallback>
             </Avatar>
           </div>

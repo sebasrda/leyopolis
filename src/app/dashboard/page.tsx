@@ -67,16 +67,37 @@ function timeAgo(dateStr: string): string {
 // Week goal constants
 const WEEKLY_GOAL_DAYS = 7;
 
+const WEEKLY_CHALLENGES = [
+  { id: 1, title: "Lector Constante", desc: "Mantén una racha de 3 días", xp: 50, type: "streak", target: 3, icon: "🔥" },
+  { id: 2, title: "Devorador de Páginas", desc: "Lee 50 páginas", xp: 100, type: "pages", target: 50, icon: "📖" },
+  { id: 3, title: "Tiempo de Calidad", desc: "Lee por 30 minutos", xp: 150, type: "time", target: 30, icon: "⏱️" },
+  { id: 4, title: "Lector Imparable", desc: "Mantén una racha de 5 días", xp: 150, type: "streak", target: 5, icon: "🔥" },
+  { id: 5, title: "Maratón de Lectura", desc: "Lee 100 páginas", xp: 200, type: "pages", target: 100, icon: "📚" },
+  { id: 6, title: "Explorador", desc: "Lee por 60 minutos", xp: 250, type: "time", target: 60, icon: "⏱️" },
+  { id: 7, title: "Racha Perfecta", desc: "Mantén una racha de 7 días", xp: 300, type: "streak", target: 7, icon: "🔥" },
+  { id: 8, title: "Lector Veloz", desc: "Lee 200 páginas", xp: 300, type: "pages", target: 200, icon: "🚀" },
+  { id: 9, title: "Dedicación", desc: "Lee por 120 minutos", xp: 300, type: "time", target: 120, icon: "⏱️" },
+];
+
+const getWeekNumber = (d: Date) => {
+  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  return Math.ceil((((date.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+};
+
 export default function DashboardPage() {
   const { data: session } = useSession();
   const userName = session?.user?.name?.split(" ")[0] || "Estudiante";
-  const { progress } = useGamification();
+  const { progress, addXp } = useGamification();
   const { userBooks } = useLearning();
 
   const [recommendations, setRecommendations] = useState<Book[]>([]);
-  const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loadingRec, setLoadingRec] = useState(true);
-  const [loadingAssign, setLoadingAssign] = useState(true);
+
+  const currentWeek = getWeekNumber(new Date());
+  const [claimedChallenges, setClaimedChallenges] = useState<Record<number, boolean>>({});
+  const [stats, setStats] = useState({ totalPages: 0, totalMinutes: 0 });
 
   useEffect(() => {
     fetch("/api/recommendations")
@@ -86,11 +107,24 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    fetch("/api/user/assignments")
-      .then((r) => (r.ok ? r.json() : []))
-      .then((d) => { setAssignments(d); setLoadingAssign(false); })
-      .catch(() => setLoadingAssign(false));
-  }, []);
+    fetch("/api/user/stats")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d && !d.error) setStats({ totalPages: d.totalPages || 0, totalMinutes: d.totalMinutes || 0 });
+      });
+
+    const saved = localStorage.getItem(`leyopolis_claimed_week_${currentWeek}`);
+    if (saved) {
+        try { setClaimedChallenges(JSON.parse(saved)); } catch (e) {}
+    }
+  }, [currentWeek]);
+
+  const handleClaim = (challenge: any) => {
+    addXp(challenge.xp);
+    const newClaimed = { ...claimedChallenges, [challenge.id]: true };
+    setClaimedChallenges(newClaimed);
+    localStorage.setItem(`leyopolis_claimed_week_${currentWeek}`, JSON.stringify(newClaimed));
+  };
 
   // ── Computed values ──────────────────────────────────────────────
   const completedBooks = userBooks.filter((b) => b.progress >= 100).length;
@@ -109,9 +143,14 @@ export default function DashboardPage() {
   const weeklyGoalPct = Math.min(100, Math.round((progress.streakDays / WEEKLY_GOAL_DAYS) * 100));
   const weekDaysLeft = Math.max(0, WEEKLY_GOAL_DAYS - progress.streakDays);
 
-  // Active assignments (retos)
-  const activeAssignments = assignments.filter((a) => a.status !== "COMPLETED").slice(0, 3);
-  const completedAssignments = assignments.filter((a) => a.status === "COMPLETED").length;
+  // Weekly challenges
+  const startIndex = (currentWeek * 3) % WEEKLY_CHALLENGES.length;
+  const activeWeeklyChallenges = [
+    WEEKLY_CHALLENGES[startIndex % WEEKLY_CHALLENGES.length],
+    WEEKLY_CHALLENGES[(startIndex + 1) % WEEKLY_CHALLENGES.length],
+    WEEKLY_CHALLENGES[(startIndex + 2) % WEEKLY_CHALLENGES.length],
+  ];
+  const completedAssignments = Object.keys(claimedChallenges).length;
 
   // Determine landscape based on book id
   const landscapes = [
@@ -339,68 +378,81 @@ export default function DashboardPage() {
             )}
           </section>
 
-          {/* ── Retos activos (Asignaciones) ─── */}
+          {/* ── Retos Semanales ─── */}
           <section>
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-base font-bold text-white">Retos activos</h2>
-              <Link
-                href="/dashboard/estudiante"
-                className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1 transition-colors"
-              >
-                Ver todos <ChevronRight className="h-3 w-3" />
-              </Link>
+              <h2 className="text-base font-bold text-white">Retos Semanales</h2>
+              <span className="text-xs text-indigo-400 bg-indigo-500/10 px-2 py-1 rounded-md">Semana {currentWeek}</span>
             </div>
 
-            {loadingAssign ? (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-24 rounded-2xl bg-card/5 animate-pulse" />
-                ))}
-              </div>
-            ) : activeAssignments.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                {activeAssignments.map((a, idx) => {
-                  const icons = ["🌍", "🌙", "🔥"];
-                  const colors = [
-                    "from-green-500/10 to-emerald-500/5 border-green-500/20",
-                    "from-blue-500/10 to-indigo-500/5 border-blue-500/20",
-                    "from-orange-500/10 to-amber-500/5 border-orange-500/20",
-                  ];
-                  const progressColors = ["bg-green-500", "bg-blue-500", "bg-orange-500"];
-                  const daysLeft = Math.max(0, Math.ceil((new Date(a.dueDate).getTime() - Date.now()) / 86400000));
-                  return (
-                    <Link
-                      key={a.id}
-                      href={`/dashboard/reader/${a.book.id}?title=${encodeURIComponent(a.book.title)}&assignmentId=${a.id}`}
-                      className={`group bg-gradient-to-br ${colors[idx % 3]} border rounded-2xl p-4 hover:scale-[1.02] transition-all duration-200`}
-                    >
-                      <div className="flex items-start gap-3 mb-3">
-                        <span className="text-xl">{icons[idx % 3]}</span>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-white line-clamp-1">{a.title}</p>
-                          <p className="text-[11px] text-slate-400 line-clamp-1">
-                            {a.book.title} · {daysLeft === 0 ? "Vence hoy" : `${daysLeft} días`}
-                          </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {activeWeeklyChallenges.map((c, idx) => {
+                const colors = [
+                  "from-green-500/10 to-emerald-500/5 border-green-500/20",
+                  "from-blue-500/10 to-indigo-500/5 border-blue-500/20",
+                  "from-orange-500/10 to-amber-500/5 border-orange-500/20",
+                ];
+                const progressColors = ["bg-green-500", "bg-blue-500", "bg-orange-500"];
+                
+                let currentProg = 0;
+                if (c.type === "streak") currentProg = progress.streakDays;
+                if (c.type === "pages") currentProg = stats.totalPages;
+                if (c.type === "time") currentProg = stats.totalMinutes;
+                
+                const pct = Math.min(100, Math.round((currentProg / c.target) * 100));
+                const isCompleted = pct >= 100;
+                const isClaimed = claimedChallenges[c.id];
+
+                return (
+                  <div
+                    key={c.id}
+                    className={`group bg-gradient-to-br ${colors[idx % 3]} border rounded-2xl p-4 transition-all duration-200 flex flex-col`}
+                  >
+                    <div className="flex items-start gap-3 mb-3">
+                      <span className="text-xl">{c.icon}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-white line-clamp-1">{c.title}</p>
+                        <p className="text-[11px] text-slate-400 line-clamp-1">{c.desc}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-auto">
+                      {!isClaimed ? (
+                        <>
+                          <div className="flex justify-between items-end mb-1.5">
+                            <span className="text-xs font-bold text-white">+{c.xp} XP</span>
+                            <span className="text-[10px] text-slate-400">{currentProg}/{c.target}</span>
+                          </div>
+                          <div className="w-full bg-card/10 rounded-full h-1.5 overflow-hidden mb-3">
+                            <div
+                              className={`h-full ${progressColors[idx % 3]} rounded-full transition-all`}
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                          {isCompleted ? (
+                            <button
+                              onClick={() => handleClaim(c)}
+                              className="w-full py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-500/20"
+                            >
+                              Reclamar Puntos
+                            </button>
+                          ) : (
+                            <div className="w-full py-1.5 rounded-lg bg-white/5 text-slate-400 text-xs font-semibold text-center">
+                              En progreso
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <div className="w-full py-2 rounded-lg bg-green-500/20 border border-green-500/30 text-green-400 flex items-center justify-center gap-1.5 text-xs font-bold mt-2">
+                          <CheckCircle2 className="h-4 w-4" />
+                          ¡Completado!
                         </div>
-                      </div>
-                      <div className="w-full bg-card/10 rounded-full h-1.5 overflow-hidden">
-                        <div
-                          className={`h-full ${progressColors[idx % 3]} rounded-full transition-all`}
-                          style={{ width: `${a.progress}%` }}
-                        />
-                      </div>
-                      <p className="text-[11px] text-slate-400 mt-1">{a.progress}%</p>
-                    </Link>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="rounded-2xl border border-dashed border-white/10 bg-[#1a2235]/40 py-6 flex flex-col items-center text-center gap-2">
-                <CheckCircle2 className="h-8 w-8 text-green-400 opacity-50" />
-                <p className="text-slate-300 font-semibold text-sm">¡Todo al día!</p>
-                <p className="text-muted-foreground text-xs">No tienes retos pendientes.</p>
-              </div>
-            )}
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </section>
 
           {/* ── Community Banner ─── */}

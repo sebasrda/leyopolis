@@ -95,8 +95,8 @@
   --popover: oklch(0.14 0.018 255);
   --popover-foreground: oklch(0.93 0.01 250);
 
-  /* Primary (brand indigo) */
-  --primary: oklch(0.56 0.22 271);             /* indigo-500 */
+  /* Primary (brand purple) */
+  --primary: oklch(0.45 0.25 300);             /* purple */
   --primary-foreground: oklch(0.985 0 0);
 
   /* Secondary (slightly lighter surface) */
@@ -129,12 +129,12 @@
   /* Sidebar (matches DashboardLayout) */
   --sidebar: oklch(0.12 0.018 255);
   --sidebar-foreground: oklch(0.93 0.01 250);
-  --sidebar-primary: oklch(0.56 0.22 271);
+  --sidebar-primary: oklch(0.45 0.25 300);
   --sidebar-primary-foreground: oklch(0.985 0 0);
   --sidebar-accent: oklch(0.18 0.018 255);
   --sidebar-accent-foreground: oklch(0.93 0.01 250);
   --sidebar-border: oklch(1 0 0 / 8%);
-  --sidebar-ring: oklch(0.56 0.22 271 / 50%);
+  --sidebar-ring: oklch(0.45 0.25 300 / 50%);
 }
 
 

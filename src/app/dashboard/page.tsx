@@ -113,6 +113,26 @@ export default function DashboardPage() {
   const activeAssignments = assignments.filter((a) => a.status !== "COMPLETED").slice(0, 3);
   const completedAssignments = assignments.filter((a) => a.status === "COMPLETED").length;
 
+  // Determine landscape based on book id
+  const landscapes = [
+    "/images/landscapes/space.png", 
+    "/images/landscapes/forest.png", 
+    "/images/landscapes/mountains.png", 
+    "/images/landscapes/ocean.png"
+  ];
+  
+  const getLandscapeForBook = (bookId: string) => {
+    if (!bookId) return landscapes[0];
+    let hash = 0;
+    for (let i = 0; i < bookId.length; i++) {
+      hash = bookId.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash) % landscapes.length;
+    return landscapes[index];
+  };
+
+  const currentLandscape = heroBookData ? getLandscapeForBook(heroBookData.id) : landscapes[0];
+
   // Recent activity from userBooks
   const recentActivity = userBooks
     .filter((b) => b.lastRead)
@@ -171,14 +191,12 @@ export default function DashboardPage() {
 
             {heroBookData ? (
               <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-[#1a2235] to-[#0f1623] border border-white/10 h-[200px] flex items-center gap-6 px-6">
-                {/* Background blur image */}
-                {heroBookData.coverImage && (
-                  <div
-                    className="absolute inset-0 opacity-10 bg-cover bg-center blur-xl scale-110"
-                    style={{ backgroundImage: `url(${heroBookData.coverImage})` }}
-                  />
-                )}
-                <div className="absolute inset-0 bg-gradient-to-r from-[#0f1623]/80 via-transparent to-[#0f1623]/40" />
+                {/* Adventure Landscape Background */}
+                <div
+                  className="absolute inset-0 opacity-40 bg-cover bg-center mix-blend-screen"
+                  style={{ backgroundImage: `url(${currentLandscape})` }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-[#0f1623]/90 via-[#0f1623]/70 to-transparent" />
 
                 {/* Book Cover */}
                 <div className="relative z-10 shrink-0">
@@ -206,7 +224,7 @@ export default function DashboardPage() {
                   <p className="text-xs text-slate-400 mb-1.5">{heroProgress}% completado</p>
                   <div className="w-full bg-card/10 rounded-full h-1.5 mb-4 overflow-hidden">
                     <div
-                      className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full transition-all"
+                      className="h-full bg-gradient-to-r from-purple-600 to-violet-500 rounded-full transition-all"
                       style={{ width: `${heroProgress}%` }}
                     />
                   </div>
@@ -214,7 +232,7 @@ export default function DashboardPage() {
                   <div className="flex items-center gap-3">
                     <Link
                       href={`/dashboard/reader/${heroBookData.id}?title=${encodeURIComponent(heroBookData.title)}`}
-                      className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold px-5 py-2.5 rounded-xl transition-all shadow-lg shadow-indigo-500/20"
+                      className="inline-flex items-center gap-2 bg-[#6B21A8] hover:bg-[#581C87] text-white text-sm font-bold px-5 py-2.5 rounded-xl transition-all shadow-lg shadow-purple-900/40"
                     >
                       <Play className="h-4 w-4 fill-white" />
                       Continuar leyendo

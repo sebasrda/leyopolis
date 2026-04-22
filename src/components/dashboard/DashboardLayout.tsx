@@ -159,6 +159,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const isStudent = role === "STUDENT";
 
+  const firstName = session?.user?.name ? session.user.name.split(" ")[0].toLowerCase() : "";
+  const isFemale = firstName.endsWith("a");
+  const defaultAvatar = isFemale ? "/images/avatars/girl.png" : "/images/avatars/boy.png";
+
   // XP progress within current level
   const currentLevelXp = LEVEL_THRESHOLDS[Math.min(progress.level - 1, LEVEL_THRESHOLDS.length - 1)] || 0;
   const nextLevelXp = LEVEL_THRESHOLDS[Math.min(progress.level, LEVEL_THRESHOLDS.length - 1)] || currentLevelXp + 500;
@@ -200,7 +204,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div className="px-4 py-4 border-b border-white/5">
             <div className="flex items-center gap-3 mb-3">
               <Avatar className="h-10 w-10 ring-2 ring-indigo-500/40">
-                <AvatarImage src={session?.user?.image || ""} />
+                <AvatarImage src={session?.user?.image || defaultAvatar} />
                 <AvatarFallback className="bg-indigo-600 text-white text-sm font-bold">
                   {session?.user?.name?.charAt(0) || "E"}
                 </AvatarFallback>
@@ -223,7 +227,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </div>
               <div className="w-full bg-card/10 rounded-full h-1.5 overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full transition-all duration-700"
+                  className="h-full bg-gradient-to-r from-purple-600 to-violet-500 rounded-full transition-all duration-700"
                   style={{ width: `${xpPercent}%` }}
                 />
               </div>
@@ -239,7 +243,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {isStudent && collapsed && (
           <div className="px-3 py-3 flex justify-center border-b border-white/5">
             <Avatar className="h-9 w-9 ring-2 ring-indigo-500/40">
-              <AvatarImage src={session?.user?.image || ""} />
+              <AvatarImage src={session?.user?.image || defaultAvatar} />
               <AvatarFallback className="bg-indigo-600 text-white text-xs font-bold">
                 {session?.user?.name?.charAt(0) || "E"}
               </AvatarFallback>
@@ -258,14 +262,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 group",
                   isActive
-                    ? "bg-indigo-600/20 text-indigo-300 border border-indigo-500/50/20" 
+                    ? "bg-[#311A4D] text-[#D8B4FE] border border-[#D8B4FE]/20" 
                     : "text-slate-400 hover:text-white hover:bg-card/5"
                 )}
               >
-                <item.icon className={cn("h-4.5 w-4.5 shrink-0", isActive ? "text-indigo-400" : "text-muted-foreground group-hover:text-slate-300")} style={{ height: '18px', width: '18px' }} />
+                <item.icon className={cn("h-4.5 w-4.5 shrink-0", isActive ? "text-[#D8B4FE]" : "text-muted-foreground group-hover:text-slate-300")} style={{ height: '18px', width: '18px' }} />
                 {!collapsed && <span className="font-medium text-sm">{item.label}</span>}
                 {!collapsed && isActive && (
-                  <span className="ml-auto h-1.5 w-1.5 rounded-full bg-indigo-400" />
+                  <span className="ml-auto h-1.5 w-1.5 rounded-full bg-[#D8B4FE]" />
                 )}
               </Link>
             );
@@ -303,7 +307,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             href="/dashboard/settings"
             className={cn(
               "flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-card/5 transition-all",
-              pathname === "/dashboard/settings" && "bg-indigo-600/20 text-indigo-300 border border-indigo-500/50/20"
+              pathname === "/dashboard/settings" && "bg-[#311A4D] text-[#D8B4FE] border border-[#D8B4FE]/20"
             )}
           >
             <Settings className="shrink-0" style={{ height: '18px', width: '18px' }} />
@@ -369,7 +373,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center gap-3 px-2 hover:bg-card/10 rounded-xl">
                   <Avatar className="h-8 w-8 ring-2 ring-indigo-500/30">
-                    <AvatarImage src={session?.user?.image || ""} />
+                    <AvatarImage src={session?.user?.image || defaultAvatar} />
                     <AvatarFallback className={`text-indigo-300 font-bold ${status === "loading" ? "bg-slate-700 animate-pulse" : "bg-indigo-500/20"}`}>
                       {status === "loading" ? "" : (session?.user?.name?.charAt(0) || "U")}
                     </AvatarFallback>

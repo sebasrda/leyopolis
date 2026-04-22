@@ -147,8 +147,8 @@ export function MemoryGame({ pairs, onComplete }: MemoryGameProps) {
     if (!pairs || pairs.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center p-12 text-center h-full">
-                <div className="bg-white p-8 rounded-3xl shadow-lg border-2 border-indigo-50">
-                    <p className="text-gray-500 italic">No hay suficientes parejas literarias para este libro.</p>
+                <div className="bg-card p-8 rounded-3xl shadow-lg border-2 border-indigo-50">
+                    <p className="text-muted-foreground italic">No hay suficientes parejas literarias para este libro.</p>
                 </div>
             </div>
         );
@@ -157,15 +157,15 @@ export function MemoryGame({ pairs, onComplete }: MemoryGameProps) {
     return (
         <div className="flex flex-col items-center w-full h-full p-4">
             {/* Header */}
-            <div className="flex justify-between w-full max-w-4xl mb-6 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                <div className="flex items-center gap-2 text-gray-600">
+            <div className="flex justify-between w-full max-w-4xl mb-6 bg-card p-4 rounded-xl shadow-sm border border-border">
+                <div className="flex items-center gap-2 text-muted-foreground">
                     <Timer size={20} />
                     <span className="font-mono text-xl">{Math.floor(timer / 60)}:{(timer % 60).toString().padStart(2, '0')}</span>
                 </div>
-                <div className="text-gray-600 font-bold">
+                <div className="text-muted-foreground font-bold">
                     Movimientos: {moves}
                 </div>
-                <div className="text-indigo-600 font-bold">
+                <div className="text-indigo-400 font-bold">
                     Pares: {matches} / {pairs.length}
                 </div>
             </div>
@@ -183,7 +183,7 @@ export function MemoryGame({ pairs, onComplete }: MemoryGameProps) {
                     >
                         <motion.div
                             className={`w-full h-full rounded-xl shadow-md flex items-center justify-center p-4 text-center transition-all duration-500 transform-style-3d ${
-                                card.isFlipped || card.isMatched ? 'rotate-y-180 bg-white border-2 border-indigo-500' : 'bg-gradient-to-br from-indigo-500 to-purple-600'
+                                card.isFlipped || card.isMatched ? 'rotate-y-180 bg-card border-2 border-indigo-500/50' : 'bg-gradient-to-br from-indigo-500 to-purple-600'
                             }`}
                             animate={{ rotateY: card.isFlipped || card.isMatched ? 180 : 0 }}
                         >
@@ -193,8 +193,8 @@ export function MemoryGame({ pairs, onComplete }: MemoryGameProps) {
                             </div>
 
                             {/* Back (Visible) */}
-                            <div className="absolute inset-0 backface-hidden rotate-y-180 flex items-center justify-center p-3 bg-white rounded-xl border border-gray-100 shadow-inner">
-                                <span className={`text-xs sm:text-sm md:text-base font-bold leading-tight break-words max-w-full ${card.isMatched ? 'text-green-600' : 'text-indigo-900'}`}>
+                            <div className="absolute inset-0 backface-hidden rotate-y-180 flex items-center justify-center p-3 bg-card rounded-xl border border-border shadow-inner">
+                                <span className={`text-xs sm:text-sm md:text-base font-bold leading-tight break-words max-w-full ${card.isMatched ? 'text-green-600' : 'text-indigo-200'}`}>
                                     {card.content}
                                 </span>
                             </div>

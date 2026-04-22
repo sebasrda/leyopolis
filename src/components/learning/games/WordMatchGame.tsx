@@ -45,7 +45,7 @@ export function WordMatchGame() {
           <Lightbulb className="h-16 w-16 text-orange-500" />
         </div>
         <h3 className="text-3xl font-bold mb-4">¡Conexión Perfecta!</h3>
-        <p className="text-gray-600 mb-8">Has dominado el vocabulario.</p>
+        <p className="text-muted-foreground mb-8">Has dominado el vocabulario.</p>
         <Button onClick={() => setMatched([])} className="bg-orange-500 hover:bg-orange-600 text-lg px-8 py-4 rounded-full">
           Reiniciar
         </Button>
@@ -57,7 +57,7 @@ export function WordMatchGame() {
     <div className="max-w-4xl mx-auto h-full flex flex-col justify-center">
       <div className="grid grid-cols-2 gap-12">
         <div className="space-y-4">
-          <h4 className="font-bold text-gray-500 mb-4 text-center uppercase tracking-widest">Palabras</h4>
+          <h4 className="font-bold text-muted-foreground mb-4 text-center uppercase tracking-widest">Palabras</h4>
           {pairs.map((item, idx) => (
             <motion.div
               key={idx}
@@ -68,16 +68,16 @@ export function WordMatchGame() {
                   ? "bg-green-100 border-green-400 opacity-50" 
                   : selectedWord === idx 
                     ? "bg-orange-100 border-orange-500 shadow-md" 
-                    : "bg-white border-gray-200 hover:border-orange-300"
+                    : "bg-card border-border hover:border-orange-300"
               }`}
             >
-              <span className="font-bold text-lg text-gray-800">{item.word}</span>
+              <span className="font-bold text-lg text-foreground">{item.word}</span>
             </motion.div>
           ))}
         </div>
 
         <div className="space-y-4">
-          <h4 className="font-bold text-gray-500 mb-4 text-center uppercase tracking-widest">Significados</h4>
+          <h4 className="font-bold text-muted-foreground mb-4 text-center uppercase tracking-widest">Significados</h4>
           {shuffledDefs.map((item, idx) => (
             <motion.div
               key={idx}
@@ -86,10 +86,10 @@ export function WordMatchGame() {
               className={`p-6 rounded-xl cursor-pointer border-2 transition-all ${
                 matched.includes(item.id) 
                   ? "bg-green-100 border-green-400 opacity-50" 
-                  : "bg-white border-gray-200 hover:border-orange-300"
+                  : "bg-card border-border hover:border-orange-300"
               }`}
             >
-              <span className="text-sm text-gray-600 leading-snug">{item.text}</span>
+              <span className="text-sm text-muted-foreground leading-snug">{item.text}</span>
             </motion.div>
           ))}
         </div>

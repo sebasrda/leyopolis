@@ -289,7 +289,7 @@ export default function AdminClassesPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
       </div>
     );
   }
@@ -312,8 +312,8 @@ export default function AdminClassesPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Gestión de Clases</h1>
-          <p className="text-gray-500">Crea clases, asigna docentes y matricula estudiantes.</p>
+          <h1 className="text-3xl font-bold text-foreground">Gestión de Clases</h1>
+          <p className="text-muted-foreground">Crea clases, asigna docentes y matricula estudiantes.</p>
         </div>
         <div className="flex gap-2">
           <Dialog open={createOpen} onOpenChange={setCreateOpen}>
@@ -366,12 +366,12 @@ export default function AdminClassesPage() {
                       />
                     </div>
                   </Label>
-                  <div className="border rounded-md p-2 max-h-32 overflow-y-auto space-y-1 bg-gray-50/20">
+                  <div className="border rounded-md p-2 max-h-32 overflow-y-auto space-y-1 bg-muted/20">
                     {filteredStudents.length === 0 ? (
-                      <div className="text-xs text-gray-500 text-center py-2">No se encontraron estudiantes</div>
+                      <div className="text-xs text-muted-foreground text-center py-2">No se encontraron estudiantes</div>
                     ) : (
                       filteredStudents.map(s => (
-                        <label key={s.id} className="flex items-center gap-2 cursor-pointer text-xs p-1 hover:bg-white rounded border border-transparent hover:border-gray-100">
+                        <label key={s.id} className="flex items-center gap-2 cursor-pointer text-xs p-1 hover:bg-card rounded border border-transparent hover:border-border">
                           <input 
                             type="checkbox" 
                             checked={newClassStudentIds.includes(s.id)} 
@@ -379,7 +379,7 @@ export default function AdminClassesPage() {
                               if (e.target.checked) setNewClassStudentIds([...newClassStudentIds, s.id]);
                               else setNewClassStudentIds(newClassStudentIds.filter(id => id !== s.id));
                             }} 
-                            className="rounded border-gray-300 text-indigo-600" 
+                            className="rounded border-gray-300 text-indigo-400" 
                           />
                           <span className="truncate">{s.name || s.email}</span>
                         </label>
@@ -401,12 +401,12 @@ export default function AdminClassesPage() {
                       />
                     </div>
                   </Label>
-                  <div className="border rounded-md p-2 max-h-32 overflow-y-auto space-y-1 bg-gray-50/20">
+                  <div className="border rounded-md p-2 max-h-32 overflow-y-auto space-y-1 bg-muted/20">
                     {filteredBooks.length === 0 ? (
-                      <div className="text-xs text-gray-500 text-center py-2">No se encontraron libros</div>
+                      <div className="text-xs text-muted-foreground text-center py-2">No se encontraron libros</div>
                     ) : (
                       filteredBooks.map(b => (
-                        <label key={b.id} className="flex items-center gap-2 cursor-pointer text-xs p-1 hover:bg-white rounded border border-transparent hover:border-gray-100">
+                        <label key={b.id} className="flex items-center gap-2 cursor-pointer text-xs p-1 hover:bg-card rounded border border-transparent hover:border-border">
                           <input 
                             type="checkbox" 
                             checked={newClassBookIds.includes(b.id)} 
@@ -414,7 +414,7 @@ export default function AdminClassesPage() {
                               if (e.target.checked) setNewClassBookIds([...newClassBookIds, b.id]);
                               else setNewClassBookIds(newClassBookIds.filter(id => id !== b.id));
                             }} 
-                            className="rounded border-gray-300 text-indigo-600" 
+                            className="rounded border-gray-300 text-indigo-400" 
                           />
                           <span className="truncate">{b.title}</span>
                         </label>
@@ -458,21 +458,21 @@ export default function AdminClassesPage() {
                 </div>
                 <div className="max-h-48 overflow-y-auto border rounded-lg divide-y">
                   {filteredStudents.length === 0 ? (
-                    <p className="text-sm text-gray-500 p-3 text-center">No hay estudiantes registrados</p>
+                    <p className="text-sm text-muted-foreground p-3 text-center">No hay estudiantes registrados</p>
                   ) : (
                     filteredStudents.map(s => (
-                      <label key={s.id} className="flex items-center gap-3 p-2 hover:bg-gray-50 cursor-pointer">
+                      <label key={s.id} className="flex items-center gap-3 p-2 hover:bg-muted cursor-pointer">
                         <input type="checkbox" checked={selectedStudents.includes(s.id)} onChange={() => toggleStudent(s.id)} className="rounded" />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium truncate">{s.name}</p>
-                          <p className="text-xs text-gray-500 truncate">{s.email}</p>
+                          <p className="text-xs text-muted-foreground truncate">{s.email}</p>
                         </div>
                       </label>
                     ))
                   )}
                 </div>
                 {selectedStudents.length > 0 && (
-                  <p className="text-sm text-indigo-600 font-medium">{selectedStudents.length} seleccionado(s)</p>
+                  <p className="text-sm text-indigo-400 font-medium">{selectedStudents.length} seleccionado(s)</p>
                 )}
                 <Button onClick={handleEnroll} disabled={enrolling || !enrollClassId || selectedStudents.length === 0} className="w-full">
                   {enrolling ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Matriculando...</> : `Matricular ${selectedStudents.length} Estudiantes`}
@@ -488,7 +488,7 @@ export default function AdminClassesPage() {
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Settings className="h-5 w-5 text-indigo-600" /> Gestionar Clase: {editName}
+              <Settings className="h-5 w-5 text-indigo-400" /> Gestionar Clase: {editName}
             </DialogTitle>
           </DialogHeader>
 
@@ -532,16 +532,16 @@ export default function AdminClassesPage() {
                   />
                 </div>
               </Label>
-              <div className="border rounded-md p-2 max-h-48 overflow-y-auto space-y-1 bg-gray-50/30">
+              <div className="border rounded-md p-2 max-h-48 overflow-y-auto space-y-1 bg-muted/30">
                 {filteredStudents.length === 0 ? (
-                  <p className="text-xs text-center text-gray-500 py-2">No se encontraron estudiantes</p>
+                  <p className="text-xs text-center text-muted-foreground py-2">No se encontraron estudiantes</p>
                 ) : (
                   filteredStudents.map(s => (
-                    <label key={s.id} className={`flex items-center gap-2 cursor-pointer text-xs p-1.5 hover:bg-white rounded border border-transparent ${editStudentIds.includes(s.id) ? 'bg-indigo-50 border-indigo-100' : 'hover:border-gray-100'}`}>
+                    <label key={s.id} className={`flex items-center gap-2 cursor-pointer text-xs p-1.5 hover:bg-card rounded border border-transparent ${editStudentIds.includes(s.id) ? 'bg-indigo-500/10 border-indigo-500/50/20' : 'hover:border-border'}`}>
                       <input type="checkbox" checked={editStudentIds.includes(s.id)} onChange={(e) => {
                         if (e.target.checked) setEditStudentIds([...editStudentIds, s.id]);
                         else setEditStudentIds(editStudentIds.filter(id => id !== s.id));
-                      }} className="rounded border-gray-300 text-indigo-600" />
+                      }} className="rounded border-gray-300 text-indigo-400" />
                       <span className="flex-1 truncate font-medium">{s.name || s.email}</span>
                     </label>
                   ))
@@ -562,16 +562,16 @@ export default function AdminClassesPage() {
                   />
                 </div>
               </Label>
-              <div className="border rounded-md p-2 max-h-48 overflow-y-auto space-y-1 bg-gray-50/30">
+              <div className="border rounded-md p-2 max-h-48 overflow-y-auto space-y-1 bg-muted/30">
                 {filteredBooks.length === 0 ? (
-                  <p className="text-xs text-center text-gray-500 py-2">No se encontraron libros</p>
+                  <p className="text-xs text-center text-muted-foreground py-2">No se encontraron libros</p>
                 ) : (
                   filteredBooks.map(b => (
-                    <label key={b.id} className={`flex items-center gap-2 cursor-pointer text-xs p-1.5 hover:bg-white rounded border border-transparent ${editBookIds.includes(b.id) ? 'bg-indigo-50 border-indigo-100' : 'hover:border-gray-100'}`}>
+                    <label key={b.id} className={`flex items-center gap-2 cursor-pointer text-xs p-1.5 hover:bg-card rounded border border-transparent ${editBookIds.includes(b.id) ? 'bg-indigo-500/10 border-indigo-500/50/20' : 'hover:border-border'}`}>
                       <input type="checkbox" checked={editBookIds.includes(b.id)} onChange={(e) => {
                         if (e.target.checked) setEditBookIds([...editBookIds, b.id]);
                         else setEditBookIds(editBookIds.filter(id => id !== b.id));
-                      }} className="rounded border-gray-300 text-indigo-600" />
+                      }} className="rounded border-gray-300 text-indigo-400" />
                       <span className="flex-1 truncate font-medium">{b.title}</span>
                     </label>
                   ))
@@ -591,8 +591,8 @@ export default function AdminClassesPage() {
       {classes.length === 0 ? (
         <Card className="p-12 border-dashed border-2 text-center">
           <GraduationCap className="h-12 w-12 mx-auto text-gray-300 mb-3" />
-          <h3 className="font-bold text-gray-900">No hay clases creadas</h3>
-          <p className="text-sm text-gray-500 mt-1">Crea tu primera clase con el botón de arriba.</p>
+          <h3 className="font-bold text-foreground">No hay clases creadas</h3>
+          <p className="text-sm text-muted-foreground mt-1">Crea tu primera clase con el botón de arriba.</p>
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -601,7 +601,7 @@ export default function AdminClassesPage() {
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between">
                   <div>
-                    <CardTitle className="text-lg text-indigo-900">{cls.name}</CardTitle>
+                    <CardTitle className="text-lg text-indigo-200">{cls.name}</CardTitle>
                     <CardDescription className="text-xs mt-1">
                       {cls.subject && <Badge variant="outline" className="mr-1">{cls.subject}</Badge>}
                       {cls.grade && <Badge variant="secondary" className="text-xs">{cls.grade}</Badge>}
@@ -613,11 +613,11 @@ export default function AdminClassesPage() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-muted-foreground">
                   <span className="font-medium">Docente:</span> {cls.teacher?.name || "Sin asignar"}
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-500 flex items-center gap-1">
+                  <span className="text-muted-foreground flex items-center gap-1">
                     <Users className="h-4 w-4" /> Estudiantes
                   </span>
                   <span className="font-bold">{cls._count?.students || 0}</span>

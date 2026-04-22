@@ -128,34 +128,34 @@ export default function ActivityDetailPage({ params }: { params: Promise<{ id: s
         <div className="space-y-2">
           <div className="flex items-center gap-3">
             <Link href="/dashboard/activities">
-              <Button variant="ghost" className="gap-2 text-gray-600">
+              <Button variant="ghost" className="gap-2 text-muted-foreground">
                 <ArrowLeft className="h-4 w-4" /> Volver
               </Button>
             </Link>
             {activity && (
-              <Badge className="bg-indigo-50 text-indigo-700 hover:bg-indigo-50" variant="outline">
+              <Badge className="bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/10" variant="outline">
                 {activity.type}
               </Badge>
             )}
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">{activity?.title || "Actividad"}</h1>
-          <p className="text-gray-500">{activity?.description || " "}</p>
+          <h1 className="text-3xl font-bold text-foreground">{activity?.title || "Actividad"}</h1>
+          <p className="text-muted-foreground">{activity?.description || " "}</p>
         </div>
         {activity && (
           <div className="text-right">
-            <div className="text-sm text-gray-500">Puntuación</div>
-            <div className="text-2xl font-bold text-indigo-700">{activity.points}</div>
+            <div className="text-sm text-muted-foreground">Puntuación</div>
+            <div className="text-2xl font-bold text-indigo-300">{activity.points}</div>
           </div>
         )}
       </div>
 
       {loading ? (
         <Card className="border-dashed">
-          <CardContent className="p-8 text-center text-gray-500">Cargando actividad...</CardContent>
+          <CardContent className="p-8 text-center text-muted-foreground">Cargando actividad...</CardContent>
         </Card>
       ) : !activity ? (
         <Card className="border-dashed">
-          <CardContent className="p-8 text-center text-gray-500">Actividad no disponible.</CardContent>
+          <CardContent className="p-8 text-center text-muted-foreground">Actividad no disponible.</CardContent>
         </Card>
       ) : result ? (
         <Card className="border-none shadow-md">
@@ -163,8 +163,8 @@ export default function ActivityDetailPage({ params }: { params: Promise<{ id: s
             <div className="mx-auto w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center">
               <Trophy className="h-8 w-8 text-amber-600" />
             </div>
-            <div className="text-2xl font-bold text-gray-900">Resultado</div>
-            <div className="text-5xl font-black text-indigo-600">
+            <div className="text-2xl font-bold text-foreground">Resultado</div>
+            <div className="text-5xl font-black text-indigo-400">
               {result.score} <span className="text-2xl text-gray-400">/ {result.max}</span>
             </div>
             <Button onClick={() => setResult(null)} variant="outline">
@@ -258,13 +258,13 @@ export default function ActivityDetailPage({ params }: { params: Promise<{ id: s
           <CardContent className="space-y-6">
             {questions.length === 0 ? (
               <div className="space-y-2">
-                <div className="text-sm font-medium text-gray-700">Contenido</div>
+                <div className="text-sm font-medium text-foreground">Contenido</div>
                 <Textarea value={activity.content} readOnly className="font-mono text-xs min-h-[220px]" />
               </div>
             ) : (
               <div className="space-y-6">
                 {questions.map((q) => (
-                  <Card key={q.id} className="border border-gray-200 shadow-none">
+                  <Card key={q.id} className="border border-border shadow-none">
                     <CardHeader className="pb-3">
                       <CardTitle className="text-base">{q.question}</CardTitle>
                     </CardHeader>
@@ -280,7 +280,7 @@ export default function ActivityDetailPage({ params }: { params: Promise<{ id: s
                                 onClick={() => setAnswers((prev) => ({ ...prev, [String(q.id)]: idx }))}
                                 className={[
                                   "w-full text-left p-3 rounded-lg border transition",
-                                  selected ? "border-indigo-600 bg-indigo-50 text-indigo-900" : "border-gray-200 hover:bg-gray-50",
+                                  selected ? "border-indigo-600 bg-indigo-500/10 text-indigo-200" : "border-border hover:bg-muted",
                                 ].join(" ")}
                               >
                                 {opt}

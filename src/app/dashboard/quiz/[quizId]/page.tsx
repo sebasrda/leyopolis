@@ -108,8 +108,8 @@ export default function QuizPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
-        <span className="ml-3 text-gray-500">Cargando quiz...</span>
+        <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
+        <span className="ml-3 text-muted-foreground">Cargando quiz...</span>
       </div>
     );
   }
@@ -118,7 +118,7 @@ export default function QuizPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
         <XCircle className="h-12 w-12 text-red-400" />
-        <p className="text-gray-600">{error}</p>
+        <p className="text-muted-foreground">{error}</p>
         <Button variant="outline" onClick={() => router.back()}>
           <ArrowLeft className="h-4 w-4 mr-2" /> Volver
         </Button>
@@ -133,10 +133,10 @@ export default function QuizPage() {
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{quiz?.title || "Quiz"}</h1>
-          {quiz?.description && <p className="text-gray-500 text-sm">{quiz.description}</p>}
+          <h1 className="text-2xl font-bold text-foreground">{quiz?.title || "Quiz"}</h1>
+          {quiz?.description && <p className="text-muted-foreground text-sm">{quiz.description}</p>}
         </div>
-        <Badge className="ml-auto bg-indigo-100 text-indigo-700">{quiz?.points || 100} pts</Badge>
+        <Badge className="ml-auto bg-indigo-500/20 text-indigo-300">{quiz?.points || 100} pts</Badge>
       </div>
 
       {submitted && (
@@ -145,7 +145,7 @@ export default function QuizPage() {
             <Trophy className={`h-10 w-10 ${score >= 70 ? "text-green-600" : "text-amber-600"}`} />
             <div>
               <h2 className="text-xl font-bold">{score >= 70 ? "¡Felicidades!" : "Sigue practicando"}</h2>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-muted-foreground">
                 Obtuviste <span className="font-bold text-lg">{score}%</span> de respuestas correctas
               </p>
             </div>
@@ -166,7 +166,7 @@ export default function QuizPage() {
             <Card key={q.id} className={`transition-all ${submitted ? (isCorrect ? "ring-2 ring-green-300" : "ring-2 ring-red-200") : "hover:shadow-md"}`}>
               <CardHeader className="pb-2">
                 <CardTitle className="text-base flex items-center gap-2">
-                  <span className="bg-indigo-100 text-indigo-700 rounded-full w-7 h-7 flex items-center justify-center text-sm font-bold shrink-0">
+                  <span className="bg-indigo-500/20 text-indigo-300 rounded-full w-7 h-7 flex items-center justify-center text-sm font-bold shrink-0">
                     {idx + 1}
                   </span>
                   {q.question}
@@ -190,10 +190,10 @@ export default function QuizPage() {
                               ? "bg-green-100 border-green-300 font-medium"
                               : userAnswer === optIdx
                                 ? "bg-red-50 border-red-200"
-                                : "bg-gray-50 border-gray-100"
+                                : "bg-muted border-border"
                             : userAnswer === optIdx
-                              ? "bg-indigo-50 border-indigo-300 ring-1 ring-indigo-200"
-                              : "bg-white border-gray-200 hover:bg-gray-50"
+                              ? "bg-indigo-500/10 border-indigo-300 ring-1 ring-indigo-200"
+                              : "bg-card border-border hover:bg-muted"
                         }`}
                       >
                         <span className="font-medium mr-2 text-gray-400">{String.fromCharCode(65 + optIdx)}.</span>

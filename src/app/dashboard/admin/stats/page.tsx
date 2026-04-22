@@ -97,15 +97,15 @@ export default function AdminStatsPage() {
   const statCards = [
     { title: "Usuarios Totales", value: intel ? intel.users.total : "—", change: intel ? `${intel.users.newUsers7d} nuevos (7d)` : "—", icon: Users, color: "text-blue-600" },
     { title: "Usuarios Activos", value: intel ? intel.users.activeToday : "—", change: intel ? `${intel.users.activeWeek} activos (7d)` : "—", icon: Activity, color: "text-orange-600" },
-    { title: "Libros en Plataforma", value: intel ? intel.books.total : "—", change: intel ? `${intel.books.recent.length} recientes` : "—", icon: BookOpen, color: "text-indigo-600" },
+    { title: "Libros en Plataforma", value: intel ? intel.books.total : "—", change: intel ? `${intel.books.recent.length} recientes` : "—", icon: BookOpen, color: "text-indigo-400" },
     { title: "Lecturas Hoy", value: intel ? intel.reading.readsToday : "—", change: intel ? `Promedio ${formatDuration(intel.reading.avgReadingSeconds)}` : "—", icon: Clock, color: "text-green-600" },
   ];
 
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Panel de Inteligencia / Estadísticas</h1>
-        <p className="text-gray-500">
+        <h1 className="text-3xl font-bold text-foreground">Panel de Inteligencia / Estadísticas</h1>
+        <p className="text-muted-foreground">
           Datos en tiempo real del comportamiento, crecimiento y lectura. Última actualización:{" "}
           {intel?.updatedAt ? new Date(intel.updatedAt).toLocaleTimeString() : "—"}
         </p>
@@ -114,7 +114,7 @@ export default function AdminStatsPage() {
       {error && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm font-medium text-gray-900">Estado</CardTitle>
+            <CardTitle className="text-sm font-medium text-foreground">Estado</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-sm text-red-600">{error}</div>
@@ -126,12 +126,12 @@ export default function AdminStatsPage() {
         {statCards.map((stat, i) => (
           <Card key={i}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500">{stat.title}</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">{stat.title}</CardTitle>
               <stat.icon className={`h-4 w-4 ${stat.color}`} />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stat.value}</div>
-              <p className="text-xs text-gray-500 flex items-center mt-1">
+              <p className="text-xs text-muted-foreground flex items-center mt-1">
                 <TrendingUp className="h-3 w-3 mr-1" /> {stat.change}
               </p>
             </CardContent>
@@ -143,7 +143,7 @@ export default function AdminStatsPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="h-4 w-4 text-indigo-600" /> Lecturas por día (30d)
+              <BarChart3 className="h-4 w-4 text-indigo-400" /> Lecturas por día (30d)
             </CardTitle>
           </CardHeader>
           <CardContent className="h-[320px]">
@@ -183,7 +183,7 @@ export default function AdminStatsPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <BookOpen className="h-4 w-4 text-indigo-600" /> Libros más populares (30d)
+              <BookOpen className="h-4 w-4 text-indigo-400" /> Libros más populares (30d)
             </CardTitle>
           </CardHeader>
           <CardContent className="h-[320px]">
@@ -223,7 +223,7 @@ export default function AdminStatsPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <BookOpen className="h-4 w-4 text-indigo-600" /> Top libros (30d)
+              <BookOpen className="h-4 w-4 text-indigo-400" /> Top libros (30d)
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -240,7 +240,7 @@ export default function AdminStatsPage() {
                 {(intel?.tables.topBooks ?? []).slice(0, 8).map((row) => (
                   <TableRow key={row.id}>
                     <TableCell className="font-medium">{row.title}</TableCell>
-                    <TableCell className="text-gray-500">{row.author}</TableCell>
+                    <TableCell className="text-muted-foreground">{row.author}</TableCell>
                     <TableCell className="text-right">{row.reads}</TableCell>
                     <TableCell className="text-right">{row.weeklyGrowth}%</TableCell>
                   </TableRow>
@@ -270,7 +270,7 @@ export default function AdminStatsPage() {
                   <TableRow key={row.id}>
                     <TableCell className="font-medium">
                       <div>{row.name}</div>
-                      <div className="text-xs text-gray-500">{row.email}</div>
+                      <div className="text-xs text-muted-foreground">{row.email}</div>
                     </TableCell>
                     <TableCell className="text-right">{formatDuration(row.readingSeconds)}</TableCell>
                     <TableCell className="text-right">{row.booksCompleted}</TableCell>

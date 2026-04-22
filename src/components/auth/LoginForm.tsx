@@ -77,7 +77,7 @@ export default function LoginForm() {
               />
               <button 
                 type="button" 
-                className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 focus:outline-none"
+                className="absolute right-3 top-3 text-gray-400 hover:text-muted-foreground focus:outline-none"
                 onClick={() => setShowPassword(!showPassword)}
                 tabIndex={-1}
               >
@@ -92,13 +92,13 @@ export default function LoginForm() {
         </form>
       </CardContent>
       <CardFooter className="flex flex-col space-y-2">
-        <p className="text-sm text-center text-gray-600">
+        <p className="text-sm text-center text-muted-foreground">
           ¿No tienes una cuenta?{" "}
-          <Link href="/register" className="text-indigo-600 hover:underline">
+          <Link href="/register" className="text-indigo-400 hover:underline">
             Regístrate gratis
           </Link>
         </p>
-        <Link href="/forgot-password" className="text-xs text-center text-gray-500 hover:underline">
+        <Link href="/forgot-password" className="text-xs text-center text-muted-foreground hover:underline">
           ¿Olvidaste tu contraseña?
         </Link>
       </CardFooter>

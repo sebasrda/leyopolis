@@ -55,13 +55,13 @@ export function MyAssignments() {
             <Card className="border-none shadow-sm h-full">
                 <CardHeader>
                     <CardTitle className="text-lg flex items-center gap-2">
-                        <BookOpen className="h-5 w-5 text-indigo-600" /> Tareas Pendientes
+                        <BookOpen className="h-5 w-5 text-indigo-400" /> Tareas Pendientes
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="space-y-4 animate-pulse">
                         {[1, 2].map((i) => (
-                            <div key={i} className="h-24 bg-gray-100 rounded-lg" />
+                            <div key={i} className="h-24 bg-muted rounded-lg" />
                         ))}
                     </div>
                 </CardContent>
@@ -74,10 +74,10 @@ export function MyAssignments() {
             <Card className="border-none shadow-sm h-full">
                 <CardHeader>
                     <CardTitle className="text-lg flex items-center gap-2">
-                        <BookOpen className="h-5 w-5 text-indigo-600" /> Tareas Pendientes
+                        <BookOpen className="h-5 w-5 text-indigo-400" /> Tareas Pendientes
                     </CardTitle>
                 </CardHeader>
-                <CardContent className="flex flex-col items-center justify-center py-8 text-gray-500">
+                <CardContent className="flex flex-col items-center justify-center py-8 text-muted-foreground">
                     <CheckCircle2 className="h-12 w-12 mb-2 text-green-500 opacity-20" />
                     <p>¡Todo al día! No tienes tareas pendientes.</p>
                 </CardContent>
@@ -89,7 +89,7 @@ export function MyAssignments() {
         <Card className="border-none shadow-sm h-full">
             <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
-                    <BookOpen className="h-5 w-5 text-indigo-600" /> Tareas Pendientes
+                    <BookOpen className="h-5 w-5 text-indigo-400" /> Tareas Pendientes
                 </CardTitle>
                 <CardDescription>Lecturas asignadas por tus profesores</CardDescription>
             </CardHeader>
@@ -99,7 +99,7 @@ export function MyAssignments() {
                     const daysLeft = Math.ceil((new Date(assignment.dueDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
                     
                     return (
-                        <div key={assignment.id} className="group flex items-start gap-4 p-4 rounded-xl border bg-white hover:border-indigo-200 hover:shadow-md transition-all">
+                        <div key={assignment.id} className="group flex items-start gap-4 p-4 rounded-xl border bg-card hover:border-indigo-500/50/30 hover:shadow-md transition-all">
                             <BookCover 
                                 src={assignment.book.coverImage || "https://placehold.co/400x600?text=Libro"} 
                                 alt={assignment.book.title}
@@ -109,17 +109,17 @@ export function MyAssignments() {
                             <div className="flex-1 min-w-0 space-y-2">
                                 <div className="flex justify-between items-start">
                                     <div>
-                                        <h4 className="font-bold text-gray-900 line-clamp-1 group-hover:text-indigo-600 transition-colors">
+                                        <h4 className="font-bold text-foreground line-clamp-1 group-hover:text-indigo-400 transition-colors">
                                             {assignment.title}
                                         </h4>
-                                        <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+                                        <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
                                             <span className="font-medium text-indigo-500">{assignment.class.name}</span>
                                             <span>•</span>
                                             <span>{assignment.book.title}</span>
                                         </p>
                                     </div>
                                     <Badge variant={assignment.status === 'COMPLETED' ? "outline" : "secondary"} className={cn(
-                                        assignment.status === 'COMPLETED' ? "border-green-500 text-green-600 bg-green-50" : "bg-indigo-50 text-indigo-700"
+                                        assignment.status === 'COMPLETED' ? "border-green-500 text-green-600 bg-green-50" : "bg-indigo-500/10 text-indigo-300"
                                     )}>
                                         {assignment.status === 'COMPLETED' ? 'Completado' : `${assignment.progress}%`}
                                     </Badge>
@@ -128,7 +128,7 @@ export function MyAssignments() {
                                 <div className="flex items-center gap-4 text-xs">
                                     <div className={cn(
                                         "flex items-center gap-1 font-medium",
-                                        isOverdue ? "text-red-500" : daysLeft <= 3 ? "text-orange-500" : "text-gray-500"
+                                        isOverdue ? "text-red-500" : daysLeft <= 3 ? "text-orange-500" : "text-muted-foreground"
                                     )}>
                                         <Calendar className="h-3 w-3" />
                                         {isOverdue ? 'Vencida' : `${daysLeft} días restantes`}

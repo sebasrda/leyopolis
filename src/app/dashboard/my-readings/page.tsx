@@ -24,11 +24,11 @@ export default function MyReadingsPage() {
   return (
     <div className="space-y-8 p-6">
       <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-          <BookMarked className="h-8 w-8 text-indigo-600" />
+        <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
+          <BookMarked className="h-8 w-8 text-indigo-400" />
           Mis Lecturas
         </h1>
-        <p className="text-gray-500">Gestiona tu progreso, historial y aprendizaje.</p>
+        <p className="text-muted-foreground">Gestiona tu progreso, historial y aprendizaje.</p>
       </div>
 
       <Tabs defaultValue="current" className="w-full">
@@ -42,10 +42,10 @@ export default function MyReadingsPage() {
         {/* CURRENT READINGS TAB */}
         <TabsContent value="current" className="space-y-6">
           {currentBooks.length === 0 ? (
-             <div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+             <div className="text-center py-12 bg-muted rounded-xl border-2 border-dashed border-border">
                 <BookOpen className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                <h3 className="text-lg font-medium text-gray-900">No tienes lecturas en curso</h3>
-                <p className="text-gray-500 mb-4">Explora la biblioteca para encontrar tu próximo libro.</p>
+                <h3 className="text-lg font-medium text-foreground">No tienes lecturas en curso</h3>
+                <p className="text-muted-foreground mb-4">Explora la biblioteca para encontrar tu próximo libro.</p>
                 <Link href="/dashboard/library">
                   <Button>Ir a la Biblioteca</Button>
                 </Link>
@@ -64,7 +64,7 @@ export default function MyReadingsPage() {
                     <BookCover src={image} alt={book.title}>
                         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3 p-4">
                             <Link href={`/dashboard/reader/${book.id}?title=${encodeURIComponent(book.title)}`}>
-                            <Button className="bg-white text-indigo-900 hover:bg-indigo-50 font-bold w-full">
+                            <Button className="bg-card text-indigo-200 hover:bg-indigo-500/10 font-bold w-full">
                                 <PlayCircle className="h-4 w-4 mr-2" /> Continuar
                             </Button>
                             </Link>
@@ -79,28 +79,28 @@ export default function MyReadingsPage() {
 
                     <CardContent className="p-4 space-y-4">
                     <div>
-                        <h3 className="font-bold text-gray-900 line-clamp-1" title={book.title}>{book.title}</h3>
-                        <p className="text-sm text-gray-500">{book.author}</p>
+                        <h3 className="font-bold text-foreground line-clamp-1" title={book.title}>{book.title}</h3>
+                        <p className="text-sm text-muted-foreground">{book.author}</p>
                     </div>
                     
                     {/* Real-time Granular Stats */}
-                    <div className="bg-indigo-50/50 rounded-xl p-3 border border-indigo-100/50 space-y-2">
-                        <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wider text-indigo-700">
+                    <div className="bg-indigo-500/10/50 rounded-xl p-3 border border-indigo-500/50/20/50 space-y-2">
+                        <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wider text-indigo-300">
                             <span>Progreso Real</span>
-                            <span className="bg-white px-1.5 py-0.5 rounded border border-indigo-100">
+                            <span className="bg-card px-1.5 py-0.5 rounded border border-indigo-500/50/20">
                                 {item.pagesReached || 1} / {(book as any).totalPages || 150} págs
                             </span>
                         </div>
                         <div className="grid grid-cols-2 gap-2 text-[10px]">
-                            <div className="bg-white/60 p-1.5 rounded border border-indigo-50 overflow-hidden">
+                            <div className="bg-card/60 p-1.5 rounded border border-indigo-50 overflow-hidden">
                                 <p className="text-gray-400 font-medium">Tiempo total</p>
-                                <p className="font-bold text-indigo-900 truncate">
+                                <p className="font-bold text-indigo-200 truncate">
                                     {item.totalDuration ? Math.round(item.totalDuration / 60) : 0} min
                                 </p>
                             </div>
-                            <div className="bg-white/60 p-1.5 rounded border border-indigo-50 overflow-hidden">
+                            <div className="bg-card/60 p-1.5 rounded border border-indigo-50 overflow-hidden">
                                 <p className="text-gray-400 font-medium">Ritmo</p>
-                                <p className="font-bold text-indigo-900 truncate">
+                                <p className="font-bold text-indigo-200 truncate">
                                     {item.avgTimePerPage ? (item.avgTimePerPage / 60).toFixed(1) : "0"} min/p
                                 </p>
                             </div>
@@ -116,7 +116,7 @@ export default function MyReadingsPage() {
                     </div>
 
                     <div className="space-y-1.5">
-                        <div className="flex justify-between text-xs text-gray-500 font-medium">
+                        <div className="flex justify-between text-xs text-muted-foreground font-medium">
                         <span>Progreso General</span>
                         <span>{progress}%</span>
                         </div>
@@ -129,8 +129,8 @@ export default function MyReadingsPage() {
                 
                 {/* Add New Book Placeholder - Always visible as an option */}
                 <Link href="/dashboard/library">
-                <Card className="h-full border-2 border-dashed border-gray-200 hover:border-indigo-400 hover:bg-indigo-50/50 transition-all flex flex-col items-center justify-center text-gray-400 hover:text-indigo-600 cursor-pointer min-h-[300px]">
-                    <div className="p-4 rounded-full bg-gray-50 group-hover:bg-indigo-100 mb-4 transition-colors">
+                <Card className="h-full border-2 border-dashed border-border hover:border-indigo-400 hover:bg-indigo-500/10/50 transition-all flex flex-col items-center justify-center text-gray-400 hover:text-indigo-400 cursor-pointer min-h-[300px]">
+                    <div className="p-4 rounded-full bg-muted group-hover:bg-indigo-500/20 mb-4 transition-colors">
                     <BookOpen className="h-8 w-8" />
                     </div>
                     <span className="font-medium">Explorar Biblioteca</span>
@@ -145,7 +145,7 @@ export default function MyReadingsPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <History className="h-5 w-5 text-indigo-600" />
+                <History className="h-5 w-5 text-indigo-400" />
                 Historial de Lectura
               </CardTitle>
               <CardDescription>Libros que has completado.</CardDescription>
@@ -163,16 +163,16 @@ export default function MyReadingsPage() {
                     const image = book.coverImage || `https://placehold.co/400x600?text=${encodeURIComponent(book.title)}`;
                     
                     return (
-                    <div key={item.id} className="flex items-start gap-4 p-4 rounded-lg hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-100">
+                    <div key={item.id} className="flex items-start gap-4 p-4 rounded-lg hover:bg-muted transition-colors border border-transparent hover:border-border">
                         <BookCover src={image} alt={book.title} className="w-16 h-24 shrink-0 shadow-sm rounded-md" />
                         <div className="flex-1 space-y-1">
                         <div className="flex justify-between items-start">
-                            <h3 className="font-bold text-gray-900">{book.title}</h3>
+                            <h3 className="font-bold text-foreground">{book.title}</h3>
                             <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50">
                             Completado
                             </Badge>
                         </div>
-                        <p className="text-sm text-gray-500">{book.author}</p>
+                        <p className="text-sm text-muted-foreground">{book.author}</p>
                         <div className="flex items-center gap-4 text-xs text-gray-400 mt-2">
                             <span className="flex items-center gap-1">
                             <Clock className="h-3 w-3" /> {date}
@@ -210,7 +210,7 @@ export default function MyReadingsPage() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {note.quote && (
-                    <blockquote className="border-l-4 border-indigo-200 pl-3 italic text-gray-600 text-sm line-clamp-3">
+                    <blockquote className="border-l-4 border-indigo-500/50/30 pl-3 italic text-muted-foreground text-sm line-clamp-3">
                       "{note.quote}"
                     </blockquote>
                   )}
@@ -249,20 +249,20 @@ export default function MyReadingsPage() {
               <Card key={vocab.id} className={`border-l-4 ${vocab.mastered ? "border-l-green-500" : "border-l-indigo-500"}`}>
                 <CardHeader className="pb-2">
                   <div className="flex justify-between items-center">
-                    <CardTitle className="text-xl text-indigo-900">{vocab.word}</CardTitle>
+                    <CardTitle className="text-xl text-indigo-200">{vocab.word}</CardTitle>
                     <div onClick={() => toggleVocabularyMastery(vocab.id)} className="cursor-pointer">
                         {vocab.mastered ? (
                         <Badge className="bg-green-100 text-green-700 hover:bg-green-200 border-none">Aprendido</Badge>
                         ) : (
-                        <Badge variant="outline" className="hover:bg-indigo-50">Por repasar</Badge>
+                        <Badge variant="outline" className="hover:bg-indigo-500/10">Por repasar</Badge>
                         )}
                     </div>
                   </div>
                   <CardDescription className="line-clamp-1">De: {vocab.bookTitle}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <p className="text-sm text-gray-700">{vocab.definition}</p>
-                  <div className="bg-gray-50 p-2 rounded text-xs text-gray-500 italic">
+                  <p className="text-sm text-foreground">{vocab.definition}</p>
+                  <div className="bg-muted p-2 rounded text-xs text-muted-foreground italic">
                     "{vocab.context}"
                   </div>
                   <div className="pt-2 flex gap-2">

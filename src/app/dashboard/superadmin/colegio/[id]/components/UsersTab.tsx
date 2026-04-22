@@ -98,7 +98,7 @@ export default function UsersTab({ institutionId, role, limits, onUpdate }: { in
     <Card className="border-none shadow-md">
       <CardContent className="p-6 space-y-6">
         <div className="flex justify-between items-center">
-          <h2 className="text-xl font-bold text-gray-800">Gestión de {roleName}</h2>
+          <h2 className="text-xl font-bold text-foreground">Gestión de {roleName}</h2>
           
           <Dialog open={createOpen} onOpenChange={(val) => { setCreateOpen(val); if (!val) setNewCredentials(null); }}>
             <DialogTrigger asChild>
@@ -116,11 +116,11 @@ export default function UsersTab({ institutionId, role, limits, onUpdate }: { in
                     <KeyRound className="h-10 w-10 text-green-600 mx-auto" />
                     <div>
                         <p className="text-sm text-green-800 font-medium">¡Creado exitosamente!</p>
-                        <p className="text-xs text-gray-500 mt-2">Copia estos datos y entrégalos al usuario:</p>
+                        <p className="text-xs text-muted-foreground mt-2">Copia estos datos y entrégalos al usuario:</p>
                     </div>
-                    <div className="bg-white p-4 rounded border text-left space-y-2">
+                    <div className="bg-card p-4 rounded border text-left space-y-2">
                         <p className="font-mono text-sm"><strong>Email:</strong> {newCredentials.email}</p>
-                        <p className="font-mono text-sm text-indigo-600"><strong>Clave:</strong> {newCredentials.pass}</p>
+                        <p className="font-mono text-sm text-indigo-400"><strong>Clave:</strong> {newCredentials.pass}</p>
                     </div>
                     <Button onClick={() => setCreateOpen(false)} className="w-full">Cerrar</Button>
                  </div>
@@ -164,28 +164,28 @@ export default function UsersTab({ institutionId, role, limits, onUpdate }: { in
             </div>
         )}
 
-        <div className="bg-white border rounded-lg overflow-hidden">
+        <div className="bg-card border rounded-lg overflow-hidden">
           <table className="w-full text-left text-sm">
-            <thead className="bg-gray-50 border-b">
+            <thead className="bg-muted border-b">
               <tr>
-                <th className="p-3 font-medium text-gray-500">Nombre</th>
-                <th className="p-3 font-medium text-gray-500">Email</th>
-                <th className="p-3 font-medium text-gray-500">Licencia</th>
-                <th className="p-3 font-medium text-gray-500 text-center">Acciones</th>
+                <th className="p-3 font-medium text-muted-foreground">Nombre</th>
+                <th className="p-3 font-medium text-muted-foreground">Email</th>
+                <th className="p-3 font-medium text-muted-foreground">Licencia</th>
+                <th className="p-3 font-medium text-muted-foreground text-center">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y">
               {loading ? (
                 <tr><td colSpan={4} className="p-8 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto text-indigo-400" /></td></tr>
               ) : users.length === 0 ? (
-                <tr><td colSpan={4} className="p-8 text-center text-gray-500">No hay {roleName.toLowerCase()} registrados.</td></tr>
+                <tr><td colSpan={4} className="p-8 text-center text-muted-foreground">No hay {roleName.toLowerCase()} registrados.</td></tr>
               ) : (
                 users.map(u => (
-                  <tr key={u.id} className="hover:bg-gray-50">
-                    <td className="p-3 font-medium text-gray-900">{u.name || "Sin nombre"}</td>
-                    <td className="p-3 text-gray-500">{u.email}</td>
+                  <tr key={u.id} className="hover:bg-muted">
+                    <td className="p-3 font-medium text-foreground">{u.name || "Sin nombre"}</td>
+                    <td className="p-3 text-muted-foreground">{u.email}</td>
                     <td className="p-3">
-                      <span className="inline-flex items-center px-2 py-1 rounded-md bg-indigo-50 text-indigo-700 text-xs font-semibold">
+                      <span className="inline-flex items-center px-2 py-1 rounded-md bg-indigo-500/10 text-indigo-300 text-xs font-semibold">
                         {u.licenseType === "DEMO" ? "Demo" : u.licenseType === "MENSUAL" ? "Mensual" : u.licenseType === "TRIMESTRAL" ? "Trimestral" : u.licenseType === "ANUAL" ? "Anual" : "Permanente"}
                       </span>
                       {u.expiresAt && (

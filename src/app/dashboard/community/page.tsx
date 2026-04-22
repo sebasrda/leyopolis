@@ -90,8 +90,8 @@ export default function CommunityPage() {
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Comunidad y Clubes</h1>
-          <p className="text-gray-500">Únete a grupos de lectura y comparte tus ideas.</p>
+          <h1 className="text-3xl font-bold text-foreground">Comunidad y Clubes</h1>
+          <p className="text-muted-foreground">Únete a grupos de lectura y comparte tus ideas.</p>
         </div>
         <div className="flex gap-2">
           <Button className="bg-indigo-600 hover:bg-indigo-500 gap-2">
@@ -105,7 +105,7 @@ export default function CommunityPage() {
         <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
         <Input 
           placeholder="Buscar clubes de lectura..." 
-          className="pl-10 bg-white"
+          className="pl-10 bg-card"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
@@ -115,14 +115,14 @@ export default function CommunityPage() {
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[1, 2, 3].map((i) => (
-            <Card key={i} className="animate-pulse h-64 bg-gray-100 border-none" />
+            <Card key={i} className="animate-pulse h-64 bg-muted border-none" />
           ))}
         </div>
       ) : filteredClubs.length === 0 ? (
-        <div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed">
+        <div className="text-center py-12 bg-muted rounded-xl border-2 border-dashed">
           <Users className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-          <h3 className="text-lg font-medium text-gray-900">No se encontraron clubes</h3>
-          <p className="text-gray-500">Intenta con otra búsqueda o crea tu propio club.</p>
+          <h3 className="text-lg font-medium text-foreground">No se encontraron clubes</h3>
+          <p className="text-muted-foreground">Intenta con otra búsqueda o crea tu propio club.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -154,10 +154,10 @@ export default function CommunityPage() {
               </div>
               
               <CardContent className="flex-1 p-5">
-                <p className="text-gray-600 text-sm line-clamp-3">{club.description}</p>
+                <p className="text-muted-foreground text-sm line-clamp-3">{club.description}</p>
               </CardContent>
               
-              <CardFooter className="p-5 pt-0 gap-3 border-t bg-gray-50/50 mt-auto pt-4">
+              <CardFooter className="p-5 pt-0 gap-3 border-t bg-muted/50 mt-auto pt-4">
                 <Link href={`/dashboard/community/club/${club.id}`} className="flex-1">
                   <Button variant="default" className="w-full bg-indigo-600 hover:bg-indigo-700">
                     <BookOpen className="h-4 w-4 mr-2" /> Entrar
@@ -168,7 +168,7 @@ export default function CommunityPage() {
                   size="icon"
                   onClick={() => handleJoinToggle(club.id, club.isMember)}
                   title={club.isMember ? "Salir del club" : "Unirse al club"}
-                  className={club.isMember ? "text-red-500 hover:text-red-700 hover:bg-red-50" : "text-indigo-600 bg-indigo-50 hover:bg-indigo-100"}
+                  className={club.isMember ? "text-red-500 hover:text-red-700 hover:bg-red-50" : "text-indigo-400 bg-indigo-500/10 hover:bg-indigo-500/20"}
                 >
                   {club.isMember ? <LogOut className="h-4 w-4" /> : <LogIn className="h-4 w-4" />}
                 </Button>

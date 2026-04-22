@@ -75,12 +75,12 @@ export default function VideoDetailPage({ params }: { params: Promise<{ id: stri
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
         <Link href="/dashboard/videos">
-          <Button variant="ghost" className="gap-2 text-gray-600">
+          <Button variant="ghost" className="gap-2 text-muted-foreground">
             <ArrowLeft className="h-4 w-4" /> Videos
           </Button>
         </Link>
         {video && (
-          <Badge variant="outline" className="bg-indigo-50 text-indigo-700 hover:bg-indigo-50">
+          <Badge variant="outline" className="bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/10">
             {video.provider}
           </Badge>
         )}
@@ -88,11 +88,11 @@ export default function VideoDetailPage({ params }: { params: Promise<{ id: stri
 
       {loading ? (
         <Card className="border-dashed">
-          <CardContent className="p-8 text-center text-gray-500">Cargando video...</CardContent>
+          <CardContent className="p-8 text-center text-muted-foreground">Cargando video...</CardContent>
         </Card>
       ) : !video ? (
         <Card className="border-dashed">
-          <CardContent className="p-8 text-center text-gray-500">Video no disponible.</CardContent>
+          <CardContent className="p-8 text-center text-muted-foreground">Video no disponible.</CardContent>
         </Card>
       ) : (
         <Card className="border-none shadow-md overflow-hidden">
@@ -102,7 +102,7 @@ export default function VideoDetailPage({ params }: { params: Promise<{ id: stri
                 <CardTitle className="text-2xl">{video.title}</CardTitle>
                 <CardDescription>{video.description || " "}</CardDescription>
               </div>
-              <div className="text-right text-xs text-gray-500">
+              <div className="text-right text-xs text-muted-foreground">
                 <div>{video.teacher.name || video.teacher.email || "—"}</div>
                 <div>{new Date(video.createdAt).toLocaleDateString()}</div>
               </div>

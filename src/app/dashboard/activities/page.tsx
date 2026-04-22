@@ -148,8 +148,8 @@ export default function ActivitiesPage() {
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold text-gray-900">Actividades</h1>
-          <p className="text-gray-500">Cuestionarios, juegos y comprensión lectora.</p>
+          <h1 className="text-3xl font-bold text-foreground">Actividades</h1>
+          <p className="text-muted-foreground">Cuestionarios, juegos y comprensión lectora.</p>
         </div>
 
         {canCreate && (
@@ -196,11 +196,11 @@ export default function ActivitiesPage() {
                 <div className="grid gap-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <div className="text-sm font-medium text-gray-700">Título</div>
+                      <div className="text-sm font-medium text-foreground">Título</div>
                       <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Título de la actividad" />
                     </div>
                     <div className="space-y-2">
-                      <div className="text-sm font-medium text-gray-700">Puntos</div>
+                      <div className="text-sm font-medium text-foreground">Puntos</div>
                       <Input
                         type="number"
                         value={String(points)}
@@ -211,12 +211,12 @@ export default function ActivitiesPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <div className="text-sm font-medium text-gray-700">Descripción</div>
+                    <div className="text-sm font-medium text-foreground">Descripción</div>
                     <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Opcional" />
                   </div>
 
                   <div className="space-y-2">
-                    <div className="text-sm font-medium text-gray-700">Tipo</div>
+                    <div className="text-sm font-medium text-foreground">Tipo</div>
                     <div className="flex flex-wrap gap-2">
                       {activityTypes.map((t) => (
                         <Button
@@ -234,8 +234,8 @@ export default function ActivitiesPage() {
 
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <div className="text-sm font-medium text-gray-700">Contenido (JSON)</div>
-                      <Badge variant="outline" className="bg-gray-50">
+                      <div className="text-sm font-medium text-foreground">Contenido (JSON)</div>
+                      <Badge variant="outline" className="bg-muted">
                         {typeLabel}
                       </Badge>
                     </div>
@@ -264,11 +264,11 @@ export default function ActivitiesPage() {
 
       {loading ? (
         <Card className="border-dashed">
-          <CardContent className="p-8 text-center text-gray-500">Cargando actividades...</CardContent>
+          <CardContent className="p-8 text-center text-muted-foreground">Cargando actividades...</CardContent>
         </Card>
       ) : activities.length === 0 ? (
         <Card className="border-dashed">
-          <CardContent className="p-8 text-center text-gray-500">No hay actividades disponibles.</CardContent>
+          <CardContent className="p-8 text-center text-muted-foreground">No hay actividades disponibles.</CardContent>
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -280,13 +280,13 @@ export default function ActivitiesPage() {
                     <CardTitle className="text-lg">{a.title}</CardTitle>
                     <CardDescription className="line-clamp-2">{a.description || "Sin descripción"}</CardDescription>
                   </div>
-                  <Badge className="bg-indigo-50 text-indigo-700 hover:bg-indigo-50" variant="outline">
+                  <Badge className="bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/10" variant="outline">
                     {a.type}
                   </Badge>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center justify-between text-sm text-gray-500">
+                <div className="flex items-center justify-between text-sm text-muted-foreground">
                   <div className="flex items-center gap-2">
                     <Trophy className="h-4 w-4 text-amber-500" />
                     <span>{a.points} pts</span>

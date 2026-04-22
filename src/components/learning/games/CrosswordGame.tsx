@@ -58,7 +58,7 @@ export function CrosswordGame() {
       <div className="flex flex-col items-center justify-center h-full text-center">
         <Trophy className="h-24 w-24 text-teal-500 mb-6 animate-pulse" />
         <h3 className="text-3xl font-bold mb-4">¡Crucigrama Resuelto!</h3>
-        <p className="text-gray-600 mb-8">Has completado el desafío.</p>
+        <p className="text-muted-foreground mb-8">Has completado el desafío.</p>
         <Button onClick={() => {
             setUserGrid(Array(8).fill(null).map(() => Array(8).fill('')));
             setSolved(false);
@@ -72,7 +72,7 @@ export function CrosswordGame() {
   return (
     <div className="flex flex-col md:flex-row gap-8 items-start justify-center max-w-5xl mx-auto h-full overflow-y-auto">
        {/* Grid */}
-       <div className="bg-white p-6 rounded-2xl shadow-md border-2 border-teal-100 flex-shrink-0">
+       <div className="bg-card p-6 rounded-2xl shadow-md border-2 border-teal-100 flex-shrink-0">
          <div className="grid grid-cols-8 gap-1 select-none bg-gray-800 p-2 rounded-lg">
             {initialGrid.map((row, r) => (
                 row.map((cell, c) => {
@@ -81,14 +81,14 @@ export function CrosswordGame() {
                         <div 
                             key={`${r}-${c}`}
                             className={`w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-sm ${
-                                isPlayable ? "bg-white" : "bg-transparent"
+                                isPlayable ? "bg-card" : "bg-transparent"
                             }`}
                         >
                             {isPlayable ? (
                                 <input 
                                     type="text"
                                     maxLength={1}
-                                    className="w-full h-full text-center font-bold text-xl uppercase focus:bg-yellow-100 outline-none rounded-sm text-gray-800"
+                                    className="w-full h-full text-center font-bold text-xl uppercase focus:bg-yellow-100 outline-none rounded-sm text-foreground"
                                     value={userGrid[r][c]}
                                     onChange={(e) => handleInput(r, c, e.target.value)}
                                 />
@@ -106,7 +106,7 @@ export function CrosswordGame() {
        </div>
 
        {/* Clues */}
-       <div className="w-full md:w-80 bg-white p-6 rounded-2xl shadow-md border-2 border-teal-100 flex-col flex">
+       <div className="w-full md:w-80 bg-card p-6 rounded-2xl shadow-md border-2 border-teal-100 flex-col flex">
             <h4 className="font-bold text-lg mb-4 text-teal-600 flex items-center gap-2">
                 <PenTool size={20} />
                 Pistas
@@ -114,8 +114,8 @@ export function CrosswordGame() {
             
             <div className="space-y-6 overflow-y-auto flex-1">
                 <div>
-                    <h5 className="font-bold text-gray-700 mb-2 border-b pb-1">Horizontales</h5>
-                    <ul className="space-y-2 text-sm text-gray-600">
+                    <h5 className="font-bold text-foreground mb-2 border-b pb-1">Horizontales</h5>
+                    <ul className="space-y-2 text-sm text-muted-foreground">
                         <li className="flex gap-2">
                             <span className="font-bold bg-teal-100 text-teal-700 w-5 h-5 flex items-center justify-center rounded-full text-xs">1</span>
                             Guía de papel para encontrar tesoros. (4 letras)
@@ -128,8 +128,8 @@ export function CrosswordGame() {
                 </div>
 
                 <div>
-                    <h5 className="font-bold text-gray-700 mb-2 border-b pb-1">Verticales</h5>
-                    <ul className="space-y-2 text-sm text-gray-600">
+                    <h5 className="font-bold text-foreground mb-2 border-b pb-1">Verticales</h5>
+                    <ul className="space-y-2 text-sm text-muted-foreground">
                         <li className="flex gap-2">
                             <span className="font-bold bg-teal-100 text-teal-700 w-5 h-5 flex items-center justify-center rounded-full text-xs">1</span>
                             Masa de agua salada que cubre gran parte de la Tierra. (3 letras)

@@ -64,7 +64,7 @@ export default function SettingsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
       </div>
     );
   }
@@ -72,15 +72,15 @@ export default function SettingsPage() {
   return (
     <div className="space-y-8">
       <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold text-gray-900">Configuración</h1>
-        <p className="text-gray-500">Personaliza tu perfil y experiencia de lectura.</p>
+        <h1 className="text-3xl font-bold text-foreground">Configuración</h1>
+        <p className="text-muted-foreground">Personaliza tu perfil y experiencia de lectura.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="bg-white p-6 shadow-md border-none space-y-4">
+        <Card className="bg-card p-6 shadow-md border-none space-y-4">
           <div className="flex items-center gap-2 mb-2">
-            <UserIcon className="h-5 w-5 text-indigo-600" />
-            <h2 className="text-xl font-bold text-gray-900">Perfil</h2>
+            <UserIcon className="h-5 w-5 text-indigo-400" />
+            <h2 className="text-xl font-bold text-foreground">Perfil</h2>
           </div>
           <div className="space-y-2">
             <Label htmlFor="username">Nombre completo</Label>
@@ -111,8 +111,8 @@ export default function SettingsPage() {
           </Button>
         </Card>
 
-        <Card className="bg-white p-6 shadow-md border-none space-y-4">
-          <h2 className="text-xl font-bold text-gray-900">Preferencias de Lectura</h2>
+        <Card className="bg-card p-6 shadow-md border-none space-y-4">
+          <h2 className="text-xl font-bold text-foreground">Preferencias de Lectura</h2>
           <div className="space-y-2">
             <Label htmlFor="font-size">Tamaño de fuente</Label>
             <Select disabled>
@@ -139,7 +139,7 @@ export default function SettingsPage() {
               </SelectContent>
             </Select>
           </div>
-          <Button className="w-full bg-gray-200 text-gray-500 cursor-not-allowed font-bold" disabled>
+          <Button className="w-full bg-gray-200 text-muted-foreground cursor-not-allowed font-bold" disabled>
             Aplicar Preferencias
           </Button>
         </Card>

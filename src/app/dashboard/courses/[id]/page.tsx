@@ -168,16 +168,16 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="space-y-2">
           <Link href="/dashboard/courses">
-            <Button variant="ghost" className="text-gray-600">
+            <Button variant="ghost" className="text-muted-foreground">
               ← Cursos
             </Button>
           </Link>
-          <h1 className="text-3xl font-bold text-gray-900">{course?.title || "Curso"}</h1>
-          <p className="text-gray-500">{course?.description || " "}</p>
+          <h1 className="text-3xl font-bold text-foreground">{course?.title || "Curso"}</h1>
+          <p className="text-muted-foreground">{course?.description || " "}</p>
         </div>
         <div className="flex items-center gap-3">
           {course && (
-            <Badge variant="outline" className="bg-indigo-50 text-indigo-700 hover:bg-indigo-50">
+            <Badge variant="outline" className="bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/10">
               {course.enrollments.length} estudiantes
             </Badge>
           )}
@@ -220,7 +220,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
                   <div className="grid gap-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <div className="text-sm font-medium text-gray-700">Módulo</div>
+                        <div className="text-sm font-medium text-foreground">Módulo</div>
                         <Select value={moduleId} onValueChange={setModuleId}>
                           <SelectTrigger>
                             <SelectValue placeholder="Selecciona un módulo" />
@@ -236,7 +236,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
                       </div>
 
                       <div className="space-y-2">
-                        <div className="text-sm font-medium text-gray-700">Tipo</div>
+                        <div className="text-sm font-medium text-foreground">Tipo</div>
                         <Select value={itemType} onValueChange={(v) => setItemType(v as any)}>
                           <SelectTrigger>
                             <SelectValue />
@@ -251,7 +251,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
                     </div>
 
                     <div className="space-y-2">
-                      <div className="text-sm font-medium text-gray-700">Elemento</div>
+                      <div className="text-sm font-medium text-foreground">Elemento</div>
                       <Select value={itemRefId} onValueChange={setItemRefId}>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecciona un elemento" />
@@ -297,11 +297,11 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
 
       {loading ? (
         <Card className="border-dashed">
-          <CardContent className="p-8 text-center text-gray-500">Cargando curso...</CardContent>
+          <CardContent className="p-8 text-center text-muted-foreground">Cargando curso...</CardContent>
         </Card>
       ) : !course ? (
         <Card className="border-dashed">
-          <CardContent className="p-8 text-center text-gray-500">No se puede ver este curso.</CardContent>
+          <CardContent className="p-8 text-center text-muted-foreground">No se puede ver este curso.</CardContent>
         </Card>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -311,7 +311,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
                     <span>{m.title}</span>
-                    <Badge variant="outline" className="bg-gray-50">
+                    <Badge variant="outline" className="bg-muted">
                       {m.items.length} items
                     </Badge>
                   </CardTitle>
@@ -319,18 +319,18 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {m.items.length === 0 ? (
-                    <div className="text-sm text-gray-500">Sin elementos.</div>
+                    <div className="text-sm text-muted-foreground">Sin elementos.</div>
                   ) : (
                     <div className="space-y-2">
                       {m.items.map((it) => (
-                        <div key={it.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition">
+                        <div key={it.id} className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-muted transition">
                           <div className="space-y-1">
-                            <div className="text-sm font-semibold text-gray-900">
+                            <div className="text-sm font-semibold text-foreground">
                               {it.type === "BOOK" && (it.book?.title ?? "Libro")}
                               {it.type === "ACTIVITY" && (it.activity?.title ?? "Actividad")}
                               {it.type === "VIDEO" && (it.video?.title ?? "Video")}
                             </div>
-                            <div className="text-xs text-gray-500">
+                            <div className="text-xs text-muted-foreground">
                               {it.type === "BOOK" && it.book?.author}
                               {it.type === "ACTIVITY" && it.activity?.type}
                               {it.type === "VIDEO" && it.video?.provider}
@@ -372,7 +372,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
             <Card className="border-none shadow-md">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Users className="h-4 w-4 text-indigo-600" /> Estudiantes
+                  <Users className="h-4 w-4 text-indigo-400" /> Estudiantes
                 </CardTitle>
                 <CardDescription>Inscritos en el curso</CardDescription>
               </CardHeader>
@@ -392,12 +392,12 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
 
                 <div className="space-y-2">
                   {course.enrollments.length === 0 ? (
-                    <div className="text-sm text-gray-500">Sin estudiantes.</div>
+                    <div className="text-sm text-muted-foreground">Sin estudiantes.</div>
                   ) : (
                     course.enrollments.slice(0, 12).map((e) => (
                       <div key={e.id} className="flex items-center justify-between text-sm">
-                        <div className="line-clamp-1 text-gray-700">{e.user.name || e.user.email || "Usuario"}</div>
-                        <Badge variant="outline" className="bg-gray-50 text-gray-600">
+                        <div className="line-clamp-1 text-foreground">{e.user.name || e.user.email || "Usuario"}</div>
+                        <Badge variant="outline" className="bg-muted text-muted-foreground">
                           {e.user.role}
                         </Badge>
                       </div>

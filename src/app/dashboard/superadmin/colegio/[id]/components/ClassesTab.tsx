@@ -171,7 +171,7 @@ export default function ClassesTab({ institutionId, onUpdate }: { institutionId:
     <Card className="border-none shadow-md">
       <CardContent className="p-6 space-y-6">
         <div className="flex justify-between items-center">
-          <h2 className="text-xl font-bold text-gray-800">Gestión de Clases / Aulas</h2>
+          <h2 className="text-xl font-bold text-foreground">Gestión de Clases / Aulas</h2>
           
           <Dialog open={createOpen} onOpenChange={setCreateOpen}>
             <DialogTrigger asChild>
@@ -199,7 +199,7 @@ export default function ClassesTab({ institutionId, onUpdate }: { institutionId:
                           <SelectTrigger><SelectValue placeholder="Seleccionar Docente" /></SelectTrigger>
                           <SelectContent>
                               {teachers.length === 0 ? (
-                                  <div className="p-2 text-sm text-gray-500">No hay docentes registrados</div>
+                                  <div className="p-2 text-sm text-muted-foreground">No hay docentes registrados</div>
                               ) : (
                                 teachers.map(t => <SelectItem key={t.id} value={t.id}>{t.name || t.email}</SelectItem>)
                               )}
@@ -220,13 +220,13 @@ export default function ClassesTab({ institutionId, onUpdate }: { institutionId:
                           />
                         </div>
                       </Label>
-                      <div className="border rounded-md p-2 max-h-32 overflow-y-auto space-y-1 bg-gray-50/30">
-                        {filteredStudents.length === 0 ? <div className="text-sm text-gray-500 text-center py-2">No se encontraron estudiantes</div> : filteredStudents.map(s => (
-                          <label key={s.id} className="flex items-center gap-2 cursor-pointer text-sm p-1 hover:bg-white rounded border border-transparent hover:border-gray-100">
+                      <div className="border rounded-md p-2 max-h-32 overflow-y-auto space-y-1 bg-muted/30">
+                        {filteredStudents.length === 0 ? <div className="text-sm text-muted-foreground text-center py-2">No se encontraron estudiantes</div> : filteredStudents.map(s => (
+                          <label key={s.id} className="flex items-center gap-2 cursor-pointer text-sm p-1 hover:bg-card rounded border border-transparent hover:border-border">
                             <input type="checkbox" checked={newClassStudentIds.includes(s.id)} onChange={(e) => {
                               if (e.target.checked) setNewClassStudentIds([...newClassStudentIds, s.id]);
                               else setNewClassStudentIds(newClassStudentIds.filter(id => id !== s.id));
-                            }} className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                            }} className="rounded border-gray-300 text-indigo-400 focus:ring-indigo-500" />
                             <span className="truncate">{s.name || s.email}</span>
                           </label>
                         ))}
@@ -246,13 +246,13 @@ export default function ClassesTab({ institutionId, onUpdate }: { institutionId:
                           />
                         </div>
                       </Label>
-                      <div className="border rounded-md p-2 max-h-32 overflow-y-auto space-y-1 bg-gray-50/30">
-                        {filteredBooks.length === 0 ? <div className="text-sm text-gray-500 text-center py-2">No se encontraron libros</div> : filteredBooks.map(b => (
-                          <label key={b.id} className="flex items-center gap-2 cursor-pointer text-sm p-1 hover:bg-white rounded border border-transparent hover:border-gray-100">
+                      <div className="border rounded-md p-2 max-h-32 overflow-y-auto space-y-1 bg-muted/30">
+                        {filteredBooks.length === 0 ? <div className="text-sm text-muted-foreground text-center py-2">No se encontraron libros</div> : filteredBooks.map(b => (
+                          <label key={b.id} className="flex items-center gap-2 cursor-pointer text-sm p-1 hover:bg-card rounded border border-transparent hover:border-border">
                             <input type="checkbox" checked={newClassBookIds.includes(b.id)} onChange={(e) => {
                               if (e.target.checked) setNewClassBookIds([...newClassBookIds, b.id]);
                               else setNewClassBookIds(newClassBookIds.filter(id => id !== b.id));
-                            }} className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                            }} className="rounded border-gray-300 text-indigo-400 focus:ring-indigo-500" />
                             <span className="truncate">{b.title}</span>
                           </label>
                         ))}
@@ -272,7 +272,7 @@ export default function ClassesTab({ institutionId, onUpdate }: { institutionId:
             <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
-                  <Settings className="h-5 w-5 text-indigo-600" /> Gestionar Clase: {editName}
+                  <Settings className="h-5 w-5 text-indigo-400" /> Gestionar Clase: {editName}
                 </DialogTitle>
               </DialogHeader>
 
@@ -308,13 +308,13 @@ export default function ClassesTab({ institutionId, onUpdate }: { institutionId:
                       />
                     </div>
                   </Label>
-                  <div className="border rounded-md p-2 max-h-40 overflow-y-auto space-y-1 bg-gray-50/50">
-                    {filteredStudents.length === 0 ? <p className="text-xs text-center text-gray-500 py-2">No se encontraron estudiantes</p> : filteredStudents.map(s => (
-                      <label key={s.id} className={`flex items-center gap-2 cursor-pointer text-xs p-1.5 hover:bg-white rounded border border-transparent ${editStudentIds.includes(s.id) ? 'bg-indigo-50 border-indigo-100' : 'hover:border-gray-100'}`}>
+                  <div className="border rounded-md p-2 max-h-40 overflow-y-auto space-y-1 bg-muted/50">
+                    {filteredStudents.length === 0 ? <p className="text-xs text-center text-muted-foreground py-2">No se encontraron estudiantes</p> : filteredStudents.map(s => (
+                      <label key={s.id} className={`flex items-center gap-2 cursor-pointer text-xs p-1.5 hover:bg-card rounded border border-transparent ${editStudentIds.includes(s.id) ? 'bg-indigo-500/10 border-indigo-500/50/20' : 'hover:border-border'}`}>
                         <input type="checkbox" checked={editStudentIds.includes(s.id)} onChange={(e) => {
                           if (e.target.checked) setEditStudentIds([...editStudentIds, s.id]);
                           else setEditStudentIds(editStudentIds.filter(id => id !== s.id));
-                        }} className="rounded border-gray-300 text-indigo-600" />
+                        }} className="rounded border-gray-300 text-indigo-400" />
                         <span className="flex-1 truncate font-medium">{s.name || s.email}</span>
                       </label>
                     ))}
@@ -334,13 +334,13 @@ export default function ClassesTab({ institutionId, onUpdate }: { institutionId:
                       />
                     </div>
                   </Label>
-                  <div className="border rounded-md p-2 max-h-40 overflow-y-auto space-y-1 bg-gray-50/50">
-                    {filteredBooks.length === 0 ? <p className="text-xs text-center text-gray-500 py-2">No se encontraron libros</p> : filteredBooks.map(b => (
-                      <label key={b.id} className={`flex items-center gap-2 cursor-pointer text-xs p-1.5 hover:bg-white rounded border border-transparent ${editBookIds.includes(b.id) ? 'bg-indigo-50 border-indigo-100' : 'hover:border-gray-100'}`}>
+                  <div className="border rounded-md p-2 max-h-40 overflow-y-auto space-y-1 bg-muted/50">
+                    {filteredBooks.length === 0 ? <p className="text-xs text-center text-muted-foreground py-2">No se encontraron libros</p> : filteredBooks.map(b => (
+                      <label key={b.id} className={`flex items-center gap-2 cursor-pointer text-xs p-1.5 hover:bg-card rounded border border-transparent ${editBookIds.includes(b.id) ? 'bg-indigo-500/10 border-indigo-500/50/20' : 'hover:border-border'}`}>
                         <input type="checkbox" checked={editBookIds.includes(b.id)} onChange={(e) => {
                           if (e.target.checked) setEditBookIds([...editBookIds, b.id]);
                           else setEditBookIds(editBookIds.filter(id => id !== b.id));
-                        }} className="rounded border-gray-300 text-indigo-600" />
+                        }} className="rounded border-gray-300 text-indigo-400" />
                         <span className="flex-1 truncate font-medium">{b.title}</span>
                       </label>
                     ))}
@@ -356,37 +356,37 @@ export default function ClassesTab({ institutionId, onUpdate }: { institutionId:
           </Dialog>
         </div>
 
-        <div className="bg-white border rounded-lg overflow-hidden">
+        <div className="bg-card border rounded-lg overflow-hidden">
           <table className="w-full text-left text-sm">
-            <thead className="bg-gray-50 border-b">
+            <thead className="bg-muted border-b">
               <tr>
-                <th className="p-3 font-medium text-gray-500">Clase</th>
-                <th className="p-3 font-medium text-gray-500">Docente Titular</th>
-                <th className="p-3 font-medium text-gray-500">Estudiantes</th>
-                <th className="p-3 font-medium text-gray-500 text-center">Acciones</th>
+                <th className="p-3 font-medium text-muted-foreground">Clase</th>
+                <th className="p-3 font-medium text-muted-foreground">Docente Titular</th>
+                <th className="p-3 font-medium text-muted-foreground">Estudiantes</th>
+                <th className="p-3 font-medium text-muted-foreground text-center">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y">
               {loading ? (
                 <tr><td colSpan={4} className="p-8 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto text-indigo-400" /></td></tr>
               ) : classes.length === 0 ? (
-                <tr><td colSpan={4} className="p-8 text-center text-gray-500">No hay clases configuradas.</td></tr>
+                <tr><td colSpan={4} className="p-8 text-center text-muted-foreground">No hay clases configuradas.</td></tr>
               ) : (
                 classes.map(c => (
-                  <tr key={c.id} className="hover:bg-gray-50">
+                  <tr key={c.id} className="hover:bg-muted">
                     <td className="p-3">
-                        <div className="font-bold text-gray-900">{c.name}</div>
+                        <div className="font-bold text-foreground">{c.name}</div>
                         {c.grade && <Badge variant="secondary" className="mt-1 text-[10px]">{c.grade}</Badge>}
                     </td>
-                    <td className="p-3 text-gray-600">{c.teacher?.name || c.teacher?.email || "Sin asignar"}</td>
+                    <td className="p-3 text-muted-foreground">{c.teacher?.name || c.teacher?.email || "Sin asignar"}</td>
                     <td className="p-3">
-                        <span className="flex items-center gap-1 text-gray-600">
+                        <span className="flex items-center gap-1 text-muted-foreground">
                             <Users className="h-4 w-4" /> {c._count?.students || 0}
                         </span>
                     </td>
                     <td className="p-3">
                       <div className="flex items-center justify-center gap-2">
-                        <Button variant="ghost" size="icon" className="text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 h-8 w-8" onClick={() => handleEditOpen(c)}>
+                        <Button variant="ghost" size="icon" className="text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10 h-8 w-8" onClick={() => handleEditOpen(c)}>
                           <Settings className="h-4 w-4" />
                         </Button>
                         <Button variant="ghost" size="icon" className="text-red-400 hover:text-red-700 hover:bg-red-50 h-8 w-8" onClick={() => handleDelete(c.id)}>

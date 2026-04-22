@@ -18,20 +18,20 @@ const plans = [
 
 export default function PreciosPage() {
   return (
-    <main className="min-h-screen bg-white">
-      <nav className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+    <main className="min-h-screen bg-card">
+      <nav className="sticky top-0 z-50 w-full border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
         <div className="container mx-auto flex h-16 items-center justify-between px-6">
           <a href="/" className="flex items-center gap-2">
             <div className="h-8 w-8 rounded bg-indigo-600 flex items-center justify-center">
               <span className="text-white font-bold text-xl">L</span>
             </div>
-            <span className="text-2xl font-bold tracking-tight text-indigo-900">LEYOPOLIS</span>
+            <span className="text-2xl font-bold tracking-tight text-indigo-200">LEYOPOLIS</span>
           </a>
           <div className="flex items-center gap-4">
-            <a href="/demo" className="text-sm font-medium text-gray-600 hover:text-indigo-600">
+            <a href="/demo" className="text-sm font-medium text-muted-foreground hover:text-indigo-400">
               Ver demo
             </a>
-            <a href="/login" className="text-sm font-medium text-gray-600 hover:text-indigo-600">
+            <a href="/login" className="text-sm font-medium text-muted-foreground hover:text-indigo-400">
               Iniciar sesión
             </a>
             <a
@@ -46,8 +46,8 @@ export default function PreciosPage() {
 
       <div className="container mx-auto px-6 py-12 space-y-10">
         <div className="space-y-2 max-w-3xl">
-          <h1 className="text-3xl font-bold text-gray-900">Precios</h1>
-          <p className="text-gray-600">Planes institucionales para implementar Leyópolis en tu organización.</p>
+          <h1 className="text-3xl font-bold text-foreground">Precios</h1>
+          <p className="text-muted-foreground">Planes institucionales para implementar Leyópolis en tu organización.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -55,10 +55,10 @@ export default function PreciosPage() {
             <Card key={p.name} className="border-none shadow-md">
               <CardContent className="p-6 space-y-4">
                 <div className="flex items-baseline justify-between">
-                  <h3 className="font-bold text-gray-900">{p.name}</h3>
-                  <div className="font-bold text-indigo-600">{p.price}</div>
+                  <h3 className="font-bold text-foreground">{p.name}</h3>
+                  <div className="font-bold text-indigo-400">{p.price}</div>
                 </div>
-                <ul className="space-y-2 text-sm text-gray-600">
+                <ul className="space-y-2 text-sm text-muted-foreground">
                   {p.items.map((it) => (
                     <li key={it} className="flex items-center gap-2">
                       <span className="h-1.5 w-1.5 rounded-full bg-indigo-600" />

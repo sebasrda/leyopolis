@@ -62,7 +62,7 @@ export default function RegisterForm() {
   return (
     <Card className="w-full max-w-lg mx-auto">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold text-center text-indigo-900">Crear una cuenta</CardTitle>
+        <CardTitle className="text-2xl font-bold text-center text-indigo-200">Crear una cuenta</CardTitle>
         <CardDescription className="text-center">
           Únete a Leyopolis y transforma tu experiencia de lectura
         </CardDescription>
@@ -113,8 +113,8 @@ export default function RegisterForm() {
             </div>
           </div>
           
-          <p className="text-xs text-gray-500 mt-2">
-            Al registrarte, aceptas nuestros <Link href="/terms" className="text-indigo-600">Términos de servicio</Link> y <Link href="/privacy" className="text-indigo-600">Política de privacidad</Link>.
+          <p className="text-xs text-muted-foreground mt-2">
+            Al registrarte, aceptas nuestros <Link href="/terms" className="text-indigo-400">Términos de servicio</Link> y <Link href="/privacy" className="text-indigo-400">Política de privacidad</Link>.
           </p>
 
           <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-500" disabled={loading}>
@@ -123,9 +123,9 @@ export default function RegisterForm() {
         </form>
       </CardContent>
       <CardFooter>
-        <p className="text-sm text-center w-full text-gray-600">
+        <p className="text-sm text-center w-full text-muted-foreground">
           ¿Ya tienes una cuenta?{" "}
-          <Link href="/login" className="text-indigo-600 hover:underline">
+          <Link href="/login" className="text-indigo-400 hover:underline">
             Inicia sesión
           </Link>
         </p>

@@ -27,7 +27,7 @@ export function LanguageSelector() {
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          className="flex items-center gap-2 text-gray-500 hover:text-indigo-600 hover:bg-gray-100"
+          className="flex items-center gap-2 text-muted-foreground hover:text-indigo-400 hover:bg-muted"
           data-i18n-skip="true"
         >
           <Globe className="h-4 w-4" />

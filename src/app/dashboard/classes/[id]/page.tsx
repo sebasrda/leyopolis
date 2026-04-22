@@ -124,7 +124,7 @@ export default function ClassDetailsPage({ params }: { params: Promise<{ id: str
   };
 
   if (!cls) {
-    return <div className="p-8 text-center text-gray-500 hover:animate-pulse transition-all">Cargando clase...</div>;
+    return <div className="p-8 text-center text-muted-foreground hover:animate-pulse transition-all">Cargando clase...</div>;
   }
 
   return (
@@ -136,19 +136,19 @@ export default function ClassDetailsPage({ params }: { params: Promise<{ id: str
             <Link href="/dashboard/classes"><ArrowLeft className="h-4 w-4" /></Link>
           </Button>
           <div>
-            <h1 className="text-3xl font-extrabold text-indigo-900">{cls.name}</h1>
-            <p className="text-gray-500">Gestión de panel de {cls.subject || "Lectura"}</p>
+            <h1 className="text-3xl font-extrabold text-indigo-200">{cls.name}</h1>
+            <p className="text-muted-foreground">Gestión de panel de {cls.subject || "Lectura"}</p>
           </div>
         </div>
       </div>
 
       {/* Stats Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-indigo-50 border-indigo-100 shadow-sm">
+        <Card className="bg-indigo-500/10 border-indigo-500/50/20 shadow-sm">
           <CardContent className="p-6 flex items-center justify-between">
             <div>
-              <p className="text-sm font-semibold text-indigo-600 uppercase tracking-wider">Total Estudiantes</p>
-              <h2 className="text-3xl font-black text-indigo-900 mt-1">{cls.students?.length || 0}</h2>
+              <p className="text-sm font-semibold text-indigo-400 uppercase tracking-wider">Total Estudiantes</p>
+              <h2 className="text-3xl font-black text-indigo-200 mt-1">{cls.students?.length || 0}</h2>
             </div>
             <Users className="h-8 w-8 text-indigo-300" />
           </CardContent>
@@ -165,16 +165,16 @@ export default function ClassDetailsPage({ params }: { params: Promise<{ id: str
       </div>
 
       {/* Tabs Menu */}
-      <div className="flex gap-4 border-b border-gray-200">
+      <div className="flex gap-4 border-b border-border">
         <button 
           onClick={() => setActiveTab("students")}
-          className={`pb-4 px-4 font-bold border-b-2 transition-colors ${activeTab === "students" ? "border-indigo-600 text-indigo-700" : "border-transparent text-gray-500 hover:text-gray-700"}`}
+          className={`pb-4 px-4 font-bold border-b-2 transition-colors ${activeTab === "students" ? "border-indigo-600 text-indigo-300" : "border-transparent text-muted-foreground hover:text-foreground"}`}
         >
           🎓 Lista de Estudiantes
         </button>
         <button 
           onClick={() => setActiveTab("assignments")}
-          className={`pb-4 px-4 font-bold border-b-2 transition-colors ${activeTab === "assignments" ? "border-indigo-600 text-indigo-700" : "border-transparent text-gray-500 hover:text-gray-700"}`}
+          className={`pb-4 px-4 font-bold border-b-2 transition-colors ${activeTab === "assignments" ? "border-indigo-600 text-indigo-300" : "border-transparent text-muted-foreground hover:text-foreground"}`}
         >
           📚 Lecturas Asignadas
         </button>
@@ -185,7 +185,7 @@ export default function ClassDetailsPage({ params }: { params: Promise<{ id: str
         
         {/* STUDENTS TAB */}
         {activeTab === "students" && (
-          <Card className="border-gray-200 shadow-sm">
+          <Card className="border-border shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
                 <CardTitle>Estudiantes Matriculados</CardTitle>
@@ -215,16 +215,16 @@ export default function ClassDetailsPage({ params }: { params: Promise<{ id: str
                       </div>
                     </div>
                     
-                    <div className="border rounded-md min-h-[150px] max-h-[300px] overflow-y-auto bg-gray-50 p-2">
+                    <div className="border rounded-md min-h-[150px] max-h-[300px] overflow-y-auto bg-muted p-2">
                       {isSearching ? (
-                        <p className="text-center text-gray-500 py-4 text-sm">Buscando...</p>
+                        <p className="text-center text-muted-foreground py-4 text-sm">Buscando...</p>
                       ) : searchResults.length > 0 ? (
                         <div className="space-y-2">
                           {searchResults.map(st => (
-                            <div key={st.id} className="flex justify-between items-center p-2 bg-white border border-gray-200 rounded-md">
+                            <div key={st.id} className="flex justify-between items-center p-2 bg-card border border-border rounded-md">
                               <div>
                                 <p className="font-semibold text-sm">{st.name}</p>
-                                <p className="text-xs text-gray-500">{st.email}</p>
+                                <p className="text-xs text-muted-foreground">{st.email}</p>
                               </div>
                               <Button 
                                 size="sm" 
@@ -237,21 +237,21 @@ export default function ClassDetailsPage({ params }: { params: Promise<{ id: str
                           ))}
                         </div>
                       ) : searchQuery.length >= 2 ? (
-                        <p className="text-center text-gray-500 py-4 text-sm">No se encontraron estudiantes.</p>
+                        <p className="text-center text-muted-foreground py-4 text-sm">No se encontraron estudiantes.</p>
                       ) : (
                         <p className="text-center text-gray-400 py-4 text-sm flex items-center justify-center gap-2">
                           <Users className="h-4 w-4" /> Escribe al menos 2 letras
                         </p>
                       )}
                     </div>
-                    <p className="text-xs text-gray-500 mt-2">* Al inscribir a un estudiante, se registrará el enlace y, de haber un servicio de correo habilitado, se le enviará un email de bienvenida.</p>
+                    <p className="text-xs text-muted-foreground mt-2">* Al inscribir a un estudiante, se registrará el enlace y, de haber un servicio de correo habilitado, se le enviará un email de bienvenida.</p>
                   </div>
                 </DialogContent>
               </Dialog>
             </CardHeader>
             <CardContent>
               {cls.students?.length === 0 ? (
-                <div className="text-center py-10 text-gray-400 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                <div className="text-center py-10 text-gray-400 bg-muted rounded-lg border border-dashed border-border">
                   <Users className="h-10 w-10 mx-auto mb-3 opacity-30" />
                   <p>Todavía no tienes estudiantes en esta clase.</p>
                   <p className="text-sm">Comparte el código de acceso con tu salón.</p>
@@ -259,14 +259,14 @@ export default function ClassDetailsPage({ params }: { params: Promise<{ id: str
               ) : (
                 <div className="space-y-4">
                   {cls.students?.map((st: any) => (
-                    <div key={st.id} className="flex justify-between items-center p-3 hover:bg-gray-50 rounded-lg border border-gray-100 transition-colors">
+                    <div key={st.id} className="flex justify-between items-center p-3 hover:bg-muted rounded-lg border border-border transition-colors">
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center font-bold text-indigo-700 uppercase">
+                        <div className="h-10 w-10 rounded-full bg-indigo-500/20 flex items-center justify-center font-bold text-indigo-300 uppercase">
                           {st.name?.charAt(0) || "U"}
                         </div>
                         <div>
-                          <p className="font-semibold text-gray-900">{st.name}</p>
-                          <p className="text-sm text-gray-500">{st.email}</p>
+                          <p className="font-semibold text-foreground">{st.name}</p>
+                          <p className="text-sm text-muted-foreground">{st.email}</p>
                         </div>
                       </div>
                       <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700 hover:bg-red-50"><Trash2 className="h-4 w-4" /></Button>
@@ -280,7 +280,7 @@ export default function ClassDetailsPage({ params }: { params: Promise<{ id: str
 
         {/* ASSIGNMENTS TAB */}
         {activeTab === "assignments" && (
-          <Card className="border-gray-200 shadow-sm border-t-indigo-500 border-t-4">
+          <Card className="border-border shadow-sm border-t-indigo-500 border-t-4">
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
                 <CardTitle>Plan de Lectura</CardTitle>
@@ -336,31 +336,31 @@ export default function ClassDetailsPage({ params }: { params: Promise<{ id: str
             </CardHeader>
             <CardContent>
               {cls.assignments?.length === 0 ? (
-                <div className="text-center py-10 text-gray-400 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                <div className="text-center py-10 text-gray-400 bg-muted rounded-lg border border-dashed border-border">
                   <BookOpen className="h-10 w-10 mx-auto mb-3 opacity-30" />
                   <p>No has asignado ninguna lectura a esta clase aún.</p>
                 </div>
               ) : (
                 <div className="grid gap-4">
                   {cls.assignments?.map((assign: any) => (
-                    <div key={assign.id} className="flex flex-col md:flex-row justify-between items-start md:items-center p-4 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all gap-4">
+                    <div key={assign.id} className="flex flex-col md:flex-row justify-between items-start md:items-center p-4 bg-card rounded-xl shadow-sm border border-border hover:shadow-md transition-all gap-4">
                       
                       {/* Título de tarea y libro vinculado */}
                       <div className="flex items-start gap-4">
-                        <div className="h-12 w-12 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-500 shrink-0 mt-1">
+                        <div className="h-12 w-12 rounded-lg bg-indigo-500/20 flex items-center justify-center text-indigo-500 shrink-0 mt-1">
                           <BookOpen className="h-6 w-6" />
                         </div>
                         <div>
-                          <h3 className="font-bold text-gray-900 text-lg leading-tight">{assign.title}</h3>
-                          <p className="text-indigo-600 font-semibold text-sm">Libro: {assign.book?.title || "Libro no encontrado"}</p>
+                          <h3 className="font-bold text-foreground text-lg leading-tight">{assign.title}</h3>
+                          <p className="text-indigo-400 font-semibold text-sm">Libro: {assign.book?.title || "Libro no encontrado"}</p>
                         </div>
                       </div>
 
                       {/* Fecha de entrega */}
-                      <div className="flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-lg shrink-0 w-full md:w-auto mt-2 md:mt-0">
+                      <div className="flex items-center gap-2 bg-muted px-4 py-2 rounded-lg shrink-0 w-full md:w-auto mt-2 md:mt-0">
                         <Calendar className="h-4 w-4 text-gray-400" />
-                        <span className="text-sm font-medium text-gray-600">
-                          Entrega: <span className="font-bold text-gray-800">{new Date(assign.dueDate).toLocaleDateString()}</span>
+                        <span className="text-sm font-medium text-muted-foreground">
+                          Entrega: <span className="font-bold text-foreground">{new Date(assign.dueDate).toLocaleDateString()}</span>
                         </span>
                       </div>
                     </div>

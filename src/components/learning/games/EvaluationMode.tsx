@@ -56,15 +56,15 @@ export function EvaluationMode({ onClose }: EvaluationModeProps) {
     const percentage = Math.round((score / questions.length) * 100);
     return (
       <div className="max-w-2xl mx-auto text-center py-10">
-        <div className="bg-white rounded-3xl shadow-xl p-8 border-2 border-emerald-100">
+        <div className="bg-card rounded-3xl shadow-xl p-8 border-2 border-emerald-100">
           <div className="mb-6 inline-flex p-4 bg-emerald-100 rounded-full">
             <GraduationCap className="h-16 w-16 text-emerald-600" />
           </div>
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">Evaluación Completada</h2>
-          <p className="text-gray-500 mb-8">Has finalizado el examen del libro.</p>
+          <h2 className="text-3xl font-bold text-foreground mb-2">Evaluación Completada</h2>
+          <p className="text-muted-foreground mb-8">Has finalizado el examen del libro.</p>
           
           <div className="text-6xl font-black text-emerald-600 mb-2">{percentage}%</div>
-          <p className="text-xl font-medium text-gray-700 mb-8">
+          <p className="text-xl font-medium text-foreground mb-8">
             {score} de {questions.length} respuestas correctas
           </p>
           
@@ -99,12 +99,12 @@ export function EvaluationMode({ onClose }: EvaluationModeProps) {
 
       <div className="space-y-8">
         {questions.map((q: any, idx: number) => (
-          <Card key={idx} className="overflow-hidden border-gray-200 shadow-sm">
-            <div className="bg-gray-50 p-4 border-b border-gray-100 flex gap-3">
+          <Card key={idx} className="overflow-hidden border-border shadow-sm">
+            <div className="bg-muted p-4 border-b border-border flex gap-3">
               <span className="bg-emerald-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0">
                 {idx + 1}
               </span>
-              <h3 className="font-medium text-gray-900">{q.question}</h3>
+              <h3 className="font-medium text-foreground">{q.question}</h3>
             </div>
             <div className="p-4 grid grid-cols-1 gap-3">
               {q.options.map((opt: string, optIdx: number) => (
@@ -113,15 +113,15 @@ export function EvaluationMode({ onClose }: EvaluationModeProps) {
                   className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
                     answers[idx] === optIdx 
                       ? "bg-emerald-50 border-emerald-500 ring-1 ring-emerald-500" 
-                      : "bg-white border-gray-200 hover:bg-gray-50"
+                      : "bg-card border-border hover:bg-muted"
                   }`}
                 >
                   <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${
                     answers[idx] === optIdx ? "border-emerald-600 bg-emerald-600" : "border-gray-300"
                   }`}>
-                    {answers[idx] === optIdx && <div className="w-2 h-2 bg-white rounded-full" />}
+                    {answers[idx] === optIdx && <div className="w-2 h-2 bg-card rounded-full" />}
                   </div>
-                  <span className="text-sm text-gray-700">{opt}</span>
+                  <span className="text-sm text-foreground">{opt}</span>
                   <input 
                     type="radio" 
                     name={`q-${idx}`} 

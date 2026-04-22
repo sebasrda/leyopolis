@@ -52,9 +52,9 @@ export function QuizGame({ questions, onComplete, onExit }: QuizGameProps) {
     if (showResults) {
         return (
             <div className="flex flex-col items-center justify-center h-full p-8 text-center animate-in fade-in zoom-in">
-                <h2 className="text-3xl font-bold mb-4 text-gray-800">¡Juego Completado!</h2>
-                <div className="text-6xl font-black text-indigo-600 mb-2">{score} <span className="text-2xl text-gray-400">/ {maxScore} XP</span></div>
-                <p className="text-gray-500 mb-8">Has demostrado gran comprensión lectora.</p>
+                <h2 className="text-3xl font-bold mb-4 text-foreground">¡Juego Completado!</h2>
+                <div className="text-6xl font-black text-indigo-400 mb-2">{score} <span className="text-2xl text-gray-400">/ {maxScore} XP</span></div>
+                <p className="text-muted-foreground mb-8">Has demostrado gran comprensión lectora.</p>
                 
                 <div className="flex gap-4">
                     <Button onClick={onExit} variant="outline" className="w-32">Salir</Button>
@@ -80,13 +80,13 @@ export function QuizGame({ questions, onComplete, onExit }: QuizGameProps) {
 
             {/* Question Card */}
             <div className="flex-1 flex flex-col justify-center">
-                <h3 className="text-xl md:text-2xl font-bold text-gray-800 mb-8 leading-relaxed">
+                <h3 className="text-xl md:text-2xl font-bold text-foreground mb-8 leading-relaxed">
                     {question.question}
                 </h3>
 
                 <div className="grid grid-cols-1 gap-4">
                     {question.options.map((option, index) => {
-                        let buttonStyle = "bg-white border-2 border-gray-200 hover:border-indigo-300 text-gray-700";
+                        let buttonStyle = "bg-card border-2 border-border hover:border-indigo-300 text-foreground";
                         
                         if (isAnswered) {
                             if (index === question.correctAnswer) {
@@ -94,10 +94,10 @@ export function QuizGame({ questions, onComplete, onExit }: QuizGameProps) {
                             } else if (selectedOption === index) {
                                 buttonStyle = "bg-red-100 border-red-500 text-red-800";
                             } else {
-                                buttonStyle = "bg-gray-50 border-gray-100 text-gray-400 opacity-50";
+                                buttonStyle = "bg-muted border-border text-gray-400 opacity-50";
                             }
                         } else if (selectedOption === index) {
-                            buttonStyle = "bg-indigo-50 border-indigo-500 text-indigo-700";
+                            buttonStyle = "bg-indigo-500/10 border-indigo-500/50 text-indigo-300";
                         }
 
                         return (

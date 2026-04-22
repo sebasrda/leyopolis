@@ -140,17 +140,17 @@ export function ProgressDonut({ completed, inProgress, toRead }: ProgressDonutPr
         <div className="flex items-center gap-2">
           <span className="h-2.5 w-2.5 rounded-full bg-indigo-500 shrink-0" />
           <span className="text-slate-300 font-medium">{completed}</span>
-          <span className="text-slate-500 text-xs">Completados</span>
+          <span className="text-muted-foreground text-xs">Completados</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="h-2.5 w-2.5 rounded-full bg-amber-500 shrink-0" />
           <span className="text-slate-300 font-medium">{inProgress}</span>
-          <span className="text-slate-500 text-xs">En progreso</span>
+          <span className="text-muted-foreground text-xs">En progreso</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="h-2.5 w-2.5 rounded-full bg-slate-600 shrink-0" />
           <span className="text-slate-300 font-medium">{toRead}</span>
-          <span className="text-slate-500 text-xs">Por leer</span>
+          <span className="text-muted-foreground text-xs">Por leer</span>
         </div>
       </div>
     </div>

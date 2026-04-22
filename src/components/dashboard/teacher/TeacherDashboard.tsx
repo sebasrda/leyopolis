@@ -108,13 +108,13 @@ export default function TeacherDashboard() {
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900">Panel de Profesor</h1>
-                    <p className="text-gray-500">Gestiona tus aulas y asignaciones de lectura.</p>
+                    <h1 className="text-3xl font-bold text-foreground">Panel de Profesor</h1>
+                    <p className="text-muted-foreground">Gestiona tus aulas y asignaciones de lectura.</p>
                 </div>
                 <div className="flex gap-3">
                     <Button 
                         variant="outline" 
-                        className="gap-2 border-indigo-200 text-indigo-700 hover:bg-indigo-50"
+                        className="gap-2 border-indigo-500/50/30 text-indigo-300 hover:bg-indigo-500/10"
                         onClick={() => setIsSuggestedDialogOpen(true)}
                     >
                         <Sparkles size={18} className="text-indigo-500" />
@@ -155,33 +155,33 @@ export default function TeacherDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <Card>
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-gray-500">Estudiantes Activos</CardTitle>
+                        <CardTitle className="text-sm font-medium text-muted-foreground">Estudiantes Activos</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{eduOverview?.dashboardStats?.totalStudents ?? 0}</div>
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-xs text-muted-foreground mt-1">
                             estudiantes enrolados
                         </p>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-gray-500">Lecturas Activas</CardTitle>
+                        <CardTitle className="text-sm font-medium text-muted-foreground">Lecturas Activas</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{eduOverview?.dashboardStats?.activeReadings ?? 0}</div>
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-xs text-muted-foreground mt-1">
                             asignaciones vigentes
                         </p>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-gray-500">Comprensión Promedio</CardTitle>
+                        <CardTitle className="text-sm font-medium text-muted-foreground">Comprensión Promedio</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{eduOverview?.dashboardStats?.averageComprehension ?? 0}%</div>
-                        <p className="text-xs text-indigo-600 flex items-center mt-1">
+                        <p className="text-xs text-indigo-400 flex items-center mt-1">
                             basado en evaluaciones
                         </p>
                     </CardContent>
@@ -191,12 +191,12 @@ export default function TeacherDashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <Card className="border-none shadow-md">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-gray-500">Cursos</CardTitle>
+                        <CardTitle className="text-sm font-medium text-muted-foreground">Cursos</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="flex items-center justify-between">
                             <div className="text-2xl font-bold">{eduOverview?.counts.courses ?? 0}</div>
-                            <GraduationCap className="h-5 w-5 text-indigo-600" />
+                            <GraduationCap className="h-5 w-5 text-indigo-400" />
                         </div>
                         <Link href="/dashboard/courses">
                             <Button variant="outline" className="w-full mt-4">Gestionar cursos</Button>
@@ -205,7 +205,7 @@ export default function TeacherDashboard() {
                 </Card>
                 <Card className="border-none shadow-md">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-gray-500">Actividades</CardTitle>
+                        <CardTitle className="text-sm font-medium text-muted-foreground">Actividades</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="flex items-center justify-between">
@@ -219,7 +219,7 @@ export default function TeacherDashboard() {
                 </Card>
                 <Card className="border-none shadow-md">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-gray-500">Videos</CardTitle>
+                        <CardTitle className="text-sm font-medium text-muted-foreground">Videos</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="flex items-center justify-between">
@@ -241,20 +241,20 @@ export default function TeacherDashboard() {
                 <CardContent className="space-y-3">
                     {eduOverview?.latestAttempts?.length ? (
                         eduOverview.latestAttempts.slice(0, 8).map((a) => (
-                            <div key={a.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition">
+                            <div key={a.id} className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-muted transition">
                                 <div className="space-y-1">
-                                    <div className="font-semibold text-gray-900 line-clamp-1">{a.activity.title}</div>
-                                    <div className="text-xs text-gray-500">
+                                    <div className="font-semibold text-foreground line-clamp-1">{a.activity.title}</div>
+                                    <div className="text-xs text-muted-foreground">
                                         {a.user.name || a.user.email || "Estudiante"} · {new Date(a.createdAt).toLocaleString()}
                                     </div>
                                 </div>
-                                <Badge variant="outline" className="bg-indigo-50 text-indigo-700 hover:bg-indigo-50">
+                                <Badge variant="outline" className="bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/10">
                                     {Math.round(a.score)}
                                 </Badge>
                             </div>
                         ))
                     ) : (
-                        <div className="text-sm text-gray-500">Sin intentos recientes.</div>
+                        <div className="text-sm text-muted-foreground">Sin intentos recientes.</div>
                     )}
                 </CardContent>
             </Card>
@@ -262,7 +262,7 @@ export default function TeacherDashboard() {
             {/* Classes Grid */}
             <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                    <h2 className="text-xl font-semibold text-gray-800">Mis Clases</h2>
+                    <h2 className="text-xl font-semibold text-foreground">Mis Clases</h2>
                     <div className="relative w-64">
                         <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
                         <Input 
@@ -279,7 +279,7 @@ export default function TeacherDashboard() {
                         <Card key={cls.id} className="hover:shadow-md transition-shadow cursor-pointer border-t-4 border-t-indigo-500">
                             <CardHeader className="pb-3">
                                 <div className="flex justify-between items-start">
-                                    <Badge variant="secondary" className="mb-2 bg-indigo-50 text-indigo-700">
+                                    <Badge variant="secondary" className="mb-2 bg-indigo-500/10 text-indigo-300">
                                         {cls.students} Estudiantes
                                     </Badge>
                                     <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400">
@@ -295,19 +295,19 @@ export default function TeacherDashboard() {
                                 <div className="space-y-4">
                                     <div>
                                         <div className="flex justify-between text-xs mb-1">
-                                            <span className="text-gray-500">Progreso del grupo</span>
-                                            <span className="font-semibold text-indigo-600">{cls.progress}%</span>
+                                            <span className="text-muted-foreground">Progreso del grupo</span>
+                                            <span className="font-semibold text-indigo-400">{cls.progress}%</span>
                                         </div>
                                         <Progress value={cls.progress} className="h-2" />
                                     </div>
                                     
                                     <div className="flex items-center justify-between text-sm pt-2 border-t">
-                                        <div className="flex items-center text-gray-500">
+                                        <div className="flex items-center text-muted-foreground">
                                             <Calendar size={14} className="mr-1" />
                                             {cls.nextDeadline ? new Date(cls.nextDeadline).toLocaleDateString() : 'Sin fecha'}
                                         </div>
                                         <Link href={`/dashboard/teacher/class/${cls.id}`}>
-                                            <Button variant="ghost" size="sm" className="text-indigo-600 hover:text-indigo-800 p-0 h-auto">
+                                            <Button variant="ghost" size="sm" className="text-indigo-400 hover:text-indigo-300 p-0 h-auto">
                                                 Gestionar &rarr;
                                             </Button>
                                         </Link>
@@ -319,11 +319,11 @@ export default function TeacherDashboard() {
                     
                     {/* Add Class Card */}
                     {isCreating ? (
-                        <Card className="flex flex-col justify-center p-6 border-2 border-indigo-400 bg-indigo-50/50 h-full min-h-[200px]">
-                            <h3 className="font-semibold text-gray-700 mb-4">Nueva Clase</h3>
+                        <Card className="flex flex-col justify-center p-6 border-2 border-indigo-400 bg-indigo-500/10/50 h-full min-h-[200px]">
+                            <h3 className="font-semibold text-foreground mb-4">Nueva Clase</h3>
                             <Input 
                                 placeholder="Nombre de la clase" 
-                                className="mb-4 bg-white"
+                                className="mb-4 bg-card"
                                 value={newClassName}
                                 onChange={(e) => setNewClassName(e.target.value)}
                                 autoFocus
@@ -336,13 +336,13 @@ export default function TeacherDashboard() {
                     ) : (
                         <button 
                             onClick={() => setIsCreating(true)}
-                            className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-xl hover:border-indigo-400 hover:bg-indigo-50 transition-all group h-full min-h-[200px]"
+                            className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-xl hover:border-indigo-400 hover:bg-indigo-500/10 transition-all group h-full min-h-[200px]"
                         >
-                            <div className="h-12 w-12 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                            <div className="h-12 w-12 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                                 <Plus size={24} />
                             </div>
-                            <h3 className="font-semibold text-gray-700">Crear Nueva Clase</h3>
-                            <p className="text-sm text-gray-500 text-center mt-1">Añade un nuevo grupo de estudiantes</p>
+                            <h3 className="font-semibold text-foreground">Crear Nueva Clase</h3>
+                            <p className="text-sm text-muted-foreground text-center mt-1">Añade un nuevo grupo de estudiantes</p>
                         </button>
                     )}
                 </div>

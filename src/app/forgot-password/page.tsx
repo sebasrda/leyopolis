@@ -46,7 +46,7 @@ export default function ForgotPasswordPage() {
           <div className="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-indigo-600 mb-4">
             <span className="text-white font-bold text-2xl">L</span>
           </div>
-          <p className="text-sm text-gray-500">LEYÓPOLIS</p>
+          <p className="text-sm text-muted-foreground">LEYÓPOLIS</p>
         </div>
 
         <Card className="border-none shadow-xl">
@@ -64,7 +64,7 @@ export default function ForgotPasswordPage() {
             {sent ? (
               <div className="flex flex-col items-center gap-4 py-4">
                 <CheckCircle2 className="h-16 w-16 text-green-500" />
-                <p className="text-sm text-gray-600 text-center">
+                <p className="text-sm text-muted-foreground text-center">
                   Si <strong>{email}</strong> está registrado en Leyópolis, recibirás las instrucciones en los próximos minutos.
                 </p>
                 <p className="text-xs text-gray-400 text-center">
@@ -105,7 +105,7 @@ export default function ForgotPasswordPage() {
           <CardFooter className="justify-center">
             <Link
               href="/login"
-              className="flex items-center gap-1 text-sm text-gray-500 hover:text-indigo-600 transition-colors"
+              className="flex items-center gap-1 text-sm text-muted-foreground hover:text-indigo-400 transition-colors"
             >
               <ArrowLeft className="h-4 w-4" />
               Volver al inicio de sesión

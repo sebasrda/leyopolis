@@ -63,8 +63,8 @@ export default function AdminSettingsPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Configuración Global</h1>
-        <p className="text-gray-500">Ajustes generales de la plataforma.</p>
+        <h1 className="text-3xl font-bold text-foreground">Configuración Global</h1>
+        <p className="text-muted-foreground">Ajustes generales de la plataforma.</p>
       </div>
 
       <div className="grid gap-6">
@@ -111,7 +111,7 @@ export default function AdminSettingsPage() {
                 value={settings.OPENROUTER_API_KEY}
                 onChange={(e) => setSettings({...settings, OPENROUTER_API_KEY: e.target.value})}
               />
-              <p className="text-xs text-gray-500 italic">Usado como proveedor principal de alta fiabilidad.</p>
+              <p className="text-xs text-muted-foreground italic">Usado como proveedor principal de alta fiabilidad.</p>
             </div>
 
             <div className="grid gap-2 pt-2">
@@ -123,7 +123,7 @@ export default function AdminSettingsPage() {
                 value={settings.ANTHROPIC_API_KEY}
                 onChange={(e) => setSettings({...settings, ANTHROPIC_API_KEY: e.target.value})}
               />
-              <p className="text-xs text-gray-500 italic">Claude complementa a las demás IAs para procesamiento de audio y tareas avanzadas de razonamiento.</p>
+              <p className="text-xs text-muted-foreground italic">Claude complementa a las demás IAs para procesamiento de audio y tareas avanzadas de razonamiento.</p>
             </div>
             
             <div className="grid gap-2 pt-2">
@@ -166,7 +166,7 @@ export default function AdminSettingsPage() {
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label>Registro de Usuarios</Label>
-                <p className="text-sm text-gray-500">Permitir que nuevos usuarios se registren.</p>
+                <p className="text-sm text-muted-foreground">Permitir que nuevos usuarios se registren.</p>
               </div>
               <Switch 
                 checked={settings.registrationEnabled === "true"}
@@ -176,7 +176,7 @@ export default function AdminSettingsPage() {
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label>Modo Mantenimiento</Label>
-                <p className="text-sm text-gray-500">Deshabilitar acceso a usuarios no administradores.</p>
+                <p className="text-sm text-muted-foreground">Deshabilitar acceso a usuarios no administradores.</p>
               </div>
               <Switch 
                 checked={settings.maintenanceMode === "true"}

@@ -83,7 +83,7 @@ export default function TeacherAiToolsPage() {
   };
 
   const tools = [
-    { id: "lesson-planner" as const, icon: GraduationCap, label: "Preparador de Clases", color: "bg-indigo-100 text-indigo-700" },
+    { id: "lesson-planner" as const, icon: GraduationCap, label: "Preparador de Clases", color: "bg-indigo-500/20 text-indigo-300" },
     { id: "dictionary" as const, icon: BookOpen, label: "Diccionario Educativo", color: "bg-emerald-100 text-emerald-700" },
     { id: "text-generator" as const, icon: BookText, label: "Generador de Textos", color: "bg-purple-100 text-purple-700" },
   ];
@@ -102,8 +102,8 @@ export default function TeacherAiToolsPage() {
       </div>
 
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Herramientas IA para Docentes</h1>
-        <p className="text-gray-500">Herramientas inteligentes para preparar tus clases.</p>
+        <h1 className="text-3xl font-bold text-foreground">Herramientas IA para Docentes</h1>
+        <p className="text-muted-foreground">Herramientas inteligentes para preparar tus clases.</p>
       </div>
 
       {/* Tool Selector */}
@@ -114,14 +114,14 @@ export default function TeacherAiToolsPage() {
             onClick={() => { setActiveTool(tool.id); setResult(""); }}
             className={`p-4 rounded-xl border-2 text-left transition-all ${
               activeTool === tool.id
-                ? "border-indigo-300 bg-indigo-50 shadow-sm"
-                : "border-gray-200 bg-white hover:border-gray-300"
+                ? "border-indigo-300 bg-indigo-500/10 shadow-sm"
+                : "border-border bg-card hover:border-gray-300"
             }`}
           >
             <div className={`h-10 w-10 rounded-lg ${tool.color} flex items-center justify-center mb-2`}>
               <tool.icon className="h-5 w-5" />
             </div>
-            <h3 className="font-bold text-gray-900 text-sm">{tool.label}</h3>
+            <h3 className="font-bold text-foreground text-sm">{tool.label}</h3>
           </button>
         ))}
       </div>
@@ -130,7 +130,7 @@ export default function TeacherAiToolsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
-            <Sparkles className="h-5 w-5 text-indigo-600" />
+            <Sparkles className="h-5 w-5 text-indigo-400" />
             {tools.find(t => t.id === activeTool)?.label}
           </CardTitle>
         </CardHeader>
@@ -223,7 +223,7 @@ export default function TeacherAiToolsPage() {
 
       {/* Result */}
       {result && (
-        <Card className="border-indigo-200">
+        <Card className="border-indigo-500/50/30">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-base">Resultado</CardTitle>
             <Button variant="ghost" size="sm" onClick={copyResult} className="gap-1">
@@ -231,7 +231,7 @@ export default function TeacherAiToolsPage() {
             </Button>
           </CardHeader>
           <CardContent>
-            <div className="bg-gray-50 p-4 rounded-lg whitespace-pre-wrap text-sm leading-relaxed">
+            <div className="bg-muted p-4 rounded-lg whitespace-pre-wrap text-sm leading-relaxed">
               {result}
             </div>
           </CardContent>

@@ -102,11 +102,11 @@ export default function GamesModal({ isOpen, onClose, bookTitle, bookId }: Games
 
   return (
     <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-300">
-      <div className="w-full max-w-5xl h-[90vh] bg-white dark:bg-gray-900 rounded-3xl overflow-hidden shadow-2xl flex flex-col relative">
+      <div className="w-full max-w-5xl h-[90vh] bg-card dark:bg-gray-900 rounded-3xl overflow-hidden shadow-2xl flex flex-col relative">
         
         <div className="h-20 bg-gradient-to-r from-indigo-600 to-purple-600 flex items-center justify-between px-8 text-white shrink-0">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-white/20 rounded-xl backdrop-blur-md">
+            <div className="p-2 bg-card/20 rounded-xl backdrop-blur-md">
               <Gamepad2 className="h-8 w-8 text-yellow-300" />
             </div>
             <div>
@@ -120,27 +120,27 @@ export default function GamesModal({ isOpen, onClose, bookTitle, bookId }: Games
                 onClick={handleRegenerate}
                 disabled={loading}
                 variant="outline" 
-                className="bg-white/10 hover:bg-white/20 border-white/20 text-white gap-2 transition-all hover:scale-105 active:scale-95"
+                className="bg-card/10 hover:bg-card/20 border-white/20 text-white gap-2 transition-all hover:scale-105 active:scale-95"
               >
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
                 <span className="hidden sm:inline">Regenerar (IA)</span>
               </Button>
             )}
-            <Button variant="ghost" size="icon" onClick={onClose} className="hover:bg-white/20 text-white rounded-full h-10 w-10">
+            <Button variant="ghost" size="icon" onClick={onClose} className="hover:bg-card/20 text-white rounded-full h-10 w-10">
               <X className="h-6 w-6" />
             </Button>
           </div>
         </div>
 
-        <div className="flex-1 overflow-hidden bg-indigo-50/10">
+        <div className="flex-1 overflow-hidden bg-indigo-500/10/10">
           {!activeGame ? (
             <GameMenu onSelectGame={setActiveGame} />
           ) : (
             <div className="h-full flex flex-col">
-              <div className="p-4 border-b bg-white dark:bg-gray-800 flex items-center gap-4 shrink-0">
+              <div className="p-4 border-b bg-card dark:bg-gray-800 flex items-center gap-4 shrink-0">
                 <Button variant="ghost" onClick={() => setActiveGame(null)}>← Menú</Button>
                 <div className="h-6 w-px bg-gray-200" />
-                <h3 className="font-bold text-lg text-indigo-900 dark:text-indigo-300">
+                <h3 className="font-bold text-lg text-indigo-200 dark:text-indigo-300">
                   {activeGame === 'truefalse' && 'Reto: ¿Verdad o Falso?'}
                   {activeGame === 'timeline' && 'Cronología Literaria'}
                   {activeGame === 'wordsearch' && 'Busca las Palabras Clave'}
@@ -179,7 +179,7 @@ export default function GamesModal({ isOpen, onClose, bookTitle, bookId }: Games
                   </>
                 ) : (
                   <div className="text-center">
-                    <Loader2 className="h-10 w-10 animate-spin text-indigo-600 mx-auto mb-4" />
+                    <Loader2 className="h-10 w-10 animate-spin text-indigo-400 mx-auto mb-4" />
                     <p>Cargando actividades personalizadas...</p>
                   </div>
                 )}
@@ -202,7 +202,7 @@ function GameMenu({ onSelectGame }: { onSelectGame: (g: GameType) => void }) {
 
   return (
     <div className="h-full flex flex-col items-center justify-center p-8 overflow-y-auto">
-      <h3 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-12 text-center">Zona de Juegos Literarios</h3>
+      <h3 className="text-3xl font-bold text-foreground dark:text-gray-100 mb-12 text-center">Zona de Juegos Literarios</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 w-full max-w-5xl">
         {games.map((game) => (
           <motion.div
@@ -217,8 +217,8 @@ function GameMenu({ onSelectGame }: { onSelectGame: (g: GameType) => void }) {
                 <game.icon className="h-16 w-16 text-white opacity-90" />
               </div>
               <CardContent className="p-6 text-center flex-1 flex flex-col">
-                <h4 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">{game.title}</h4>
-                <p className="text-sm text-gray-500 flex-1">{game.description}</p>
+                <h4 className="text-xl font-bold text-foreground dark:text-gray-100 mb-2">{game.title}</h4>
+                <p className="text-sm text-muted-foreground flex-1">{game.description}</p>
                 <Button className={`mt-6 w-full ${game.color} hover:opacity-90 text-white font-bold rounded-full`}>
                   Jugar
                 </Button>

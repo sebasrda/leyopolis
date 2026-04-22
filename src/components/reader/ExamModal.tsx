@@ -143,7 +143,7 @@ export default function ExamModal({ isOpen, onClose, bookTitle, bookId }: { isOp
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
-          className="bg-white dark:bg-gray-900 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden relative print:shadow-none print:max-w-full print:rounded-none"
+          className="bg-card dark:bg-gray-900 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden relative print:shadow-none print:max-w-full print:rounded-none"
         >
           <div className="bg-indigo-600 p-6 flex justify-between items-center no-print print:hidden">
             <div>
@@ -158,7 +158,7 @@ export default function ExamModal({ isOpen, onClose, bookTitle, bookId }: { isOp
           <div className="p-8">
             {/* Print Header */}
             <div className="hidden print:block text-center mb-8 border-b pb-4">
-              <h1 className="text-3xl font-bold text-indigo-700">Evidencia de Evaluación - Leyópolis</h1>
+              <h1 className="text-3xl font-bold text-indigo-300">Evidencia de Evaluación - Leyópolis</h1>
               <div className="mt-4 grid grid-cols-2 text-left gap-4 max-w-md mx-auto">
                 <p><span className="font-bold">Libro:</span> {bookTitle}</p>
                 <p><span className="font-bold">Fecha:</span> {new Date().toLocaleDateString()}</p>
@@ -169,40 +169,40 @@ export default function ExamModal({ isOpen, onClose, bookTitle, bookId }: { isOp
             
             {loading ? (
               <div className="flex flex-col items-center justify-center py-12 print:hidden">
-                <Loader2 className="h-8 w-8 animate-spin text-indigo-600 mb-4" />
-                <p className="text-gray-500">Cargando preguntas oficiales...</p>
+                <Loader2 className="h-8 w-8 animate-spin text-indigo-400 mb-4" />
+                <p className="text-muted-foreground">Cargando preguntas oficiales...</p>
               </div>
             ) : alreadyCompleted ? (
               <div className="text-center py-12 print:hidden">
                 <AlertCircle className="h-12 w-12 text-amber-500 mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-gray-800 mb-2">Examen ya realizado</h3>
-                <p className="text-gray-500 mb-6">Ya has completado este examen y solo se permite un intento. Contacta al administrador si necesitas repetir la prueba.</p>
+                <h3 className="text-xl font-bold text-foreground mb-2">Examen ya realizado</h3>
+                <p className="text-muted-foreground mb-6">Ya has completado este examen y solo se permite un intento. Contacta al administrador si necesitas repetir la prueba.</p>
                 <Button onClick={onClose} className="bg-indigo-600">Volver a la lectura</Button>
               </div>
             ) : error ? (
               <div className="text-center py-12 print:hidden">
                 <AlertCircle className="h-12 w-12 text-amber-500 mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-gray-800 mb-2">¡Ups!</h3>
-                <p className="text-gray-500 mb-6">{error}</p>
+                <h3 className="text-xl font-bold text-foreground mb-2">¡Ups!</h3>
+                <p className="text-muted-foreground mb-6">{error}</p>
                 <Button onClick={onClose} className="bg-indigo-600">Volver a la lectura</Button>
               </div>
             ) : !showResult && questions.length > 0 ? (
               <>
                 <div className="mb-6 space-y-2 print:hidden">
-                  <div className="flex justify-between text-sm text-gray-500 font-medium">
+                  <div className="flex justify-between text-sm text-muted-foreground font-medium">
                     <span>Pregunta {currentQuestion + 1} de {questions.length}</span>
                     <span>{Math.round(((currentQuestion) / questions.length) * 100)}% Completado</span>
                   </div>
                   <Progress value={((currentQuestion) / questions.length) * 100} className="h-2" />
                 </div>
 
-                <h3 className="text-xl font-semibold text-gray-800 mb-6">
+                <h3 className="text-xl font-semibold text-foreground mb-6">
                   {questions[currentQuestion].text}
                 </h3>
 
                 <div className="space-y-3 mb-8">
                   {questions[currentQuestion].options?.map((option, index) => {
-                    let optionClass = "border-2 border-gray-200 hover:border-indigo-300 hover:bg-indigo-50";
+                    let optionClass = "border-2 border-border hover:border-indigo-300 hover:bg-indigo-500/10";
                     
                     if (isAnswered) {
                       if (index === questions[currentQuestion].correctAnswer) {
@@ -210,10 +210,10 @@ export default function ExamModal({ isOpen, onClose, bookTitle, bookId }: { isOp
                       } else if (index === selectedOption) {
                         optionClass = "border-red-500 bg-red-50 text-red-700";
                       } else {
-                        optionClass = "border-gray-100 text-gray-400 opacity-50";
+                        optionClass = "border-border text-gray-400 opacity-50";
                       }
                     } else if (selectedOption === index) {
-                      optionClass = "border-indigo-600 bg-indigo-50 text-indigo-700 ring-1 ring-indigo-600";
+                      optionClass = "border-indigo-600 bg-indigo-500/10 text-indigo-300 ring-1 ring-indigo-600";
                     }
 
                     return (
@@ -255,7 +255,7 @@ export default function ExamModal({ isOpen, onClose, bookTitle, bookId }: { isOp
                     <AlertCircle size={64} className="text-red-600" />
                   )}
                 </div>
-                <h3 className="text-3xl font-bold text-gray-800 mb-2">
+                <h3 className="text-3xl font-bold text-foreground mb-2">
                   {currentPass ? "¡Felicidades, Aprobaste!" : "Evaluación Finalizada"}
                 </h3>
                 <div className="mb-4">
@@ -263,25 +263,25 @@ export default function ExamModal({ isOpen, onClose, bookTitle, bookId }: { isOp
                     {currentPass ? "APROBADO" : "REPROBADO"}
                   </Badge>
                 </div>
-                <p className="text-gray-500 mb-8 print:hidden">
+                <p className="text-muted-foreground mb-8 print:hidden">
                   {currentPass 
                     ? "Has demostrado un excelente conocimiento de la lectura." 
                     : "Te recomendamos volver a leer los puntos clave para mejorar tu nivel."}
                 </p>
                 
                 <div className="grid grid-cols-2 gap-4 max-w-sm mx-auto mb-10">
-                  <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                    <p className="text-sm text-gray-500 uppercase font-bold tracking-wider">Puntuación</p>
-                    <p className="text-4xl font-black text-indigo-600">{score}/{questions.length}</p>
+                  <div className="bg-muted p-4 rounded-xl border border-border">
+                    <p className="text-sm text-muted-foreground uppercase font-bold tracking-wider">Puntuación</p>
+                    <p className="text-4xl font-black text-indigo-400">{score}/{questions.length}</p>
                   </div>
-                  <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                    <p className="text-sm text-gray-500 uppercase font-bold tracking-wider">Precisión</p>
+                  <div className="bg-muted p-4 rounded-xl border border-border">
+                    <p className="text-sm text-muted-foreground uppercase font-bold tracking-wider">Precisión</p>
                     <p className="text-4xl font-black text-green-600">{Math.round((score / (questions.length||1)) * 100)}%</p>
                   </div>
                 </div>
 
                 <div className="flex justify-center gap-4 no-print print:hidden">
-                  <Button variant="outline" onClick={() => window.print()} size="lg" className="border-indigo-200 text-indigo-700">
+                  <Button variant="outline" onClick={() => window.print()} size="lg" className="border-indigo-500/50/30 text-indigo-300">
                     Descargar Evidencia
                   </Button>
                   <Button variant="outline" onClick={onClose} size="lg">Cerrar</Button>

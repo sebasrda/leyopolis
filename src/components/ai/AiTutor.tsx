@@ -43,13 +43,13 @@ export default function AiTutor() {
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="mb-4 w-80 md:w-96 bg-white rounded-2xl shadow-2xl border border-indigo-100 overflow-hidden pointer-events-auto flex flex-col"
+            className="mb-4 w-80 md:w-96 bg-card rounded-2xl shadow-2xl border border-indigo-500/50/20 overflow-hidden pointer-events-auto flex flex-col"
             style={{ maxHeight: '600px' }} // Limit height
           >
             {/* Header */}
             <div className="bg-indigo-600 p-4 flex items-center justify-between text-white shrink-0">
               <div className="flex items-center gap-2">
-                <div className="bg-white/20 p-1.5 rounded-lg">
+                <div className="bg-card/20 p-1.5 rounded-lg">
                     <Bot size={20} />
                 </div>
                 <div>
@@ -60,7 +60,7 @@ export default function AiTutor() {
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="text-white hover:bg-white/20 h-8 w-8"
+                className="text-white hover:bg-card/20 h-8 w-8"
                 onClick={() => setIsOpen(false)}
               >
                 <X size={18} />
@@ -68,7 +68,7 @@ export default function AiTutor() {
             </div>
 
             {/* Chat Area */}
-            <ScrollArea className="flex-1 p-4 bg-gray-50 h-80">
+            <ScrollArea className="flex-1 p-4 bg-muted h-80">
               <div className="space-y-4">
                 {messages.map((msg, idx) => (
                   <div 
@@ -79,7 +79,7 @@ export default function AiTutor() {
                       className={`max-w-[85%] p-3 rounded-2xl text-sm ${
                         msg.role === 'user' 
                           ? 'bg-indigo-600 text-white rounded-br-none' 
-                          : 'bg-white text-gray-800 border border-gray-200 rounded-bl-none shadow-sm'
+                          : 'bg-card text-foreground border border-border rounded-bl-none shadow-sm'
                       }`}
                     >
                       {msg.content}
@@ -90,7 +90,7 @@ export default function AiTutor() {
             </ScrollArea>
 
             {/* Input Area */}
-            <div className="p-3 bg-white border-t flex gap-2 shrink-0">
+            <div className="p-3 bg-card border-t flex gap-2 shrink-0">
               <Input 
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
@@ -123,7 +123,7 @@ export default function AiTutor() {
         </span>
         
         {!isOpen && (
-            <div className="absolute right-full mr-4 bg-white px-3 py-1.5 rounded-lg shadow-lg text-sm text-gray-700 font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+            <div className="absolute right-full mr-4 bg-card px-3 py-1.5 rounded-lg shadow-lg text-sm text-foreground font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                 ¡Hola! ¿Ayuda?
             </div>
         )}

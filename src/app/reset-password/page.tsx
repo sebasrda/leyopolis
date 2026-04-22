@@ -24,8 +24,8 @@ function ResetPasswordForm() {
     return (
       <div className="flex flex-col items-center gap-4 py-6">
         <AlertCircle className="h-12 w-12 text-red-400" />
-        <p className="text-gray-600 text-center">Enlace inválido o expirado.</p>
-        <Link href="/forgot-password" className="text-indigo-600 hover:underline text-sm">
+        <p className="text-muted-foreground text-center">Enlace inválido o expirado.</p>
+        <Link href="/forgot-password" className="text-indigo-400 hover:underline text-sm">
           Solicitar nuevo enlace
         </Link>
       </div>
@@ -65,8 +65,8 @@ function ResetPasswordForm() {
   return done ? (
     <div className="flex flex-col items-center gap-4 py-6">
       <CheckCircle2 className="h-16 w-16 text-green-500" />
-      <p className="text-gray-700 font-semibold text-center">¡Contraseña actualizada!</p>
-      <p className="text-gray-500 text-sm text-center">Serás redirigido al inicio de sesión en unos segundos...</p>
+      <p className="text-foreground font-semibold text-center">¡Contraseña actualizada!</p>
+      <p className="text-muted-foreground text-sm text-center">Serás redirigido al inicio de sesión en unos segundos...</p>
     </div>
   ) : (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -81,7 +81,7 @@ function ResetPasswordForm() {
           required
           minLength={6}
         />
-        <button type="button" className="absolute right-3 top-3 text-gray-400 hover:text-gray-600" onClick={() => setShowPw(!showPw)} tabIndex={-1}>
+        <button type="button" className="absolute right-3 top-3 text-gray-400 hover:text-muted-foreground" onClick={() => setShowPw(!showPw)} tabIndex={-1}>
           {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
         </button>
       </div>
@@ -112,7 +112,7 @@ export default function ResetPasswordPage() {
           <div className="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-indigo-600 mb-4">
             <span className="text-white font-bold text-2xl">L</span>
           </div>
-          <p className="text-sm text-gray-500">LEYÓPOLIS</p>
+          <p className="text-sm text-muted-foreground">LEYÓPOLIS</p>
         </div>
         <Card className="border-none shadow-xl">
           <CardHeader className="space-y-1 text-center">
@@ -120,12 +120,12 @@ export default function ResetPasswordPage() {
             <CardDescription>Ingresa tu nueva contraseña para recuperar el acceso.</CardDescription>
           </CardHeader>
           <CardContent>
-            <Suspense fallback={<div className="flex justify-center py-8"><Loader2 className="h-8 w-8 animate-spin text-indigo-600" /></div>}>
+            <Suspense fallback={<div className="flex justify-center py-8"><Loader2 className="h-8 w-8 animate-spin text-indigo-400" /></div>}>
               <ResetPasswordForm />
             </Suspense>
           </CardContent>
           <CardFooter className="justify-center">
-            <Link href="/login" className="text-sm text-gray-500 hover:text-indigo-600 transition-colors">
+            <Link href="/login" className="text-sm text-muted-foreground hover:text-indigo-400 transition-colors">
               Volver al inicio de sesión
             </Link>
           </CardFooter>

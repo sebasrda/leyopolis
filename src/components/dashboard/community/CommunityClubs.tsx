@@ -81,7 +81,7 @@ export function CommunityClubs() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {clubs.map((club) => (
                 <Card key={club.id} className="group overflow-hidden hover:shadow-lg transition-all border-t-4 border-t-indigo-500">
-                    <div className="h-32 bg-gray-100 relative cursor-pointer">
+                    <div className="h-32 bg-muted relative cursor-pointer">
                         <Link href={`/dashboard/community/club/${club.id}`}>
                         <img 
                             src={club.coverImage || "https://placehold.co/400x200?text=Club"} 
@@ -95,11 +95,11 @@ export function CommunityClubs() {
                         </Link>
                     </div>
                     <CardContent className="p-4 pt-4">
-                        <p className="text-sm text-gray-600 mb-4 line-clamp-2 min-h-[40px]">
+                        <p className="text-sm text-muted-foreground mb-4 line-clamp-2 min-h-[40px]">
                             {club.description}
                         </p>
                         
-                        <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
+                        <div className="flex items-center justify-between text-xs text-muted-foreground mb-4">
                             <div className="flex items-center gap-1">
                                 <Users className="h-3 w-3" />
                                 {club.membersCount} miembros
@@ -112,7 +112,7 @@ export function CommunityClubs() {
 
                         <Button 
                             className={`w-full ${club.isMember 
-                                ? "bg-white text-indigo-600 border border-indigo-200 hover:bg-indigo-50" 
+                                ? "bg-card text-indigo-400 border border-indigo-500/50/30 hover:bg-indigo-500/10" 
                                 : "bg-indigo-600 hover:bg-indigo-700 text-white"}`}
                             onClick={() => handleJoinLeave(club.id, club.isMember)}
                             disabled={processing === club.id}

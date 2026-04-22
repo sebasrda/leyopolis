@@ -52,7 +52,7 @@ export default function InstitutionDashboard({ institutionId }: { institutionId:
     }
   };
 
-  if (loading) return <div className="flex justify-center p-12"><Loader2 className="h-8 w-8 animate-spin text-indigo-600" /></div>;
+  if (loading) return <div className="flex justify-center p-12"><Loader2 className="h-8 w-8 animate-spin text-indigo-400" /></div>;
   if (!data) return <div className="p-8 text-center text-red-500">Colegio no encontrado</div>;
 
   return (
@@ -60,39 +60,39 @@ export default function InstitutionDashboard({ institutionId }: { institutionId:
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link href="/dashboard/superadmin">
-          <button className="p-2 bg-gray-100 hover:bg-gray-200 rounded-full text-gray-600 transition-colors">
+          <button className="p-2 bg-muted hover:bg-gray-200 rounded-full text-muted-foreground transition-colors">
             <ArrowLeft className="h-5 w-5" />
           </button>
         </Link>
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Building2 className="h-7 w-7 text-indigo-600" />
+            <Building2 className="h-7 w-7 text-indigo-400" />
             {data.name}
           </h1>
-          <p className="text-gray-500 text-sm mt-1">{data.domain}</p>
+          <p className="text-muted-foreground text-sm mt-1">{data.domain}</p>
         </div>
       </div>
 
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="bg-white border rounded-lg p-1 shadow-sm flex flex-wrap gap-1 h-auto justify-start mb-6 w-full max-w-2xl">
-          <TabsTrigger value="overview" className="data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700">Resumen</TabsTrigger>
-          <TabsTrigger value="students" className="data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700">Estudiantes</TabsTrigger>
-          <TabsTrigger value="teachers" className="data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700">Docentes</TabsTrigger>
-          <TabsTrigger value="admins" className="data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700">Administración</TabsTrigger>
-          <TabsTrigger value="coordinators" className="data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700">Coordinadores</TabsTrigger>
-          <TabsTrigger value="classes" className="data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700">Clases</TabsTrigger>
+        <TabsList className="bg-card border rounded-lg p-1 shadow-sm flex flex-wrap gap-1 h-auto justify-start mb-6 w-full max-w-2xl">
+          <TabsTrigger value="overview" className="data-[state=active]:bg-indigo-500/10 data-[state=active]:text-indigo-300">Resumen</TabsTrigger>
+          <TabsTrigger value="students" className="data-[state=active]:bg-indigo-500/10 data-[state=active]:text-indigo-300">Estudiantes</TabsTrigger>
+          <TabsTrigger value="teachers" className="data-[state=active]:bg-indigo-500/10 data-[state=active]:text-indigo-300">Docentes</TabsTrigger>
+          <TabsTrigger value="admins" className="data-[state=active]:bg-indigo-500/10 data-[state=active]:text-indigo-300">Administración</TabsTrigger>
+          <TabsTrigger value="coordinators" className="data-[state=active]:bg-indigo-500/10 data-[state=active]:text-indigo-300">Coordinadores</TabsTrigger>
+          <TabsTrigger value="classes" className="data-[state=active]:bg-indigo-500/10 data-[state=active]:text-indigo-300">Clases</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview">
           <Card className="border-none shadow-md">
-            <CardHeader className="border-b bg-gray-50/50">
+            <CardHeader className="border-b bg-muted/50">
               <CardTitle>Información General</CardTitle>
             </CardHeader>
             <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                <div>
                   <p className="text-sm font-semibold text-gray-400 uppercase">Estado</p>
                   <div className="mt-1">
-                    <Badge variant="outline" className="uppercase bg-indigo-50 text-indigo-700 border-indigo-200">{data.status}</Badge>
+                    <Badge variant="outline" className="uppercase bg-indigo-500/10 text-indigo-300 border-indigo-500/50/30">{data.status}</Badge>
                   </div>
                </div>
                <div>
@@ -102,7 +102,7 @@ export default function InstitutionDashboard({ institutionId }: { institutionId:
                <div>
                   <p className="text-sm font-semibold text-gray-400 uppercase">Estudiantes Usados</p>
                   <p className="text-lg font-medium mt-1">
-                    <span className="text-indigo-600 font-bold">{data._count?.users || 0}</span> 
+                    <span className="text-indigo-400 font-bold">{data._count?.users || 0}</span> 
                     <span className="text-gray-400"> / {data.maxStudents} límite</span>
                   </p>
                </div>
@@ -127,14 +127,14 @@ export default function InstitutionDashboard({ institutionId }: { institutionId:
         <TabsContent value="admins">
           <div className="space-y-6">
             <Card className="border-none shadow-md">
-              <CardHeader className="border-b bg-gray-50/50">
+              <CardHeader className="border-b bg-muted/50">
                 <CardTitle>Configuración de Plataforma / Biblioteca</CardTitle>
               </CardHeader>
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="font-semibold text-gray-900">Limitar Biblioteca a Unidades Asignadas</h3>
-                    <p className="text-sm text-gray-500">
+                    <h3 className="font-semibold text-foreground">Limitar Biblioteca a Unidades Asignadas</h3>
+                    <p className="text-sm text-muted-foreground">
                       Si se activa, los estudiantes de este colegio solo verán en su biblioteca los libros estrictamente asignados a sus clases matriculadas.
                     </p>
                   </div>

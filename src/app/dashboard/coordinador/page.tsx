@@ -60,29 +60,29 @@ export default function CoordinadorDashboardPage() {
   return (
     <div className="space-y-8">
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold text-gray-900">Panel del Coordinador</h1>
-        <p className="text-gray-500">Seguimiento institucional: lectura, quizzes y progreso por grado.</p>
+        <h1 className="text-3xl font-bold text-foreground">Panel del Coordinador</h1>
+        <p className="text-muted-foreground">Seguimiento institucional: lectura, quizzes y progreso por grado.</p>
       </div>
 
       {loading ? (
         <Card className="border-dashed">
-          <CardContent className="p-8 text-center text-gray-500">Cargando...</CardContent>
+          <CardContent className="p-8 text-center text-muted-foreground">Cargando...</CardContent>
         </Card>
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card className="border-none shadow-md">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500">Estudiantes</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">Estudiantes</CardTitle>
               </CardHeader>
               <CardContent className="flex items-center justify-between">
                 <div className="text-2xl font-bold">{overview?.counts.students ?? 0}</div>
-                <Users className="h-5 w-5 text-indigo-600" />
+                <Users className="h-5 w-5 text-indigo-400" />
               </CardContent>
             </Card>
             <Card className="border-none shadow-md">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500">Profesores</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">Profesores</CardTitle>
               </CardHeader>
               <CardContent className="flex items-center justify-between">
                 <div className="text-2xl font-bold">{overview?.counts.teachers ?? 0}</div>
@@ -91,7 +91,7 @@ export default function CoordinadorDashboardPage() {
             </Card>
             <Card className="border-none shadow-md">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500">Lecturas (7 días)</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">Lecturas (7 días)</CardTitle>
               </CardHeader>
               <CardContent className="flex items-center justify-between">
                 <div className="text-2xl font-bold">{overview?.counts.sessions7d ?? 0}</div>
@@ -109,18 +109,18 @@ export default function CoordinadorDashboardPage() {
               <CardContent className="space-y-3">
                 {(overview?.topBooks ?? []).length ? (
                   overview!.topBooks.map((b) => (
-                    <div key={b.bookId} className="flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition">
+                    <div key={b.bookId} className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-muted transition">
                       <div className="space-y-1">
-                        <div className="font-semibold text-gray-900 line-clamp-1">{b.title}</div>
-                        <div className="text-xs text-gray-500 line-clamp-1">{b.author}</div>
+                        <div className="font-semibold text-foreground line-clamp-1">{b.title}</div>
+                        <div className="text-xs text-muted-foreground line-clamp-1">{b.author}</div>
                       </div>
-                      <Badge variant="outline" className="bg-indigo-50 text-indigo-700 hover:bg-indigo-50">
+                      <Badge variant="outline" className="bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/10">
                         {b.reads}
                       </Badge>
                     </div>
                   ))
                 ) : (
-                  <div className="text-sm text-gray-500">Sin datos.</div>
+                  <div className="text-sm text-muted-foreground">Sin datos.</div>
                 )}
               </CardContent>
             </Card>
@@ -132,11 +132,11 @@ export default function CoordinadorDashboardPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <div className="text-sm text-gray-500">Progreso promedio</div>
-                  <div className="font-bold text-indigo-700">{overview?.counts.avgProgress ?? 0}%</div>
+                  <div className="text-sm text-muted-foreground">Progreso promedio</div>
+                  <div className="font-bold text-indigo-300">{overview?.counts.avgProgress ?? 0}%</div>
                 </div>
                 <div className="flex items-center justify-between">
-                  <div className="text-sm text-gray-500">Quiz promedio</div>
+                  <div className="text-sm text-muted-foreground">Quiz promedio</div>
                   <div className="font-bold text-emerald-700">{overview?.counts.avgQuiz ?? 0}</div>
                 </div>
                 <div className="flex flex-col gap-2">
@@ -177,15 +177,15 @@ export default function CoordinadorDashboardPage() {
               <CardContent className="space-y-3">
                 {(overview?.progressByGrade ?? []).length ? (
                   overview!.progressByGrade.map((r) => (
-                    <div key={r.grade} className="flex items-center justify-between p-3 rounded-lg border border-gray-200">
-                      <div className="font-medium text-gray-800">{r.grade}</div>
-                      <Badge variant="outline" className="bg-gray-50 text-gray-700 hover:bg-gray-50">
+                    <div key={r.grade} className="flex items-center justify-between p-3 rounded-lg border border-border">
+                      <div className="font-medium text-foreground">{r.grade}</div>
+                      <Badge variant="outline" className="bg-muted text-foreground hover:bg-muted">
                         {r.avgProgress}%
                       </Badge>
                     </div>
                   ))
                 ) : (
-                  <div className="text-sm text-gray-500">Sin datos.</div>
+                  <div className="text-sm text-muted-foreground">Sin datos.</div>
                 )}
               </CardContent>
             </Card>
@@ -198,20 +198,20 @@ export default function CoordinadorDashboardPage() {
               <CardContent className="space-y-3">
                 {(overview?.latestQuizzes ?? []).length ? (
                   overview!.latestQuizzes.map((a) => (
-                    <div key={a.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition">
+                    <div key={a.id} className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-muted transition">
                       <div className="space-y-1">
-                        <div className="font-semibold text-gray-900 line-clamp-1">{a.activity.title}</div>
-                        <div className="text-xs text-gray-500 line-clamp-1">
+                        <div className="font-semibold text-foreground line-clamp-1">{a.activity.title}</div>
+                        <div className="text-xs text-muted-foreground line-clamp-1">
                           {a.student.name || a.student.email || "Estudiante"} {a.student.grade ? `· ${a.student.grade}` : ""}
                         </div>
                       </div>
-                      <Badge variant="outline" className="bg-indigo-50 text-indigo-700 hover:bg-indigo-50">
+                      <Badge variant="outline" className="bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/10">
                         {a.score}
                       </Badge>
                     </div>
                   ))
                 ) : (
-                  <div className="text-sm text-gray-500">Sin datos.</div>
+                  <div className="text-sm text-muted-foreground">Sin datos.</div>
                 )}
               </CardContent>
             </Card>
@@ -226,18 +226,18 @@ export default function CoordinadorDashboardPage() {
               <CardContent className="space-y-3">
                 {(users?.students ?? []).length ? (
                   users!.students.slice(0, 10).map((s) => (
-                    <div key={s.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-200">
+                    <div key={s.id} className="flex items-center justify-between p-3 rounded-lg border border-border">
                       <div className="space-y-1">
-                        <div className="font-semibold text-gray-900 line-clamp-1">{s.name || s.email || "Estudiante"}</div>
-                        <div className="text-xs text-gray-500 line-clamp-1">{s.grade || "Sin grado"}</div>
+                        <div className="font-semibold text-foreground line-clamp-1">{s.name || s.email || "Estudiante"}</div>
+                        <div className="text-xs text-muted-foreground line-clamp-1">{s.grade || "Sin grado"}</div>
                       </div>
-                      <Badge variant="outline" className="bg-indigo-50 text-indigo-700 hover:bg-indigo-50">
+                      <Badge variant="outline" className="bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/10">
                         {s.avgProgress}%
                       </Badge>
                     </div>
                   ))
                 ) : (
-                  <div className="text-sm text-gray-500">Sin estudiantes.</div>
+                  <div className="text-sm text-muted-foreground">Sin estudiantes.</div>
                 )}
               </CardContent>
             </Card>
@@ -250,18 +250,18 @@ export default function CoordinadorDashboardPage() {
               <CardContent className="space-y-3">
                 {(users?.teachers ?? []).length ? (
                   users!.teachers.slice(0, 10).map((t) => (
-                    <div key={t.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-200">
+                    <div key={t.id} className="flex items-center justify-between p-3 rounded-lg border border-border">
                       <div className="space-y-1">
-                        <div className="font-semibold text-gray-900 line-clamp-1">{t.name || t.email || "Profesor"}</div>
-                        <div className="text-xs text-gray-500 line-clamp-1">{t.email || " "}</div>
+                        <div className="font-semibold text-foreground line-clamp-1">{t.name || t.email || "Profesor"}</div>
+                        <div className="text-xs text-muted-foreground line-clamp-1">{t.email || " "}</div>
                       </div>
-                      <Badge variant="outline" className="bg-gray-50 text-gray-700 hover:bg-gray-50">
+                      <Badge variant="outline" className="bg-muted text-foreground hover:bg-muted">
                         {t.role}
                       </Badge>
                     </div>
                   ))
                 ) : (
-                  <div className="text-sm text-gray-500">Sin profesores.</div>
+                  <div className="text-sm text-muted-foreground">Sin profesores.</div>
                 )}
               </CardContent>
             </Card>

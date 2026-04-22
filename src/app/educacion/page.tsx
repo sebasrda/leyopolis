@@ -6,20 +6,20 @@ import { BookOpen, GraduationCap, PlayCircle, Sparkles } from "lucide-react";
 
 export default function EducacionPage() {
   return (
-    <main className="min-h-screen bg-white">
-      <nav className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+    <main className="min-h-screen bg-card">
+      <nav className="sticky top-0 z-50 w-full border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
         <div className="container mx-auto flex h-16 items-center justify-between px-6">
           <a href="/" className="flex items-center gap-2">
             <div className="h-8 w-8 rounded bg-indigo-600 flex items-center justify-center">
               <span className="text-white font-bold text-xl">L</span>
             </div>
-            <span className="text-2xl font-bold tracking-tight text-indigo-900">LEYOPOLIS</span>
+            <span className="text-2xl font-bold tracking-tight text-indigo-200">LEYOPOLIS</span>
           </a>
           <div className="flex items-center gap-4">
-            <a href="/demo" className="text-sm font-medium text-gray-600 hover:text-indigo-600">
+            <a href="/demo" className="text-sm font-medium text-muted-foreground hover:text-indigo-400">
               Demo
             </a>
-            <a href="/login" className="text-sm font-medium text-gray-600 hover:text-indigo-600">
+            <a href="/login" className="text-sm font-medium text-muted-foreground hover:text-indigo-400">
               Iniciar sesión
             </a>
             <a
@@ -34,19 +34,19 @@ export default function EducacionPage() {
 
       <div className="container mx-auto px-6 py-12 space-y-10">
         <div className="max-w-3xl space-y-2">
-          <h1 className="text-3xl font-bold text-gray-900">Educación</h1>
-          <p className="text-gray-600">Cursos, actividades, videos y biblioteca integrados en Leyópolis.</p>
+          <h1 className="text-3xl font-bold text-foreground">Educación</h1>
+          <p className="text-muted-foreground">Cursos, actividades, videos y biblioteca integrados en Leyópolis.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <Card className="border-none shadow-md">
             <CardContent className="p-6 space-y-4">
-              <div className="h-10 w-10 bg-indigo-100 rounded-lg flex items-center justify-center">
-                <GraduationCap className="h-5 w-5 text-indigo-600" />
+              <div className="h-10 w-10 bg-indigo-500/20 rounded-lg flex items-center justify-center">
+                <GraduationCap className="h-5 w-5 text-indigo-400" />
               </div>
               <div>
-                <div className="font-bold text-gray-900">Cursos</div>
-                <div className="text-sm text-gray-500">Módulos con libros, actividades y videos.</div>
+                <div className="font-bold text-foreground">Cursos</div>
+                <div className="text-sm text-muted-foreground">Módulos con libros, actividades y videos.</div>
               </div>
               <Button asChild className="w-full bg-indigo-600 hover:bg-indigo-500">
                 <a href="/dashboard/courses">Entrar</a>
@@ -60,8 +60,8 @@ export default function EducacionPage() {
                 <Sparkles className="h-5 w-5 text-purple-600" />
               </div>
               <div>
-                <div className="font-bold text-gray-900">Actividades</div>
-                <div className="text-sm text-gray-500">Cuestionarios y juegos educativos tipo Moodle.</div>
+                <div className="font-bold text-foreground">Actividades</div>
+                <div className="text-sm text-muted-foreground">Cuestionarios y juegos educativos tipo Moodle.</div>
               </div>
               <Button asChild className="w-full bg-indigo-600 hover:bg-indigo-500">
                 <a href="/dashboard/activities">Entrar</a>
@@ -75,8 +75,8 @@ export default function EducacionPage() {
                 <PlayCircle className="h-5 w-5 text-emerald-600" />
               </div>
               <div>
-                <div className="font-bold text-gray-900">Videos</div>
-                <div className="text-sm text-gray-500">YouTube, Vimeo o enlaces externos.</div>
+                <div className="font-bold text-foreground">Videos</div>
+                <div className="text-sm text-muted-foreground">YouTube, Vimeo o enlaces externos.</div>
               </div>
               <Button asChild className="w-full bg-indigo-600 hover:bg-indigo-500">
                 <a href="/dashboard/videos">Entrar</a>
@@ -90,8 +90,8 @@ export default function EducacionPage() {
                 <BookOpen className="h-5 w-5 text-amber-600" />
               </div>
               <div>
-                <div className="font-bold text-gray-900">Biblioteca</div>
-                <div className="text-sm text-gray-500">Explora libros y prueba el lector.</div>
+                <div className="font-bold text-foreground">Biblioteca</div>
+                <div className="text-sm text-muted-foreground">Explora libros y prueba el lector.</div>
               </div>
               <Button asChild className="w-full bg-indigo-600 hover:bg-indigo-500">
                 <a href="/biblioteca">Ver biblioteca</a>
@@ -101,10 +101,10 @@ export default function EducacionPage() {
         </div>
 
         <div className="flex flex-wrap gap-3">
-          <Button asChild variant="outline" className="border-indigo-200 text-indigo-600 hover:bg-indigo-50">
+          <Button asChild variant="outline" className="border-indigo-500/50/30 text-indigo-400 hover:bg-indigo-500/10">
             <a href="/demo">Probar demo</a>
           </Button>
-          <Button asChild variant="outline" className="border-gray-200 text-gray-600 hover:bg-gray-50">
+          <Button asChild variant="outline" className="border-border text-muted-foreground hover:bg-muted">
             <a href="/dashboard/teacher">Panel del profesor</a>
           </Button>
         </div>

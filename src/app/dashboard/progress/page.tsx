@@ -79,11 +79,11 @@ export default function ProgressPage() {
   return (
     <div className="space-y-8 p-6">
       <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-          <Target className="h-8 w-8 text-indigo-600" />
+        <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
+          <Target className="h-8 w-8 text-indigo-400" />
           Mi Progreso
         </h1>
-        <p className="text-gray-500">Analíticas basadas en tu actividad real de lectura.</p>
+        <p className="text-muted-foreground">Analíticas basadas en tu actividad real de lectura.</p>
       </div>
 
       {/* Stats Grid */}
@@ -95,22 +95,22 @@ export default function ProgressPage() {
             <p className="text-sm font-medium opacity-90">Libros completados</p>
           </CardContent>
         </Card>
-        <Card className="bg-white p-6 shadow-md border-none flex flex-col items-center justify-center space-y-2">
+        <Card className="bg-card p-6 shadow-md border-none flex flex-col items-center justify-center space-y-2">
           <Star className="h-8 w-8 text-indigo-500" />
-          <h3 className="text-3xl font-bold text-gray-900">{vocabulary.length}</h3>
-          <p className="text-sm text-gray-500">Palabras aprendidas</p>
+          <h3 className="text-3xl font-bold text-foreground">{vocabulary.length}</h3>
+          <p className="text-sm text-muted-foreground">Palabras aprendidas</p>
         </Card>
-        <Card className="bg-white p-6 shadow-md border-none flex flex-col items-center justify-center space-y-2">
+        <Card className="bg-card p-6 shadow-md border-none flex flex-col items-center justify-center space-y-2">
           <Zap className="h-8 w-8 text-yellow-500" />
-          <h3 className="text-3xl font-bold text-gray-900">{progress.streakDays} días</h3>
-          <p className="text-sm text-gray-500">Racha actual</p>
+          <h3 className="text-3xl font-bold text-foreground">{progress.streakDays} días</h3>
+          <p className="text-sm text-muted-foreground">Racha actual</p>
         </Card>
-        <Card className="bg-white p-6 shadow-md border-none flex flex-col items-center justify-center space-y-2">
+        <Card className="bg-card p-6 shadow-md border-none flex flex-col items-center justify-center space-y-2">
           <Clock className="h-8 w-8 text-orange-500" />
           <div className="text-center">
-             <h3 className="text-2xl font-bold text-gray-900">{stats.totalPages}</h3>
-             <p className="text-sm text-gray-500">Páginas leídas</p>
-             <p className="text-xs text-indigo-600 font-medium mt-1">Tiempo: {stats.totalTime}</p>
+             <h3 className="text-2xl font-bold text-foreground">{stats.totalPages}</h3>
+             <p className="text-sm text-muted-foreground">Páginas leídas</p>
+             <p className="text-xs text-indigo-400 font-medium mt-1">Tiempo: {stats.totalTime}</p>
           </div>
         </Card>
       </div>
@@ -121,7 +121,7 @@ export default function ProgressPage() {
             <Card className="col-span-1 shadow-md border-none">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                <PieChart className="h-5 w-5 text-indigo-600" />
+                <PieChart className="h-5 w-5 text-indigo-400" />
                 Libros por Categoría
                 </CardTitle>
                 <CardDescription>Distribución de tus lecturas.</CardDescription>
@@ -166,10 +166,10 @@ export default function ProgressPage() {
             </Card>
         </div>
       ) : (
-        <div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed">
+        <div className="text-center py-12 bg-muted rounded-xl border-2 border-dashed">
             <BookOpen className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-            <h3 className="text-lg font-medium text-gray-900">Aún no hay datos suficientes</h3>
-            <p className="text-gray-500">Empieza a leer libros para ver tus estadísticas aquí.</p>
+            <h3 className="text-lg font-medium text-foreground">Aún no hay datos suficientes</h3>
+            <p className="text-muted-foreground">Empieza a leer libros para ver tus estadísticas aquí.</p>
         </div>
       )}
     </div>

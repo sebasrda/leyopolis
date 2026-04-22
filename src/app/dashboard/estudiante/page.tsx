@@ -45,29 +45,29 @@ export default function EstudianteDashboardPage() {
   return (
     <div className="space-y-8">
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold text-gray-900">Panel del Estudiante</h1>
-        <p className="text-gray-500">Lectura, actividades, juegos y progreso.</p>
+        <h1 className="text-3xl font-bold text-foreground">Panel del Estudiante</h1>
+        <p className="text-muted-foreground">Lectura, actividades, juegos y progreso.</p>
       </div>
 
       {loading ? (
         <Card className="border-dashed">
-          <CardContent className="p-8 text-center text-gray-500">Cargando...</CardContent>
+          <CardContent className="p-8 text-center text-muted-foreground">Cargando...</CardContent>
         </Card>
       ) : (
         <>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
             <Card className="border-none shadow-md">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500">Libros</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">Libros</CardTitle>
               </CardHeader>
               <CardContent className="flex items-center justify-between">
                 <div className="text-2xl font-bold">{stats?.totalBooks ?? 0}</div>
-                <BookOpen className="h-5 w-5 text-indigo-600" />
+                <BookOpen className="h-5 w-5 text-indigo-400" />
               </CardContent>
             </Card>
             <Card className="border-none shadow-md">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500">Completados</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">Completados</CardTitle>
               </CardHeader>
               <CardContent className="flex items-center justify-between">
                 <div className="text-2xl font-bold">{stats?.completedBooks ?? 0}</div>
@@ -76,7 +76,7 @@ export default function EstudianteDashboardPage() {
             </Card>
             <Card className="border-none shadow-md">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500">Nivel</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">Nivel</CardTitle>
               </CardHeader>
               <CardContent className="flex items-center justify-between">
                 <div className="text-2xl font-bold">{stats?.level ?? 1}</div>
@@ -84,13 +84,13 @@ export default function EstudianteDashboardPage() {
               </CardContent>
             </Card>
             {/* New Stats Cards */}
-            <Card className="border-none shadow-md bg-indigo-50/50">
+            <Card className="border-none shadow-md bg-indigo-500/10/50">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-indigo-700">Páginas leídas</CardTitle>
+                <CardTitle className="text-sm font-medium text-indigo-300">Páginas leídas</CardTitle>
               </CardHeader>
               <CardContent className="flex items-center justify-between">
-                <div className="text-2xl font-bold text-indigo-900">{stats?.totalPages ?? 0}</div>
-                <div className="h-8 w-8 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600">📖</div>
+                <div className="text-2xl font-bold text-indigo-200">{stats?.totalPages ?? 0}</div>
+                <div className="h-8 w-8 bg-indigo-500/20 rounded-full flex items-center justify-center text-indigo-400">📖</div>
               </CardContent>
             </Card>
             <Card className="border-none shadow-md bg-amber-50/50">
@@ -127,13 +127,13 @@ export default function EstudianteDashboardPage() {
               {(gradeBooks?.books ?? []).length ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {gradeBooks!.books.slice(0, 9).map((b) => (
-                    <Card key={b.id} className="border border-gray-200 shadow-none">
+                    <Card key={b.id} className="border border-border shadow-none">
                       <CardHeader className="pb-3">
                         <CardTitle className="text-base line-clamp-1">{b.title}</CardTitle>
                         <CardDescription className="line-clamp-1">{b.author}</CardDescription>
                       </CardHeader>
                       <CardContent className="flex items-center justify-between">
-                        <Badge variant="outline" className="bg-gray-50">Asignado</Badge>
+                        <Badge variant="outline" className="bg-muted">Asignado</Badge>
                         <Button asChild size="sm" className="bg-indigo-600 hover:bg-indigo-700">
                           <Link href={`/dashboard/reader/${b.id}?title=${encodeURIComponent(b.title)}`}>Leer</Link>
                         </Button>
@@ -142,7 +142,7 @@ export default function EstudianteDashboardPage() {
                   ))}
                 </div>
               ) : (
-                <div className="text-sm text-gray-500">
+                <div className="text-sm text-muted-foreground">
                   {gradeBooks?.grade ? "No hay libros asignados a este grado." : "Contacta al coordinador para asignarte un grado."}
                 </div>
               )}

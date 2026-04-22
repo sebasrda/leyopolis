@@ -9,7 +9,7 @@ const FEATURES = [
     icon: Sparkles,
     color: "from-indigo-500 to-purple-600",
     bg: "bg-indigo-500/10",
-    border: "border-indigo-500/20",
+    border: "border-indigo-500/50/20",
     title: "IA Pedagógica",
     desc: "Genera quizzes, juegos y actividades de comprensión automáticamente al subir un libro.",
   },
@@ -77,7 +77,7 @@ function DemoSection() {
       </div>
       <div className="relative container mx-auto px-6 text-center">
         <div className="max-w-2xl mx-auto">
-          <div className="inline-flex items-center gap-2 rounded-full bg-indigo-500/10 border border-indigo-500/20 px-4 py-1.5 text-sm font-semibold text-indigo-300 mb-6">
+          <div className="inline-flex items-center gap-2 rounded-full bg-indigo-500/10 border border-indigo-500/50/20 px-4 py-1.5 text-sm font-semibold text-indigo-300 mb-6">
             <Sparkles className="h-3.5 w-3.5" />
             ¿Quieres verlo en acción?
           </div>
@@ -107,7 +107,7 @@ function DemoSection() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="correo@institución.edu.co"
-                className="flex-1 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 px-5 py-4 text-sm outline-none focus:ring-2 focus:ring-indigo-500/60 focus:border-indigo-500/50 backdrop-blur-sm transition-all"
+                className="flex-1 rounded-xl bg-card/5 border border-white/10 text-white placeholder-gray-500 px-5 py-4 text-sm outline-none focus:ring-2 focus:ring-indigo-500/60 focus:border-indigo-500/50/50 backdrop-blur-sm transition-all"
               />
               <button
                 type="submit"
@@ -129,7 +129,7 @@ function DemoSection() {
             </form>
           )}
 
-          <p className="mt-4 text-xs text-gray-600">Sin compromisos. Respuesta en menos de 24 horas.</p>
+          <p className="mt-4 text-xs text-muted-foreground">Sin compromisos. Respuesta en menos de 24 horas.</p>
         </div>
       </div>
     </section>
@@ -143,7 +143,7 @@ export default function Home() {
       <nav className="fixed top-0 z-50 w-full border-b border-white/5 bg-[#0a0a1a]/80 backdrop-blur-xl">
         <div className="container mx-auto flex h-16 items-center justify-between px-6">
           <div className="flex items-center gap-2.5">
-            <div className="h-9 w-9 rounded-lg bg-white flex items-center justify-center shadow-lg shadow-indigo-500/20 overflow-hidden p-1">
+            <div className="h-9 w-9 rounded-lg bg-card flex items-center justify-center shadow-lg shadow-indigo-500/20 overflow-hidden p-1">
               <img src="/leyopolis-logo.png" alt="Leyópolis Logo" className="h-full w-full object-contain" />
             </div>
             <span className="text-xl font-black tracking-tight text-white">LEYÓPOLIS</span>
@@ -173,7 +173,7 @@ export default function Home() {
       </div>
 
       {/* SOCIAL PROOF BANNER */}
-      <section className="py-16 border-y border-white/5 bg-white/[0.02]">
+      <section className="py-16 border-y border-white/5 bg-card/[0.02]">
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             {[
@@ -186,7 +186,7 @@ export default function Home() {
                 <div className="text-4xl font-black bg-gradient-to-r from-indigo-400 to-fuchsia-400 bg-clip-text text-transparent">
                   {s.n}
                 </div>
-                <div className="text-sm text-gray-500 mt-1">{s.label}</div>
+                <div className="text-sm text-muted-foreground mt-1">{s.label}</div>
               </div>
             ))}
           </div>
@@ -200,7 +200,7 @@ export default function Home() {
         </div>
         <div className="relative container mx-auto px-6">
           <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 rounded-full bg-indigo-500/10 border border-indigo-500/20 px-4 py-1.5 text-sm font-semibold text-indigo-300 mb-6">
+            <div className="inline-flex items-center gap-2 rounded-full bg-indigo-500/10 border border-indigo-500/50/20 px-4 py-1.5 text-sm font-semibold text-indigo-300 mb-6">
               <Sparkles className="h-3.5 w-3.5" />
               Por qué Leyópolis
             </div>
@@ -219,7 +219,7 @@ export default function Home() {
             {FEATURES.map((f) => (
               <div
                 key={f.title}
-                className={`group relative rounded-2xl ${f.bg} ${f.border} border p-6 hover:bg-white/5 transition-all duration-300 hover:-translate-y-1`}
+                className={`group relative rounded-2xl ${f.bg} ${f.border} border p-6 hover:bg-card/5 transition-all duration-300 hover:-translate-y-1`}
               >
                 <div className={`inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${f.color} mb-4 shadow-lg`}>
                   <f.icon className="h-6 w-6 text-white" />
@@ -267,7 +267,7 @@ export default function Home() {
             ].map((r) => (
               <div
                 key={r.role}
-                className="rounded-2xl bg-white/[0.03] border border-white/[0.07] p-8 hover:bg-white/[0.06] transition-all duration-300 hover:-translate-y-1"
+                className="rounded-2xl bg-card/[0.03] border border-white/[0.07] p-8 hover:bg-card/[0.06] transition-all duration-300 hover:-translate-y-1"
               >
                 <div className={`inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${r.color} mb-6 shadow-xl`}>
                   <r.icon className="h-7 w-7 text-white" />
@@ -295,7 +295,7 @@ export default function Home() {
         <div className="container mx-auto px-6 text-center">
           <div className="relative max-w-3xl mx-auto">
             <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 blur-2xl" />
-            <div className="relative rounded-3xl bg-gradient-to-br from-indigo-600/10 to-purple-600/10 border border-indigo-500/20 p-16 backdrop-blur-sm">
+            <div className="relative rounded-3xl bg-gradient-to-br from-indigo-600/10 to-purple-600/10 border border-indigo-500/50/20 p-16 backdrop-blur-sm">
               <div className="h-16 w-16 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-2xl shadow-indigo-500/40">
                 <Sparkles className="h-8 w-8 text-white" />
               </div>
@@ -314,7 +314,7 @@ export default function Home() {
                 </a>
                 <a
                   href="/login"
-                  className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-8 py-4 text-base font-semibold text-white hover:bg-white/10 transition-all duration-200"
+                  className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-card/5 px-8 py-4 text-base font-semibold text-white hover:bg-card/10 transition-all duration-200"
                 >
                   Ya tengo cuenta
                 </a>
@@ -328,13 +328,13 @@ export default function Home() {
       <footer className="border-t border-white/5 py-12">
         <div className="container mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-white flex items-center justify-center overflow-hidden p-1">
+            <div className="h-8 w-8 rounded-lg bg-card flex items-center justify-center overflow-hidden p-1">
               <img src="/leyopolis-logo.png" alt="Leyópolis Logo" className="h-full w-full object-contain" />
             </div>
             <span className="font-black text-white">LEYÓPOLIS</span>
           </div>
-          <p className="text-sm text-gray-600">© 2026 LEYÓPOLIS. Todos los derechos reservados.</p>
-          <div className="flex gap-6 text-sm text-gray-600">
+          <p className="text-sm text-muted-foreground">© 2026 LEYÓPOLIS. Todos los derechos reservados.</p>
+          <div className="flex gap-6 text-sm text-muted-foreground">
             <a href="/login" className="hover:text-gray-400 transition-colors">Iniciar sesión</a>
             <a href="/register" className="hover:text-gray-400 transition-colors">Registrarse</a>
           </div>

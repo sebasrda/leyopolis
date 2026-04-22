@@ -62,8 +62,8 @@ export default function TranslatorPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Traductor Inteligente de Libros</h1>
-          <p className="text-gray-500 mt-1">Sube libros en PDF, EPUB o DOCX y tradúcelos completamente con IA contextual.</p>
+          <h1 className="text-3xl font-bold text-foreground">Traductor Inteligente de Libros</h1>
+          <p className="text-muted-foreground mt-1">Sube libros en PDF, EPUB o DOCX y tradúcelos completamente con IA contextual.</p>
         </div>
         <Badge className="bg-indigo-600 text-white hover:bg-indigo-500 border-none px-4 py-2 text-sm font-bold">
           <ShieldCheck className="h-4 w-4 mr-2" /> Plan Premium
@@ -74,7 +74,7 @@ export default function TranslatorPage() {
         
         {/* Upload Area */}
         <div className="lg:col-span-2 space-y-6">
-          <Card className="border-2 border-dashed border-indigo-200 bg-indigo-50/30 hover:bg-indigo-50 transition-colors p-12 text-center relative">
+          <Card className="border-2 border-dashed border-indigo-500/50/30 bg-indigo-500/10 hover:bg-indigo-500/10 transition-colors p-12 text-center relative">
             <Input 
               type="file" 
               accept=".pdf,.epub,.docx"
@@ -82,17 +82,17 @@ export default function TranslatorPage() {
               onChange={handleFileChange}
             />
             <CardContent className="space-y-6">
-              <div className="h-20 w-20 bg-indigo-100 rounded-full flex items-center justify-center mx-auto shadow-sm">
-                <Upload className="h-10 w-10 text-indigo-600" />
+              <div className="h-20 w-20 bg-indigo-500/20 rounded-full flex items-center justify-center mx-auto shadow-sm">
+                <Upload className="h-10 w-10 text-indigo-400" />
               </div>
               <div className="space-y-2">
-                <h3 className="text-xl font-bold text-indigo-900">
+                <h3 className="text-xl font-bold text-indigo-200">
                   {selectedFile ? selectedFile.name : "Arrastra tu libro aquí"}
                 </h3>
-                <p className="text-gray-500 max-w-sm mx-auto">Soporta formatos EPUB, PDF y DOCX (Máximo 50MB).</p>
+                <p className="text-muted-foreground max-w-sm mx-auto">Soporta formatos EPUB, PDF y DOCX (Máximo 50MB).</p>
               </div>
               <div className="flex justify-center gap-4">
-                <Button variant="outline" className="bg-white border-indigo-200 pointer-events-none">
+                <Button variant="outline" className="bg-card border-indigo-500/50/30 pointer-events-none">
                   <FileText className="h-4 w-4 mr-2" /> 
                   {selectedFile ? "Cambiar Archivo" : "Seleccionar Archivo"}
                 </Button>
@@ -101,14 +101,14 @@ export default function TranslatorPage() {
           </Card>
 
           {status !== "idle" && (
-            <Card className="p-8 border-none shadow-xl bg-white space-y-6">
+            <Card className="p-8 border-none shadow-xl bg-card space-y-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="h-12 w-12 bg-indigo-100 rounded-xl flex items-center justify-center">
+                  <div className="h-12 w-12 bg-indigo-500/20 rounded-xl flex items-center justify-center">
                     {status === "completed" ? (
                       <CheckCircle2 className="h-6 w-6 text-emerald-600" />
                     ) : (
-                      <Loader2 className="h-6 w-6 text-indigo-600 animate-spin" />
+                      <Loader2 className="h-6 w-6 text-indigo-400 animate-spin" />
                     )}
                   </div>
                   <div>
@@ -117,17 +117,17 @@ export default function TranslatorPage() {
                       {status === "processing" && "Traduciendo con IA..."}
                       {status === "completed" && "¡Traducción completa!"}
                     </h3>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-muted-foreground">
                       {selectedFile ? `${selectedFile.name} (${(selectedFile.size / 1024 / 1024).toFixed(2)} MB)` : "Archivo desconocido"}
                     </p>
                   </div>
                 </div>
-                <Badge variant="outline" className="font-bold text-indigo-600 border-indigo-200">
+                <Badge variant="outline" className="font-bold text-indigo-400 border-indigo-500/50/30">
                   {progress}%
                 </Badge>
               </div>
               
-              <Progress value={progress} className="h-3 bg-gray-100" />
+              <Progress value={progress} className="h-3 bg-muted" />
 
               {status === "completed" ? (
                 <div className="grid grid-cols-2 gap-4">
@@ -142,7 +142,7 @@ export default function TranslatorPage() {
                   >
                     <Layout className="h-4 w-4 mr-2" /> Abrir en Lector
                   </Button>
-                  <Button variant="outline" className="border-indigo-200 text-indigo-600 font-bold">
+                  <Button variant="outline" className="border-indigo-500/50/30 text-indigo-400 font-bold">
                     <Download className="h-4 w-4 mr-2" /> Descargar Versión
                   </Button>
                 </div>
@@ -160,7 +160,7 @@ export default function TranslatorPage() {
                 <Globe className="h-5 w-5 text-emerald-600" />
               </div>
               <h3 className="font-bold">Traducción Contextual</h3>
-              <p className="text-sm text-gray-500 leading-relaxed">
+              <p className="text-sm text-muted-foreground leading-relaxed">
                 No traducimos palabra por palabra. Nuestra IA entiende la trama y mantiene la coherencia en todo el libro.
               </p>
             </Card>
@@ -169,7 +169,7 @@ export default function TranslatorPage() {
                 <Sparkles className="h-5 w-5 text-purple-600" />
               </div>
               <h3 className="font-bold">Preservación de Estilo</h3>
-              <p className="text-sm text-gray-500 leading-relaxed">
+              <p className="text-sm text-muted-foreground leading-relaxed">
                 Mantenemos el tono y estilo literario del autor original para que la experiencia sea auténtica.
               </p>
             </Card>
@@ -184,17 +184,17 @@ export default function TranslatorPage() {
             </CardHeader>
             <CardContent className="pt-6 space-y-6">
               <div className="space-y-3">
-                <label className="text-sm font-bold text-gray-600 block">Idioma de Origen</label>
-                <Button variant="outline" className="w-full justify-between border-gray-200">
+                <label className="text-sm font-bold text-muted-foreground block">Idioma de Origen</label>
+                <Button variant="outline" className="w-full justify-between border-border">
                   <span className="flex items-center gap-2">
-                    <Languages className="h-4 w-4 text-indigo-600" /> Inglés (Detectado)
+                    <Languages className="h-4 w-4 text-indigo-400" /> Inglés (Detectado)
                   </span>
                 </Button>
               </div>
 
               <div className="space-y-3">
-                <label className="text-sm font-bold text-gray-600 block">Idioma de Destino</label>
-                <Button variant="outline" className="w-full justify-between border-gray-200">
+                <label className="text-sm font-bold text-muted-foreground block">Idioma de Destino</label>
+                <Button variant="outline" className="w-full justify-between border-border">
                   <span className="flex items-center gap-2">
                     <Languages className="h-4 w-4 text-emerald-600" /> Español (México)
                   </span>
@@ -202,10 +202,10 @@ export default function TranslatorPage() {
               </div>
 
               <div className="space-y-3">
-                <label className="text-sm font-bold text-gray-600 block">Nivel de Vocabulario</label>
+                <label className="text-sm font-bold text-muted-foreground block">Nivel de Vocabulario</label>
                 <div className="flex gap-2">
-                  <Badge variant="outline" className="bg-indigo-50 border-indigo-200 text-indigo-700">Adaptar a B2</Badge>
-                  <Badge variant="outline" className="cursor-pointer hover:bg-gray-100">Original</Badge>
+                  <Badge variant="outline" className="bg-indigo-500/10 border-indigo-500/50/30 text-indigo-300">Adaptar a B2</Badge>
+                  <Badge variant="outline" className="cursor-pointer hover:bg-muted">Original</Badge>
                 </div>
               </div>
 
@@ -233,11 +233,11 @@ export default function TranslatorPage() {
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between group cursor-pointer">
                 <div className="flex items-center gap-3">
-                  <div className="h-8 w-8 bg-gray-100 rounded flex items-center justify-center">
+                  <div className="h-8 w-8 bg-muted rounded flex items-center justify-center">
                     <FileText className="h-4 w-4 text-gray-400" />
                   </div>
                   <div>
-                    <p className="text-xs font-bold group-hover:text-indigo-600 transition-colors">Sapiens_EN_to_ES.pdf</p>
+                    <p className="text-xs font-bold group-hover:text-indigo-400 transition-colors">Sapiens_EN_to_ES.pdf</p>
                     <p className="text-[10px] text-gray-400">Hace 2 días • 12.4 MB</p>
                   </div>
                 </div>
@@ -245,11 +245,11 @@ export default function TranslatorPage() {
               </div>
               <div className="flex items-center justify-between group cursor-pointer">
                 <div className="flex items-center gap-3">
-                  <div className="h-8 w-8 bg-gray-100 rounded flex items-center justify-center">
+                  <div className="h-8 w-8 bg-muted rounded flex items-center justify-center">
                     <FileText className="h-4 w-4 text-gray-400" />
                   </div>
                   <div>
-                    <p className="text-xs font-bold group-hover:text-indigo-600 transition-colors">Don_Quijote_ES_to_EN.epub</p>
+                    <p className="text-xs font-bold group-hover:text-indigo-400 transition-colors">Don_Quijote_ES_to_EN.epub</p>
                     <p className="text-[10px] text-gray-400">Hace 5 días • 8.1 MB</p>
                   </div>
                 </div>

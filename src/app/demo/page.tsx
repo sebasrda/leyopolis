@@ -38,18 +38,18 @@ const demoBooks = [
 
 export default function DemoPage() {
   return (
-    <main className="min-h-screen bg-white">
-      <nav className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+    <main className="min-h-screen bg-card">
+      <nav className="sticky top-0 z-50 w-full border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
         <div className="container mx-auto flex h-16 items-center justify-between px-6">
           <a href="/" className="flex items-center gap-2">
             <div className="h-8 w-8 rounded bg-indigo-600 flex items-center justify-center">
               <span className="text-white font-bold text-xl">L</span>
             </div>
-            <span className="text-2xl font-bold tracking-tight text-indigo-900">LEYOPOLIS</span>
+            <span className="text-2xl font-bold tracking-tight text-indigo-200">LEYOPOLIS</span>
             <Badge className="bg-amber-100 text-amber-800 border-amber-300 ml-2">DEMO</Badge>
           </a>
           <div className="flex items-center gap-4">
-            <a href="/login" className="text-sm font-medium text-gray-600 hover:text-indigo-600">
+            <a href="/login" className="text-sm font-medium text-muted-foreground hover:text-indigo-400">
               Iniciar sesión
             </a>
             <a
@@ -76,8 +76,8 @@ export default function DemoPage() {
         </div>
 
         <div className="max-w-3xl space-y-3">
-          <h1 className="text-3xl font-bold text-gray-900">Demo Funcional — Leyópolis</h1>
-          <p className="text-gray-600">
+          <h1 className="text-3xl font-bold text-foreground">Demo Funcional — Leyópolis</h1>
+          <p className="text-muted-foreground">
             Prueba el lector inteligente, la traducción y el modo bilingüe sin registrarte.
           </p>
         </div>
@@ -85,11 +85,11 @@ export default function DemoPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card className="border-none shadow-md">
             <CardContent className="p-6 space-y-3">
-              <div className="h-10 w-10 bg-indigo-100 rounded-lg flex items-center justify-center">
-                <Sparkles className="h-5 w-5 text-indigo-600" />
+              <div className="h-10 w-10 bg-indigo-500/20 rounded-lg flex items-center justify-center">
+                <Sparkles className="h-5 w-5 text-indigo-400" />
               </div>
-              <h3 className="font-bold text-gray-900">Lector Inteligente IA</h3>
-              <p className="text-sm text-gray-500">Tutor IA dentro del lector para resolver dudas de la lectura.</p>
+              <h3 className="font-bold text-foreground">Lector Inteligente IA</h3>
+              <p className="text-sm text-muted-foreground">Tutor IA dentro del lector para resolver dudas de la lectura.</p>
             </CardContent>
           </Card>
           <Card className="border-none shadow-md">
@@ -97,8 +97,8 @@ export default function DemoPage() {
               <div className="h-10 w-10 bg-emerald-100 rounded-lg flex items-center justify-center">
                 <Globe className="h-5 w-5 text-emerald-600" />
               </div>
-              <h3 className="font-bold text-gray-900">Traducción</h3>
-              <p className="text-sm text-gray-500">Traduce páginas completas y frases seleccionadas en tiempo real.</p>
+              <h3 className="font-bold text-foreground">Traducción</h3>
+              <p className="text-sm text-muted-foreground">Traduce páginas completas y frases seleccionadas en tiempo real.</p>
             </CardContent>
           </Card>
           <Card className="border-none shadow-md">
@@ -106,21 +106,21 @@ export default function DemoPage() {
               <div className="h-10 w-10 bg-purple-100 rounded-lg flex items-center justify-center">
                 <BookOpen className="h-5 w-5 text-purple-600" />
               </div>
-              <h3 className="font-bold text-gray-900">Quizzes Educativos</h3>
-              <p className="text-sm text-gray-500">Evaluaciones de comprensión lectora integradas por libro.</p>
+              <h3 className="font-bold text-foreground">Quizzes Educativos</h3>
+              <p className="text-sm text-muted-foreground">Evaluaciones de comprensión lectora integradas por libro.</p>
             </CardContent>
           </Card>
         </div>
 
         <div className="space-y-4">
-          <h2 className="text-2xl font-bold text-gray-900">Libros Demo</h2>
-          <p className="text-sm text-gray-500">
+          <h2 className="text-2xl font-bold text-foreground">Libros Demo</h2>
+          <p className="text-sm text-muted-foreground">
             Demo incluye: 1 colegio, 2 clases, 2 docentes, 10 estudiantes de ejemplo.
           </p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {demoBooks.map((book) => (
               <Card key={book.id} className="border-none shadow-md overflow-hidden group flex flex-col">
-                <div className="relative aspect-[2/3] overflow-hidden bg-gray-100">
+                <div className="relative aspect-[2/3] overflow-hidden bg-muted">
                   <img
                     src={book.cover}
                     alt={book.title}
@@ -134,8 +134,8 @@ export default function DemoPage() {
                 </div>
                 <CardContent className="p-4 space-y-3 flex-1 flex flex-col">
                   <div className="flex-1">
-                    <h3 className="font-bold text-gray-900 text-sm line-clamp-2">{book.title}</h3>
-                    <p className="text-xs text-gray-500 mt-1">{book.author}</p>
+                    <h3 className="font-bold text-foreground text-sm line-clamp-2">{book.title}</h3>
+                    <p className="text-xs text-muted-foreground mt-1">{book.author}</p>
                   </div>
                   <Button asChild size="sm" className="w-full bg-indigo-600 hover:bg-indigo-500 text-xs">
                     <a href={`/demo/reader/${book.id}`}>Abrir lector demo</a>
@@ -147,13 +147,13 @@ export default function DemoPage() {
         </div>
 
         {/* Contact section – replaces credentials */}
-        <Card className="border-indigo-200 bg-gradient-to-br from-indigo-50 to-purple-50">
+        <Card className="border-indigo-500/50/30 bg-gradient-to-br from-indigo-50 to-purple-50">
           <CardContent className="p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div>
-              <h3 className="font-bold text-indigo-900 text-lg mb-2">
+              <h3 className="font-bold text-indigo-200 text-lg mb-2">
                 ¿Te interesa Leyópolis para tu institución?
               </h3>
-              <p className="text-sm text-indigo-700 max-w-lg">
+              <p className="text-sm text-indigo-300 max-w-lg">
                 Escríbenos y con gusto te hacemos una demostración personalizada, resolvemos tus dudas o te
                 acompañamos en el proceso de registro para tu colegio.
               </p>

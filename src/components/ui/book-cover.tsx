@@ -17,7 +17,7 @@ export function BookCover({
   children 
 }: BookCoverProps) {
     return (
-        <div className={cn("relative overflow-hidden bg-gray-100 flex items-center justify-center", aspectRatio, className)}>
+        <div className={cn("relative overflow-hidden bg-muted flex items-center justify-center", aspectRatio, className)}>
             {/* Fondo sólido simple para portadas que no llenan el aspecto */}
             <div className="absolute inset-0 w-full h-full bg-[#1A1E2E] opacity-5 pointer-events-none" />
             {/* Contained Main Image - ensures the image is shown "completa" as requested */}

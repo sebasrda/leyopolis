@@ -143,13 +143,13 @@ export default function DashboardPage() {
           <div className="flex-1">
             <p className="text-xs text-slate-400 mb-0.5">Tu meta semanal</p>
             <p className="text-3xl font-black text-white">{weeklyGoalPct}%</p>
-            <div className="w-full bg-white/10 rounded-full h-1.5 mt-2 mb-1 overflow-hidden">
+            <div className="w-full bg-card/10 rounded-full h-1.5 mt-2 mb-1 overflow-hidden">
               <div
                 className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full transition-all duration-700"
                 style={{ width: `${weeklyGoalPct}%` }}
               />
             </div>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-muted-foreground">
               {weekDaysLeft === 0 ? "¡Meta completada! 🎉" : `${weekDaysLeft} días restantes`}
             </p>
           </div>
@@ -204,7 +204,7 @@ export default function DashboardPage() {
                   <p className="text-slate-400 text-sm mb-4">{heroBookData.author}</p>
                   
                   <p className="text-xs text-slate-400 mb-1.5">{heroProgress}% completado</p>
-                  <div className="w-full bg-white/10 rounded-full h-1.5 mb-4 overflow-hidden">
+                  <div className="w-full bg-card/10 rounded-full h-1.5 mb-4 overflow-hidden">
                     <div
                       className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full transition-all"
                       style={{ width: `${heroProgress}%` }}
@@ -221,7 +221,7 @@ export default function DashboardPage() {
                     </Link>
                     <Link
                       href="/dashboard/my-readings"
-                      className="h-9 w-9 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 transition-all text-white"
+                      className="h-9 w-9 flex items-center justify-center rounded-xl bg-card/10 hover:bg-card/20 transition-all text-white"
                     >
                       <ChevronRight className="h-4 w-4" />
                     </Link>
@@ -230,14 +230,14 @@ export default function DashboardPage() {
               </div>
             ) : (
               <div className="rounded-2xl border border-dashed border-white/10 bg-[#1a2235]/40 h-[180px] flex flex-col items-center justify-center text-center gap-3">
-                <BookOpen className="h-10 w-10 text-slate-600" />
+                <BookOpen className="h-10 w-10 text-muted-foreground" />
                 <div>
                   <p className="text-slate-300 font-semibold">No tienes lecturas en curso</p>
-                  <p className="text-slate-500 text-sm">Explora la biblioteca para empezar</p>
+                  <p className="text-muted-foreground text-sm">Explora la biblioteca para empezar</p>
                 </div>
                 <Link
                   href="/dashboard/library"
-                  className="inline-flex items-center gap-2 bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/30 text-indigo-300 text-sm font-medium px-4 py-2 rounded-xl transition-all"
+                  className="inline-flex items-center gap-2 bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/50/30 text-indigo-300 text-sm font-medium px-4 py-2 rounded-xl transition-all"
                 >
                   Explorar Biblioteca
                 </Link>
@@ -261,9 +261,9 @@ export default function DashboardPage() {
               <div className="flex gap-4 overflow-x-auto pb-2">
                 {[1, 2, 3, 4].map((i) => (
                   <div key={i} className="shrink-0 w-[120px] space-y-2 animate-pulse">
-                    <div className="w-[120px] h-[170px] rounded-xl bg-white/5" />
-                    <div className="h-3 bg-white/5 rounded w-3/4" />
-                    <div className="h-3 bg-white/5 rounded w-1/2" />
+                    <div className="w-[120px] h-[170px] rounded-xl bg-card/5" />
+                    <div className="h-3 bg-card/5 rounded w-3/4" />
+                    <div className="h-3 bg-card/5 rounded w-1/2" />
                   </div>
                 ))}
               </div>
@@ -290,7 +290,7 @@ export default function DashboardPage() {
                       )}
                       {/* Hover overlay */}
                       <div className="absolute inset-0 bg-indigo-600/0 group-hover:bg-indigo-600/20 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                        <div className="bg-white/20 backdrop-blur-sm rounded-full p-2">
+                        <div className="bg-card/20 backdrop-blur-sm rounded-full p-2">
                           <Play className="h-4 w-4 text-white fill-white" />
                         </div>
                       </div>
@@ -298,9 +298,9 @@ export default function DashboardPage() {
                     <h4 className="text-xs font-semibold text-slate-200 line-clamp-2 leading-tight group-hover:text-white transition-colors">
                       {book.title}
                     </h4>
-                    <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">{book.author}</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-1">{book.author}</p>
                     {book.category && (
-                      <span className="inline-block mt-1.5 text-[10px] bg-indigo-500/15 text-indigo-300 px-1.5 py-0.5 rounded-md border border-indigo-500/20">
+                      <span className="inline-block mt-1.5 text-[10px] bg-indigo-500/15 text-indigo-300 px-1.5 py-0.5 rounded-md border border-indigo-500/50/20">
                         {book.category}
                       </span>
                     )}
@@ -309,7 +309,7 @@ export default function DashboardPage() {
               </div>
             ) : (
               <div className="rounded-2xl border border-dashed border-white/10 bg-[#1a2235]/40 py-8 flex flex-col items-center justify-center text-center gap-2">
-                <BookOpen className="h-8 w-8 text-slate-600" />
+                <BookOpen className="h-8 w-8 text-muted-foreground" />
                 <p className="text-slate-400 text-sm">Explorando la biblioteca para ti...</p>
                 <Link
                   href="/dashboard/library"
@@ -336,7 +336,7 @@ export default function DashboardPage() {
             {loadingAssign ? (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-24 rounded-2xl bg-white/5 animate-pulse" />
+                  <div key={i} className="h-24 rounded-2xl bg-card/5 animate-pulse" />
                 ))}
               </div>
             ) : activeAssignments.length > 0 ? (
@@ -365,7 +365,7 @@ export default function DashboardPage() {
                           </p>
                         </div>
                       </div>
-                      <div className="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
+                      <div className="w-full bg-card/10 rounded-full h-1.5 overflow-hidden">
                         <div
                           className={`h-full ${progressColors[idx % 3]} rounded-full transition-all`}
                           style={{ width: `${a.progress}%` }}
@@ -380,7 +380,7 @@ export default function DashboardPage() {
               <div className="rounded-2xl border border-dashed border-white/10 bg-[#1a2235]/40 py-6 flex flex-col items-center text-center gap-2">
                 <CheckCircle2 className="h-8 w-8 text-green-400 opacity-50" />
                 <p className="text-slate-300 font-semibold text-sm">¡Todo al día!</p>
-                <p className="text-slate-500 text-xs">No tienes retos pendientes.</p>
+                <p className="text-muted-foreground text-xs">No tienes retos pendientes.</p>
               </div>
             )}
           </section>
@@ -435,17 +435,17 @@ export default function DashboardPage() {
                         <p className="text-xs text-slate-300 font-medium line-clamp-1">
                           {act.label}
                         </p>
-                        <p className="text-[11px] text-slate-500 line-clamp-1 font-semibold">
+                        <p className="text-[11px] text-muted-foreground line-clamp-1 font-semibold">
                           {act.subtitle}
                         </p>
                       </div>
-                      <span className="text-[10px] text-slate-500 shrink-0">{act.time}</span>
+                      <span className="text-[10px] text-muted-foreground shrink-0">{act.time}</span>
                     </div>
                   );
                 })}
               </div>
             ) : (
-              <p className="text-slate-500 text-xs text-center py-4">Sin actividad reciente.</p>
+              <p className="text-muted-foreground text-xs text-center py-4">Sin actividad reciente.</p>
             )}
           </section>
 
@@ -453,7 +453,7 @@ export default function DashboardPage() {
           <section className="bg-[#1a2235] border border-white/10 rounded-2xl p-5">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-bold text-white">Tu progreso</h3>
-              <span className="text-xs text-slate-400 bg-white/5 px-2.5 py-1 rounded-lg border border-white/10">Esta semana</span>
+              <span className="text-xs text-slate-400 bg-card/5 px-2.5 py-1 rounded-lg border border-white/10">Esta semana</span>
             </div>
 
             <ProgressDonut
@@ -466,15 +466,15 @@ export default function DashboardPage() {
             <div className="grid grid-cols-3 gap-2 mt-5 pt-4 border-t border-white/5">
               <div className="text-center">
                 <p className="text-lg font-black text-white">{Math.round((progress.xp / 2) * 0.7) || 0}</p>
-                <p className="text-[10px] text-slate-500 leading-tight mt-0.5">Minutos de lectura</p>
+                <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">Minutos de lectura</p>
               </div>
               <div className="text-center border-x border-white/5">
                 <p className="text-lg font-black text-white">{completedAssignments}</p>
-                <p className="text-[10px] text-slate-500 leading-tight mt-0.5">Retos completados</p>
+                <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">Retos completados</p>
               </div>
               <div className="text-center">
                 <p className="text-lg font-black text-white">{progress.streakDays}</p>
-                <p className="text-[10px] text-slate-500 leading-tight mt-0.5">Días de racha</p>
+                <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">Días de racha</p>
               </div>
             </div>
           </section>
@@ -483,7 +483,7 @@ export default function DashboardPage() {
           <section className="bg-[#1a2235] border border-white/10 rounded-2xl p-5">
             <h3 className="text-sm font-bold text-white mb-4">Tu IA Mentor</h3>
             <div className="flex items-start gap-4">
-              <div className="h-12 w-12 rounded-2xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center shrink-0">
+              <div className="h-12 w-12 rounded-2xl bg-indigo-500/20 border border-indigo-500/50/30 flex items-center justify-center shrink-0">
                 <span className="text-2xl">🤖</span>
               </div>
               <div className="flex-1 min-w-0">
@@ -495,11 +495,11 @@ export default function DashboardPage() {
             <button
               disabled
               title="La IA Mentor estará disponible próximamente"
-              className="mt-4 w-full bg-indigo-600/30 text-indigo-400/50 text-sm font-semibold py-2.5 rounded-xl border border-indigo-500/20 cursor-not-allowed select-none"
+              className="mt-4 w-full bg-indigo-600/30 text-indigo-400/50 text-sm font-semibold py-2.5 rounded-xl border border-indigo-500/50/20 cursor-not-allowed select-none"
             >
               Hablar con mi mentor
             </button>
-            <p className="text-center text-[10px] text-slate-600 mt-2">Próximamente disponible</p>
+            <p className="text-center text-[10px] text-muted-foreground mt-2">Próximamente disponible</p>
           </section>
 
         </div>

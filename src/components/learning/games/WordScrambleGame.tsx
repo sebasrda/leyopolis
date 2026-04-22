@@ -108,12 +108,12 @@ export function WordScrambleGame({ sentences, onComplete, onExit }: WordScramble
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
-          className="bg-white p-8 rounded-3xl shadow-xl max-w-md w-full"
+          className="bg-card p-8 rounded-3xl shadow-xl max-w-md w-full"
         >
-          <h2 className="text-3xl font-bold text-indigo-700 mb-4">¡Juego Completado!</h2>
+          <h2 className="text-3xl font-bold text-indigo-300 mb-4">¡Juego Completado!</h2>
           <div className="text-6xl mb-6">🎉</div>
-          <p className="text-xl text-gray-600 mb-2">Tu puntuación:</p>
-          <p className="text-4xl font-bold text-indigo-600 mb-8">{score} / {sentences.length}</p>
+          <p className="text-xl text-muted-foreground mb-2">Tu puntuación:</p>
+          <p className="text-4xl font-bold text-indigo-400 mb-8">{score} / {sentences.length}</p>
           
           <Button 
             onClick={onExit}
@@ -129,9 +129,9 @@ export function WordScrambleGame({ sentences, onComplete, onExit }: WordScramble
   if (!sentences || sentences.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center p-12 text-center h-full">
-        <div className="bg-white dark:bg-gray-800 p-8 rounded-[2rem] shadow-xl border-2 border-indigo-50 dark:border-indigo-900/20">
+        <div className="bg-card dark:bg-gray-800 p-8 rounded-[2rem] shadow-xl border-2 border-indigo-50 dark:border-indigo-900/20">
           <HelpCircle className="h-12 w-12 text-indigo-400 mx-auto mb-4" />
-          <p className="text-gray-500 dark:text-gray-400 italic">No hay frases para ordenar disponibles para este libro.</p>
+          <p className="text-muted-foreground dark:text-gray-400 italic">No hay frases para ordenar disponibles para este libro.</p>
         </div>
       </div>
     );
@@ -149,12 +149,12 @@ export function WordScrambleGame({ sentences, onComplete, onExit }: WordScramble
       </div>
 
       <div className="flex-1 flex flex-col items-center justify-center">
-        <h3 className="text-xl font-medium text-gray-500 mb-8 text-center">
+        <h3 className="text-xl font-medium text-muted-foreground mb-8 text-center">
           Ordena las palabras para formar la frase correcta
         </h3>
 
         {/* Answer Area */}
-        <div className="w-full min-h-[120px] bg-white border-2 border-indigo-100 rounded-2xl p-6 mb-8 flex flex-wrap gap-2 items-center justify-center shadow-sm">
+        <div className="w-full min-h-[120px] bg-card border-2 border-indigo-500/50/20 rounded-2xl p-6 mb-8 flex flex-wrap gap-2 items-center justify-center shadow-sm">
           {selectedWords.length === 0 && !showResult && (
             <span className="text-gray-300 italic">Toca las palabras abajo para construir la frase...</span>
           )}
@@ -168,7 +168,7 @@ export function WordScrambleGame({ sentences, onComplete, onExit }: WordScramble
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.8 }}
                 onClick={() => !showResult && handleSelectedClick(word, idx)}
-                className={`px-4 py-2 bg-indigo-100 text-indigo-800 rounded-xl font-medium shadow-sm hover:bg-indigo-200 transition-colors ${showResult ? 'cursor-default' : 'cursor-pointer'}`}
+                className={`px-4 py-2 bg-indigo-500/20 text-indigo-300 rounded-xl font-medium shadow-sm hover:bg-indigo-200 transition-colors ${showResult ? 'cursor-default' : 'cursor-pointer'}`}
               >
                 {word}
               </motion.button>
@@ -187,7 +187,7 @@ export function WordScrambleGame({ sentences, onComplete, onExit }: WordScramble
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0 }}
                 onClick={() => handleWordClick(word, idx)}
-                className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-xl font-medium shadow-sm hover:border-indigo-400 hover:text-indigo-600 transition-all active:scale-95"
+                className="px-4 py-2 bg-card border border-gray-300 text-foreground rounded-xl font-medium shadow-sm hover:border-indigo-400 hover:text-indigo-400 transition-all active:scale-95"
               >
                 {word}
               </motion.button>
@@ -202,7 +202,7 @@ export function WordScrambleGame({ sentences, onComplete, onExit }: WordScramble
               <Button 
                 variant="outline" 
                 onClick={resetCurrent}
-                className="flex-1 py-6 text-gray-500"
+                className="flex-1 py-6 text-muted-foreground"
               >
                 <RotateCcw className="mr-2 h-4 w-4" /> Reiniciar
               </Button>
@@ -227,7 +227,7 @@ export function WordScrambleGame({ sentences, onComplete, onExit }: WordScramble
                   )}
                 </div>
               </div>
-              <Button onClick={nextSentence} className="bg-white text-gray-900 hover:bg-gray-50">
+              <Button onClick={nextSentence} className="bg-card text-foreground hover:bg-muted">
                 Siguiente
               </Button>
             </div>

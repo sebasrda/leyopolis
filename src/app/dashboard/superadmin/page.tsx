@@ -119,11 +119,11 @@ export default function SuperAdminDashboard() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Plataforma Leyópolis</h1>
-          <p className="text-gray-500">Gestión global de contratos, colegios y suscripciones B2B.</p>
+          <h1 className="text-3xl font-bold text-foreground">Plataforma Leyópolis</h1>
+          <p className="text-muted-foreground">Gestión global de contratos, colegios y suscripciones B2B.</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={handleSyncDb} className="gap-2 border-indigo-200 text-indigo-700 hover:bg-indigo-50">
+          <Button variant="outline" onClick={handleSyncDb} className="gap-2 border-indigo-500/50/30 text-indigo-300 hover:bg-indigo-500/10">
             <Settings className="h-4 w-4" /> Sincronizar BD
           </Button>
           <Dialog open={createOpen} onOpenChange={setCreateOpen}>
@@ -179,7 +179,7 @@ export default function SuperAdminDashboard() {
 
       {loading ? (
         <div className="flex items-center justify-center p-12">
-          <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+          <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -189,9 +189,9 @@ export default function SuperAdminDashboard() {
                 <div className="flex items-start justify-between">
                   <div>
                     <CardTitle className="text-xl flex items-center gap-2">
-                      <Building2 className="h-5 w-5 text-indigo-600" /> {inst.name}
+                      <Building2 className="h-5 w-5 text-indigo-400" /> {inst.name}
                     </CardTitle>
-                    <p className="text-sm text-gray-500 mt-1">{inst.domain}</p>
+                    <p className="text-sm text-muted-foreground mt-1">{inst.domain}</p>
                   </div>
                   {getStatusBadge(inst.status)}
                 </div>
@@ -199,25 +199,25 @@ export default function SuperAdminDashboard() {
               <CardContent className="pt-4 space-y-4">
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div className="flex flex-col">
-                    <span className="text-gray-500 flex items-center gap-1"><CreditCard className="h-3 w-3" /> Plan</span>
+                    <span className="text-muted-foreground flex items-center gap-1"><CreditCard className="h-3 w-3" /> Plan</span>
                     <span className="font-semibold">{inst.plan}</span>
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-gray-500 flex items-center gap-1"><Users className="h-3 w-3" /> Uso</span>
+                    <span className="text-muted-foreground flex items-center gap-1"><Users className="h-3 w-3" /> Uso</span>
                     <span className="font-semibold">{inst._count?.users || 0} / {inst.maxStudents}</span>
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-gray-500 flex items-center gap-1"><Calendar className="h-3 w-3" /> Inicio</span>
+                    <span className="text-muted-foreground flex items-center gap-1"><Calendar className="h-3 w-3" /> Inicio</span>
                     <span className="font-medium">{new Date(inst.startDate).toLocaleDateString()}</span>
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-gray-500 flex items-center gap-1"><AlertTriangle className="h-3 w-3" /> Fin</span>
+                    <span className="text-muted-foreground flex items-center gap-1"><AlertTriangle className="h-3 w-3" /> Fin</span>
                     <span className="font-medium text-red-600">{inst.endDate ? new Date(inst.endDate).toLocaleDateString() : "Ilimitado"}</span>
                   </div>
                 </div>
                 <div className="flex gap-2 pt-2">
                   <Link href={`/dashboard/superadmin/colegio/${inst.id}`} className="w-full">
-                    <Button variant="outline" size="sm" className="w-full bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100 hover:text-indigo-800 font-semibold gap-2">
+                    <Button variant="outline" size="sm" className="w-full bg-indigo-500/10 border-indigo-500/50/30 text-indigo-300 hover:bg-indigo-500/20 hover:text-indigo-300 font-semibold gap-2">
                       Entrar al colegio
                     </Button>
                   </Link>
@@ -226,7 +226,7 @@ export default function SuperAdminDashboard() {
             </Card>
           ))}
           {institutions.length === 0 && (
-            <div className="col-span-full text-center py-12 text-gray-500">
+            <div className="col-span-full text-center py-12 text-muted-foreground">
               No hay colegios registrados aún en la plataforma.
             </div>
           )}

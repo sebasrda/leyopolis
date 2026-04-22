@@ -179,7 +179,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className="p-5 flex items-center justify-between border-b border-white/5">
           {!collapsed && (
             <div className="flex items-center gap-2">
-              <div className="h-9 w-9 flex items-center justify-center overflow-hidden rounded-lg bg-white/10 p-1">
+              <div className="h-9 w-9 flex items-center justify-center overflow-hidden rounded-lg bg-card/10 p-1">
                 <img src="/leyopolis-logo.png" alt="Leyópolis Logo" className="h-full w-full object-contain" />
               </div>
               <span className="text-lg font-bold tracking-tight text-white">LEYÓPOLIS</span>
@@ -189,7 +189,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             variant="ghost" 
             size="icon" 
             onClick={() => setCollapsed(!collapsed)}
-            className="text-slate-400 hover:text-white hover:bg-white/10 rounded-lg"
+            className="text-slate-400 hover:text-white hover:bg-card/10 rounded-lg"
           >
             {collapsed ? <Menu className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
           </Button>
@@ -214,22 +214,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
 
             {/* Level + XP */}
-            <div className="bg-white/5 rounded-xl p-3">
+            <div className="bg-card/5 rounded-xl p-3">
               <div className="flex items-center justify-between mb-1.5">
                 <span className="text-xs font-semibold text-indigo-300">
                   Nivel {progress.level} · {getLevelName(progress.level)}
                 </span>
                 <span className="text-xs text-slate-400">{progress.xp} XP</span>
               </div>
-              <div className="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
+              <div className="w-full bg-card/10 rounded-full h-1.5 overflow-hidden">
                 <div
                   className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full transition-all duration-700"
                   style={{ width: `${xpPercent}%` }}
                 />
               </div>
               <div className="flex justify-between mt-1">
-                <span className="text-[10px] text-slate-500">{xpInLevel} / {xpNeeded} XP</span>
-                <span className="text-[10px] text-slate-500">{xpPercent}%</span>
+                <span className="text-[10px] text-muted-foreground">{xpInLevel} / {xpNeeded} XP</span>
+                <span className="text-[10px] text-muted-foreground">{xpPercent}%</span>
               </div>
             </div>
           </div>
@@ -258,11 +258,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 group",
                   isActive
-                    ? "bg-indigo-600/20 text-indigo-300 border border-indigo-500/20" 
-                    : "text-slate-400 hover:text-white hover:bg-white/5"
+                    ? "bg-indigo-600/20 text-indigo-300 border border-indigo-500/50/20" 
+                    : "text-slate-400 hover:text-white hover:bg-card/5"
                 )}
               >
-                <item.icon className={cn("h-4.5 w-4.5 shrink-0", isActive ? "text-indigo-400" : "text-slate-500 group-hover:text-slate-300")} style={{ height: '18px', width: '18px' }} />
+                <item.icon className={cn("h-4.5 w-4.5 shrink-0", isActive ? "text-indigo-400" : "text-muted-foreground group-hover:text-slate-300")} style={{ height: '18px', width: '18px' }} />
                 {!collapsed && <span className="font-medium text-sm">{item.label}</span>}
                 {!collapsed && isActive && (
                   <span className="ml-auto h-1.5 w-1.5 rounded-full bg-indigo-400" />
@@ -302,8 +302,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <Link 
             href="/dashboard/settings"
             className={cn(
-              "flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all",
-              pathname === "/dashboard/settings" && "bg-indigo-600/20 text-indigo-300 border border-indigo-500/20"
+              "flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-card/5 transition-all",
+              pathname === "/dashboard/settings" && "bg-indigo-600/20 text-indigo-300 border border-indigo-500/50/20"
             )}
           >
             <Settings className="shrink-0" style={{ height: '18px', width: '18px' }} />
@@ -320,7 +320,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
           {isStudent && !collapsed && (
             <div className="pt-1">
-              <button className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-all text-xs">
+              <button className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-muted-foreground hover:text-slate-300 hover:bg-card/5 transition-all text-xs">
                 <HelpCircle style={{ height: '15px', width: '15px' }} />
                 <span>Centro de Ayuda</span>
               </button>
@@ -338,10 +338,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <header className="h-16 bg-[#0f1623] border-b border-white/5 px-8 flex items-center justify-between z-10">
           <div className="flex-1 max-w-xl">
             <div className="relative">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input 
                 placeholder="Buscar libros, autores, temas..." 
-                className="pl-10 bg-white/5 border-white/10 text-slate-300 placeholder:text-slate-500 focus-visible:ring-1 focus-visible:ring-indigo-500/50 focus-visible:border-indigo-500/50 rounded-xl"
+                className="pl-10 bg-card/5 border-white/10 text-slate-300 placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-indigo-500/50 focus-visible:border-indigo-500/50/50 rounded-xl"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={handleSearch}
@@ -356,18 +356,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </Badge>
             )}
 
-            <Button variant="ghost" size="icon" className="relative text-slate-400 hover:text-white hover:bg-white/10 rounded-xl">
+            <Button variant="ghost" size="icon" className="relative text-slate-400 hover:text-white hover:bg-card/10 rounded-xl">
               <Bell className="h-5 w-5" />
               <span className="absolute top-2 right-2 h-2 w-2 bg-red-500 rounded-full border-2 border-[#0f1623]"></span>
             </Button>
 
             <LanguageSelector />
             
-            <div className="h-8 w-px bg-white/10 mx-1" />
+            <div className="h-8 w-px bg-card/10 mx-1" />
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center gap-3 px-2 hover:bg-white/10 rounded-xl">
+                <Button variant="ghost" className="flex items-center gap-3 px-2 hover:bg-card/10 rounded-xl">
                   <Avatar className="h-8 w-8 ring-2 ring-indigo-500/30">
                     <AvatarImage src={session?.user?.image || ""} />
                     <AvatarFallback className={`text-indigo-300 font-bold ${status === "loading" ? "bg-slate-700 animate-pulse" : "bg-indigo-500/20"}`}>
@@ -391,14 +391,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56 bg-[#1a2235] border-white/10 text-slate-300">
                 <DropdownMenuLabel className="text-slate-400">Mi Cuenta</DropdownMenuLabel>
-                <DropdownMenuSeparator className="bg-white/10" />
-                <DropdownMenuItem asChild className="hover:bg-white/10 focus:bg-white/10 cursor-pointer">
+                <DropdownMenuSeparator className="bg-card/10" />
+                <DropdownMenuItem asChild className="hover:bg-card/10 focus:bg-card/10 cursor-pointer">
                   <Link href="/dashboard/settings">Mi Perfil</Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild className="hover:bg-white/10 focus:bg-white/10 cursor-pointer">
+                <DropdownMenuItem asChild className="hover:bg-card/10 focus:bg-card/10 cursor-pointer">
                   <Link href="/dashboard/progress">Mis Estadísticas</Link>
                 </DropdownMenuItem>
-                <DropdownMenuSeparator className="bg-white/10" />
+                <DropdownMenuSeparator className="bg-card/10" />
                 <DropdownMenuItem 
                   onClick={() => signOut({ callbackUrl: "/login" })}
                   className="hover:bg-red-500/10 focus:bg-red-500/10 text-red-400 cursor-pointer"

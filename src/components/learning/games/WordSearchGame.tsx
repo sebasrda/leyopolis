@@ -193,16 +193,16 @@ export function WordSearchGame({ words = ["LEYOPOLIS", "LIBRO", "JUEGO"], gridSi
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="bg-white dark:bg-gray-800 p-10 rounded-[2.5rem] shadow-2xl max-w-lg w-full border-4 border-emerald-500/20"
+          className="bg-card dark:bg-gray-800 p-10 rounded-[2.5rem] shadow-2xl max-w-lg w-full border-4 border-emerald-500/20"
         >
           <div className="w-24 h-24 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle className="h-12 w-12 text-emerald-600" />
           </div>
-          <h2 className="text-4xl font-extrabold text-gray-900 dark:text-white mb-2">¡Increíble!</h2>
+          <h2 className="text-4xl font-extrabold text-foreground dark:text-white mb-2">¡Increíble!</h2>
           <p className="text-xl text-emerald-600 font-medium mb-6">Encontraste todas las palabras</p>
-          <div className="bg-gray-50 dark:bg-gray-900/50 p-6 rounded-2xl mb-8">
-            <p className="text-sm text-gray-500 dark:text-gray-400 uppercase tracking-widest font-bold mb-1">Puntuación</p>
-            <p className="text-5xl font-black text-indigo-600">{words.length * 10}</p>
+          <div className="bg-muted dark:bg-gray-900/50 p-6 rounded-2xl mb-8">
+            <p className="text-sm text-muted-foreground dark:text-gray-400 uppercase tracking-widest font-bold mb-1">Puntuación</p>
+            <p className="text-5xl font-black text-indigo-400">{words.length * 10}</p>
           </div>
           <Button 
             onClick={() => onComplete(words.length * 10, words.length * 10)}
@@ -218,9 +218,9 @@ export function WordSearchGame({ words = ["LEYOPOLIS", "LIBRO", "JUEGO"], gridSi
   if (!grid || grid.length === 0 || !words || words.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center p-12 text-center h-full w-full">
-        <div className="bg-white dark:bg-gray-800 p-8 rounded-[2rem] shadow-xl border-2 border-indigo-50 dark:border-indigo-900/20 max-w-md">
+        <div className="bg-card dark:bg-gray-800 p-8 rounded-[2rem] shadow-xl border-2 border-indigo-50 dark:border-indigo-900/20 max-w-md">
           <Grid3X3 className="h-12 w-12 text-indigo-400 mx-auto mb-4 opacity-50" />
-          <p className="text-gray-500 dark:text-gray-400 italic">No se pudo generar la sopa de letras para este libro.</p>
+          <p className="text-muted-foreground dark:text-gray-400 italic">No se pudo generar la sopa de letras para este libro.</p>
         </div>
       </div>
     );
@@ -230,8 +230,8 @@ export function WordSearchGame({ words = ["LEYOPOLIS", "LIBRO", "JUEGO"], gridSi
     <div className="flex flex-col md:flex-row gap-8 items-start justify-center p-4 max-w-5xl mx-auto h-full" onMouseUp={handleMouseUp}>
       
       {/* Word List */}
-      <div className="w-full md:w-64 bg-white p-6 rounded-2xl shadow-md border border-indigo-100">
-        <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+      <div className="w-full md:w-64 bg-card p-6 rounded-2xl shadow-md border border-indigo-500/50/20">
+        <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
             Palabras ({foundWords.length}/{words.length})
         </h3>
         <div className="flex flex-wrap gap-2">
@@ -243,7 +243,7 @@ export function WordSearchGame({ words = ["LEYOPOLIS", "LIBRO", "JUEGO"], gridSi
                         className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-300 ${
                             isFound 
                                 ? 'bg-green-100 text-green-700 line-through opacity-60' 
-                                : 'bg-gray-100 text-gray-700'
+                                : 'bg-muted text-foreground'
                         }`}
                     >
                         {word}
@@ -255,7 +255,7 @@ export function WordSearchGame({ words = ["LEYOPOLIS", "LIBRO", "JUEGO"], gridSi
 
       {/* Grid */}
       <div 
-        className="bg-white p-4 rounded-2xl shadow-lg border-4 border-indigo-200 touch-none select-none"
+        className="bg-card p-4 rounded-2xl shadow-lg border-4 border-indigo-500/50/30 touch-none select-none"
         onMouseLeave={() => setIsSelecting(false)}
       >
         <div 
@@ -277,7 +277,7 @@ export function WordSearchGame({ words = ["LEYOPOLIS", "LIBRO", "JUEGO"], gridSi
                                 flex items-center justify-center text-lg font-bold rounded-md cursor-pointer transition-colors duration-150
                                 ${cell.found ? 'bg-green-500 text-white animate-pulse' : ''}
                                 ${isSelected ? 'bg-indigo-500 text-white transform scale-110 shadow-lg z-10' : ''}
-                                ${!cell.found && !isSelected ? 'bg-indigo-50 text-indigo-900 hover:bg-indigo-100' : ''}
+                                ${!cell.found && !isSelected ? 'bg-indigo-500/10 text-indigo-200 hover:bg-indigo-500/20' : ''}
                             `}
                         >
                             {cell.letter}

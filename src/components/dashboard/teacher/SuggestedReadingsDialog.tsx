@@ -122,10 +122,10 @@ export function SuggestedReadingsDialog({ isOpen, onClose, onSuccess, classes }:
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="px-6 py-2 border-b bg-gray-50 flex items-center gap-4">
-                    <Label className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Unidad / Curso:</Label>
+                <div className="px-6 py-2 border-b bg-muted flex items-center gap-4">
+                    <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Unidad / Curso:</Label>
                     <Select value={selectedGrade} onValueChange={setSelectedGrade}>
-                        <SelectTrigger className="w-[180px] bg-white">
+                        <SelectTrigger className="w-[180px] bg-card">
                             <SelectValue placeholder="Selecciona grado" />
                         </SelectTrigger>
                         <SelectContent>
@@ -139,14 +139,14 @@ export function SuggestedReadingsDialog({ isOpen, onClose, onSuccess, classes }:
                 <div className="flex-1 overflow-y-auto p-6">
                     {loading ? (
                         <div className="flex flex-col items-center justify-center py-20 gap-3">
-                            <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
-                            <p className="text-gray-500 italic">Buscando las mejores opciones...</p>
+                            <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
+                            <p className="text-muted-foreground italic">Buscando las mejores opciones...</p>
                         </div>
                     ) : books.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {books.map((book) => (
                                 <Card key={book.id} className="group relative overflow-hidden border-none shadow-sm hover:shadow-md transition-all">
-                                    <div className="aspect-[3/4] overflow-hidden bg-gray-100">
+                                    <div className="aspect-[3/4] overflow-hidden bg-muted">
                                         <img 
                                             src={book.coverImage || `https://placehold.co/400x600?text=${encodeURIComponent(book.title)}`} 
                                             alt={book.title}
@@ -155,7 +155,7 @@ export function SuggestedReadingsDialog({ isOpen, onClose, onSuccess, classes }:
                                         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-4">
                                             <Button 
                                                 variant="secondary" 
-                                                className="w-full bg-white text-indigo-900 border-none hover:bg-indigo-50 font-bold"
+                                                className="w-full bg-card text-indigo-200 border-none hover:bg-indigo-500/10 font-bold"
                                                 onClick={() => {
                                                     setAssigningTo(book);
                                                     setSuccess(false);
@@ -166,10 +166,10 @@ export function SuggestedReadingsDialog({ isOpen, onClose, onSuccess, classes }:
                                         </div>
                                     </div>
                                     <CardContent className="p-3">
-                                        <h4 className="font-bold text-gray-900 line-clamp-1">{book.title}</h4>
-                                        <p className="text-xs text-gray-500 mb-2">{book.author}</p>
+                                        <h4 className="font-bold text-foreground line-clamp-1">{book.title}</h4>
+                                        <p className="text-xs text-muted-foreground mb-2">{book.author}</p>
                                         {book.grade && (
-                                            <span className="text-[10px] bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full font-bold">
+                                            <span className="text-[10px] bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded-full font-bold">
                                                 {book.grade}
                                             </span>
                                         )}
@@ -180,7 +180,7 @@ export function SuggestedReadingsDialog({ isOpen, onClose, onSuccess, classes }:
                     ) : (
                         <div className="text-center py-20">
                             <BookOpen className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                            <p className="text-gray-500">No se encontraron lecturas sugeridas para este curso por el momento.</p>
+                            <p className="text-muted-foreground">No se encontraron lecturas sugeridas para este curso por el momento.</p>
                         </div>
                     )}
                 </div>
@@ -188,7 +188,7 @@ export function SuggestedReadingsDialog({ isOpen, onClose, onSuccess, classes }:
                 {/* Assignment Overlay Mini-Form */}
                 {assigningTo && (
                     <div className={cn(
-                        "absolute inset-0 z-50 bg-white/95 backdrop-blur-sm flex items-center justify-center p-8 transition-all animate-in fade-in zoom-in-95",
+                        "absolute inset-0 z-50 bg-card/95 backdrop-blur-sm flex items-center justify-center p-8 transition-all animate-in fade-in zoom-in-95",
                         success && "bg-green-50/95"
                     )}>
                         {success ? (
@@ -200,8 +200,8 @@ export function SuggestedReadingsDialog({ isOpen, onClose, onSuccess, classes }:
                         ) : (
                             <div className="w-full max-w-md space-y-6">
                                 <div className="text-center space-y-2">
-                                    <h3 className="text-xl font-bold text-gray-900 line-clamp-2">Asignar "{assigningTo.title}"</h3>
-                                    <p className="text-sm text-gray-500">Configura los detalles de la asignación para tus alumnos.</p>
+                                    <h3 className="text-xl font-bold text-foreground line-clamp-2">Asignar "{assigningTo.title}"</h3>
+                                    <p className="text-sm text-muted-foreground">Configura los detalles de la asignación para tus alumnos.</p>
                                 </div>
 
                                 <div className="space-y-4">
@@ -245,7 +245,7 @@ export function SuggestedReadingsDialog({ isOpen, onClose, onSuccess, classes }:
                     </div>
                 )}
 
-                <DialogFooter className="p-4 border-t bg-gray-50 flex justify-end">
+                <DialogFooter className="p-4 border-t bg-muted flex justify-end">
                   <Button variant="outline" onClick={onClose}>Cerrar Panel</Button>
                 </DialogFooter>
             </DialogContent>

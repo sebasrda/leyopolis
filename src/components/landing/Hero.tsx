@@ -72,7 +72,7 @@ export default function Hero() {
         <div className="mx-auto max-w-2xl lg:mx-0 lg:flex-auto">
           {/* Badge */}
           <div className="mb-8 flex">
-            <div className="inline-flex items-center gap-2 rounded-full bg-indigo-500/10 border border-indigo-500/30 px-4 py-2 text-sm font-semibold text-indigo-300 backdrop-blur-sm">
+            <div className="inline-flex items-center gap-2 rounded-full bg-indigo-500/10 border border-indigo-500/50/30 px-4 py-2 text-sm font-semibold text-indigo-300 backdrop-blur-sm">
               <Zap className="h-4 w-4 text-indigo-400 fill-indigo-400" />
               Plataforma Educativa con IA · Versión 1.0
               <ArrowRight className="h-3.5 w-3.5 text-indigo-400" />
@@ -111,7 +111,7 @@ export default function Hero() {
             </a>
             <a
               href="/demo"
-              className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-8 py-4 text-base font-semibold text-white backdrop-blur-sm hover:bg-white/10 hover:border-white/20 transition-all duration-300"
+              className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-card/5 px-8 py-4 text-base font-semibold text-white backdrop-blur-sm hover:bg-card/10 hover:border-white/20 transition-all duration-300"
             >
               <Sparkles className="h-4 w-4 text-purple-400" />
               Ver demo
@@ -122,12 +122,12 @@ export default function Hero() {
           <div className="mt-14 flex items-center gap-8 flex-wrap">
             {STATS.map(({ value, label, icon: Icon }) => (
               <div key={label} className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500/10 border border-indigo-500/20">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500/10 border border-indigo-500/50/20">
                   <Icon className="h-5 w-5 text-indigo-400" />
                 </div>
                 <div>
                   <div className="text-xl font-black text-white">{value}</div>
-                  <div className="text-xs text-gray-500">{label}</div>
+                  <div className="text-xs text-muted-foreground">{label}</div>
                 </div>
               </div>
             ))}
@@ -146,7 +146,7 @@ export default function Hero() {
             {/* Glow behind grid */}
             <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 blur-2xl scale-110" />
 
-            <div className="relative grid grid-cols-2 gap-3 p-3 rounded-3xl bg-white/[0.03] border border-white/[0.06] backdrop-blur-xl shadow-2xl">
+            <div className="relative grid grid-cols-2 gap-3 p-3 rounded-3xl bg-card/[0.03] border border-white/[0.06] backdrop-blur-xl shadow-2xl">
               {FEATURED_BOOKS.map((book, i) => (
                 <a
                   key={book.title}
@@ -192,7 +192,7 @@ export default function Hero() {
                     <div key={i} className="w-5 h-5 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 border-2 border-[#0a0a1a]" />
                   ))}
                 </div>
-                <span className="text-xs text-gray-500">+50 unidades pedagógicas disponibles</span>
+                <span className="text-xs text-muted-foreground">+50 unidades pedagógicas disponibles</span>
               </div>
             </div>
 
@@ -203,7 +203,7 @@ export default function Hero() {
               </div>
               <div>
                 <p className="text-[10px] font-bold text-emerald-300">Quiz generado con IA</p>
-                <p className="text-[9px] text-gray-500">En segundos</p>
+                <p className="text-[9px] text-muted-foreground">En segundos</p>
               </div>
             </div>
 
@@ -213,7 +213,7 @@ export default function Hero() {
               </div>
               <div>
                 <p className="text-[10px] font-bold text-purple-300">Traducción en tiempo real</p>
-                <p className="text-[9px] text-gray-500">+40 idiomas</p>
+                <p className="text-[9px] text-muted-foreground">+40 idiomas</p>
               </div>
             </div>
           </div>

@@ -49,15 +49,15 @@ export default function GameHub() {
                 </div>
                 
                 <div className="flex gap-6 mt-4 md:mt-0">
-                    <div className="text-center bg-white/20 p-3 rounded-xl backdrop-blur-sm">
+                    <div className="text-center bg-card/20 p-3 rounded-xl backdrop-blur-sm">
                         <div className="text-sm opacity-75">Nivel</div>
                         <div className="text-2xl font-bold">{progress.level}</div>
                     </div>
-                    <div className="text-center bg-white/20 p-3 rounded-xl backdrop-blur-sm">
+                    <div className="text-center bg-card/20 p-3 rounded-xl backdrop-blur-sm">
                         <div className="text-sm opacity-75">XP Total</div>
                         <div className="text-2xl font-bold">{progress.xp}</div>
                     </div>
-                    <div className="text-center bg-white/20 p-3 rounded-xl backdrop-blur-sm">
+                    <div className="text-center bg-card/20 p-3 rounded-xl backdrop-blur-sm">
                         <div className="text-sm opacity-75">Racha</div>
                         <div className="text-2xl font-bold">🔥 {progress.streakDays}</div>
                     </div>
@@ -65,16 +65,16 @@ export default function GameHub() {
             </div>
 
             {/* Game Grid */}
-            <h2 className="text-xl font-semibold mb-4 text-gray-800 flex items-center gap-2">
-                <Target className="text-indigo-600" />
+            <h2 className="text-xl font-semibold mb-4 text-foreground flex items-center gap-2">
+                <Target className="text-indigo-400" />
                 Desafíos Disponibles
             </h2>
             
             {games.length === 0 ? (
-                <div className="text-center py-20 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
+                <div className="text-center py-20 bg-muted rounded-2xl border-2 border-dashed border-border">
                     <Brain className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">No hay desafíos disponibles</h3>
-                    <p className="text-gray-500 max-w-md mx-auto mb-6">
+                    <h3 className="text-xl font-bold text-foreground mb-2">No hay desafíos disponibles</h3>
+                    <p className="text-muted-foreground max-w-md mx-auto mb-6">
                         Los juegos y desafíos se desbloquean a medida que lees libros. ¡Ve a la biblioteca y empieza una nueva lectura!
                     </p>
                     <Link href="/dashboard/library">
@@ -89,7 +89,7 @@ export default function GameHub() {
                         <motion.div
                             key={game.id}
                             whileHover={{ y: -5 }}
-                            className={`bg-white rounded-xl shadow-md overflow-hidden border-l-4 ${
+                            className={`bg-card rounded-xl shadow-md overflow-hidden border-l-4 ${
                                 game.difficulty === 'Easy' ? 'border-green-400' :
                                 game.difficulty === 'Medium' ? 'border-yellow-400' : 'border-red-400'
                             }`}
@@ -102,18 +102,18 @@ export default function GameHub() {
                                     }`}>
                                         {game.difficulty}
                                     </span>
-                                    <div className="flex items-center text-indigo-600 text-sm font-semibold">
+                                    <div className="flex items-center text-indigo-400 text-sm font-semibold">
                                         <Award size={16} className="mr-1" />
                                         {game.xpReward} XP
                                     </div>
                                 </div>
                                 
-                                <h3 className="text-lg font-bold text-gray-800 mb-2">{game.title}</h3>
-                                <p className="text-gray-600 text-sm mb-4">{game.description}</p>
+                                <h3 className="text-lg font-bold text-foreground mb-2">{game.title}</h3>
+                                <p className="text-muted-foreground text-sm mb-4">{game.description}</p>
                                 
                                 <button
                                     onClick={() => setSelectedGame(game)}
-                                    className="w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
+                                    className="w-full bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 font-semibold py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
                                 >
                                     <Play size={16} fill="currentColor" />
                                     Jugar Ahora
@@ -137,24 +137,24 @@ export default function GameHub() {
                             initial={{ scale: 0.9, y: 20 }}
                             animate={{ scale: 1, y: 0 }}
                             exit={{ scale: 0.9, y: 20 }}
-                            className="bg-white rounded-2xl w-full max-w-4xl h-[80vh] flex flex-col shadow-2xl overflow-hidden"
+                            className="bg-card rounded-2xl w-full max-w-4xl h-[80vh] flex flex-col shadow-2xl overflow-hidden"
                         >
                             {/* Modal Header */}
-                            <div className="bg-gray-50 p-4 border-b flex justify-between items-center">
+                            <div className="bg-muted p-4 border-b flex justify-between items-center">
                                 <div>
-                                    <h3 className="font-bold text-lg text-gray-800">{selectedGame.title}</h3>
-                                    <p className="text-sm text-gray-500">Objetivo: {selectedGame.xpReward} XP</p>
+                                    <h3 className="font-bold text-lg text-foreground">{selectedGame.title}</h3>
+                                    <p className="text-sm text-muted-foreground">Objetivo: {selectedGame.xpReward} XP</p>
                                 </div>
                                 <button 
                                     onClick={() => setSelectedGame(null)}
                                     className="p-2 hover:bg-gray-200 rounded-full transition-colors"
                                 >
-                                    <X size={24} className="text-gray-500" />
+                                    <X size={24} className="text-muted-foreground" />
                                 </button>
                             </div>
 
                             {/* Game Content Area */}
-                            <div className="flex-1 p-8 flex items-center justify-center bg-gray-100 overflow-y-auto">
+                            <div className="flex-1 p-8 flex items-center justify-center bg-muted overflow-y-auto">
                                 {selectedGame.type === 'quiz' ? (
                                     <QuizGame 
                                         questions={selectedGame.data as QuizQuestion[]} 
@@ -181,10 +181,10 @@ export default function GameHub() {
                                 ) : (
                                     <div className="text-center">
                                         <Brain size={64} className="mx-auto text-indigo-300 mb-4" />
-                                        <h2 className="text-2xl font-bold text-gray-700 mb-2">
+                                        <h2 className="text-2xl font-bold text-foreground mb-2">
                                             Próximamente
                                         </h2>
-                                        <p className="text-gray-500">
+                                        <p className="text-muted-foreground">
                                             El juego <strong>{selectedGame.title}</strong> está en desarrollo.
                                         </p>
                                     </div>

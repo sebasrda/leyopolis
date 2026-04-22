@@ -96,13 +96,13 @@ export default function ClassDetail({ classId }: { classId: string }) {
         <div className="p-6 max-w-7xl mx-auto space-y-8">
             {/* Header */}
             <div className="flex flex-col gap-4">
-                <Link href="/dashboard/teacher" className="text-sm text-gray-500 hover:text-indigo-600 flex items-center gap-1 w-fit">
+                <Link href="/dashboard/teacher" className="text-sm text-muted-foreground hover:text-indigo-400 flex items-center gap-1 w-fit">
                     <ArrowLeft size={16} /> Volver al Panel
                 </Link>
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-900">{classData.name}</h1>
-                        <p className="text-gray-500">Detalles del grupo y progreso de estudiantes.</p>
+                        <h1 className="text-3xl font-bold text-foreground">{classData.name}</h1>
+                        <p className="text-muted-foreground">Detalles del grupo y progreso de estudiantes.</p>
                     </div>
                     <div className="flex gap-3">
                         <Button variant="outline" className="gap-2">
@@ -121,7 +121,7 @@ export default function ClassDetail({ classId }: { classId: string }) {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <Card>
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-gray-500">Total Estudiantes</CardTitle>
+                        <CardTitle className="text-sm font-medium text-muted-foreground">Total Estudiantes</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{classData.students.length}</div>
@@ -129,7 +129,7 @@ export default function ClassDetail({ classId }: { classId: string }) {
                 </Card>
                 <Card>
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-gray-500">Asignaciones Activas</CardTitle>
+                        <CardTitle className="text-sm font-medium text-muted-foreground">Asignaciones Activas</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{classData.assignments.length}</div>
@@ -137,7 +137,7 @@ export default function ClassDetail({ classId }: { classId: string }) {
                 </Card>
                 <Card>
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-gray-500">Progreso Promedio</CardTitle>
+                        <CardTitle className="text-sm font-medium text-muted-foreground">Progreso Promedio</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">
@@ -151,17 +151,17 @@ export default function ClassDetail({ classId }: { classId: string }) {
 
             {/* Assignments List */}
             <div className="space-y-4">
-                <h2 className="text-xl font-semibold text-gray-800">Asignaciones Recientes</h2>
+                <h2 className="text-xl font-semibold text-foreground">Asignaciones Recientes</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {classData.assignments.map((assignment) => (
                         <Card key={assignment.id} className="flex flex-row overflow-hidden h-24">
-                            <div className="w-16 bg-gray-100 shrink-0">
+                            <div className="w-16 bg-muted shrink-0">
                                 <img src={assignment.book.coverImage || "https://placehold.co/400x600?text=Libro"} alt="" className="w-full h-full object-cover" />
                             </div>
                             <div className="p-3 flex flex-col justify-center flex-1">
                                 <h3 className="font-bold text-sm line-clamp-1">{assignment.title}</h3>
-                                <p className="text-xs text-gray-500 mb-1">{assignment.book.title}</p>
-                                <div className="flex items-center gap-1 text-xs text-indigo-600 mt-auto">
+                                <p className="text-xs text-muted-foreground mb-1">{assignment.book.title}</p>
+                                <div className="flex items-center gap-1 text-xs text-indigo-400 mt-auto">
                                     <Calendar size={12} />
                                     {new Date(assignment.dueDate).toLocaleDateString()}
                                 </div>
@@ -179,7 +179,7 @@ export default function ClassDetail({ classId }: { classId: string }) {
             {/* Students Table */}
             <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                    <h2 className="text-xl font-semibold text-gray-800">Estudiantes</h2>
+                    <h2 className="text-xl font-semibold text-foreground">Estudiantes</h2>
                     <div className="relative w-64">
                         <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
                         <Input 
@@ -213,7 +213,7 @@ export default function ClassDetail({ classId }: { classId: string }) {
                                             </Avatar>
                                             <div>
                                                 <div className="font-bold">{student.name}</div>
-                                                <div className="text-xs text-gray-500">{student.email}</div>
+                                                <div className="text-xs text-muted-foreground">{student.email}</div>
                                             </div>
                                         </div>
                                     </TableCell>
@@ -228,7 +228,7 @@ export default function ClassDetail({ classId }: { classId: string }) {
                                             {student.assignmentsCompleted} completadas
                                         </Badge>
                                     </TableCell>
-                                    <TableCell className="text-gray-500 text-sm">
+                                    <TableCell className="text-muted-foreground text-sm">
                                         {new Date(student.lastActive).toLocaleDateString()}
                                     </TableCell>
                                     <TableCell className="text-right">
@@ -238,7 +238,7 @@ export default function ClassDetail({ classId }: { classId: string }) {
                             ))}
                             {filteredStudents.length === 0 && (
                                 <TableRow>
-                                    <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                                         No se encontraron estudiantes
                                     </TableCell>
                                 </TableRow>

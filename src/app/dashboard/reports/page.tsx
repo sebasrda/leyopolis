@@ -31,8 +31,8 @@ export default function TeacherReportsPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Reportes de Progreso</h1>
-        <p className="text-gray-500">Analiza el rendimiento de tus estudiantes.</p>
+        <h1 className="text-3xl font-bold text-foreground">Reportes de Progreso</h1>
+        <p className="text-muted-foreground">Analiza el rendimiento de tus estudiantes.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -43,7 +43,7 @@ export default function TeacherReportsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{data.completionRate}%</div>
-            <p className="text-xs text-gray-500 mt-1">Promedio de lecturas finalizadas</p>
+            <p className="text-xs text-muted-foreground mt-1">Promedio de lecturas finalizadas</p>
           </CardContent>
         </Card>
         <Card>
@@ -53,7 +53,7 @@ export default function TeacherReportsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{data.averageTime}</div>
-            <p className="text-xs text-gray-500 mt-1">Por sesión de lectura</p>
+            <p className="text-xs text-muted-foreground mt-1">Por sesión de lectura</p>
           </CardContent>
         </Card>
         <Card>
@@ -63,7 +63,7 @@ export default function TeacherReportsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{data.atRisk}</div>
-            <p className="text-xs text-gray-500 mt-1">Requieren atención inmediata</p>
+            <p className="text-xs text-muted-foreground mt-1">Requieren atención inmediata</p>
           </CardContent>
         </Card>
       </div>
@@ -79,13 +79,13 @@ export default function TeacherReportsPage() {
                 <div className="space-y-2" key={i}>
                   <div className="flex justify-between text-sm">
                     <span className="font-medium">{cls.name}</span>
-                    <span className="text-gray-500">{cls.progress}% Completado</span>
+                    <span className="text-muted-foreground">{cls.progress}% Completado</span>
                   </div>
                   <Progress value={cls.progress} className="h-2" />
                 </div>
               ))
             ) : (
-              <p className="text-sm text-gray-500 text-center py-4">No hay datos de clases disponibles</p>
+              <p className="text-sm text-muted-foreground text-center py-4">No hay datos de clases disponibles</p>
             )}
           </div>
         </CardContent>

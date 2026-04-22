@@ -4,15 +4,15 @@ import { Button } from "@/components/ui/button";
 
 export default function ExpiredPage() {
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white shadow-lg rounded-2xl p-8 text-center space-y-6">
+    <div className="min-h-screen bg-muted flex flex-col items-center justify-center p-4">
+      <div className="max-w-md w-full bg-card shadow-lg rounded-2xl p-8 text-center space-y-6">
         <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center text-red-600 mb-6">
           <AlertCircle className="w-8 h-8" />
         </div>
         
-        <h1 className="text-2xl font-bold text-gray-900">Licencia Expirada</h1>
+        <h1 className="text-2xl font-bold text-foreground">Licencia Expirada</h1>
         
-        <p className="text-gray-600">
+        <p className="text-muted-foreground">
           Lo sentimos, pero tu acceso a la plataforma ha expirado. Si estabas utilizando una cuenta de prueba (Demo), tu límite de tiempo se ha agotado.
         </p>
 

@@ -523,10 +523,10 @@ export default function AdminBooksPage() {
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-3xl font-bold text-foreground">
             Gestión de Biblioteca
           </h1>
-          <p className="text-gray-500">
+          <p className="text-muted-foreground">
             Administra libros, exámenes y juegos interactivos.
           </p>
         </div>
@@ -534,7 +534,7 @@ export default function AdminBooksPage() {
         <div className="flex flex-col sm:flex-row gap-2">
           <Button
             variant="outline"
-            className="border-indigo-200 text-indigo-600 hover:bg-indigo-50 gap-2"
+            className="border-indigo-500/50/30 text-indigo-400 hover:bg-indigo-500/10 gap-2"
             onClick={handleBulkSynopsisFix}
             disabled={loading}
           >
@@ -686,7 +686,7 @@ export default function AdminBooksPage() {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1 text-center">
                     <Label>Archivo PDF *</Label>
-                    <div className="border-2 border-dashed border-gray-200 rounded-lg p-3 cursor-pointer hover:bg-gray-50 relative">
+                    <div className="border-2 border-dashed border-border rounded-lg p-3 cursor-pointer hover:bg-muted relative">
                       <Input
                         type="file"
                         accept=".pdf"
@@ -703,7 +703,7 @@ export default function AdminBooksPage() {
                   </div>
                   <div className="space-y-1 text-center">
                     <Label>Portada</Label>
-                    <div className="border-2 border-dashed border-gray-200 rounded-lg p-3 cursor-pointer hover:bg-gray-50 relative">
+                    <div className="border-2 border-dashed border-border rounded-lg p-3 cursor-pointer hover:bg-muted relative">
                       <Input
                         type="file"
                         accept="image/*"
@@ -722,14 +722,14 @@ export default function AdminBooksPage() {
 
                 <div className="space-y-1 mt-2">
                   <Label>Añadir Quiz Manual (Opcional)</Label>
-                  <div className="border-2 border-dashed border-gray-200 rounded-lg p-3 relative h-14 flex items-center justify-center">
+                  <div className="border-2 border-dashed border-border rounded-lg p-3 relative h-14 flex items-center justify-center">
                     <Input
                       type="file"
                       accept=".pdf,.docx,.json"
                       className="absolute inset-0 opacity-0 cursor-pointer"
                       onChange={(e) => setQuizFile(e.target.files?.[0] || null)}
                     />
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-muted-foreground">
                       {quizFile ? quizFile.name : "Subir PDF/Word de examen"}
                     </span>
                   </div>
@@ -752,7 +752,7 @@ export default function AdminBooksPage() {
         </div>
       </div>
 
-      <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm">
+      <div className="flex justify-between items-center bg-card p-4 rounded-xl shadow-sm">
         <div className="flex items-center gap-2 max-w-sm w-full">
           <Search className="h-4 w-4 text-gray-400" />
           <Input
@@ -788,7 +788,7 @@ export default function AdminBooksPage() {
               onChange={(e) => setManualGradeFilter(e.target.value)}
             />
           </div>
-          <Badge variant="outline" className="bg-indigo-50 text-indigo-700">
+          <Badge variant="outline" className="bg-indigo-500/10 text-indigo-300">
             Total: {filteredBooks.length}
           </Badge>
         </div>
@@ -796,7 +796,7 @@ export default function AdminBooksPage() {
 
       <Card className="overflow-hidden border-none shadow-lg">
         <Table>
-          <TableHeader className="bg-gray-50">
+          <TableHeader className="bg-muted">
             <TableRow>
               <TableHead className="w-20">Portada</TableHead>
               <TableHead>Libro</TableHead>
@@ -812,8 +812,8 @@ export default function AdminBooksPage() {
             {loading ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center py-20">
-                  <Loader2 className="h-10 w-10 animate-spin text-indigo-600 mx-auto mb-4" />
-                  <p className="text-gray-500">Cargando biblioteca...</p>
+                  <Loader2 className="h-10 w-10 animate-spin text-indigo-400 mx-auto mb-4" />
+                  <p className="text-muted-foreground">Cargando biblioteca...</p>
                 </TableCell>
               </TableRow>
             ) : filteredBooks.length === 0 ? (
@@ -829,7 +829,7 @@ export default function AdminBooksPage() {
               filteredBooks.map((book) => (
                 <TableRow
                   key={book.id}
-                  className="hover:bg-gray-50/50 transition-colors"
+                  className="hover:bg-muted/50 transition-colors"
                 >
                   <TableCell>
                     <img
@@ -842,8 +842,8 @@ export default function AdminBooksPage() {
                     />
                   </TableCell>
                   <TableCell>
-                    <div className="font-bold text-gray-900">{book.title}</div>
-                    <div className="text-xs text-gray-500">
+                    <div className="font-bold text-foreground">{book.title}</div>
+                    <div className="text-xs text-muted-foreground">
                       {book.author} • {book.category}
                     </div>
                   </TableCell>
@@ -862,7 +862,7 @@ export default function AdminBooksPage() {
                       className={
                         book.quizId
                           ? "bg-green-500/10 text-green-600 border-green-200"
-                          : "bg-gray-100 text-gray-400"
+                          : "bg-muted text-gray-400"
                       }
                     >
                       <Sparkles className="h-3 w-3 mr-1" />{" "}
@@ -874,7 +874,7 @@ export default function AdminBooksPage() {
                       className={
                         book.selWorkshopId
                           ? "bg-blue-500/10 text-blue-600 border-blue-200"
-                          : "bg-gray-100 text-gray-400"
+                          : "bg-muted text-gray-400"
                       }
                     >
                       <Sparkles className="h-3 w-3 mr-1" />{" "}
@@ -901,7 +901,7 @@ export default function AdminBooksPage() {
                         </button>
                       </div>
                     ) : (
-                      <Badge className="bg-gray-100 text-gray-400">
+                      <Badge className="bg-muted text-gray-400">
                         Sin audio
                       </Badge>
                     )}
@@ -969,7 +969,7 @@ export default function AdminBooksPage() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="text-indigo-400 hover:text-indigo-700 hover:bg-indigo-50 rounded-full"
+                        className="text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10 rounded-full"
                         title="Subir quiz (PDF/Word)"
                         disabled={uploadingQuizFor === book.id}
                         onClick={() =>

@@ -72,9 +72,9 @@ export function TimelineGame({ events, onComplete }: TimelineGameProps) {
     if (!events || events.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center p-12 text-center h-full">
-                <div className="bg-white dark:bg-gray-800 p-8 rounded-[2.5rem] shadow-xl border-2 border-indigo-50 dark:border-indigo-900/20">
+                <div className="bg-card dark:bg-gray-800 p-8 rounded-[2.5rem] shadow-xl border-2 border-indigo-50 dark:border-indigo-900/20">
                     <History className="h-12 w-12 text-indigo-400 mx-auto mb-4 opacity-50" />
-                    <p className="text-gray-500 dark:text-gray-400 italic">No hay suficientes eventos cronológicos para este libro.</p>
+                    <p className="text-muted-foreground dark:text-gray-400 italic">No hay suficientes eventos cronológicos para este libro.</p>
                 </div>
             </div>
         );
@@ -86,16 +86,16 @@ export function TimelineGame({ events, onComplete }: TimelineGameProps) {
                 <motion.div
                     initial={{ scale: 0.8, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    className="bg-white dark:bg-gray-800 p-10 rounded-[2.5rem] shadow-2xl max-w-lg w-full border-4 border-emerald-500/20"
+                    className="bg-card dark:bg-gray-800 p-10 rounded-[2.5rem] shadow-2xl max-w-lg w-full border-4 border-emerald-500/20"
                 >
                     <div className="w-24 h-24 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
                         <CheckCircle className="h-12 w-12 text-emerald-600" />
                     </div>
-                    <h2 className="text-4xl font-extrabold text-gray-900 dark:text-white mb-2">¡Perfecto!</h2>
+                    <h2 className="text-4xl font-extrabold text-foreground dark:text-white mb-2">¡Perfecto!</h2>
                     <p className="text-xl text-emerald-600 font-medium mb-6">Has reconstruido la historia correctamente</p>
-                    <div className="bg-gray-50 dark:bg-gray-900/50 p-6 rounded-2xl mb-8">
-                        <p className="text-sm text-gray-500 dark:text-gray-400 uppercase tracking-widest font-bold mb-1">Tiempo total</p>
-                        <p className="text-5xl font-black text-indigo-600">{Math.floor(timer / 60)}:{(timer % 60).toString().padStart(2, '0')}</p>
+                    <div className="bg-muted dark:bg-gray-900/50 p-6 rounded-2xl mb-8">
+                        <p className="text-sm text-muted-foreground dark:text-gray-400 uppercase tracking-widest font-bold mb-1">Tiempo total</p>
+                        <p className="text-5xl font-black text-indigo-400">{Math.floor(timer / 60)}:{(timer % 60).toString().padStart(2, '0')}</p>
                     </div>
                     <Button 
                         onClick={() => window.location.reload()} // Simplified for verification
@@ -113,20 +113,20 @@ export function TimelineGame({ events, onComplete }: TimelineGameProps) {
             <div className="max-w-3xl w-full flex flex-col gap-6">
                 
                 {/* Header Stats */}
-                <div className="flex justify-between items-center bg-white dark:bg-gray-800 p-4 px-8 rounded-2xl border border-indigo-100 dark:border-indigo-900/30 shadow-sm shrink-0">
-                    <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
+                <div className="flex justify-between items-center bg-card dark:bg-gray-800 p-4 px-8 rounded-2xl border border-indigo-500/50/20 dark:border-indigo-900/30 shadow-sm shrink-0">
+                    <div className="flex items-center gap-2 text-indigo-400 dark:text-indigo-400">
                         <Timer size={20} />
                         <span className="font-mono text-2xl font-bold">{Math.floor(timer / 60)}:{(timer % 60).toString().padStart(2, '0')}</span>
                     </div>
                     <div className="flex items-center gap-3">
-                        <span className="text-sm text-gray-500 font-medium uppercase tracking-wider">Ordena los hechos</span>
-                        <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg">
-                            <History className="h-5 w-5 text-indigo-600" />
+                        <span className="text-sm text-muted-foreground font-medium uppercase tracking-wider">Ordena los hechos</span>
+                        <div className="p-2 bg-indigo-500/10 dark:bg-indigo-900/30 rounded-lg">
+                            <History className="h-5 w-5 text-indigo-400" />
                         </div>
                     </div>
                 </div>
 
-                <p className="text-center text-gray-500 text-sm italic mb-2">Arrastra los eventos para ponerlos en orden cronológico real (lo que pasó primero arriba).</p>
+                <p className="text-center text-muted-foreground text-sm italic mb-2">Arrastra los eventos para ponerlos en orden cronológico real (lo que pasó primero arriba).</p>
 
                 {/* Reorderable List */}
                 <Reorder.Group axis="y" values={items} onReorder={setItems} className="flex flex-col gap-3">
@@ -141,11 +141,11 @@ export function TimelineGame({ events, onComplete }: TimelineGameProps) {
                                 whileDrag={{ scale: 1.05, boxShadow: "0px 10px 30px rgba(0,0,0,0.1)" }}
                                 className="cursor-grab active:cursor-grabbing"
                             >
-                                <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border-2 border-gray-100 dark:border-gray-700 flex items-center gap-5 group hover:border-indigo-500/50 transition-colors shadow-sm">
-                                    <div className="flex flex-col items-center justify-center p-3 bg-gray-50 dark:bg-gray-900 rounded-xl group-hover:bg-indigo-50 dark:group-hover:bg-indigo-900/20 transition-colors">
+                                <div className="bg-card dark:bg-gray-800 p-6 rounded-2xl border-2 border-border dark:border-gray-700 flex items-center gap-5 group hover:border-indigo-500/50/50 transition-colors shadow-sm">
+                                    <div className="flex flex-col items-center justify-center p-3 bg-muted dark:bg-gray-900 rounded-xl group-hover:bg-indigo-500/10 dark:group-hover:bg-indigo-900/20 transition-colors">
                                         <span className="text-lg font-bold text-gray-400 group-hover:text-indigo-500">{index + 1}</span>
                                     </div>
-                                    <p className="flex-1 text-lg font-medium text-gray-700 dark:text-gray-200">{item.text}</p>
+                                    <p className="flex-1 text-lg font-medium text-foreground dark:text-gray-200">{item.text}</p>
                                     <div className="text-gray-300 group-hover:text-indigo-500 flex flex-col gap-1 transition-colors">
                                         <MoveUp size={16} />
                                         <MoveDown size={16} />

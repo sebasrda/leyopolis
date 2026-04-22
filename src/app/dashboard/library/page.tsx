@@ -122,8 +122,8 @@ export default function LibraryPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div className="space-y-1">
-          <h1 className="text-3xl font-bold text-gray-900">Biblioteca Digital</h1>
-          <p className="text-gray-500">Explora los libros disponibles para tu aprendizaje.</p>
+          <h1 className="text-3xl font-bold text-foreground">Biblioteca Digital</h1>
+          <p className="text-muted-foreground">Explora los libros disponibles para tu aprendizaje.</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
           <div className="relative flex-1 sm:w-64">
@@ -140,8 +140,8 @@ export default function LibraryPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-3 p-4 bg-white rounded-xl border shadow-sm">
-        <div className="flex items-center gap-2 text-gray-500 mr-2">
+      <div className="flex flex-wrap items-center gap-3 p-4 bg-card rounded-xl border shadow-sm">
+        <div className="flex items-center gap-2 text-muted-foreground mr-2">
           <SlidersHorizontal size={18} />
           <span className="text-sm font-medium">Filtros:</span>
         </div>
@@ -184,8 +184,8 @@ export default function LibraryPage() {
       {/* Loading */}
       {loading && (
         <div className="flex items-center justify-center py-20">
-          <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
-          <span className="ml-3 text-gray-500">Cargando biblioteca...</span>
+          <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
+          <span className="ml-3 text-muted-foreground">Cargando biblioteca...</span>
         </div>
       )}
 
@@ -200,11 +200,11 @@ export default function LibraryPage() {
 
       {/* Books Grid */}
       {!loading && !error && filteredBooks.length === 0 && (
-        <div className="text-center py-20 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
+        <div className="text-center py-20 bg-muted rounded-2xl border-2 border-dashed border-border">
           <BookOpen className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-          <h3 className="text-xl font-bold text-gray-900 mb-2">No se encontraron libros</h3>
-          <p className="text-gray-500 max-w-md mx-auto">Intenta ajustar tus filtros de búsqueda.</p>
-          <Button variant="link" onClick={() => { setSelectedCategory("Todos"); setSelectedDifficulty("Todos"); setSearchQuery(""); }} className="mt-4 text-indigo-600">
+          <h3 className="text-xl font-bold text-foreground mb-2">No se encontraron libros</h3>
+          <p className="text-muted-foreground max-w-md mx-auto">Intenta ajustar tus filtros de búsqueda.</p>
+          <Button variant="link" onClick={() => { setSelectedCategory("Todos"); setSelectedDifficulty("Todos"); setSearchQuery(""); }} className="mt-4 text-indigo-400">
             Ver todos los libros
           </Button>
         </div>
@@ -213,16 +213,16 @@ export default function LibraryPage() {
       {/* Assigned Books Grid */}
       {!loading && !error && assignedBooksList.length > 0 && (
         <div className="mb-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="flex items-center gap-3 mb-6 bg-gradient-to-r from-indigo-50 to-white p-4 rounded-xl border border-indigo-100">
-            <div className="p-2 bg-indigo-100 rounded-lg text-indigo-600"><BookOpen className="h-6 w-6" /></div>
+          <div className="flex items-center gap-3 mb-6 bg-gradient-to-r from-indigo-50 to-white p-4 rounded-xl border border-indigo-500/50/20">
+            <div className="p-2 bg-indigo-500/20 rounded-lg text-indigo-400"><BookOpen className="h-6 w-6" /></div>
             <div>
-              <h2 className="text-2xl font-bold text-indigo-950">Tus Unidades Asignadas</h2>
-              <p className="text-sm text-indigo-600/80">Lecturas recomendadas para tus clases matriculadas</p>
+              <h2 className="text-2xl font-bold text-indigo-100">Tus Unidades Asignadas</h2>
+              <p className="text-sm text-indigo-400/80">Lecturas recomendadas para tus clases matriculadas</p>
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {assignedBooksList.map((book) => (
-              <Card key={book.id} className="group overflow-hidden border border-indigo-100 shadow-lg shadow-indigo-100/50 hover:shadow-xl hover:shadow-indigo-200 transition-all duration-300 flex flex-col h-full bg-indigo-50/20 ring-1 ring-indigo-50">
+              <Card key={book.id} className="group overflow-hidden border border-indigo-500/50/20 shadow-lg shadow-indigo-100/50 hover:shadow-xl hover:shadow-indigo-200 transition-all duration-300 flex flex-col h-full bg-indigo-500/10/20 ring-1 ring-indigo-50">
                   <BookCover src={book.image} alt={book.title}>
                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-purple-500"></div>
                     <div className="absolute top-2 right-2 flex flex-col gap-1">
@@ -230,11 +230,11 @@ export default function LibraryPage() {
                     </div>
                     <div className="absolute inset-0 bg-indigo-900/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center p-6 gap-3">
                       <Link href={`/dashboard/reader/${book.id}?title=${encodeURIComponent(book.title)}`} className="w-full">
-                        <Button className="w-full bg-white text-indigo-900 hover:bg-indigo-50 font-bold">Leer Ahora</Button>
+                        <Button className="w-full bg-card text-indigo-200 hover:bg-indigo-500/10 font-bold">Leer Ahora</Button>
                       </Link>
                       {book.hasQuiz && book.quizId && (
                         <Link href={`/dashboard/quiz/${book.quizId}`} className="w-full">
-                          <Button variant="outline" className="w-full border-white text-white hover:bg-white/10">
+                          <Button variant="outline" className="w-full border-white text-white hover:bg-card/10">
                             <Sparkles className="h-4 w-4 mr-2" /> Hacer Quiz
                           </Button>
                         </Link>
@@ -245,17 +245,17 @@ export default function LibraryPage() {
                 
                 <CardContent className="p-4 flex-1 flex flex-col gap-2">
                   <div>
-                    <h3 className="font-bold text-gray-900 line-clamp-1 text-lg" title={book.title}>{book.title}</h3>
-                    <p className="text-sm text-gray-500">{book.author}</p>
+                    <h3 className="font-bold text-foreground line-clamp-1 text-lg" title={book.title}>{book.title}</h3>
+                    <p className="text-sm text-muted-foreground">{book.author}</p>
                   </div>
                   <div className="flex items-center gap-2 mt-auto pt-2 text-xs text-gray-400 flex-wrap">
-                    <span className="bg-indigo-100 px-2 py-1 rounded-md text-indigo-700 font-medium">{book.difficulty}</span>
+                    <span className="bg-indigo-500/20 px-2 py-1 rounded-md text-indigo-300 font-medium">{book.difficulty}</span>
                     <Dialog>
                       <DialogTrigger asChild>
                         <Button 
                           variant="ghost" 
                           size="sm" 
-                          className="h-7 px-2 text-[10px] text-indigo-600 hover:text-indigo-700 hover:bg-indigo-100 font-bold ml-1 border border-indigo-200"
+                          className="h-7 px-2 text-[10px] text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/20 font-bold ml-1 border border-indigo-500/50/30"
                         >
                           Ver Sinopsis
                         </Button>
@@ -267,7 +267,7 @@ export default function LibraryPage() {
                             Sinopsis: {book.title}
                           </DialogTitle>
                         </DialogHeader>
-                        <div className="py-4 text-sm leading-relaxed text-gray-600 italic border-l-4 border-indigo-500 pl-4 bg-indigo-50/30 rounded-r-lg">
+                        <div className="py-4 text-sm leading-relaxed text-muted-foreground italic border-l-4 border-indigo-500/50 pl-4 bg-indigo-500/10 rounded-r-lg">
                           "{book.description}"
                         </div>
                       </DialogContent>
@@ -285,14 +285,14 @@ export default function LibraryPage() {
       {!loading && !error && otherBooksList.length > 0 && (
         <div className="animate-in fade-in slide-in-from-bottom-8 duration-700">
           {assignedBooksList.length > 0 && (
-             <h2 className="text-xl font-bold text-gray-800 mb-6 border-t pt-8">Catálogo General</h2>
+             <h2 className="text-xl font-bold text-foreground mb-6 border-t pt-8">Catálogo General</h2>
           )}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {otherBooksList.map((book) => (
               <Card key={book.id} className="group overflow-hidden border-none shadow-md hover:shadow-xl transition-all duration-300 flex flex-col h-full">
                   <BookCover src={book.image} alt={book.title}>
                     <div className="absolute top-2 right-2 flex flex-col gap-1">
-                      <Badge className="bg-white/90 text-indigo-900 hover:bg-white shadow-sm backdrop-blur-sm">{book.category}</Badge>
+                      <Badge className="bg-card/90 text-indigo-200 hover:bg-card shadow-sm backdrop-blur-sm">{book.category}</Badge>
                       {book.hasQuiz && (
                         <Badge className="bg-green-500/90 text-white hover:bg-green-600 shadow-sm backdrop-blur-sm flex items-center gap-1">
                           <CheckCircle className="h-3 w-3" /> Quiz
@@ -306,11 +306,11 @@ export default function LibraryPage() {
                     )}
                     <div className="absolute inset-0 bg-indigo-900/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center p-6 gap-3">
                       <Link href={`/dashboard/reader/${book.id}?title=${encodeURIComponent(book.title)}`} className="w-full">
-                        <Button className="w-full bg-white text-indigo-900 hover:bg-indigo-50 font-bold">Leer Ahora</Button>
+                        <Button className="w-full bg-card text-indigo-200 hover:bg-indigo-500/10 font-bold">Leer Ahora</Button>
                       </Link>
                       {book.hasQuiz && book.quizId && (
                         <Link href={`/dashboard/quiz/${book.quizId}`} className="w-full">
-                          <Button variant="outline" className="w-full border-white text-white hover:bg-white/10">
+                          <Button variant="outline" className="w-full border-white text-white hover:bg-card/10">
                             <Sparkles className="h-4 w-4 mr-2" /> Hacer Quiz
                           </Button>
                         </Link>
@@ -321,29 +321,29 @@ export default function LibraryPage() {
                 
                 <CardContent className="p-4 flex-1 flex flex-col gap-2">
                   <div>
-                    <h3 className="font-bold text-gray-900 line-clamp-1 text-lg" title={book.title}>{book.title}</h3>
-                    <p className="text-sm text-gray-500">{book.author}</p>
+                    <h3 className="font-bold text-foreground line-clamp-1 text-lg" title={book.title}>{book.title}</h3>
+                    <p className="text-sm text-muted-foreground">{book.author}</p>
                   </div>
                   <div className="flex items-center gap-2 mt-auto pt-2 text-xs text-gray-400 flex-wrap">
-                    <span className="bg-gray-100 px-2 py-1 rounded-md text-gray-600 font-medium">{book.difficulty}</span>
+                    <span className="bg-muted px-2 py-1 rounded-md text-muted-foreground font-medium">{book.difficulty}</span>
                     <Dialog>
                       <DialogTrigger asChild>
                         <Button 
                           variant="ghost" 
                           size="sm" 
-                          className="h-7 px-2 text-[10px] text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 font-bold ml-1 border border-indigo-100"
+                          className="h-7 px-2 text-[10px] text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10 font-bold ml-1 border border-indigo-500/50/20"
                         >
                           Sinopsis
                         </Button>
                       </DialogTrigger>
                       <DialogContent className="sm:max-w-[425px]">
                         <DialogHeader>
-                          <DialogTitle className="flex items-center gap-2 text-indigo-900">
+                          <DialogTitle className="flex items-center gap-2 text-indigo-200">
                             <BookOpen className="h-4 w-4 text-indigo-500" />
                             Sinopsis: {book.title}
                           </DialogTitle>
                         </DialogHeader>
-                        <div className="py-4 text-sm leading-relaxed text-gray-600 italic border-l-4 border-indigo-500 pl-4 bg-indigo-50/30 rounded-r-lg">
+                        <div className="py-4 text-sm leading-relaxed text-muted-foreground italic border-l-4 border-indigo-500/50 pl-4 bg-indigo-500/10 rounded-r-lg">
                           "{book.description}"
                         </div>
                       </DialogContent>

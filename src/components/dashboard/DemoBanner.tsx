@@ -64,7 +64,7 @@ export function DemoBanner() {
         <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={() => setShowModal(true)}
-            className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 border border-white/40 text-white text-xs font-bold px-3 py-1.5 rounded-full transition-all"
+            className="flex items-center gap-1.5 bg-card/20 hover:bg-card/30 border border-white/40 text-white text-xs font-bold px-3 py-1.5 rounded-full transition-all"
           >
             <Mail className="h-3 w-3" />
             <span className="hidden sm:inline">Obtener acceso completo</span>
@@ -73,7 +73,7 @@ export function DemoBanner() {
           {!expired && (
             <button
               onClick={() => setDismissed(true)}
-              className="p-1 hover:bg-white/20 rounded-full transition-colors"
+              className="p-1 hover:bg-card/20 rounded-full transition-colors"
               title="Cerrar"
             >
               <X className="h-4 w-4" />
@@ -86,13 +86,13 @@ export function DemoBanner() {
       {showModal && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowModal(false)} />
-          <div className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 text-center space-y-5 animate-in zoom-in-95 duration-200">
+          <div className="relative bg-card rounded-2xl shadow-2xl max-w-md w-full p-8 text-center space-y-5 animate-in zoom-in-95 duration-200">
             <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto">
               <Mail className="h-8 w-8 text-amber-600" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">¿Quieres acceso completo?</h2>
-              <p className="text-gray-500 text-sm leading-relaxed">
+              <h2 className="text-2xl font-bold text-foreground mb-2">¿Quieres acceso completo?</h2>
+              <p className="text-muted-foreground text-sm leading-relaxed">
                 Tu cuenta actual es de <strong>demostración gratuita</strong> con acceso limitado a 2 lecturas por grado y sin Inteligencia Artificial. Para obtener el plan completo, escríbenos:
               </p>
             </div>
@@ -114,7 +114,7 @@ export function DemoBanner() {
             </div>
             <button
               onClick={() => setShowModal(false)}
-              className="text-sm text-gray-400 hover:text-gray-600 underline"
+              className="text-sm text-gray-400 hover:text-muted-foreground underline"
             >
               Cerrar
             </button>

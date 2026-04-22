@@ -233,8 +233,8 @@ export default function AdminDashboardPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
-        <span className="ml-3 text-gray-500">Cargando panel de administración...</span>
+        <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
+        <span className="ml-3 text-muted-foreground">Cargando panel de administración...</span>
       </div>
     );
   }
@@ -243,7 +243,7 @@ export default function AdminDashboardPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] gap-3">
         <AlertCircle className="h-10 w-10 text-red-400" />
-        <p className="text-gray-600">{error}</p>
+        <p className="text-muted-foreground">{error}</p>
         <Button onClick={fetchStats}>Reintentar</Button>
       </div>
     );
@@ -253,8 +253,8 @@ export default function AdminDashboardPage() {
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Gestión del Colegio</h1>
-          <p className="text-gray-500">
+          <h1 className="text-3xl font-bold text-foreground">Gestión del Colegio</h1>
+          <p className="text-muted-foreground">
             {stats?.institution?.name 
               ? `Plataforma de ${stats.institution.name}` 
               : "Administra usuarios y clases de tu institución."}
@@ -315,13 +315,13 @@ export default function AdminDashboardPage() {
                     {stats.institution.status.toUpperCase()}
                   </Badge>
                 </h3>
-                <p className="text-sm text-gray-600 mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                   Estudiantes inscritos: <span className="font-bold">{stats.totalStudents || 0}</span> / {stats.institution.maxStudents} límite
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-xs text-gray-500">Vencimiento del plan</p>
-                <p className="font-semibold text-gray-900">
+                <p className="text-xs text-muted-foreground">Vencimiento del plan</p>
+                <p className="font-semibold text-foreground">
                   {stats.institution.endDate ? new Date(stats.institution.endDate).toLocaleDateString() : 'Ilimitado'}
                 </p>
               </div>
@@ -332,8 +332,8 @@ export default function AdminDashboardPage() {
 
       {/* Institution Library Config - SUPERADMIN ONLY */}
       {stats?.institution && isSuperAdmin && (
-        <Card className="border-indigo-100 shadow-sm overflow-hidden bg-white">
-          <CardHeader className="py-4 border-b bg-gray-50/30 flex flex-row items-center justify-between">
+        <Card className="border-indigo-500/50/20 shadow-sm overflow-hidden bg-card">
+          <CardHeader className="py-4 border-b bg-muted/30 flex flex-row items-center justify-between">
             <div>
               <CardTitle className="text-sm font-bold flex items-center gap-2">
                 <Settings className="h-4 w-4 text-indigo-500" /> Configuración de Biblioteca Institucional
@@ -344,8 +344,8 @@ export default function AdminDashboardPage() {
           <CardContent className="p-4 sm:p-6 space-y-4">
             <div className="flex items-center justify-between gap-6">
               <div className="space-y-1">
-                <p className="font-semibold text-gray-900">Restringir Biblioteca a Libros Asignados</p>
-                <p className="text-sm text-gray-500">
+                <p className="font-semibold text-foreground">Restringir Biblioteca a Libros Asignados</p>
+                <p className="text-sm text-muted-foreground">
                   Si se activa, tus estudiantes solo verán aquellos libros que hayan sido asignados específicamente a sus clases matriculadas.
                 </p>
               </div>
@@ -366,31 +366,31 @@ export default function AdminDashboardPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Usuarios Totales</CardTitle>
-            <Users className="h-4 w-4 text-gray-500" />
+            <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats?.totalUsers || 0}</div>
-            <p className="text-xs text-gray-500 mt-1">{stats?.totalStudents || 0} est. · {stats?.totalTeachers || 0} doc. · {stats?.totalAdmins || 0} admin</p>
+            <p className="text-xs text-muted-foreground mt-1">{stats?.totalStudents || 0} est. · {stats?.totalTeachers || 0} doc. · {stats?.totalAdmins || 0} admin</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Libros en Biblioteca</CardTitle>
-            <BookOpen className="h-4 w-4 text-gray-500" />
+            <BookOpen className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats?.totalBooks || 0}</div>
-            <p className="text-xs text-gray-500 mt-1">PDFs disponibles en la plataforma</p>
+            <p className="text-xs text-muted-foreground mt-1">PDFs disponibles en la plataforma</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Clases Activas</CardTitle>
-            <GraduationCap className="h-4 w-4 text-gray-500" />
+            <GraduationCap className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats?.totalClasses || 0}</div>
-            <p className="text-xs text-gray-500 mt-1">Grupos con docente asignado</p>
+            <p className="text-xs text-muted-foreground mt-1">Grupos con docente asignado</p>
           </CardContent>
         </Card>
       </div>
@@ -418,7 +418,7 @@ export default function AdminDashboardPage() {
                     <TableCell>
                       <div>
                         <p className="font-medium">{user.name || "Sin nombre"}</p>
-                        <p className="text-xs text-gray-500">{user.email}</p>
+                        <p className="text-xs text-muted-foreground">{user.email}</p>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -426,7 +426,7 @@ export default function AdminDashboardPage() {
                         {user.role}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-sm text-gray-500">
+                    <TableCell className="text-sm text-muted-foreground">
                       {new Date(user.createdAt).toLocaleDateString()}
                     </TableCell>
                     <TableCell className="text-right">
@@ -450,7 +450,7 @@ export default function AdminDashboardPage() {
                 ))}
                 {(!stats?.recentUsers || stats.recentUsers.length === 0) && (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-8 text-gray-500">No hay usuarios registrados</TableCell>
+                    <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">No hay usuarios registrados</TableCell>
                   </TableRow>
                 )}
               </TableBody>
@@ -472,27 +472,27 @@ export default function AdminDashboardPage() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
                     <span className="font-medium">Estudiantes</span>
-                    <span className="text-gray-500">{stats?.studentPercent || 0}%</span>
+                    <span className="text-muted-foreground">{stats?.studentPercent || 0}%</span>
                   </div>
-                  <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="h-2 bg-muted rounded-full overflow-hidden">
                     <div className="h-full bg-indigo-600 transition-all" style={{ width: `${stats?.studentPercent || 0}%` }}></div>
                   </div>
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
                     <span className="font-medium">Profesores</span>
-                    <span className="text-gray-500">{stats?.teacherPercent || 0}%</span>
+                    <span className="text-muted-foreground">{stats?.teacherPercent || 0}%</span>
                   </div>
-                  <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="h-2 bg-muted rounded-full overflow-hidden">
                     <div className="h-full bg-purple-600 transition-all" style={{ width: `${stats?.teacherPercent || 0}%` }}></div>
                   </div>
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
                     <span className="font-medium">Admins</span>
-                    <span className="text-gray-500">{stats?.adminPercent || 0}%</span>
+                    <span className="text-muted-foreground">{stats?.adminPercent || 0}%</span>
                   </div>
-                  <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="h-2 bg-muted rounded-full overflow-hidden">
                     <div className="h-full bg-gray-800 transition-all" style={{ width: `${stats?.adminPercent || 0}%` }}></div>
                   </div>
                 </div>

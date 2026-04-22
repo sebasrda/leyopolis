@@ -98,8 +98,8 @@ export default function VideosPage() {
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold text-gray-900">Videos</h1>
-          <p className="text-gray-500">Reproducción dentro de la plataforma con enlaces externos.</p>
+          <h1 className="text-3xl font-bold text-foreground">Videos</h1>
+          <p className="text-muted-foreground">Reproducción dentro de la plataforma con enlaces externos.</p>
         </div>
         {canCreate && (
           <Dialog open={open} onOpenChange={setOpen}>
@@ -115,11 +115,11 @@ export default function VideosPage() {
               <div className="grid gap-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <div className="text-sm font-medium text-gray-700">Título</div>
+                    <div className="text-sm font-medium text-foreground">Título</div>
                     <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Título del video" />
                   </div>
                   <div className="space-y-2">
-                    <div className="text-sm font-medium text-gray-700">Proveedor</div>
+                    <div className="text-sm font-medium text-foreground">Proveedor</div>
                     <Select value={provider} onValueChange={setProvider}>
                       <SelectTrigger>
                         <SelectValue />
@@ -134,14 +134,14 @@ export default function VideosPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <div className="text-sm font-medium text-gray-700">Descripción</div>
+                  <div className="text-sm font-medium text-foreground">Descripción</div>
                   <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Opcional" />
                 </div>
 
                 <div className="space-y-2">
-                  <div className="text-sm font-medium text-gray-700">URL</div>
+                  <div className="text-sm font-medium text-foreground">URL</div>
                   <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder={providerHint} />
-                  <div className="text-xs text-gray-500">
+                  <div className="text-xs text-muted-foreground">
                     No se suben videos al servidor. Usa enlaces externos o streaming compatible.
                   </div>
                 </div>
@@ -162,11 +162,11 @@ export default function VideosPage() {
 
       {loading ? (
         <Card className="border-dashed">
-          <CardContent className="p-8 text-center text-gray-500">Cargando videos...</CardContent>
+          <CardContent className="p-8 text-center text-muted-foreground">Cargando videos...</CardContent>
         </Card>
       ) : videos.length === 0 ? (
         <Card className="border-dashed">
-          <CardContent className="p-8 text-center text-gray-500">No hay videos disponibles.</CardContent>
+          <CardContent className="p-8 text-center text-muted-foreground">No hay videos disponibles.</CardContent>
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -178,13 +178,13 @@ export default function VideosPage() {
                     <CardTitle className="text-lg">{v.title}</CardTitle>
                     <CardDescription className="line-clamp-2">{v.description || "Sin descripción"}</CardDescription>
                   </div>
-                  <Badge variant="outline" className="bg-indigo-50 text-indigo-700 hover:bg-indigo-50">
+                  <Badge variant="outline" className="bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/10">
                     {v.provider}
                   </Badge>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center justify-between text-xs text-gray-500">
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
                   <div className="line-clamp-1">Profesor: {v.teacher.name || v.teacher.email || "—"}</div>
                   <div>{new Date(v.createdAt).toLocaleDateString()}</div>
                 </div>

@@ -118,7 +118,7 @@ export default function ClubDetailView({ clubId }: { clubId: string }) {
                             <p className="text-white/90 max-w-2xl text-sm md:text-base">{club.description}</p>
                         </div>
                         <div className="hidden md:flex items-center gap-4">
-                            <div className="flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-2 rounded-full">
+                            <div className="flex items-center gap-2 bg-card/20 backdrop-blur-md px-4 py-2 rounded-full">
                                 <Users size={18} />
                                 <span className="font-bold">{club.membersCount}</span> Miembros
                             </div>
@@ -132,7 +132,7 @@ export default function ClubDetailView({ clubId }: { clubId: string }) {
                 <div className="lg:col-span-2 space-y-6">
                     {/* Create Post */}
                     {club.isMember ? (
-                        <Card className="shadow-sm border-gray-200">
+                        <Card className="shadow-sm border-border">
                             <CardContent className="p-4">
                                 <div className="flex gap-4">
                                     <Avatar>
@@ -141,16 +141,16 @@ export default function ClubDetailView({ clubId }: { clubId: string }) {
                                     <div className="flex-1 space-y-3">
                                         <Textarea 
                                             placeholder="Comparte tus pensamientos sobre la lectura actual..." 
-                                            className="resize-none min-h-[80px] border-none bg-gray-50 focus:bg-white focus:ring-1 focus:ring-indigo-200 transition-all"
+                                            className="resize-none min-h-[80px] border-none bg-muted focus:bg-card focus:ring-1 focus:ring-indigo-200 transition-all"
                                             value={newPostContent}
                                             onChange={(e) => setNewPostContent(e.target.value)}
                                         />
-                                        <div className="flex justify-between items-center pt-2 border-t border-gray-100">
+                                        <div className="flex justify-between items-center pt-2 border-t border-border">
                                             <div className="flex gap-2 text-gray-400">
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-indigo-600">
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-indigo-400">
                                                     <ImageIcon size={18} />
                                                 </Button>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-indigo-600">
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-indigo-400">
                                                     <Smile size={18} />
                                                 </Button>
                                             </div>
@@ -168,7 +168,7 @@ export default function ClubDetailView({ clubId }: { clubId: string }) {
                             </CardContent>
                         </Card>
                     ) : (
-                        <div className="bg-indigo-50 border border-indigo-200 p-4 rounded-xl text-center text-indigo-800">
+                        <div className="bg-indigo-500/10 border border-indigo-500/50/30 p-4 rounded-xl text-center text-indigo-300">
                             Únete al club para participar en la conversación.
                         </div>
                     )}
@@ -182,7 +182,7 @@ export default function ClubDetailView({ clubId }: { clubId: string }) {
                             </div>
                         ) : (
                             club.posts.map((post) => (
-                                <Card key={post.id} className="border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                                <Card key={post.id} className="border-border shadow-sm hover:shadow-md transition-shadow">
                                     <CardContent className="p-5">
                                         <div className="flex justify-between items-start mb-3">
                                             <div className="flex items-center gap-3">
@@ -191,8 +191,8 @@ export default function ClubDetailView({ clubId }: { clubId: string }) {
                                                     <AvatarFallback>{post.author.name.charAt(0)}</AvatarFallback>
                                                 </Avatar>
                                                 <div>
-                                                    <h4 className="font-bold text-gray-900 text-sm">{post.author.name}</h4>
-                                                    <p className="text-xs text-gray-500">
+                                                    <h4 className="font-bold text-foreground text-sm">{post.author.name}</h4>
+                                                    <p className="text-xs text-muted-foreground">
                                                         {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true, locale: es })}
                                                     </p>
                                                 </div>
@@ -202,12 +202,12 @@ export default function ClubDetailView({ clubId }: { clubId: string }) {
                                             </Button>
                                         </div>
                                         
-                                        <p className="text-gray-800 mb-4 whitespace-pre-wrap text-sm leading-relaxed">
+                                        <p className="text-foreground mb-4 whitespace-pre-wrap text-sm leading-relaxed">
                                             {post.content}
                                         </p>
 
                                         <div className="flex items-center gap-4 pt-3 border-t border-gray-50">
-                                            <Button variant="ghost" size="sm" className="text-gray-500 hover:text-indigo-600 gap-2 h-8">
+                                            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-indigo-400 gap-2 h-8">
                                                 <MessageSquare size={16} />
                                                 <span className="text-xs">{post.commentsCount} Comentarios</span>
                                             </Button>
@@ -223,26 +223,26 @@ export default function ClubDetailView({ clubId }: { clubId: string }) {
                 <div className="space-y-6">
                     <Card>
                         <CardContent className="p-5">
-                            <h3 className="font-bold text-gray-900 mb-4">Sobre el Club</h3>
+                            <h3 className="font-bold text-foreground mb-4">Sobre el Club</h3>
                             <div className="space-y-4 text-sm">
                                 <div className="flex justify-between py-2 border-b">
-                                    <span className="text-gray-500">Miembros</span>
+                                    <span className="text-muted-foreground">Miembros</span>
                                     <span className="font-medium">{club.membersCount}</span>
                                 </div>
                                 <div className="flex justify-between py-2 border-b">
-                                    <span className="text-gray-500">Publicaciones</span>
+                                    <span className="text-muted-foreground">Publicaciones</span>
                                     <span className="font-medium">{club.posts.length}</span>
                                 </div>
                                 <div className="pt-2">
-                                    <h4 className="font-medium mb-2 text-gray-700">Lectura Actual</h4>
-                                    <div className="bg-gray-50 p-3 rounded-lg flex gap-3 items-center">
+                                    <h4 className="font-medium mb-2 text-foreground">Lectura Actual</h4>
+                                    <div className="bg-muted p-3 rounded-lg flex gap-3 items-center">
                                         <div className="w-10 h-14 bg-gray-200 rounded shrink-0 overflow-hidden">
                                              {/* Placeholder book cover */}
                                              <img src="https://placehold.co/100x140?text=Libro" className="w-full h-full object-cover" />
                                         </div>
                                         <div>
                                             <p className="font-bold text-xs line-clamp-1">Libro del Mes</p>
-                                            <p className="text-xs text-gray-500">Autor Desconocido</p>
+                                            <p className="text-xs text-muted-foreground">Autor Desconocido</p>
                                         </div>
                                     </div>
                                 </div>

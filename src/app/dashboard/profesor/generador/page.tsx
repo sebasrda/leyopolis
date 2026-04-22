@@ -67,8 +67,8 @@ export default function ProfesorGeneradorPage() {
   return (
     <div className="space-y-8">
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold text-gray-900">Generador por libro</h1>
-        <p className="text-gray-500">Genera quiz y juegos automáticamente para una demo institucional.</p>
+        <h1 className="text-3xl font-bold text-foreground">Generador por libro</h1>
+        <p className="text-muted-foreground">Genera quiz y juegos automáticamente para una demo institucional.</p>
       </div>
 
       <Card className="border-none shadow-md">

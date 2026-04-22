@@ -82,8 +82,8 @@ export default function TeacherClassesPage() {
     <div className="space-y-8">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Mis Clases</h1>
-          <p className="text-gray-500">Gestiona tus grupos y asignaciones de lectura.</p>
+          <h1 className="text-3xl font-bold text-foreground">Mis Clases</h1>
+          <p className="text-muted-foreground">Gestiona tus grupos y asignaciones de lectura.</p>
         </div>
         
         <Dialog open={open} onOpenChange={setOpen}>
@@ -116,7 +116,7 @@ export default function TeacherClassesPage() {
           <Card key={cls.id} className="hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
               <div>
-                <CardTitle className="text-xl font-bold text-indigo-900">{cls.name}</CardTitle>
+                <CardTitle className="text-xl font-bold text-indigo-200">{cls.name}</CardTitle>
                 <CardDescription className="flex items-center mt-1">
                   <Calendar className="h-3 w-3 mr-1" /> {new Date(cls.createdAt).toLocaleDateString()}
                 </CardDescription>
@@ -142,14 +142,14 @@ export default function TeacherClassesPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex justify-between items-center text-sm">
-                <span className="text-gray-500 flex items-center">
+                <span className="text-muted-foreground flex items-center">
                   <Users className="h-4 w-4 mr-1" /> Estudiantes
                 </span>
                 <span className="font-bold">{cls._count?.students || 0}</span>
               </div>
-              <div className="bg-indigo-50 p-3 rounded-lg">
-                <span className="text-xs font-bold text-indigo-600 uppercase">Próxima Asignación</span>
-                <div className="flex items-center mt-1 text-sm font-medium text-gray-700">
+              <div className="bg-indigo-500/10 p-3 rounded-lg">
+                <span className="text-xs font-bold text-indigo-400 uppercase">Próxima Asignación</span>
+                <div className="flex items-center mt-1 text-sm font-medium text-foreground">
                   <BookOpen className="h-4 w-4 mr-2 text-indigo-500" />
                   Sin asignación
                 </div>

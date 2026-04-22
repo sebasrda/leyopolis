@@ -182,8 +182,8 @@ export default function AdminUsersPage() {
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Gestión de Usuarios</h1>
-          <p className="text-gray-500">Administra los accesos y roles de la plataforma.</p>
+          <h1 className="text-3xl font-bold text-foreground">Gestión de Usuarios</h1>
+          <p className="text-muted-foreground">Administra los accesos y roles de la plataforma.</p>
         </div>
       </div>
 
@@ -216,13 +216,13 @@ export default function AdminUsersPage() {
                 <TableCell>
                   <div className="flex flex-col">
                     <span className={cn("font-medium", !user.isActive && "text-gray-400 line-through")}>{user.name}</span>
-                    <span className="text-xs text-gray-500">{user.email}</span>
+                    <span className="text-xs text-muted-foreground">{user.email}</span>
                   </div>
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-col">
-                    <span className="font-semibold text-indigo-700">{user.institution?.name || "Sin Colegio"}</span>
-                    <span className="text-xs text-gray-500">{user.grade || "S/G"}</span>
+                    <span className="font-semibold text-indigo-300">{user.institution?.name || "Sin Colegio"}</span>
+                    <span className="text-xs text-muted-foreground">{user.grade || "S/G"}</span>
                   </div>
                 </TableCell>
                 <TableCell>
@@ -259,7 +259,7 @@ export default function AdminUsersPage() {
                   </div>
                 </TableCell>
                 <TableCell>
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-muted-foreground">
                     {user.lastActive ? new Date(user.lastActive).toLocaleDateString() : "N/A"}
                   </span>
                 </TableCell>
@@ -296,7 +296,7 @@ export default function AdminUsersPage() {
                         )}
                       </DropdownMenuItem>
 
-                      <DropdownMenuItem className="gap-2 text-indigo-600" onClick={() => handleLicenseChange(user.id, "ACTIVATED")}>
+                      <DropdownMenuItem className="gap-2 text-indigo-400" onClick={() => handleLicenseChange(user.id, "ACTIVATED")}>
                         <Shield className="h-4 w-4" /> Hacer Permanente
                       </DropdownMenuItem>
                       <DropdownMenuItem className="gap-2 text-amber-600" onClick={() => handleLicenseChange(user.id, "DEMO")}>

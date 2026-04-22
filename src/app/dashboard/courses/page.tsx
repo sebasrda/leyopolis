@@ -85,8 +85,8 @@ export default function CoursesPage() {
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold text-gray-900">Cursos</h1>
-          <p className="text-gray-500">Módulos con actividades, videos y libros.</p>
+          <h1 className="text-3xl font-bold text-foreground">Cursos</h1>
+          <p className="text-muted-foreground">Módulos con actividades, videos y libros.</p>
         </div>
         {canCreate && (
           <Dialog open={open} onOpenChange={setOpen}>
@@ -101,11 +101,11 @@ export default function CoursesPage() {
               </DialogHeader>
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <div className="text-sm font-medium text-gray-700">Título</div>
+                  <div className="text-sm font-medium text-foreground">Título</div>
                   <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Nombre del curso" />
                 </div>
                 <div className="space-y-2">
-                  <div className="text-sm font-medium text-gray-700">Descripción</div>
+                  <div className="text-sm font-medium text-foreground">Descripción</div>
                   <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Opcional" />
                 </div>
                 <div className="flex justify-end gap-2">
@@ -124,11 +124,11 @@ export default function CoursesPage() {
 
       {loading ? (
         <Card className="border-dashed">
-          <CardContent className="p-8 text-center text-gray-500">Cargando cursos...</CardContent>
+          <CardContent className="p-8 text-center text-muted-foreground">Cargando cursos...</CardContent>
         </Card>
       ) : courses.length === 0 ? (
         <Card className="border-dashed">
-          <CardContent className="p-8 text-center text-gray-500">No hay cursos disponibles.</CardContent>
+          <CardContent className="p-8 text-center text-muted-foreground">No hay cursos disponibles.</CardContent>
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -140,21 +140,21 @@ export default function CoursesPage() {
                     <CardTitle className="text-lg">{c.title}</CardTitle>
                     <CardDescription className="line-clamp-2">{c.description || "Sin descripción"}</CardDescription>
                   </div>
-                  <Badge variant="outline" className="bg-indigo-50 text-indigo-700 hover:bg-indigo-50">
+                  <Badge variant="outline" className="bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/10">
                     {c._count.enrollments} estudiantes
                   </Badge>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center justify-between text-xs text-gray-500">
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
                   <div>
                     {c._count.modules} módulos · {c._count.activities} actividades · {c._count.videos} videos
                   </div>
                   <div>{new Date(c.createdAt).toLocaleDateString()}</div>
                 </div>
-                <div className="flex items-center justify-between text-xs text-gray-500">
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
                   <div className="line-clamp-1">Profesor: {c.teacher.name || c.teacher.email || "—"}</div>
-                  <BookOpen className="h-4 w-4 text-indigo-600" />
+                  <BookOpen className="h-4 w-4 text-indigo-400" />
                 </div>
                 <Link href={`/dashboard/courses/${c.id}`} className="block">
                   <Button className="w-full bg-indigo-600 hover:bg-indigo-700">Abrir</Button>

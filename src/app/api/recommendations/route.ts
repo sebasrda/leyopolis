@@ -4,41 +4,36 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
+function getWeekNumber() {
+  const d = new Date();
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+}
+
 export async function GET() {
-  const session = await getServerSession(authOptions);
-  
-  // For demo purposes, we allow fetching recommendations without strict session if we have a demo user concept,
-  // but ideally we need a user ID. 
-  // If no session, we return generic top rated books.
-  
-  const userId = session?.user?.id || "demo-user-123"; // Fallback to demo user for now to keep app working
-
   try {
-    // 1. Get IDs of books the user has already started/read
-    const userBooks = await prisma.userBook.findMany({
-      where: { userId: userId },
-      select: { bookId: true }
-    });
+    const totalBooks = await prisma.book.count({ where: { published: true } });
+    const weekNum = getWeekNumber();
+    
+    // Determine how many books to skip based on the week
+    // Each week we show a different set if possible
+    const takeCount = 12;
+    const skipCount = totalBooks > takeCount ? (weekNum * 3) % (totalBooks - takeCount + 1) : 0;
 
-    const readBookIds = userBooks.map(ub => ub.bookId);
-
-    // 2. Find books NOT in that list (Recommendations)
-    // We can limit to 3-5 recommendations
     const recommendations = await (prisma as any).book.findMany({
       where: {
-        id: { notIn: readBookIds },
-        published: true, // Only published books
+        published: true,
       },
-      take: 4,
+      take: takeCount,
+      skip: skipCount,
       orderBy: {
-        // Simple strategy: newest or by rating (if we had it)
-        createdAt: 'desc' 
+        title: 'asc' // Stable ordering
       }
     });
 
-    // If user has read everything (or no books exist), we might return empty or some default
     return NextResponse.json(recommendations);
-
   } catch (error) {
     console.error("Error fetching recommendations:", error);
     return NextResponse.json({ error: "Failed to fetch recommendations" }, { status: 500 });

@@ -8,6 +8,7 @@ import Link from "next/link";
 import Image from "next/image";
 import {
   ChevronRight,
+  ChevronLeft,
   Star,
   Play,
   Target,
@@ -20,6 +21,7 @@ import {
   Calendar,
 } from "lucide-react";
 import { ProgressDonut } from "@/components/dashboard/student/ProgressDonut";
+import { cn } from "@/lib/utils";
 
 interface Book {
   id: string;
@@ -94,7 +96,8 @@ export default function DashboardPage() {
 
   const [recommendations, setRecommendations] = useState<Book[]>([]);
   const [loadingRec, setLoadingRec] = useState(true);
-
+  const [recPage, setRecPage] = useState(0);
+  
   const currentWeek = getWeekNumber(new Date());
   const [claimedChallenges, setClaimedChallenges] = useState<Record<number, boolean>>({});
   const [stats, setStats] = useState({ totalPages: 0, totalMinutes: 0 });
@@ -316,7 +319,7 @@ export default function DashboardPage() {
 
             {loadingRec ? (
               <div className="flex gap-4 overflow-x-auto pb-2">
-                {[1, 2, 3, 4].map((i) => (
+                {[1, 2, 3, 4, 5, 6].map((i) => (
                   <div key={i} className="shrink-0 w-[120px] space-y-2 animate-pulse">
                     <div className="w-[120px] h-[170px] rounded-xl bg-card/5" />
                     <div className="h-3 bg-card/5 rounded w-3/4" />
@@ -325,44 +328,70 @@ export default function DashboardPage() {
                 ))}
               </div>
             ) : recommendations.length > 0 ? (
-              <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10">
-                {recommendations.slice(0, 7).map((book) => (
-                  <Link
-                    key={book.id}
-                    href={`/dashboard/reader/${book.id}?title=${encodeURIComponent(book.title)}`}
-                    className="shrink-0 w-[120px] group"
-                  >
-                    {/* Cover */}
-                    <div className="w-[120px] h-[170px] rounded-xl overflow-hidden mb-2.5 shadow-lg ring-1 ring-white/10 group-hover:ring-indigo-500/40 transition-all duration-200 relative">
-                      {book.coverImage ? (
-                        <img
-                          src={book.coverImage}
-                          alt={book.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-indigo-700 via-purple-700 to-pink-700 flex items-center justify-center p-3">
-                          <span className="text-white text-xs text-center font-bold leading-tight">{book.title}</span>
-                        </div>
+              <div className="relative group/rec">
+                {/* Arrows */}
+                {recommendations.length > 6 && (
+                  <>
+                    <button 
+                      onClick={() => setRecPage(0)}
+                      className={cn(
+                        "absolute -left-4 top-[85px] -translate-y-1/2 z-10 h-8 w-8 rounded-full bg-[#1a2235]/90 border border-white/10 flex items-center justify-center text-white shadow-xl opacity-0 group-hover/rec:opacity-100 transition-all hover:bg-indigo-600 hover:border-indigo-500",
+                        recPage === 0 && "hidden"
                       )}
-                      {/* Hover overlay */}
-                      <div className="absolute inset-0 bg-indigo-600/0 group-hover:bg-indigo-600/20 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                        <div className="bg-card/20 backdrop-blur-sm rounded-full p-2">
-                          <Play className="h-4 w-4 text-white fill-white" />
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </button>
+                    <button 
+                      onClick={() => setRecPage(1)}
+                      className={cn(
+                        "absolute -right-4 top-[85px] -translate-y-1/2 z-10 h-8 w-8 rounded-full bg-[#1a2235]/90 border border-white/10 flex items-center justify-center text-white shadow-xl opacity-0 group-hover/rec:opacity-100 transition-all hover:bg-indigo-600 hover:border-indigo-500",
+                        recPage === 1 && "hidden"
+                      )}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </>
+                )}
+
+                <div className="flex gap-4 overflow-hidden pb-2 min-h-[230px]">
+                  {recommendations.slice(recPage * 6, (recPage + 1) * 6).map((book) => (
+                    <Link
+                      key={book.id}
+                      href={`/dashboard/reader/${book.id}?title=${encodeURIComponent(book.title)}`}
+                      className="shrink-0 w-[120px] group animate-in fade-in slide-in-from-right-4 duration-500"
+                    >
+                      {/* Cover */}
+                      <div className="w-[120px] h-[170px] rounded-xl overflow-hidden mb-2.5 shadow-lg ring-1 ring-white/10 group-hover:ring-indigo-500/40 transition-all duration-200 relative">
+                        {book.coverImage ? (
+                          <img
+                            src={book.coverImage}
+                            alt={book.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-indigo-700 via-purple-700 to-pink-700 flex items-center justify-center p-3">
+                            <span className="text-white text-xs text-center font-bold leading-tight">{book.title}</span>
+                          </div>
+                        )}
+                        {/* Hover overlay */}
+                        <div className="absolute inset-0 bg-indigo-600/0 group-hover:bg-indigo-600/20 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                          <div className="bg-card/20 backdrop-blur-sm rounded-full p-2">
+                            <Play className="h-4 w-4 text-white fill-white" />
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <h4 className="text-xs font-semibold text-slate-200 line-clamp-2 leading-tight group-hover:text-white transition-colors">
-                      {book.title}
-                    </h4>
-                    <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-1">{book.author}</p>
-                    {book.category && (
-                      <span className="inline-block mt-1.5 text-[10px] bg-indigo-500/15 text-indigo-300 px-1.5 py-0.5 rounded-md border border-indigo-500/50/20">
-                        {book.category}
-                      </span>
-                    )}
-                  </Link>
-                ))}
+                      <h4 className="text-xs font-semibold text-slate-200 line-clamp-2 leading-tight group-hover:text-white transition-colors">
+                        {book.title}
+                      </h4>
+                      <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-1">{book.author}</p>
+                      {book.category && (
+                        <span className="inline-block mt-1.5 text-[10px] bg-indigo-500/15 text-indigo-300 px-1.5 py-0.5 rounded-md border border-indigo-500/50/20">
+                          {book.category}
+                        </span>
+                      )}
+                    </Link>
+                  ))}
+                </div>
               </div>
             ) : (
               <div className="rounded-2xl border border-dashed border-white/10 bg-[#1a2235]/40 py-8 flex flex-col items-center justify-center text-center gap-2">

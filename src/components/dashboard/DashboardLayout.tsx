@@ -158,6 +158,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   const isStudent = role === "STUDENT";
+  
+  const roleTranslations: Record<string, string> = {
+    STUDENT: "Estudiante",
+    TEACHER: "Docente",
+    COORDINATOR: "Coordinador",
+    ADMIN: "Administrador de Colegio",
+    SUPERADMIN: "Súper Administrador"
+  };
+  const translatedRole = roleTranslations[role] || role;
 
   const firstName = session?.user?.name ? session.user.name.split(" ")[0].toLowerCase() : "";
   const isFemale = firstName.endsWith("a");
@@ -210,10 +219,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-white truncate">
-                  {session?.user?.name || "Usuario"}
-                </p>
-                <p className="text-xs text-slate-400 capitalize">{role.toLowerCase()}</p>
+                {status === "loading" ? (
+                  <div className="space-y-2 py-1">
+                    <div className="h-3 w-20 bg-white/10 animate-pulse rounded" />
+                    <div className="h-2 w-14 bg-white/5 animate-pulse rounded" />
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-sm font-semibold text-white truncate">
+                      {session?.user?.name || "Invitado"}
+                    </p>
+                    <p className="text-xs text-slate-400">{translatedRole}</p>
+                  </>
+                )}
               </div>
             </div>
 

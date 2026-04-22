@@ -86,34 +86,7 @@ export default function ProgressPage() {
         <p className="text-muted-foreground">Analíticas basadas en tu actividad real de lectura.</p>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white border-none shadow-lg">
-          <CardContent className="p-6 flex flex-col items-center justify-center space-y-2">
-            <Trophy className="h-8 w-8 opacity-80" />
-            <h3 className="text-3xl font-bold">{stats.completedBooks}</h3>
-            <p className="text-sm font-medium opacity-90">Libros completados</p>
-          </CardContent>
-        </Card>
-        <Card className="bg-card p-6 shadow-md border-none flex flex-col items-center justify-center space-y-2">
-          <Star className="h-8 w-8 text-indigo-500" />
-          <h3 className="text-3xl font-bold text-foreground">{vocabulary.length}</h3>
-          <p className="text-sm text-muted-foreground">Palabras aprendidas</p>
-        </Card>
-        <Card className="bg-card p-6 shadow-md border-none flex flex-col items-center justify-center space-y-2">
-          <Zap className="h-8 w-8 text-yellow-500" />
-          <h3 className="text-3xl font-bold text-foreground">{progress.streakDays} días</h3>
-          <p className="text-sm text-muted-foreground">Racha actual</p>
-        </Card>
-        <Card className="bg-card p-6 shadow-md border-none flex flex-col items-center justify-center space-y-2">
-          <Clock className="h-8 w-8 text-orange-500" />
-          <div className="text-center">
-             <h3 className="text-2xl font-bold text-foreground">{stats.totalPages}</h3>
-             <p className="text-sm text-muted-foreground">Páginas leídas</p>
-             <p className="text-xs text-indigo-400 font-medium mt-1">Tiempo: {stats.totalTime}</p>
-          </div>
-        </Card>
-      </div>
+
 
       {categoryData.length > 0 ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

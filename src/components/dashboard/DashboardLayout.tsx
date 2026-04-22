@@ -92,8 +92,8 @@ const adminItems = [
 
 // Super Admin sidebar
 const superAdminItems = [
+  { icon: LayoutDashboard, label: "Inicio", href: "/dashboard" },
   { icon: Crown, label: "Súper Admin", href: "/dashboard/superadmin" },
-  { icon: Building2, label: "Colegios", href: "/dashboard/superadmin" },
   { icon: Library, label: "Biblioteca", href: "/dashboard/library" },
   { icon: BookOpen, label: "Mis Lecturas", href: "/dashboard/my-readings" },
   { icon: Library, label: "Gestión Libros BBDD", href: "/dashboard/admin/books" },

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 
 export interface VocabularyItem {
   id: string;
@@ -70,8 +71,12 @@ export function LearningProvider({ children }: { children: React.ReactNode }) {
   const [readingProgress, setReadingProgress] = useState<Record<string, ReadingProgress>>({});
   const [userBooks, setUserBooks] = useState<UserBook[]>([]);
 
-  // Load from API on mount
+  const { data: session, status } = useSession();
+
+  // Load from API on mount and when session becomes available
   useEffect(() => {
+    if (status !== "authenticated") return;
+
     const fetchData = async () => {
         try {
             // Vocabulary
@@ -108,7 +113,7 @@ export function LearningProvider({ children }: { children: React.ReactNode }) {
     // Still load legacy reading progress from local storage
     const savedProgress = localStorage.getItem("leyopolis_reading_progress");
     if (savedProgress) setReadingProgress(JSON.parse(savedProgress));
-  }, []);
+  }, [status]);
 
   useEffect(() => {
     const interval = setInterval(async () => {

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 
 // Types
 export interface Achievement {
@@ -46,8 +47,12 @@ const GamificationContext = createContext<GamificationContextType | undefined>(u
 export function GamificationProvider({ children }: { children: React.ReactNode }) {
   const [progress, setProgress] = useState<UserProgress>(DEFAULT_PROGRESS);
 
-  // Load from API on mount
+  const { data: session, status } = useSession();
+
+  // Load from API on mount and when session becomes available
   useEffect(() => {
+    if (status !== "authenticated") return;
+
     const fetchProgress = async () => {
         try {
             const res = await fetch('/api/user/progress');
@@ -75,7 +80,7 @@ export function GamificationProvider({ children }: { children: React.ReactNode }
     };
     
     fetchProgress();
-  }, []);
+  }, [status]);
 
   // Save to localStorage as backup
   useEffect(() => {

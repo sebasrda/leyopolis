@@ -89,7 +89,7 @@ const getWeekNumber = (d: Date) => {
 };
 
 export default function DashboardPage() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const userName = session?.user?.name?.split(" ")[0] || "Estudiante";
   const { progress, addXp } = useGamification();
   const { userBooks } = useLearning();
@@ -110,6 +110,8 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
+    if (status !== "authenticated") return;
+
     fetch("/api/user/stats")
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
@@ -120,7 +122,7 @@ export default function DashboardPage() {
     if (saved) {
         try { setClaimedChallenges(JSON.parse(saved)); } catch (e) {}
     }
-  }, [currentWeek]);
+  }, [currentWeek, status]);
 
   const handleClaim = (challenge: any) => {
     addXp(challenge.xp);

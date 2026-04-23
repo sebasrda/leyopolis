@@ -12,10 +12,6 @@ export function FloatingAiTutor({ role }: { role: "STUDENT" | "TEACHER" | "COORD
   return (
     <Portal>
       <div className="fixed bottom-24 left-6 z-[9999]">
-        {/* Educational disclaimer */}
-        <div className="mb-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 text-xs text-amber-700 max-w-[280px] shadow-sm">
-          ⚠️ Uso exclusivo educativo dentro del aula.
-        </div>
         <AiTutorWidget
           mode="general"
           hideFloatingButton={true}

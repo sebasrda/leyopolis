@@ -274,76 +274,72 @@ export async function generateAndSaveActivities({
   if (genAI) {
     for (const modelName of geminiModels) {
       console.log(`[AI-STATS] Intentando con modelo: ${modelName}`);
-      const aiModel = genAI.getGenerativeModel({ 
-        model: modelName,
-        generationConfig: { temperature: 0.7, maxOutputTokens: 2048 }
-      });
-
-      // Increased retries and backoff for Free Tier resilience
-      for (let i = 0; i < 4; i++) {
+      if (result) break;
+      
+      console.log(`[AI-STATS] Probando modelo Gemini: ${modelName}`);
+      for (let i = 0; i < 3; i++) { // 3 retries
         try {
+          const model = genAI.getGenerativeModel({ model: modelName });
           const contentParts: any[] = [prompt];
+          
           if (isMultimodal && pdfDataPart) {
             contentParts.push(pdfDataPart);
           }
+
+          const response = await model.generateContent(contentParts);
+          const text = response.response.text();
           
-          const geminiResult = await aiModel.generateContent(contentParts);
-          const responseText = geminiResult.response.text();
-          
-          // Better JSON detection
-          const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+          const jsonMatch = text.match(/\{[\s\S]*\}/);
           if (jsonMatch) {
-            try {
-              parsedJson = JSON.parse(jsonMatch[0]);
-              result = geminiResult;
-              break;
-            } catch (pErr) {
-              console.error("[AI-STATS] Gemini devolvió un JSON inválido, reintentando...", pErr);
-              lastError = pErr;
-            }
-          } else {
-            console.warn("[AI-STATS] No se encontró bloque JSON en la respuesta de Gemini.");
-            lastError = new Error("No JSON block found in response");
+            parsedJson = JSON.parse(jsonMatch[0]);
+            result = { source: `gemini-${modelName}` };
+            console.log(`[AI-STATS] Éxito con Gemini: ${modelName}`);
+            break;
           }
         } catch (err: any) {
           lastError = err;
-          const errMsg = err.message || "";
+          const errMsg = err.message || String(err);
+          console.warn(`[AI-STATS] Intento ${i+1} falló para ${modelName}:`, errMsg.slice(0, 100));
           
-          // Detect Quota (RPM or RPD)
-          if (errMsg.includes("429") || errMsg.includes("Too Many Requests") || errMsg.includes("quota")) {
-            const isDaily = errMsg.toLowerCase().includes("day") || errMsg.toLowerCase().includes("limit");
-            if (isDaily) {
-              console.warn(`[AI-STATS] Límite DIARIO alcanzado para ${modelName}. Probando siguiente modelo...`);
-              break; // Stop retrying THIS model, try the next one in the list
-            }
-            console.log(`[AI-STATS] Límite por minuto alcanzado (${modelName}), esperando 15s... (Intento ${i+1}/4)`);
-            await sleep(15000);
-            continue;
+          if (errMsg.includes("429") || errMsg.toLowerCase().includes("quota")) {
+            console.warn(`[AI-STATS] Límite de cuota en Gemini. Probando siguiente recurso...`);
+            break; 
           }
-          
-          // Detect Model Not Found (404) or other errors
-          console.warn(`[AI-STATS] Gemini ${modelName} falló: ${lastError?.message}. Probando siguiente modelo...`);
-          break; 
+          await new Promise(r => setTimeout(r, 2000));
         }
       }
-      if (result) break;
     }
   }
 
-  // SECONDARY ATTEMPT: OpenRouter (Higher reliability)
+  // SECONDARY ATTEMPT: OpenRouter (High availability)
   if (!result && openrouterKey) {
-    console.log(`[AI-STATS] Intentando con OpenRouter para: ${title}`);
+    providersAttempted.push("OpenRouter");
+    console.log(`[AI-STATS] Intentando con OpenRouter (Modelo: google/gemini-2.0-flash-001)`);
     try {
       parsedJson = await generateWithOpenRouter(prompt, openrouterKey, "google/gemini-2.0-flash-001");
-      result = { source: "openrouter" };
+      if (parsedJson) {
+        result = { source: "openrouter" };
+        console.log(`[AI-STATS] Éxito con OpenRouter`);
+      }
     } catch (err: any) {
       lastError = err;
       console.error("[AI-STATS] OpenRouter falló:", err.message);
+      
+      // Fallback to a cheaper/more available model on OpenRouter if Gemini-2.0 fails there too
+      try {
+        console.log("[AI-STATS] Re-intentando OpenRouter con gpt-4o-mini...");
+        parsedJson = await generateWithOpenRouter(prompt, openrouterKey, "openai/gpt-4o-mini");
+        if (parsedJson) {
+          result = { source: "openrouter-fallback" };
+          console.log("[AI-STATS] Éxito con OpenRouter (GPT-4o-mini fallback)");
+        }
+      } catch (e2) {}
     }
   }
 
-  // TERTIARY ATTEMPT: Anthropic/Claude (via OpenAI-compatible API)
+  // TERTIARY ATTEMPT: Anthropic/Claude
   if (!result && anthropicKey) {
+    providersAttempted.push("Anthropic Claude");
     console.log(`[AI-STATS] Intentando con Anthropic Claude para: ${title}`);
     try {
       const { OpenAI: OpenAIClient } = await import("openai");
@@ -357,7 +353,7 @@ export async function generateAndSaveActivities({
       });
       
       const response = await anthropicClient.chat.completions.create({
-        model: "claude-sonnet-4-20250514",
+        model: "claude-3-5-sonnet-20240620",
         messages: [
           { role: "system", content: "Actúas como un experto pedagogo que genera contenido educativo en JSON estricto para una plataforma de lectura infantil." },
           { role: "user", content: prompt }
@@ -371,6 +367,7 @@ export async function generateAndSaveActivities({
         if (jsonMatch) {
           parsedJson = JSON.parse(jsonMatch[0]);
           result = { source: "anthropic" };
+          console.log("[AI-STATS] Éxito con Anthropic");
         }
       }
     } catch (err: any) {
@@ -379,12 +376,16 @@ export async function generateAndSaveActivities({
     }
   }
 
-  // QUATERNARY ATTEMPT: OpenAI (Legacy fallback)
+  // QUATERNARY ATTEMPT: OpenAI (Direct)
   if (!result && openaiKey) {
+    providersAttempted.push("OpenAI (Direct)");
     console.log(`[AI-STATS] Intentando fallback con OpenAI para: ${title}`);
     try {
       parsedJson = await generateWithOpenAI(prompt, "gpt-4o-mini", openaiKey);
-      result = { source: "openai" };
+      if (parsedJson) {
+        result = { source: "openai" };
+        console.log("[AI-STATS] Éxito con OpenAI");
+      }
     } catch (err: any) {
       lastError = err;
       console.error("[AI-STATS] Fallback OpenAI falló:", err.message);
@@ -394,12 +395,13 @@ export async function generateAndSaveActivities({
   if (!result || !parsedJson) {
     const errorPrefix = `Error en Generación IA (Híbrida): `;
     const errorBody = lastError?.message || "Sin respuesta de ningún proveedor";
+    const attemptedMsg = providersAttempted.length > 0 ? ` (Intentados: ${providersAttempted.join(", ")})` : "";
     
-    if (errorBody.includes("429") || errorBody.includes("quota")) {
-      throw new Error(`${errorPrefix} Límite de cuota alcanzado. Por favor, revisa tus llaves en la configuración o espera unos minutos.`);
+    if (errorBody.includes("429") || errorBody.toLowerCase().includes("quota") || errorBody.toLowerCase().includes("limit")) {
+      throw new Error(`${errorPrefix} Límite de cuota alcanzado en TODOS los proveedores configurados${attemptedMsg}. Por favor, revisa tus llaves o saldos.`);
     }
     
-    throw new Error(`${errorPrefix} ${errorBody}`);
+    throw new Error(`${errorPrefix}${errorBody}${attemptedMsg}`);
   }
 
   // DATA NORMALIZATION: Ensure all questions use 'correctAnswer' (UI standard)

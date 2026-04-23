@@ -14,6 +14,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useLearning } from '@/context/LearningContext';
 import { useTranslation } from "react-i18next";
 import { useSession } from "next-auth/react";
+import { GesturePageTurner } from './GesturePageTurner';
 
 // Importar estilos necesarios para la capa de texto de react-pdf
 import 'react-pdf/dist/Page/TextLayer.css';
@@ -1859,6 +1860,9 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
           </div>
         </div>
       </footer>
+
+      {/* AI Gesture Tracking Page Turner */}
+      <GesturePageTurner onTurnNext={nextFlip} onTurnPrev={prevFlip} />
 
       {/* Modales */}
       <GamesModal isOpen={showGames} onClose={() => setShowGames(false)} bookTitle={bookTitle} bookId={bookId} />

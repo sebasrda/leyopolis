@@ -30,21 +30,28 @@ export function GesturePageTurner({ onTurnNext, onTurnPrev }: GesturePageTurnerP
     setIsLoading(true);
     setError(null);
     
-    // Safety timeout to prevent infinite loading spinner
-    const timeoutId = setTimeout(() => {
-      if (isLoading && !isActive) {
-        setIsLoading(false);
-        setError("La carga de la IA tardó demasiado. Revisa tu conexión.");
-      }
-    }, 15000);
-
     try {
-      // 1. Initialize MediaPipe
+      // 1. START CAMERA FIRST (This should be fast)
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { 
+          facingMode: "user",
+          width: { ideal: 640 },
+          height: { ideal: 480 }
+        } 
+      });
+      
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+        setIsActive(true); // Now the UI shows the video
+      }
+
+      // 2. INITIALIZE IA IN BACKGROUND
       if (!landmarkerRef.current) {
         try {
-          // Using a specific stable version
           const vision = await FilesetResolver.forVisionTasks(
-            "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm"
+            "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.10/wasm"
           );
           const handLandmarker = await HandLandmarker.createFromOptions(vision, {
             baseOptions: {
@@ -55,45 +62,22 @@ export function GesturePageTurner({ onTurnNext, onTurnPrev }: GesturePageTurnerP
             numHands: 1
           });
           landmarkerRef.current = handLandmarker;
+          setIsLoading(false); // IA is ready
+          detectFrame();
         } catch (wasmError) {
-          clearTimeout(timeoutId);
-          console.error("MediaPipe WASM load error:", wasmError);
-          setError("Error: El motor de IA no pudo descargar los archivos necesarios.");
+          console.error("MediaPipe load error:", wasmError);
+          setError("IA no disponible. Intenta refrescar.");
           setIsLoading(false);
-          return;
+          // We don't stop the camera, just IA won't work
         }
+      } else {
+        setIsLoading(false);
+        detectFrame();
       }
 
-      // 2. Start Video
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { 
-          facingMode: "user",
-          width: { ideal: 640 },
-          height: { ideal: 480 }
-        } 
-      });
-      
-      clearTimeout(timeoutId);
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.onloadedmetadata = async () => {
-          try {
-            await videoRef.current?.play();
-            setIsActive(true);
-            setIsLoading(false);
-            detectFrame();
-          } catch (e) {
-            console.error("Video play failed:", e);
-            setError("Permiso de cámara denegado o bloqueado.");
-            setIsLoading(false);
-          }
-        };
-      }
     } catch (err: any) {
-      clearTimeout(timeoutId);
       console.error("Camera access error:", err);
-      setError("No se pudo acceder a la cámara. ¿Diste permisos?");
+      setError("No se pudo acceder a la cámara. Revisa permisos.");
       setIsLoading(false);
     }
   };

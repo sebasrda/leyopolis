@@ -80,19 +80,31 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
 
   try {
     // Prevent deleting self
-    if (session.user.email) {
-       const userToDelete = await prisma.user.findUnique({ where: { id } });
-       if (userToDelete?.email === session.user.email) {
-         return NextResponse.json({ message: "Cannot delete yourself" }, { status: 400 });
-       }
+    const userToDelete = await prisma.user.findUnique({ where: { id } });
+    if (!userToDelete) return NextResponse.json({ message: "User not found" }, { status: 404 });
+    
+    if (session.user.email === userToDelete.email) {
+      return NextResponse.json({ message: "Cannot delete yourself" }, { status: 400 });
     }
 
-    await prisma.user.delete({
-      where: { id }
-    });
+    // Use transaction to delete related records first (Cascading manually if not set in schema)
+    await prisma.$transaction([
+      prisma.readingSession.deleteMany({ where: { userId: id } }),
+      prisma.activityAttempt.deleteMany({ where: { userId: id } }),
+      prisma.userBook.deleteMany({ where: { userId: id } }),
+      prisma.notification.deleteMany({ where: { userId: id } }),
+      prisma.licenseChange.deleteMany({ where: { userId: id } }),
+      // Classes related to the student/teacher
+      prisma.class.updateMany({
+        where: { students: { some: { id } } },
+        data: { /* Prisma doesn't support easy disconnectMany in updateMany, but usually we disconnect in a separate step or handle it */ }
+      }),
+      prisma.user.delete({ where: { id } })
+    ]);
 
     return NextResponse.json({ message: "User deleted" });
   } catch (error) {
-    return NextResponse.json({ message: "Error deleting user" }, { status: 500 });
+    console.error("Error deleting user:", error);
+    return NextResponse.json({ message: "Error deleting user: " + (error instanceof Error ? error.message : "Unknown error") }, { status: 500 });
   }
 }

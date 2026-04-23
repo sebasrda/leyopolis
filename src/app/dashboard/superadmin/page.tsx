@@ -49,6 +49,8 @@ export default function SuperAdminDashboard() {
 
   useEffect(() => {
     fetchInstitutions();
+    const interval = setInterval(fetchInstitutions, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   const fetchInstitutions = async () => {

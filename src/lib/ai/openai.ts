@@ -1,15 +1,15 @@
 import { OpenAI } from "openai";
 
-const apiKey = process.env.OPENAI_API_KEY;
-const openai = apiKey ? new OpenAI({ apiKey }) : null;
-
-export async function generateWithOpenAI(prompt: string, model: string = "gpt-4o-mini") {
-  if (!openai) {
+export async function generateWithOpenAI(prompt: string, model: string = "gpt-4o-mini", externalApiKey?: string) {
+  const key = externalApiKey || process.env.OPENAI_API_KEY;
+  if (!key) {
     throw new Error("OpenAI configuration missing");
   }
 
+  const client = new OpenAI({ apiKey: key });
+
   try {
-    const response = await openai.chat.completions.create({
+    const response = await client.chat.completions.create({
       model: model,
       messages: [
         { role: "system", content: "Actúas como un experto pedagogo que genera contenido educativo en JSON estricto." },

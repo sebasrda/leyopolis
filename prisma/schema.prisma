@@ -44,6 +44,7 @@ model User {
   institution       Institution?       @relation(fields: [institutionId], references: [id])
   activities        UserActivity[]
   readings          UserBook[]
+  challenges        UserChallenge[]
   videos            Video[]
   vocabulary        Vocabulary[]
   enrolledClasses   Class[]            @relation("ClassStudents")
@@ -51,6 +52,18 @@ model User {
   @@index([institutionId])
   @@index([grade])
   @@index([isDemo])
+}
+
+model UserChallenge {
+  id          String   @id @default(cuid())
+  userId      String
+  challengeId Int
+  weekNumber  Int
+  claimedAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, challengeId, weekNumber])
+  @@index([userId, weekNumber])
 }
 
 model Institution {

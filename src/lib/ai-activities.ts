@@ -383,7 +383,7 @@ export async function generateAndSaveActivities({
   if (!result && openaiKey) {
     console.log(`[AI-STATS] Intentando fallback con OpenAI para: ${title}`);
     try {
-      parsedJson = await generateWithOpenAI(prompt, "gpt-4o-mini");
+      parsedJson = await generateWithOpenAI(prompt, "gpt-4o-mini", openaiKey);
       result = { source: "openai" };
     } catch (err: any) {
       lastError = err;

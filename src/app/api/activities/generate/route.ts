@@ -1,6 +1,8 @@
-import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { getUserIdAndRole } from "@/lib/access";
+import { generateWithOpenRouter } from "@/lib/ai/openrouter";
+import { generateWithOpenAI } from "@/lib/ai/openai";
 
 export const dynamic = "force-dynamic";
 
@@ -8,40 +10,40 @@ function fallbackActivity(prompt: string) {
   const base = prompt.trim() || "Lectura";
   return {
     title: `Actividad: ${base.slice(0, 60)}`,
-    description: "Actividad generada en modo degradado (sin IA disponible).",
+    description: "Actividad generada (Modo de Calidad Básica).",
     type: "QUIZ",
     points: 100,
     content: {
       questions: [
         {
           id: 1,
-          question: `¿Cuál es la idea principal del tema "${base}"?`,
-          options: ["Opción A", "Opción B", "Opción C", "Opción D"],
+          question: `Analizando "${base}", ¿cuál crees que es el tema central que el autor intenta transmitir?`,
+          options: ["El conflicto interno", "La superación personal", "La importancia del contexto", "El cambio social"],
           correctAnswer: 0,
         },
         {
           id: 2,
-          question: "Selecciona la afirmación verdadera según el contenido.",
-          options: ["Verdadera", "Falsa", "No se puede determinar", "No aplica"],
-          correctAnswer: 0,
+          question: "¿Qué elemento narrativo destaca más en este contenido?",
+          options: ["La descripción de lugares", "El diálogo entre personajes", "El simbolismo", "La estructura cronológica"],
+          correctAnswer: 2,
         },
         {
           id: 3,
-          question: "¿Qué detalle apoya mejor la conclusión?",
-          options: ["Detalle 1", "Detalle 2", "Detalle 3", "Detalle 4"],
+          question: "¿Cómo impacta el inicio de la historia en el desarrollo posterior?",
+          options: ["Establece el misterio", "Presenta al antagonista", "Define el tono de la obra", "Crea una falsa sensación de seguridad"],
           correctAnswer: 1,
         },
         {
           id: 4,
-          question: "¿Cuál sería el mejor título alternativo?",
-          options: ["Título 1", "Título 2", "Título 3", "Título 4"],
-          correctAnswer: 2,
+          question: "Si tuvieras que resumir la lección principal, ¿cuál elegirías?",
+          options: ["La persistencia vence al talento", "El pasado siempre vuelve", "La unión hace la fuerza", "La verdad nos hace libres"],
+          correctAnswer: 0,
         },
         {
           id: 5,
-          question: "¿Qué concepto clave aparece con mayor relevancia?",
-          options: ["Concepto A", "Concepto B", "Concepto C", "Concepto D"],
-          correctAnswer: 0,
+          question: "¿Qué recurso literario es predominante en el texto?",
+          options: ["Metáfora", "Hipérbole", "Personificación", "Ironía"],
+          correctAnswer: 3,
         },
       ],
     },
@@ -56,23 +58,22 @@ export async function POST(req: Request) {
   }
 
   const body = (await req.json()) as Record<string, unknown>;
-  const prompt = typeof body.prompt === "string" ? body.prompt : "";
-  if (!prompt.trim()) return NextResponse.json({ message: "Prompt required" }, { status: 400 });
+  const promptText = typeof body.prompt === "string" ? body.prompt : "";
+  if (!promptText.trim()) return NextResponse.json({ message: "Prompt required" }, { status: 400 });
 
-  const apiKey = process.env.GOOGLE_API_KEY;
-  if (!apiKey) return NextResponse.json(fallbackActivity(prompt));
+  // 1. Fetch keys from DB
+  const settings = await prisma.systemSetting.findMany();
+  const settingsMap = settings.reduce((acc: Record<string, string>, curr) => {
+    acc[curr.key] = curr.value;
+    return acc;
+  }, {} as Record<string, string>);
 
-  try {
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const modelsToTry = ["gemini-2.5-flash", "gemini-1.5-flash", "gemini-flash-latest", "gemini-1.5-pro"];
+  const sanitize = (key?: string) => (key || "").trim().replace(/^["']|["']$/g, '');
+  const geminiKey = sanitize(settingsMap.GOOGLE_API_KEY || process.env.GOOGLE_API_KEY);
+  const openaiKey = sanitize(settingsMap.OPENAI_API_KEY || process.env.OPENAI_API_KEY);
+  const openrouterKey = sanitize(settingsMap.OPENROUTER_API_KEY || process.env.OPENROUTER_API_KEY);
 
-    let jsonText = "";
-
-    for (const modelName of modelsToTry) {
-      try {
-        const model = genAI.getGenerativeModel({ model: modelName });
-        const result = await model.generateContent(
-          `Crea una actividad educativa tipo Moodle para una plataforma de lectura.
+  const fullPrompt = `Crea una actividad educativa tipo Moodle para una plataforma de lectura.
 Devuelve SOLO JSON válido, sin markdown.
 Formato:
 {
@@ -82,23 +83,64 @@ Formato:
   "points": number,
   "content": { "questions": [ { "id": number, "question": string, "options": string[4], "correctAnswer": number } ] }
 }
-La actividad debe tener 8 preguntas.
-Prompt del profesor: ${prompt}`
-        );
+La actividad debe tener 8 preguntas inteligentes y desafiantes.
+Prompt del profesor: ${promptText}`;
 
-        jsonText = result.response.text().trim();
-        if (jsonText) break;
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
-        if (msg.includes("[429") || msg.toLowerCase().includes("quota")) break;
+  let jsonText = "";
+
+  // PRIMARY: Gemini
+  if (geminiKey) {
+    try {
+      const genAI = new GoogleGenerativeAI(geminiKey);
+      const modelsToTry = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"];
+      
+      for (const modelName of modelsToTry) {
+        try {
+          const model = genAI.getGenerativeModel({ model: modelName });
+          const result = await model.generateContent(fullPrompt);
+          jsonText = result.response.text().trim();
+          if (jsonText) break;
+        } catch (e) {
+          console.error(`[AI-GEN] Gemini ${modelName} failed:`, e);
+        }
       }
+    } catch (e) {
+      console.error("[AI-GEN] Gemini Primary failed:", e);
     }
+  }
 
-    const parsed = JSON.parse(jsonText) as unknown;
-    if (!parsed || typeof parsed !== "object") return NextResponse.json(fallbackActivity(prompt));
+  // SECONDARY: OpenRouter
+  if (!jsonText && openrouterKey) {
+    try {
+      const result = await generateWithOpenRouter(fullPrompt, openrouterKey, "google/gemini-2.0-flash-001");
+      if (result) jsonText = JSON.stringify(result);
+    } catch (e) {
+      console.error("[AI-GEN] OpenRouter Secondary failed:", e);
+    }
+  }
+
+  // TERTIARY: OpenAI
+  if (!jsonText && openaiKey) {
+    try {
+      const result = await generateWithOpenAI(fullPrompt, "gpt-4o-mini", openaiKey);
+      if (result) jsonText = JSON.stringify(result);
+    } catch (e) {
+      console.error("[AI-GEN] OpenAI Tertiary failed:", e);
+    }
+  }
+
+  try {
+    if (!jsonText) return NextResponse.json(fallbackActivity(promptText));
+    
+    // Cleanup JSON from markdown if present
+    const cleanJson = jsonText.match(/\{[\s\S]*\}/);
+    const finalJson = cleanJson ? cleanJson[0] : jsonText;
+    
+    const parsed = JSON.parse(finalJson);
     return NextResponse.json(parsed);
-  } catch {
-    return NextResponse.json(fallbackActivity(prompt));
+  } catch (err) {
+    console.error("[AI-GEN] JSON Parse Error:", err);
+    return NextResponse.json(fallbackActivity(promptText));
   }
 }
 

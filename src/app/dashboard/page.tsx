@@ -121,23 +121,43 @@ export default function DashboardPage() {
   useEffect(() => {
     if (status !== "authenticated") return;
 
-    fetch("/api/user/stats")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => {
-        if (d && !d.error) setStats({ totalPages: d.totalPages || 0, totalMinutes: d.totalMinutes || 0 });
-      });
+    const fetchStatsAndChallenges = () => {
+      fetch("/api/user/stats")
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => {
+          if (d && !d.error) setStats({ totalPages: d.totalPages || 0, totalMinutes: d.totalMinutes || 0 });
+        });
 
-    const saved = localStorage.getItem(`leyopolis_claimed_week_${currentWeek}`);
-    if (saved) {
-        try { setClaimedChallenges(JSON.parse(saved)); } catch (e) {}
-    }
+      fetch(`/api/user/challenges?week=${currentWeek}`)
+        .then(r => r.ok ? r.json() : {})
+        .then(d => setClaimedChallenges(d))
+        .catch(() => {});
+    };
+
+    fetchStatsAndChallenges();
+    const interval = setInterval(fetchStatsAndChallenges, 10000); // Poll every 10s
+    return () => clearInterval(interval);
   }, [currentWeek, status]);
 
-  const handleClaim = (challenge: any) => {
-    addXp(challenge.xp);
-    const newClaimed = { ...claimedChallenges, [challenge.id]: true };
-    setClaimedChallenges(newClaimed);
-    localStorage.setItem(`leyopolis_claimed_week_${currentWeek}`, JSON.stringify(newClaimed));
+  const handleClaim = async (challenge: any) => {
+    try {
+        const res = await fetch("/api/user/challenges", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                challengeId: challenge.id,
+                weekNumber: currentWeek,
+                xp: challenge.xp
+            })
+        });
+
+        if (res.ok) {
+            addXp(challenge.xp);
+            setClaimedChallenges(prev => ({ ...prev, [challenge.id]: true }));
+        }
+    } catch (e) {
+        console.error("Error claiming challenge:", e);
+    }
   };
 
   // ── Computed values ──────────────────────────────────────────────

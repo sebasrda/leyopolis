@@ -19,7 +19,7 @@ export function GesturePageTurner({ onTurnNext, onTurnPrev }: GesturePageTurnerP
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const landmarkerRef = useRef<HandLandmarker | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const requestRef = useRef<number>();
+  const requestRef = useRef<number>(0);
 
   // Swipe detection state
   const lastXRef = useRef<number | null>(null);

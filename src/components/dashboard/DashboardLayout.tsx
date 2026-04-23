@@ -402,6 +402,26 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <span className="absolute top-2 right-2 h-2 w-2 bg-red-500 rounded-full border-2 border-[#0f1623]"></span>
             </Button>
 
+            {/* AI Tutor Header Button */}
+            {!pathname.includes("/reader/") && role !== "STUDENT" && (session?.user as any)?.licenseType !== "DEMO" && (
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => {
+                  const event = new CustomEvent('open-ai-tutor');
+                  window.dispatchEvent(event);
+                }}
+                className="relative text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10 rounded-xl group"
+                title="Tutor IA"
+              >
+                <Bot className="h-5 w-5 group-hover:scale-110 transition-transform" />
+                <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-indigo-500"></span>
+                </span>
+              </Button>
+            )}
+
             <LanguageSelector />
             
             <div className="h-8 w-px bg-card/10 mx-1" />

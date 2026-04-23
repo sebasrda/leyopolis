@@ -20,9 +20,12 @@ import { GesturePageTurner } from './GesturePageTurner';
 import 'react-pdf/dist/Page/TextLayer.css';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 
-// Configurar worker de PDF.js
-// Configurar worker de PDF.js (Revertido a unpkg para máxima compatibilidad con v10)
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+// Estilos para evitar que las imágenes se inviertan en modo oscuro cuando usamos renderMode="svg"
+const darkModeImageFix = `
+  .dark-mode-fix svg image {
+    filter: invert(1) hue-rotate(180deg);
+  }
+`;
 
 interface ProfessionalFlipbookProps {
   pdfUrl: string;
@@ -137,7 +140,8 @@ const PageComponent = forwardRef<HTMLDivElement, {
   };
 
   return (
-    <div ref={ref} className={cn("w-full h-full shadow-lg overflow-hidden relative", isDarkMode ? "bg-black" : "bg-card")} onMouseUp={handleMouseUp}>
+    <div ref={ref} className={cn("w-full h-full shadow-lg overflow-hidden relative", isDarkMode ? "bg-black dark-mode-fix" : "bg-card")} onMouseUp={handleMouseUp}>
+      <style>{darkModeImageFix}</style>
       <div className="w-full h-full flex items-center justify-center">
         {/* Usamos un wrapper div simple para el contenido primero */}
         <div className="w-full h-full relative overflow-hidden flex items-center justify-center">
@@ -159,8 +163,9 @@ const PageComponent = forwardRef<HTMLDivElement, {
                             <Page
                             pageNumber={pageNumber}
                             height={height * scale * contentScale} 
-                            renderTextLayer={true} // ACTIVAR CAPA DE TEXTO
-                            renderAnnotationLayer={true} // ACTIVAR CAPA DE ANOTACIONES (Links)
+                            renderTextLayer={true} 
+                            renderAnnotationLayer={true} 
+                            renderMode="svg" // Usar SVG para poder des-invertir las imágenes con CSS
                             pdf={pdfDocument} 
                             loading={
                                 <div className="flex items-center justify-center w-full h-full">
@@ -1375,6 +1380,26 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
             </div>
 
             <div className="h-6 w-px bg-card/10" />
+
+            {/* AI Tutor Header Button */}
+            {!pathname.includes("/reader/") && userRole !== "STUDENT" && (session?.user as any)?.licenseType !== "DEMO" && (
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => {
+                  const event = new CustomEvent('open-ai-tutor');
+                  window.dispatchEvent(event);
+                }}
+                className="relative text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10 rounded-xl group"
+                title="Tutor IA"
+              >
+                <Bot className="h-5 w-5 group-hover:scale-110 transition-transform" />
+                <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-indigo-500"></span>
+                </span>
+              </Button>
+            )}
 
             {/* Pantalla Completa */}
             <button onClick={toggleFullscreen} className="p-2 hover:bg-card/10 rounded-full transition text-gray-300" title="Pantalla Completa">

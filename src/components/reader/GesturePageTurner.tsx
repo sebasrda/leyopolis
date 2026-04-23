@@ -27,12 +27,14 @@ export function GesturePageTurner({ onTurnNext, onTurnPrev }: GesturePageTurnerP
   const lastTimeRef = useRef<number>(0);
   const cooldownRef = useRef<number>(0);
 
+  const isActiveRef = useRef(false);
+
   const startCamera = async () => {
     setIsLoading(true);
     setError(null);
     
     try {
-      // 1. START CAMERA FIRST (This should be fast)
+      // 1. START CAMERA FIRST
       const stream = await navigator.mediaDevices.getUserMedia({ 
         video: { 
           facingMode: "user",
@@ -45,10 +47,11 @@ export function GesturePageTurner({ onTurnNext, onTurnPrev }: GesturePageTurnerP
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
-        setIsActive(true); // Now the UI shows the video
+        isActiveRef.current = true;
+        setIsActive(true); 
       }
 
-      // 2. INITIALIZE IA IN BACKGROUND
+      // 2. INITIALIZE IA
       if (!landmarkerRef.current) {
         try {
           const vision = await FilesetResolver.forVisionTasks(
@@ -60,16 +63,18 @@ export function GesturePageTurner({ onTurnNext, onTurnPrev }: GesturePageTurnerP
               delegate: "CPU"
             },
             runningMode: "VIDEO",
-            numHands: 1
+            numHands: 1,
+            minHandDetectionConfidence: 0.3, // Much more forgiving
+            minHandPresenceConfidence: 0.3,
+            minTrackingConfidence: 0.3
           });
           landmarkerRef.current = handLandmarker;
-          setIsLoading(false); // IA is ready
+          setIsLoading(false);
           detectFrame();
         } catch (wasmError) {
           console.error("MediaPipe load error:", wasmError);
           setError("IA no disponible. Intenta refrescar.");
           setIsLoading(false);
-          // We don't stop the camera, just IA won't work
         }
       } else {
         setIsLoading(false);
@@ -84,6 +89,7 @@ export function GesturePageTurner({ onTurnNext, onTurnPrev }: GesturePageTurnerP
   };
 
   const stopCamera = useCallback(() => {
+    isActiveRef.current = false;
     setIsActive(false);
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
@@ -103,12 +109,12 @@ export function GesturePageTurner({ onTurnNext, onTurnPrev }: GesturePageTurnerP
     };
   }, [stopCamera]);
 
-  // --- NEW ROBUST STATE MACHINE FOR GESTURES ---
+  // --- GESTURE LOGIC ---
   const gestureState = useRef<"NONE" | "RIGHT_ZONE" | "LEFT_ZONE">("NONE");
   const stateTimestamp = useRef<number>(0);
 
   const detectFrame = () => {
-    if (!videoRef.current || !landmarkerRef.current || !isActive || !canvasRef.current) return;
+    if (!videoRef.current || !landmarkerRef.current || !isActiveRef.current || !canvasRef.current) return;
 
     const video = videoRef.current;
     const canvas = canvasRef.current;
@@ -123,80 +129,75 @@ export function GesturePageTurner({ onTurnNext, onTurnPrev }: GesturePageTurnerP
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       
-      // 1. Draw Status Background
-      ctx.fillStyle = "rgba(0,0,0,0.5)";
+      // Draw status bar
+      ctx.fillStyle = "rgba(0,0,0,0.6)";
       ctx.fillRect(0, 0, canvas.width, 40);
-      ctx.font = "bold 20px Arial";
-      ctx.fillStyle = "white";
+      ctx.font = "bold 24px Arial";
 
       if (results.landmarks && results.landmarks.length > 0) {
         const landmarks = results.landmarks[0];
         const drawingUtils = new DrawingUtils(ctx);
         
-        // Draw Hand Skeleton
-        drawingUtils.drawConnectors(landmarks, HandLandmarker.HAND_CONNECTIONS, { color: "#4ade80", lineWidth: 3 });
-        drawingUtils.drawLandmarks(landmarks, { color: "#3b82f6", lineWidth: 1, radius: 4 });
+        drawingUtils.drawConnectors(landmarks, HandLandmarker.HAND_CONNECTIONS, { color: "#4ade80", lineWidth: 4 });
+        drawingUtils.drawLandmarks(landmarks, { color: "#ffffff", lineWidth: 2, radius: 5 });
 
-        ctx.fillText("MANO DETECTADA ✅", 10, 28);
+        ctx.fillStyle = "#4ade80";
+        ctx.fillText("MANO OK ✅", 10, 30);
 
-        // --- ZONE BASED GESTURE LOGIC ---
-        const handX = landmarks[0].x; 
+        const handX = landmarks[0].x; // Wrist 
 
-        // Visual Zones
-        ctx.strokeStyle = "rgba(255,255,255,0.4)";
-        ctx.setLineDash([5, 5]);
-        ctx.beginPath(); ctx.moveTo(canvas.width * 0.35, 40); ctx.lineTo(canvas.width * 0.35, canvas.height); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(canvas.width * 0.65, 40); ctx.lineTo(canvas.width * 0.65, canvas.height); ctx.stroke();
+        // Zones
+        ctx.strokeStyle = "rgba(255,255,255,0.5)";
+        ctx.setLineDash([10, 5]);
+        ctx.beginPath(); ctx.moveTo(canvas.width * 0.3, 40); ctx.lineTo(canvas.width * 0.3, canvas.height); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(canvas.width * 0.7, 40); ctx.lineTo(canvas.width * 0.7, canvas.height); ctx.stroke();
         ctx.setLineDash([]);
 
         const cooldownTime = 1200; 
         if (nowInMs - cooldownRef.current > cooldownTime) {
-          
-          if (handX < 0.35) {
+          if (handX < 0.3) {
             if (gestureState.current !== "RIGHT_ZONE") {
               gestureState.current = "RIGHT_ZONE";
               stateTimestamp.current = nowInMs;
             }
           } 
-          else if (handX > 0.65) {
-            if (gestureState.current === "RIGHT_ZONE" && (nowInMs - stateTimestamp.current < 1200)) {
+          else if (handX > 0.7) {
+            if (gestureState.current === "RIGHT_ZONE" && (nowInMs - stateTimestamp.current < 1500)) {
               onTurnNext();
               cooldownRef.current = nowInMs;
               gestureState.current = "NONE";
-              flashScreen("rgba(139, 92, 246, 0.8)");
+              flashScreen("rgba(139, 92, 246, 0.9)");
             } else {
               gestureState.current = "LEFT_ZONE";
               stateTimestamp.current = nowInMs;
             }
           }
-          else if (handX > 0.4 && handX < 0.6) {
-            if (nowInMs - stateTimestamp.current > 1500) gestureState.current = "NONE";
-          }
 
-          if (handX < 0.35 && gestureState.current === "LEFT_ZONE" && (nowInMs - stateTimestamp.current < 1200)) {
+          if (handX < 0.3 && gestureState.current === "LEFT_ZONE" && (nowInMs - stateTimestamp.current < 1500)) {
               onTurnPrev();
               cooldownRef.current = nowInMs;
               gestureState.current = "NONE";
-              flashScreen("rgba(59, 130, 246, 0.8)");
+              flashScreen("rgba(59, 130, 246, 0.9)");
           }
 
           if (gestureState.current === "RIGHT_ZONE") {
-             ctx.fillStyle = "rgba(139, 92, 246, 0.5)";
-             ctx.fillRect(0, 40, canvas.width * 0.35, canvas.height - 40);
-             ctx.fillStyle = "white"; ctx.font = "bold 14px Arial"; ctx.fillText("¡DESLIZA A LA IZQUIERDA!", 10, canvas.height - 20);
+             ctx.fillStyle = "rgba(139, 92, 246, 0.7)";
+             ctx.fillRect(0, 40, canvas.width * 0.3, canvas.height - 40);
+             ctx.fillStyle = "white"; ctx.font = "bold 20px Arial"; ctx.fillText("PASAR PÁGINA >>", 20, canvas.height - 30);
           } else if (gestureState.current === "LEFT_ZONE") {
-             ctx.fillStyle = "rgba(59, 130, 246, 0.5)";
-             ctx.fillRect(canvas.width * 0.65, 40, canvas.width * 0.35, canvas.height - 40);
-             ctx.fillStyle = "white"; ctx.font = "bold 14px Arial"; ctx.fillText("¡DESLIZA A LA DERECHA!", canvas.width * 0.65 + 10, canvas.height - 20);
+             ctx.fillStyle = "rgba(59, 130, 246, 0.7)";
+             ctx.fillRect(canvas.width * 0.7, 40, canvas.width * 0.3, canvas.height - 40);
+             ctx.fillStyle = "white"; ctx.font = "bold 20px Arial"; ctx.fillText("<< VOLVER", canvas.width * 0.7 + 10, canvas.height - 30);
           }
         }
       } else {
-        ctx.fillText("BUSCANDO MANO... 🔍", 10, 28);
-        if (nowInMs - stateTimestamp.current > 1500) gestureState.current = "NONE";
+        ctx.fillStyle = "#fbbf24";
+        ctx.fillText("BUSCANDO MANO...", 10, 30);
+        if (nowInMs - stateTimestamp.current > 2000) gestureState.current = "NONE";
       }
     }
 
-    if (isActive) {
+    if (isActiveRef.current) {
       requestRef.current = requestAnimationFrame(detectFrame);
     }
   };

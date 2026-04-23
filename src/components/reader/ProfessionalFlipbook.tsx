@@ -160,6 +160,7 @@ const PageComponent = forwardRef<HTMLDivElement, {
                             <Page
                             pageNumber={pageNumber}
                             height={height * scale * contentScale} 
+                            devicePixelRatio={typeof window !== 'undefined' ? Math.max(window.devicePixelRatio || 1, 2) : 2}
                             renderTextLayer={true} // ACTIVAR CAPA DE TEXTO
                             renderAnnotationLayer={true} // ACTIVAR CAPA DE ANOTACIONES (Links)
                             pdf={pdfDocument} 

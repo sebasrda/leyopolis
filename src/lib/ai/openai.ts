@@ -23,7 +23,15 @@ export async function generateWithOpenAI(prompt: string, model: string = "gpt-4o
     const content = response.choices[0].message.content;
     if (!content) throw new Error("OpenAI returned empty response");
     
-    return JSON.parse(content);
+    try {
+      // Clean content from potential markdown markers
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      const cleanContent = jsonMatch ? jsonMatch[0] : content;
+      return JSON.parse(cleanContent);
+    } catch (parseError) {
+      console.error("[AI-INTEL] OpenAI returned non-JSON content:", content.slice(0, 200));
+      throw new Error(`OpenAI no devolvió un formato válido (JSON). Respuesta: ${content.slice(0, 50)}...`);
+    }
   } catch (error: any) {
     console.error(`[AI-STATS] OpenAI error (${model}):`, error.message);
     throw error;

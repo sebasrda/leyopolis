@@ -341,7 +341,13 @@ export default function AdminBooksPage() {
         body: JSON.stringify({ bookId }),
       });
 
-      const data = await res.json();
+      let data;
+      try {
+        data = await res.json();
+      } catch (e) {
+        const text = await res.text();
+        throw new Error(`Error del servidor (${res.status}): ${text.slice(0, 100)}`);
+      }
 
       if (!res.ok) {
         const detail = data.error ? `: ${data.error}` : "";

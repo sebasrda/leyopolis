@@ -9,6 +9,7 @@ import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import ExamModal from './ExamModal';
 import GamesModal from './GamesModal';
 import AiTutorWidget, { AiTutorRef } from './AiTutorWidget';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLearning } from '@/context/LearningContext';

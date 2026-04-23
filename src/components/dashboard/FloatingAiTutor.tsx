@@ -18,7 +18,6 @@ export function FloatingAiTutor({ role }: { role: "STUDENT" | "TEACHER" | "COORD
         </div>
         <AiTutorWidget
           mode="general"
-          hideFloatingButton={true}
           initialMessage={
             role === "TEACHER"
               ? "¡Hola! Soy tu Tutor IA. Puedo ayudarte con planificación de clases, actividades y análisis de estudiantes."

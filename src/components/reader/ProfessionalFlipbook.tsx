@@ -4,12 +4,11 @@ import React, { useState, useRef, useEffect, useCallback, forwardRef } from 'rea
 import { Document, Page, pdfjs } from 'react-pdf';
 import HTMLFlipBook from 'react-pageflip';
 import Link from 'next/link';
-import { Loader2, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Maximize, Minimize, Type, ScanLine, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Save, Moon, Sun, Languages, Gamepad2, GraduationCap, X, BookMarked, MessageSquare, Search, Highlighter, Sparkles, Library, Headphones, Volume2, Pause, Play, SkipForward, Bot } from 'lucide-react';
+import { Loader2, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Maximize, Minimize, Type, ScanLine, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Save, Moon, Sun, Languages, Gamepad2, GraduationCap, X, BookMarked, MessageSquare, Search, Highlighter, Sparkles, Library, Headphones, Volume2, Pause, Play, SkipForward } from 'lucide-react';
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import ExamModal from './ExamModal';
 import GamesModal from './GamesModal';
 import AiTutorWidget, { AiTutorRef } from './AiTutorWidget';
-import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLearning } from '@/context/LearningContext';
@@ -21,12 +20,9 @@ import { GesturePageTurner } from './GesturePageTurner';
 import 'react-pdf/dist/Page/TextLayer.css';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 
-// Estilos para evitar que las imágenes se inviertan en modo oscuro cuando usamos renderMode="svg"
-const darkModeImageFix = `
-  .dark-mode-fix svg image {
-    filter: invert(1) hue-rotate(180deg);
-  }
-`;
+// Configurar worker de PDF.js
+// Configurar worker de PDF.js (Revertido a unpkg para máxima compatibilidad con v10)
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 interface ProfessionalFlipbookProps {
   pdfUrl: string;
@@ -163,8 +159,8 @@ const PageComponent = forwardRef<HTMLDivElement, {
                             <Page
                             pageNumber={pageNumber}
                             height={height * scale * contentScale} 
-                            renderTextLayer={true} 
-                            renderAnnotationLayer={true} 
+                            renderTextLayer={true} // ACTIVAR CAPA DE TEXTO
+                            renderAnnotationLayer={true} // ACTIVAR CAPA DE ANOTACIONES (Links)
                             pdf={pdfDocument} 
                             loading={
                                 <div className="flex items-center justify-center w-full h-full">
@@ -1379,26 +1375,6 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
             </div>
 
             <div className="h-6 w-px bg-card/10" />
-
-            {/* AI Tutor Header Button */}
-            {userRole !== "STUDENT" && (
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => {
-                  const event = new CustomEvent('open-ai-tutor');
-                  window.dispatchEvent(event);
-                }}
-                className="relative text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10 rounded-xl group"
-                title="Tutor IA"
-              >
-                <Bot className="h-5 w-5 group-hover:scale-110 transition-transform" />
-                <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-indigo-500"></span>
-                </span>
-              </Button>
-            )}
 
             {/* Pantalla Completa */}
             <button onClick={toggleFullscreen} className="p-2 hover:bg-card/10 rounded-full transition text-gray-300" title="Pantalla Completa">

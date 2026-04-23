@@ -21,7 +21,6 @@ interface AiTutorWidgetProps {
   isDarkMode?: boolean;
   initialMessage?: string;
   mode?: 'reader' | 'general';
-  hideFloatingButton?: boolean;
 }
 
 export interface AiTutorRef {
@@ -34,20 +33,12 @@ const AiTutorWidget = forwardRef<AiTutorRef, AiTutorWidgetProps>(({
   currentPageNumber = 1, 
   isDarkMode = false,
   initialMessage,
-  mode = 'reader',
-  hideFloatingButton = false
+  mode = 'reader'
 }, ref) => {
-  const [isOpen, setIsOpen] = useState(mode === 'reader'); // Open by default only in reader
+  const [isOpen, setIsOpen] = useState(true); // Open by default
   const dragX = useMotionValue(0);
   const dragY = useMotionValue(0);
   
-  // Listen for global open event
-  useEffect(() => {
-    const handleOpen = () => setIsOpen(true);
-    window.addEventListener('open-ai-tutor', handleOpen);
-    return () => window.removeEventListener('open-ai-tutor', handleOpen);
-  }, []);
-
   const defaultMessage = mode === 'reader' 
     ? `Hola! Soy tu tutor inteligente Gemini. Estoy aquí para ayudarte a entender "${bookTitle}". ¿Tienes alguna pregunta sobre la página ${currentPageNumber}?`
     : `Hola! Soy tu Tutor IA. ¿En qué puedo ayudarte hoy?`;
@@ -159,10 +150,12 @@ const AiTutorWidget = forwardRef<AiTutorRef, AiTutorWidgetProps>(({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             className="mb-4 w-80 md:w-96 h-[500px] bg-card rounded-2xl shadow-2xl overflow-hidden flex flex-col border border-border cursor-default pointer-events-auto"
+            // We want to stop propagation for CONTENT, but ALLOW it for HEADER
           >
             {/* Header - Allow Drag */}
             <div 
               className="bg-gradient-to-r from-blue-600 to-indigo-600 p-4 flex items-center justify-between text-white shrink-0 cursor-move"
+              // No stopPropagation here, so drag bubbles to parent
             >
               <div className="flex items-center gap-2">
                 <div className="p-1.5 bg-card/20 rounded-lg">
@@ -251,25 +244,23 @@ const AiTutorWidget = forwardRef<AiTutorRef, AiTutorWidgetProps>(({
         )}
       </AnimatePresence>
 
-      {!hideFloatingButton && (
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => {
-            if (isOpen) {
-              minimizeToDock();
-            } else {
-              setIsOpen(true);
-            }
-          }}
-          className={cn(
-              "h-14 w-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 z-50 cursor-pointer pointer-events-auto bg-gradient-to-r from-blue-600 to-indigo-600 text-white animate-bounce-subtle",
-              isOpen ? "bg-gray-200 text-muted-foreground rotate-90 !bg-none" : ""
-          )}
-        >
-          {isOpen ? <X size={24} /> : <Sparkles size={24} />}
-        </motion.button>
-      )}
+      <motion.button
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        onClick={() => {
+          if (isOpen) {
+            minimizeToDock();
+          } else {
+            setIsOpen(true);
+          }
+        }}
+        className={cn(
+            "h-14 w-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 z-50 cursor-pointer pointer-events-auto bg-gradient-to-r from-blue-600 to-indigo-600 text-white animate-bounce-subtle",
+            isOpen ? "bg-gray-200 text-muted-foreground rotate-90 !bg-none" : ""
+        )}
+      >
+        {isOpen ? <X size={24} /> : <Sparkles size={24} />}
+      </motion.button>
     </motion.div>
   );
 });

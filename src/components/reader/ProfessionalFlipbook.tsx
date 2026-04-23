@@ -141,8 +141,7 @@ const PageComponent = forwardRef<HTMLDivElement, {
   };
 
   return (
-    <div ref={ref} className={cn("w-full h-full shadow-lg overflow-hidden relative", isDarkMode ? "bg-black dark-mode-fix" : "bg-card")} onMouseUp={handleMouseUp}>
-      <style>{darkModeImageFix}</style>
+    <div ref={ref} className={cn("w-full h-full shadow-lg overflow-hidden relative", isDarkMode ? "bg-black" : "bg-card")} onMouseUp={handleMouseUp}>
       <div className="w-full h-full flex items-center justify-center">
         {/* Usamos un wrapper div simple para el contenido primero */}
         <div className="w-full h-full relative overflow-hidden flex items-center justify-center">
@@ -166,7 +165,6 @@ const PageComponent = forwardRef<HTMLDivElement, {
                             height={height * scale * contentScale} 
                             renderTextLayer={true} 
                             renderAnnotationLayer={true} 
-                            renderMode={"svg" as any} // Usar SVG para poder des-invertir las imágenes con CSS
                             pdf={pdfDocument} 
                             loading={
                                 <div className="flex items-center justify-center w-full h-full">

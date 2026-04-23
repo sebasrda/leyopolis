@@ -212,40 +212,41 @@ export function GesturePageTurner({ onTurnNext, onTurnPrev }: GesturePageTurnerP
     <div className="flex flex-col items-center gap-2">
       {/* Floating control button */}
       <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
-        {isActive && (
-          <div className="relative w-56 h-42 bg-black rounded-xl overflow-hidden border-2 border-indigo-500 shadow-2xl backdrop-blur-md">
-            {/* Native video display - much more reliable than canvas drawImage */}
-            <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                muted
-                className="absolute inset-0 w-full h-full object-cover"
-                style={{ transform: "scaleX(-1)" }} 
-            />
-            {/* Transparent overlay for skeleton and zones */}
-            <canvas
-              ref={canvasRef}
-              className="absolute inset-0 w-full h-full pointer-events-none"
+        {/* The Camera Window */}
+        <div className={cn(
+          "relative w-56 h-42 bg-black rounded-xl overflow-hidden border-2 border-indigo-500 shadow-2xl backdrop-blur-md transition-all duration-500",
+          isActive ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none h-0"
+        )}>
+          <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              className="absolute inset-0 w-full h-full object-cover"
               style={{ transform: "scaleX(-1)" }} 
-            />
-            <div className="absolute top-2 right-2 flex items-center gap-2 pointer-events-none">
-              <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[10px] font-bold text-white uppercase tracking-wider bg-black/40 px-1.5 py-0.5 rounded">
-                IA LIVE
-              </span>
-            </div>
+          />
+          <canvas
+            ref={canvasRef}
+            className="absolute inset-0 w-full h-full pointer-events-none"
+            style={{ transform: "scaleX(-1)" }} 
+          />
+          <div className="absolute top-2 right-2 flex items-center gap-2 pointer-events-none">
+            <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-[10px] font-bold text-white uppercase tracking-wider bg-black/40 px-1.5 py-0.5 rounded">
+              IA LIVE
+            </span>
           </div>
-        )}
+        </div>
 
         <Button
           onClick={isActive ? stopCamera : startCamera}
           disabled={isLoading}
-          className={`rounded-full shadow-2xl border ${
-            isActive
-              ? "bg-red-500 hover:bg-red-600 border-red-400 text-white"
+          className={cn(
+            "rounded-full shadow-2xl border h-14 w-14 p-0 flex items-center justify-center transition-all duration-300 group",
+            isActive 
+              ? "bg-red-500 hover:bg-red-600 border-red-400 text-white" 
               : "bg-[#1E1B4B] hover:bg-[#312E81] border-indigo-500 text-indigo-300"
-          } h-14 w-14 p-0 flex items-center justify-center transition-all duration-300 group`}
+          )}
           title={isActive ? "Desactivar Manos Libres" : "Activar Manos Libres (IA)"}
         >
           {isLoading ? (

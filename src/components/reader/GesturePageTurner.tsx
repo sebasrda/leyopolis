@@ -32,22 +32,36 @@ export function GesturePageTurner({ onTurnNext, onTurnPrev }: GesturePageTurnerP
     try {
       // 1. Initialize MediaPipe
       if (!landmarkerRef.current) {
-        const vision = await FilesetResolver.forVisionTasks(
-          "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
-        );
-        const handLandmarker = await HandLandmarker.createFromOptions(vision, {
-          baseOptions: {
-            modelAssetPath: `https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task`,
-            delegate: "CPU" // GPU can cause black screens on some devices
-          },
-          runningMode: "VIDEO",
-          numHands: 1
-        });
-        landmarkerRef.current = handLandmarker;
+        try {
+          const vision = await FilesetResolver.forVisionTasks(
+            "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.10/wasm"
+          );
+          const handLandmarker = await HandLandmarker.createFromOptions(vision, {
+            baseOptions: {
+              modelAssetPath: `https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task`,
+              delegate: "CPU"
+            },
+            runningMode: "VIDEO",
+            numHands: 1
+          });
+          landmarkerRef.current = handLandmarker;
+        } catch (wasmError) {
+          console.error("MediaPipe WASM load error:", wasmError);
+          setError("Error: No se pudo cargar el motor de IA. Revisa tu internet.");
+          setIsLoading(false);
+          return;
+        }
       }
 
       // 2. Start Video
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { 
+          facingMode: "user",
+          width: { ideal: 640 },
+          height: { ideal: 480 }
+        } 
+      });
+      
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
@@ -59,14 +73,14 @@ export function GesturePageTurner({ onTurnNext, onTurnPrev }: GesturePageTurnerP
             detectFrame();
           } catch (e) {
             console.error("Video play failed:", e);
-            setError("Error al iniciar el video.");
+            setError("La cámara está bloqueada o desactivada.");
             setIsLoading(false);
           }
         };
       }
     } catch (err: any) {
-      console.error("Camera/MediaPipe error:", err);
-      setError("No se pudo acceder a la cámara o cargar la IA.");
+      console.error("Camera access error:", err);
+      setError("No se pudo acceder a la cámara. Revisa los permisos.");
       setIsLoading(false);
     }
   };
@@ -82,12 +96,6 @@ export function GesturePageTurner({ onTurnNext, onTurnPrev }: GesturePageTurnerP
     }
     if (videoRef.current) {
       videoRef.current.srcObject = null;
-    }
-    
-    // Clear canvas
-    if (canvasRef.current) {
-      const ctx = canvasRef.current.getContext("2d");
-      if (ctx) ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
     }
   }, []);
 
@@ -117,10 +125,7 @@ export function GesturePageTurner({ onTurnNext, onTurnPrev }: GesturePageTurnerP
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       
-      // 1. Draw Camera Feed
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-      // 2. Draw Status Background
+      // 1. Draw Status Background
       ctx.fillStyle = "rgba(0,0,0,0.5)";
       ctx.fillRect(0, 0, canvas.width, 40);
       ctx.font = "bold 20px Arial";
@@ -137,22 +142,18 @@ export function GesturePageTurner({ onTurnNext, onTurnPrev }: GesturePageTurnerP
         ctx.fillText("MANO DETECTADA ✅", 10, 28);
 
         // --- ZONE BASED GESTURE LOGIC ---
-        // x=0 is left of camera sensor, x=1 is right.
-        // Mirroring: user's left is sensor x=1, user's right is sensor x=0.
-        const handX = landmarks[0].x; // Use wrist for stability
+        const handX = landmarks[0].x; 
 
-        // Visual Zones for Debug
-        ctx.strokeStyle = "rgba(255,255,255,0.2)";
+        // Visual Zones
+        ctx.strokeStyle = "rgba(255,255,255,0.4)";
         ctx.setLineDash([5, 5]);
         ctx.beginPath(); ctx.moveTo(canvas.width * 0.35, 40); ctx.lineTo(canvas.width * 0.35, canvas.height); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(canvas.width * 0.65, 40); ctx.lineTo(canvas.width * 0.65, canvas.height); ctx.stroke();
         ctx.setLineDash([]);
 
-        const cooldownTime = 1000; // 1s cooldown
+        const cooldownTime = 1200; 
         if (nowInMs - cooldownRef.current > cooldownTime) {
           
-          // Swipe Forward (Next): Move hand from User Right to User Left 
-          // (Sensor x=0 to x=1)
           if (handX < 0.35) {
             if (gestureState.current !== "RIGHT_ZONE") {
               gestureState.current = "RIGHT_ZONE";
@@ -160,47 +161,40 @@ export function GesturePageTurner({ onTurnNext, onTurnPrev }: GesturePageTurnerP
             }
           } 
           else if (handX > 0.65) {
-            if (gestureState.current === "RIGHT_ZONE" && (nowInMs - stateTimestamp.current < 800)) {
-              // DETECTED: Moved from Right to Left quickly
+            if (gestureState.current === "RIGHT_ZONE" && (nowInMs - stateTimestamp.current < 1200)) {
               onTurnNext();
               cooldownRef.current = nowInMs;
               gestureState.current = "NONE";
               flashScreen("rgba(139, 92, 246, 0.8)");
             } else {
-              // Direct enter Left Zone
               gestureState.current = "LEFT_ZONE";
               stateTimestamp.current = nowInMs;
             }
           }
           else if (handX > 0.4 && handX < 0.6) {
-            // In middle: if we were in a zone too long, reset
-            if (nowInMs - stateTimestamp.current > 1000) gestureState.current = "NONE";
+            if (nowInMs - stateTimestamp.current > 1500) gestureState.current = "NONE";
           }
 
-          // Swipe Backward (Prev): Move hand from User Left to User Right
-          // (Sensor x=1 to x=0)
-          if (handX < 0.35 && gestureState.current === "LEFT_ZONE" && (nowInMs - stateTimestamp.current < 800)) {
+          if (handX < 0.35 && gestureState.current === "LEFT_ZONE" && (nowInMs - stateTimestamp.current < 1200)) {
               onTurnPrev();
               cooldownRef.current = nowInMs;
               gestureState.current = "NONE";
               flashScreen("rgba(59, 130, 246, 0.8)");
           }
 
-          // Feedback on current state
           if (gestureState.current === "RIGHT_ZONE") {
              ctx.fillStyle = "rgba(139, 92, 246, 0.5)";
              ctx.fillRect(0, 40, canvas.width * 0.35, canvas.height - 40);
-             ctx.fillStyle = "white"; ctx.fillText("¡DESLIZA A LA IZQUIERDA! >>", 50, canvas.height - 20);
+             ctx.fillStyle = "white"; ctx.font = "bold 14px Arial"; ctx.fillText("¡DESLIZA A LA IZQUIERDA!", 10, canvas.height - 20);
           } else if (gestureState.current === "LEFT_ZONE") {
              ctx.fillStyle = "rgba(59, 130, 246, 0.5)";
              ctx.fillRect(canvas.width * 0.65, 40, canvas.width * 0.35, canvas.height - 40);
-             ctx.fillStyle = "white"; ctx.fillText("<< ¡DESLIZA A LA DERECHA!", 50, canvas.height - 20);
+             ctx.fillStyle = "white"; ctx.font = "bold 14px Arial"; ctx.fillText("¡DESLIZA A LA DERECHA!", canvas.width * 0.65 + 10, canvas.height - 20);
           }
         }
       } else {
         ctx.fillText("BUSCANDO MANO... 🔍", 10, 28);
-        // Reset state if hand is lost for 1s
-        if (nowInMs - stateTimestamp.current > 1000) gestureState.current = "NONE";
+        if (nowInMs - stateTimestamp.current > 1500) gestureState.current = "NONE";
       }
     }
 
@@ -219,34 +213,29 @@ export function GesturePageTurner({ onTurnNext, onTurnPrev }: GesturePageTurnerP
 
   return (
     <div className="flex flex-col items-center gap-2">
-      {/* Invisible video element to feed the ML model */}
-      <video
-        ref={videoRef}
-        autoPlay
-        playsInline
-        muted
-        className="fixed top-[-2000px] left-[-2000px] w-[640px] h-[480px] opacity-0 pointer-events-none"
-        style={{ transform: "scaleX(-1)" }} // mirror
-      />
-
       {/* Floating control button */}
       <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
         {isActive && (
-          <div className="relative w-48 h-36 bg-black/80 rounded-xl overflow-hidden border-2 border-indigo-500/50 shadow-2xl shadow-indigo-500/20 backdrop-blur-md">
+          <div className="relative w-56 h-42 bg-black rounded-xl overflow-hidden border-2 border-indigo-500 shadow-2xl backdrop-blur-md">
+            {/* Native video display - much more reliable than canvas drawImage */}
+            <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className="absolute inset-0 w-full h-full object-cover"
+                style={{ transform: "scaleX(-1)" }} 
+            />
+            {/* Transparent overlay for skeleton and zones */}
             <canvas
               ref={canvasRef}
-              className="absolute inset-0 w-full h-full object-cover"
-              style={{ transform: "scaleX(-1)" }} // mirror
+              className="absolute inset-0 w-full h-full pointer-events-none"
+              style={{ transform: "scaleX(-1)" }} 
             />
-            <div className="absolute top-2 left-2 flex items-center gap-2">
+            <div className="absolute top-2 right-2 flex items-center gap-2 pointer-events-none">
               <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
               <span className="text-[10px] font-bold text-white uppercase tracking-wider bg-black/40 px-1.5 py-0.5 rounded">
-                Manos Libres
-              </span>
-            </div>
-            <div className="absolute bottom-2 left-0 w-full text-center">
-              <span className="text-[10px] text-slate-300 font-medium drop-shadow-md">
-                Desliza tu mano ↔️
+                IA LIVE
               </span>
             </div>
           </div>
@@ -273,7 +262,7 @@ export function GesturePageTurner({ onTurnNext, onTurnPrev }: GesturePageTurnerP
       </div>
 
       {error && (
-        <div className="fixed bottom-24 right-6 bg-red-500/90 text-white text-xs px-4 py-2 rounded-lg shadow-xl z-50 backdrop-blur-md">
+        <div className="fixed bottom-24 right-6 bg-red-500/90 text-white text-xs px-4 py-2 rounded-lg shadow-xl z-[70] backdrop-blur-md max-w-[200px]">
           {error}
         </div>
       )}

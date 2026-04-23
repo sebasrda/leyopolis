@@ -66,10 +66,93 @@ export default function CoordinadorDashboardPage() {
   if (!session) return null;
 
   return (
-    <div className="space-y-8">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold text-foreground">Panel del Coordinador</h1>
-        <p className="text-muted-foreground">Seguimiento institucional: lectura, quizzes y progreso por grado.</p>
+    <div className="text-white space-y-8">
+      {/* ── TOP HEADER ─────────────────────────────── */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+          <h1 className="text-3xl font-bold text-white">
+            ¡Hola, {session?.user?.name?.split(" ")[0] || "Coordinador"}! 👋
+          </h1>
+          <p className="text-slate-400 mt-1 text-sm">
+            Seguimiento institucional: lectura, quizzes y progreso por grado en tiempo real.
+          </p>
+        </div>
+        <div className="flex gap-3">
+          <Button 
+            className="bg-[#6B21A8] hover:bg-[#581C87] text-white shadow-lg shadow-purple-900/40 gap-2 rounded-xl h-11 px-6"
+            onClick={() => setIsSuggestedOpen(true)}
+          >
+            <Sparkles className="h-4 w-4" /> Lecturas Sugeridas
+          </Button>
+        </div>
+      </div>
+
+      {/* ── HERO MONITORING CARD ───────────────────── */}
+      <div className="relative rounded-2xl overflow-hidden bg-[#0f1623] border border-white/10 min-h-[220px] flex items-center p-8 group shadow-2xl">
+        <div
+          className="absolute inset-0 opacity-40 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
+          style={{ backgroundImage: `url('https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80&w=2071')` }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0f1623] via-[#0f1623]/60 to-transparent" />
+        
+        <div className="relative z-10 w-full">
+          <div className="flex flex-col md:flex-row justify-between md:items-end gap-8">
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Badge className="bg-indigo-500/20 text-indigo-300 border-none px-3 py-1">Panel de Coordinación</Badge>
+                <Badge className="bg-emerald-500/20 text-emerald-300 border-none px-3 py-1">Datos en Vivo</Badge>
+              </div>
+              <div>
+                <h2 className="text-4xl font-black text-white mb-2">Estado Académico</h2>
+                <p className="text-slate-300 max-w-md">
+                  Analiza el rendimiento general y detecta áreas de mejora en la comprensión lectora de tu institución.
+                </p>
+              </div>
+              <div className="flex items-center gap-6 pt-2">
+                <div>
+                  <p className="text-3xl font-bold text-white">{overview?.counts.students ?? 0}</p>
+                  <p className="text-xs text-slate-400 uppercase tracking-wider">Estudiantes</p>
+                </div>
+                <div className="h-10 w-px bg-white/10" />
+                <div>
+                  <p className="text-3xl font-bold text-white">{overview?.counts.teachers ?? 0}</p>
+                  <p className="text-xs text-slate-400 uppercase tracking-wider">Docentes</p>
+                </div>
+                <div className="h-10 w-px bg-white/10" />
+                <div>
+                  <p className="text-3xl font-bold text-white">{overview?.counts.sessions7d ?? 0}</p>
+                  <p className="text-xs text-slate-400 uppercase tracking-wider">Sesiones (7d)</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl p-6 min-w-[300px]">
+              <h3 className="text-sm font-bold text-slate-400 mb-4 flex items-center gap-2">
+                <BarChart3 className="h-4 w-4 text-indigo-400" /> Promedios Globales
+              </h3>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-slate-400">Progreso de lectura</span>
+                    <span className="text-indigo-300 font-black">{overview?.counts.avgProgress ?? 0}%</span>
+                  </div>
+                  <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                    <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${overview?.counts.avgProgress ?? 0}%` }} />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-slate-400">Desempeño en Quizzes</span>
+                    <span className="text-emerald-400 font-black">{overview?.counts.avgQuiz ?? 0}/100</span>
+                  </div>
+                  <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                    <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${overview?.counts.avgQuiz ?? 0}%` }} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {loading ? (
@@ -109,62 +192,73 @@ export default function CoordinadorDashboardPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <Card className="border-none shadow-md lg:col-span-2">
+            <Card className="bg-[#1a2235]/50 border-white/5 shadow-xl lg:col-span-2">
               <CardHeader>
-                <CardTitle className="text-lg">Libros más leídos (7 días)</CardTitle>
-                <CardDescription>Ranking institucional basado en sesiones de lectura.</CardDescription>
+                <CardTitle className="text-lg text-white">Libros más leídos (7 días)</CardTitle>
+                <CardDescription className="text-slate-400">Ranking institucional basado en sesiones de lectura.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 {(overview?.topBooks ?? []).length ? (
                   overview!.topBooks.map((b) => (
-                    <div key={b.bookId} className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-muted transition">
+                    <div key={b.bookId} className="flex items-center justify-between p-3 rounded-xl border border-white/5 hover:bg-white/5 transition group">
                       <div className="space-y-1">
-                        <div className="font-semibold text-foreground line-clamp-1">{b.title}</div>
-                        <div className="text-xs text-muted-foreground line-clamp-1">{b.author}</div>
+                        <div className="font-bold text-white line-clamp-1 group-hover:text-indigo-300 transition-colors">{b.title}</div>
+                        <div className="text-xs text-slate-400 line-clamp-1">{b.author}</div>
                       </div>
-                      <Badge variant="outline" className="bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/10">
-                        {b.reads}
+                      <Badge className="bg-indigo-500/20 text-indigo-300 border-none px-3">
+                        {b.reads} lecturas
                       </Badge>
                     </div>
                   ))
                 ) : (
-                  <div className="text-sm text-muted-foreground">Sin datos.</div>
+                  <div className="text-sm text-slate-500 py-4">Sin datos de lectura recientes.</div>
                 )}
               </CardContent>
             </Card>
 
-            <Card className="border-none shadow-md">
-              <CardHeader>
-                <CardTitle className="text-lg">Promedios</CardTitle>
-                <CardDescription>Progreso y quizzes</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="text-sm text-muted-foreground">Progreso promedio</div>
-                  <div className="font-bold text-indigo-300">{overview?.counts.avgProgress ?? 0}%</div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="text-sm text-muted-foreground">Quiz promedio</div>
-                  <div className="font-bold text-emerald-700">{overview?.counts.avgQuiz ?? 0}</div>
-                </div>
-                <div className="flex flex-col gap-2">
+            <div className="space-y-6">
+              <Card className="bg-[#1a2235]/50 border-white/5 shadow-xl">
+                <CardHeader>
+                  <CardTitle className="text-lg text-white">Herramientas</CardTitle>
+                  <CardDescription className="text-slate-400">Accesos directos de gestión</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <Button asChild className="w-full justify-start gap-3 bg-white/5 hover:bg-white/10 text-white border-white/5 rounded-xl h-11">
+                    <Link href="/dashboard/activities">
+                      <Sparkles className="h-4 w-4 text-purple-400" /> Gestionar Actividades
+                    </Link>
+                  </Button>
+                  <Button asChild className="w-full justify-start gap-3 bg-white/5 hover:bg-white/10 text-white border-white/5 rounded-xl h-11">
+                    <Link href="/dashboard/courses">
+                      <Users className="h-4 w-4 text-indigo-400" /> Administrar Cursos
+                    </Link>
+                  </Button>
+                  <Button asChild className="w-full justify-start gap-3 bg-white/5 hover:bg-white/10 text-white border-white/5 rounded-xl h-11">
+                    <Link href="/dashboard/reports">
+                      <BarChart3 className="h-4 w-4 text-emerald-400" /> Ver Reportes Detallados
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-indigo-600/20 to-violet-600/20 border-indigo-500/30 shadow-xl overflow-hidden">
+                <CardContent className="p-6 text-center space-y-4">
+                  <div className="h-12 w-12 bg-indigo-500/20 rounded-2xl flex items-center justify-center mx-auto">
+                    <Sparkles className="h-6 w-6 text-indigo-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-white">Sugerir Lecturas</h3>
+                    <p className="text-xs text-indigo-200 mt-1">Recomienda libros a grados específicos</p>
+                  </div>
                   <Button 
-                    className="w-full bg-indigo-600 hover:bg-indigo-700 gap-2"
+                    className="w-full bg-[#6B21A8] hover:bg-[#581C87] text-white rounded-xl"
                     onClick={() => setIsSuggestedOpen(true)}
                   >
-                    <Sparkles className="h-4 w-4" /> Lecturas Sugeridas
+                    Abrir Selector
                   </Button>
-                  <div className="flex gap-2">
-                    <Button asChild variant="outline" className="flex-1">
-                      <Link href="/dashboard/activities">Actividades</Link>
-                    </Button>
-                    <Button asChild variant="outline" className="flex-1">
-                      <Link href="/dashboard/courses">Cursos</Link>
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </div>
           </div>
 
           <SuggestedReadingsDialog 
@@ -177,49 +271,52 @@ export default function CoordinadorDashboardPage() {
           />
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="border-none shadow-md">
+            <Card className="bg-[#1a2235]/50 border-white/5 shadow-xl">
               <CardHeader>
-                <CardTitle className="text-lg">Progreso por grado</CardTitle>
-                <CardDescription>Promedio de progreso de lectura por grado.</CardDescription>
+                <CardTitle className="text-lg text-white">Progreso por grado</CardTitle>
+                <CardDescription className="text-slate-400">Promedio de progreso de lectura institucional.</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-4">
                 {(overview?.progressByGrade ?? []).length ? (
                   overview!.progressByGrade.map((r) => (
-                    <div key={r.grade} className="flex items-center justify-between p-3 rounded-lg border border-border">
-                      <div className="font-medium text-foreground">{r.grade}</div>
-                      <Badge variant="outline" className="bg-muted text-foreground hover:bg-muted">
-                        {r.avgProgress}%
-                      </Badge>
+                    <div key={r.grade} className="space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="font-bold text-slate-300">{r.grade}</span>
+                        <span className="text-indigo-400 font-black">{r.avgProgress}%</span>
+                      </div>
+                      <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                        <div className="h-full bg-gradient-to-r from-indigo-600 to-indigo-400 transition-all" style={{ width: `${r.avgProgress}%` }}></div>
+                      </div>
                     </div>
                   ))
                 ) : (
-                  <div className="text-sm text-muted-foreground">Sin datos.</div>
+                  <div className="text-sm text-slate-500">Sin datos de progreso.</div>
                 )}
               </CardContent>
             </Card>
 
-            <Card className="border-none shadow-md">
+            <Card className="bg-[#1a2235]/50 border-white/5 shadow-xl">
               <CardHeader>
-                <CardTitle className="text-lg">Resultados recientes</CardTitle>
-                <CardDescription>Últimos quizzes completados.</CardDescription>
+                <CardTitle className="text-lg text-white">Resultados recientes</CardTitle>
+                <CardDescription className="text-slate-400">Últimos quizzes completados.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 {(overview?.latestQuizzes ?? []).length ? (
                   overview!.latestQuizzes.map((a) => (
-                    <div key={a.id} className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-muted transition">
+                    <div key={a.id} className="flex items-center justify-between p-3 rounded-xl border border-white/5 hover:bg-white/5 transition group">
                       <div className="space-y-1">
-                        <div className="font-semibold text-foreground line-clamp-1">{a.activity.title}</div>
-                        <div className="text-xs text-muted-foreground line-clamp-1">
+                        <div className="font-bold text-white line-clamp-1 group-hover:text-emerald-300 transition-colors">{a.activity.title}</div>
+                        <div className="text-xs text-slate-500 line-clamp-1">
                           {a.student.name || a.student.email || "Estudiante"} {a.student.grade ? `· ${a.student.grade}` : ""}
                         </div>
                       </div>
-                      <Badge variant="outline" className="bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/10">
-                        {a.score}
+                      <Badge className="bg-emerald-500/20 text-emerald-300 border-none px-3">
+                        {a.score}/100
                       </Badge>
                     </div>
                   ))
                 ) : (
-                  <div className="text-sm text-muted-foreground">Sin datos.</div>
+                  <div className="text-sm text-slate-500 py-4">Sin resultados recientes.</div>
                 )}
               </CardContent>
             </Card>

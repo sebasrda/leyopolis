@@ -121,6 +121,15 @@ export default function SuperAdminDashboard() {
     }
   };
 
+  const stats = {
+    total: institutions.length,
+    users: institutions.reduce((acc, inst) => acc + (inst._count?.users || 0), 0),
+    active: institutions.filter(i => i.status === 'activa').length,
+    anual: institutions.filter(i => i.plan === 'ANUAL').length,
+    mensual: institutions.filter(i => i.plan === 'MENSUAL').length,
+    trial: institutions.filter(i => i.plan === 'TRIAL').length,
+  };
+
   return (
     <div className="text-white space-y-8">
       {/* ── TOP HEADER ─────────────────────────────── */}
@@ -189,70 +198,68 @@ export default function SuperAdminDashboard() {
       </div>
 
       {/* ── HERO MONITORING CARD ───────────────────── */}
-      <div className="relative rounded-2xl overflow-hidden bg-[#0f1623] border border-white/10 min-h-[220px] flex items-center p-8 group shadow-2xl">
-        <div
-          className="absolute inset-0 opacity-40 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
-          style={{ backgroundImage: `url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=2070')` }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#0f1623] via-[#0f1623]/60 to-transparent" />
-        
-        <div className="relative z-10 w-full">
-          <div className="flex flex-col md:flex-row justify-between md:items-end gap-8">
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <Badge className="bg-indigo-500/20 text-indigo-300 border-none px-3 py-1">Panel Global Leyópolis</Badge>
-                <Badge className="bg-emerald-500/20 text-emerald-300 border-none px-3 py-1">Estado de Servidores: OK</Badge>
-              </div>
-              <div>
-                <h2 className="text-4xl font-black text-white mb-2">Visión de Plataforma</h2>
-                <p className="text-slate-300 max-w-md">
-                  Supervisa la salud del negocio, la retención de instituciones y el crecimiento global de la red educativa.
-                </p>
-              </div>
-              <div className="flex items-center gap-6 pt-2">
-                <div>
-                  <p className="text-3xl font-bold text-white">{institutions.length}</p>
-                  <p className="text-xs text-slate-400 uppercase tracking-wider">Colegios</p>
-                </div>
-                <div className="h-10 w-px bg-white/10" />
-                <div>
-                  <p className="text-3xl font-bold text-white">
-                    {institutions.reduce((acc, inst) => acc + (inst._count?.users || 0), 0)}
-                  </p>
-                  <p className="text-xs text-slate-400 uppercase tracking-wider">Usuarios Globales</p>
-                </div>
-                <div className="h-10 w-px bg-white/10" />
-                <div>
-                  <p className="text-3xl font-bold text-white">
-                    {institutions.filter(i => i.status === 'activa').length}
-                  </p>
-                  <p className="text-xs text-slate-400 uppercase tracking-wider">Cuentas Activas</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl p-6 min-w-[300px]">
-              <h3 className="text-sm font-bold text-slate-400 mb-4 flex items-center gap-2">
-                <CreditCard className="h-4 w-4 text-indigo-400" /> Distribución de Planes
-              </h3>
+      {!loading && (
+        <div className="relative rounded-2xl overflow-hidden bg-[#0f1623] border border-white/10 min-h-[220px] flex items-center p-8 group shadow-2xl">
+          <div
+            className="absolute inset-0 opacity-40 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
+            style={{ backgroundImage: `url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=2070')` }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0f1623] via-[#0f1623]/60 to-transparent" />
+          
+          <div className="relative z-10 w-full">
+            <div className="flex flex-col md:flex-row justify-between md:items-end gap-8">
               <div className="space-y-4">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-slate-400">Anual</span>
-                  <span className="text-indigo-300 font-black">{institutions.filter(i => i.plan === 'ANUAL').length}</span>
+                <div className="flex items-center gap-2">
+                  <Badge className="bg-indigo-500/20 text-indigo-300 border-none px-3 py-1">Panel Global Leyópolis</Badge>
+                  <Badge className="bg-emerald-500/20 text-emerald-300 border-none px-3 py-1">Estado de Servidores: OK</Badge>
                 </div>
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-slate-400">Mensual</span>
-                  <span className="text-purple-300 font-black">{institutions.filter(i => i.plan === 'MENSUAL').length}</span>
+                <div>
+                  <h2 className="text-4xl font-black text-white mb-2">Visión de Plataforma</h2>
+                  <p className="text-slate-300 max-w-md">
+                    Supervisa la salud del negocio, la retención de instituciones y el crecimiento global de la red educativa.
+                  </p>
                 </div>
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-slate-400">Trial / Demo</span>
-                  <span className="text-amber-300 font-black">{institutions.filter(i => i.plan === 'TRIAL').length}</span>
+                <div className="flex items-center gap-6 pt-2">
+                  <div>
+                    <p className="text-3xl font-bold text-white">{stats.total}</p>
+                    <p className="text-xs text-slate-400 uppercase tracking-wider">Colegios</p>
+                  </div>
+                  <div className="h-10 w-px bg-white/10" />
+                  <div>
+                    <p className="text-3xl font-bold text-white">{stats.users}</p>
+                    <p className="text-xs text-slate-400 uppercase tracking-wider">Usuarios Globales</p>
+                  </div>
+                  <div className="h-10 w-px bg-white/10" />
+                  <div>
+                    <p className="text-3xl font-bold text-white">{stats.active}</p>
+                    <p className="text-xs text-slate-400 uppercase tracking-wider">Cuentas Activas</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl p-6 min-w-[300px]">
+                <h3 className="text-sm font-bold text-slate-400 mb-4 flex items-center gap-2">
+                  <CreditCard className="h-4 w-4 text-indigo-400" /> Distribución de Planes
+                </h3>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-slate-400">Anual</span>
+                    <span className="text-indigo-300 font-black">{stats.anual}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-slate-400">Mensual</span>
+                    <span className="text-purple-300 font-black">{stats.mensual}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-slate-400">Trial / Demo</span>
+                    <span className="text-amber-300 font-black">{stats.trial}</span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       {loading ? (
         <div className="flex items-center justify-center p-12">

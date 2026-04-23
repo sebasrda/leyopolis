@@ -269,9 +269,11 @@ export async function generateAndSaveActivities({
   let lastError: any;
   // Use a tiered list of models. If one is 429 (quota) or 404 (not found), we pivot.
   const geminiModels = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-flash-8b"];
+  const providersAttempted: string[] = [];
   
   // PRIMARY ATTEMPT: Gemini
   if (genAI) {
+    providersAttempted.push("Google Gemini (Direct)");
     for (const modelName of geminiModels) {
       console.log(`[AI-STATS] Intentando con modelo: ${modelName}`);
       if (result) break;

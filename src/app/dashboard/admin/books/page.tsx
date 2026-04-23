@@ -341,11 +341,11 @@ export default function AdminBooksPage() {
         body: JSON.stringify({ bookId }),
       });
 
+      const text = await res.text();
       let data;
       try {
-        data = await res.json();
+        data = JSON.parse(text);
       } catch (e) {
-        const text = await res.text();
         throw new Error(`Error del servidor (${res.status}): ${text.slice(0, 100)}`);
       }
 

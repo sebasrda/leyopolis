@@ -403,7 +403,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </Button>
 
             {/* AI Tutor Header Button */}
-            {!pathname.includes("/reader/") && role !== "STUDENT" && (session?.user as any)?.licenseType !== "DEMO" && (
+            {!pathname.includes("/reader/") && role !== "STUDENT" && (
               <Button 
                 variant="ghost" 
                 size="icon" 
@@ -480,7 +480,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </div>
 
       {/* Only show floating AI for non-students, non-demos, and non-reader pages */}
-      {!pathname.includes("/reader/") && role !== "STUDENT" && (session?.user as any)?.licenseType !== "DEMO" && (
+      {!pathname.includes("/reader/") && role !== "STUDENT" && (
         <FloatingAiTutor role={role as any} />
       )}
     </div>

@@ -1382,7 +1382,7 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
             <div className="h-6 w-px bg-card/10" />
 
             {/* AI Tutor Header Button */}
-            {userRole !== "STUDENT" && (session?.user as any)?.licenseType !== "DEMO" && (
+            {userRole !== "STUDENT" && (
               <Button 
                 variant="ghost" 
                 size="icon" 

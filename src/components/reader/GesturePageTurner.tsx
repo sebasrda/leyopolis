@@ -132,37 +132,36 @@ export function GesturePageTurner({ onTurnNext, onTurnPrev }: GesturePageTurnerP
         const xPos = indexTip.x; // Value between 0.0 and 1.0
 
         // Handle cooldown
-        if (nowInMs - cooldownRef.current > 1500) { // 1.5 seconds cooldown between swipes
+        if (nowInMs - cooldownRef.current > 1200) { // Slightly shorter cooldown
           if (lastXRef.current !== null) {
             const deltaX = xPos - lastXRef.current;
             const deltaTime = nowInMs - lastTimeRef.current;
-            const velocity = deltaX / deltaTime; // speed of movement
-
-            // Threshold for swipe (velocity and distance)
-            if (Math.abs(deltaX) > 0.15 && Math.abs(velocity) > 0.001) {
-              if (deltaX < 0) {
-                // Moved left -> next page
-                console.log("Swipe Left detected!");
+            
+            // Check for a fast enough movement
+            // deltaX < 0 means movement towards the left of the camera (which might be user's right or left depending on mirroring)
+            // Let's use a smaller distance threshold (0.08 instead of 0.15)
+            if (Math.abs(deltaX) > 0.08) {
+              if (deltaX > 0.1) {
+                // SWIPE LEFT (Hand moves to user's left, x increases in sensor) -> NEXT PAGE
+                console.log("GESTURE: Swipe Left -> Next Page", deltaX);
                 onTurnNext();
                 cooldownRef.current = nowInMs;
-                flashScreen("rgba(139, 92, 246, 0.4)"); // purple flash
-              } else {
-                // Moved right -> previous page
-                console.log("Swipe Right detected!");
+                flashScreen("rgba(139, 92, 246, 0.6)"); // purple flash
+                lastXRef.current = null;
+              } else if (deltaX < -0.1) {
+                // SWIPE RIGHT (Hand moves to user's right, x decreases in sensor) -> PREV PAGE
+                console.log("GESTURE: Swipe Right -> Prev Page", deltaX);
                 onTurnPrev();
                 cooldownRef.current = nowInMs;
-                flashScreen("rgba(59, 130, 246, 0.4)"); // blue flash
+                flashScreen("rgba(59, 130, 246, 0.6)"); // blue flash
+                lastXRef.current = null;
               }
-              lastXRef.current = null; // reset
-            } else {
-              lastXRef.current = xPos;
-              lastTimeRef.current = nowInMs;
             }
-          } else {
-            lastXRef.current = xPos;
-            lastTimeRef.current = nowInMs;
           }
         }
+        
+        lastXRef.current = xPos;
+        lastTimeRef.current = nowInMs;
       } else {
         lastXRef.current = null;
       }

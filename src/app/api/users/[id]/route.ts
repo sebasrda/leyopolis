@@ -87,18 +87,15 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
       return NextResponse.json({ message: "Cannot delete yourself" }, { status: 400 });
     }
 
-    // Use transaction to delete related records first (Cascading manually if not set in schema)
+    // Use transaction to delete related records first (those without Cascade Delete in schema)
     await prisma.$transaction([
-      prisma.readingSession.deleteMany({ where: { userId: id } }),
-      prisma.activityAttempt.deleteMany({ where: { userId: id } }),
       prisma.userBook.deleteMany({ where: { userId: id } }),
-      prisma.notification.deleteMany({ where: { userId: id } }),
-      prisma.licenseChange.deleteMany({ where: { userId: id } }),
-      // Classes related to the student/teacher
-      prisma.class.updateMany({
-        where: { students: { some: { id } } },
-        data: { /* Prisma doesn't support easy disconnectMany in updateMany, but usually we disconnect in a separate step or handle it */ }
-      }),
+      prisma.evaluationResult.deleteMany({ where: { userId: id } }),
+      prisma.clubMember.deleteMany({ where: { userId: id } }),
+      prisma.post.deleteMany({ where: { userId: id } }),
+      prisma.comment.deleteMany({ where: { userId: id } }),
+      prisma.vocabulary.deleteMany({ where: { userId: id } }), // Added for safety
+      prisma.note.deleteMany({ where: { userId: id } }),       // Added for safety
       prisma.user.delete({ where: { id } })
     ]);
 

@@ -21,6 +21,7 @@ import {
   FileText,
   Settings,
   Sparkles,
+  Calendar,
 } from "lucide-react";
 import { SuggestedReadingsDialog } from "@/components/dashboard/teacher/SuggestedReadingsDialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";

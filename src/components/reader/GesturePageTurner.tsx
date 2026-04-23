@@ -38,7 +38,7 @@ export function GesturePageTurner({ onTurnNext, onTurnPrev }: GesturePageTurnerP
         const handLandmarker = await HandLandmarker.createFromOptions(vision, {
           baseOptions: {
             modelAssetPath: `https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task`,
-            delegate: "GPU"
+            delegate: "CPU" // GPU can cause black screens on some devices
           },
           runningMode: "VIDEO",
           numHands: 1
@@ -51,11 +51,17 @@ export function GesturePageTurner({ onTurnNext, onTurnPrev }: GesturePageTurnerP
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.onloadedmetadata = () => {
-          videoRef.current?.play();
-          setIsActive(true);
-          setIsLoading(false);
-          detectFrame();
+        videoRef.current.onloadedmetadata = async () => {
+          try {
+            await videoRef.current?.play();
+            setIsActive(true);
+            setIsLoading(false);
+            detectFrame();
+          } catch (e) {
+            console.error("Video play failed:", e);
+            setError("Error al iniciar el video.");
+            setIsLoading(false);
+          }
         };
       }
     } catch (err: any) {
@@ -182,7 +188,8 @@ export function GesturePageTurner({ onTurnNext, onTurnPrev }: GesturePageTurnerP
         ref={videoRef}
         autoPlay
         playsInline
-        className="absolute opacity-0 pointer-events-none w-px h-px"
+        muted
+        className="fixed top-[-2000px] left-[-2000px] w-[640px] h-[480px] opacity-0 pointer-events-none"
         style={{ transform: "scaleX(-1)" }} // mirror
       />
 

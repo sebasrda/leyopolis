@@ -155,7 +155,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   };
 
   // Select sidebar items based on role
-  let items = studentItems;
+  let items: any[] = studentItems;
   if (role === "SUPERADMIN") {
     items = superAdminItems;
   } else if (role === "ADMIN") {

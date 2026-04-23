@@ -48,10 +48,17 @@ export default function TeacherDashboard() {
         latestAttempts: { id: string; score: number; createdAt: string; activity: { id: string; title: string }; user: { id: string; name: string | null; email: string | null } }[];
     } | null>(null);
 
-    // Fetch classes on mount
+    // Fetch classes and stats on mount and poll every 5s
     React.useEffect(() => {
         fetchClasses();
         fetchEduOverview();
+
+        const interval = setInterval(() => {
+            fetchClasses();
+            fetchEduOverview();
+        }, 5000);
+
+        return () => clearInterval(interval);
     }, []);
 
     const fetchClasses = async () => {

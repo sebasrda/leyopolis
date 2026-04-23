@@ -42,17 +42,25 @@ export default function CoordinadorDashboardPage() {
 
   useEffect(() => {
     if (!session) return;
-    Promise.all([
-      fetch("/api/coordinator/overview").then((r) => (r.ok ? r.json() : null)),
-      fetch("/api/coordinator/users").then((r) => (r.ok ? r.json() : null)),
-      fetch("/api/teacher/classes").then((r) => (r.ok ? r.json() : [])),
-    ])
-      .then(([o, u, c]) => {
-        setOverview(o);
-        setUsers(u);
-        setClasses(c);
-      })
-      .finally(() => setLoading(false));
+    
+    const fetchData = () => {
+      Promise.all([
+        fetch("/api/coordinator/overview").then((r) => (r.ok ? r.json() : null)),
+        fetch("/api/coordinator/users").then((r) => (r.ok ? r.json() : null)),
+        fetch("/api/teacher/classes").then((r) => (r.ok ? r.json() : [])),
+      ])
+        .then(([o, u, c]) => {
+          setOverview(o);
+          setUsers(u);
+          setClasses(c);
+        })
+        .finally(() => setLoading(false));
+    };
+
+    fetchData();
+    const interval = setInterval(fetchData, 5000);
+
+    return () => clearInterval(interval);
   }, [session]);
 
   if (!session) return null;

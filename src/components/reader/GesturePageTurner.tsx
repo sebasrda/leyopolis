@@ -106,6 +106,9 @@ export function GesturePageTurner({ onTurnNext, onTurnPrev }: GesturePageTurnerP
       const results = landmarkerRef.current.detectForVideo(video, nowInMs);
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // Draw the video frame so the user can see themselves
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
       if (results.landmarks && results.landmarks.length > 0) {
         const landmarks = results.landmarks[0];
@@ -179,7 +182,7 @@ export function GesturePageTurner({ onTurnNext, onTurnPrev }: GesturePageTurnerP
         ref={videoRef}
         autoPlay
         playsInline
-        className="hidden"
+        className="absolute opacity-0 pointer-events-none w-px h-px"
         style={{ transform: "scaleX(-1)" }} // mirror
       />
 

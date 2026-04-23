@@ -97,6 +97,10 @@ export function GesturePageTurner({ onTurnNext, onTurnPrev }: GesturePageTurnerP
     };
   }, [stopCamera]);
 
+  // --- NEW ROBUST STATE MACHINE FOR GESTURES ---
+  const gestureState = useRef<"NONE" | "RIGHT_ZONE" | "LEFT_ZONE">("NONE");
+  const stateTimestamp = useRef<number>(0);
+
   const detectFrame = () => {
     if (!videoRef.current || !landmarkerRef.current || !isActive || !canvasRef.current) return;
 
@@ -113,57 +117,90 @@ export function GesturePageTurner({ onTurnNext, onTurnPrev }: GesturePageTurnerP
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       
-      // Draw the video frame so the user can see themselves
+      // 1. Draw Camera Feed
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      // 2. Draw Status Background
+      ctx.fillStyle = "rgba(0,0,0,0.5)";
+      ctx.fillRect(0, 0, canvas.width, 40);
+      ctx.font = "bold 20px Arial";
+      ctx.fillStyle = "white";
 
       if (results.landmarks && results.landmarks.length > 0) {
         const landmarks = results.landmarks[0];
         const drawingUtils = new DrawingUtils(ctx);
         
-        drawingUtils.drawConnectors(landmarks, HandLandmarker.HAND_CONNECTIONS, {
-          color: "#4ade80",
-          lineWidth: 3
-        });
+        // Draw Hand Skeleton
+        drawingUtils.drawConnectors(landmarks, HandLandmarker.HAND_CONNECTIONS, { color: "#4ade80", lineWidth: 3 });
         drawingUtils.drawLandmarks(landmarks, { color: "#3b82f6", lineWidth: 1, radius: 4 });
 
-        // Gesture Detection logic
-        // Use the index finger tip (landmark 8)
-        const indexTip = landmarks[8];
-        const xPos = indexTip.x; // Value between 0.0 and 1.0
+        ctx.fillText("MANO DETECTADA ✅", 10, 28);
 
-        // Handle cooldown
-        if (nowInMs - cooldownRef.current > 1200) { // Slightly shorter cooldown
-          if (lastXRef.current !== null) {
-            const deltaX = xPos - lastXRef.current;
-            const deltaTime = nowInMs - lastTimeRef.current;
-            
-            // Check for a fast enough movement
-            // deltaX < 0 means movement towards the left of the camera (which might be user's right or left depending on mirroring)
-            // Let's use a smaller distance threshold (0.08 instead of 0.15)
-            if (Math.abs(deltaX) > 0.08) {
-              if (deltaX > 0.1) {
-                // SWIPE LEFT (Hand moves to user's left, x increases in sensor) -> NEXT PAGE
-                console.log("GESTURE: Swipe Left -> Next Page", deltaX);
-                onTurnNext();
-                cooldownRef.current = nowInMs;
-                flashScreen("rgba(139, 92, 246, 0.6)"); // purple flash
-                lastXRef.current = null;
-              } else if (deltaX < -0.1) {
-                // SWIPE RIGHT (Hand moves to user's right, x decreases in sensor) -> PREV PAGE
-                console.log("GESTURE: Swipe Right -> Prev Page", deltaX);
-                onTurnPrev();
-                cooldownRef.current = nowInMs;
-                flashScreen("rgba(59, 130, 246, 0.6)"); // blue flash
-                lastXRef.current = null;
-              }
+        // --- ZONE BASED GESTURE LOGIC ---
+        // x=0 is left of camera sensor, x=1 is right.
+        // Mirroring: user's left is sensor x=1, user's right is sensor x=0.
+        const handX = landmarks[0].x; // Use wrist for stability
+
+        // Visual Zones for Debug
+        ctx.strokeStyle = "rgba(255,255,255,0.2)";
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath(); ctx.moveTo(canvas.width * 0.35, 40); ctx.lineTo(canvas.width * 0.35, canvas.height); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(canvas.width * 0.65, 40); ctx.lineTo(canvas.width * 0.65, canvas.height); ctx.stroke();
+        ctx.setLineDash([]);
+
+        const cooldownTime = 1000; // 1s cooldown
+        if (nowInMs - cooldownRef.current > cooldownTime) {
+          
+          // Swipe Forward (Next): Move hand from User Right to User Left 
+          // (Sensor x=0 to x=1)
+          if (handX < 0.35) {
+            if (gestureState.current !== "RIGHT_ZONE") {
+              gestureState.current = "RIGHT_ZONE";
+              stateTimestamp.current = nowInMs;
+            }
+          } 
+          else if (handX > 0.65) {
+            if (gestureState.current === "RIGHT_ZONE" && (nowInMs - stateTimestamp.current < 800)) {
+              // DETECTED: Moved from Right to Left quickly
+              onTurnNext();
+              cooldownRef.current = nowInMs;
+              gestureState.current = "NONE";
+              flashScreen("rgba(139, 92, 246, 0.8)");
+            } else {
+              // Direct enter Left Zone
+              gestureState.current = "LEFT_ZONE";
+              stateTimestamp.current = nowInMs;
             }
           }
+          else if (handX > 0.4 && handX < 0.6) {
+            // In middle: if we were in a zone too long, reset
+            if (nowInMs - stateTimestamp.current > 1000) gestureState.current = "NONE";
+          }
+
+          // Swipe Backward (Prev): Move hand from User Left to User Right
+          // (Sensor x=1 to x=0)
+          if (handX < 0.35 && gestureState.current === "LEFT_ZONE" && (nowInMs - stateTimestamp.current < 800)) {
+              onTurnPrev();
+              cooldownRef.current = nowInMs;
+              gestureState.current = "NONE";
+              flashScreen("rgba(59, 130, 246, 0.8)");
+          }
+
+          // Feedback on current state
+          if (gestureState.current === "RIGHT_ZONE") {
+             ctx.fillStyle = "rgba(139, 92, 246, 0.5)";
+             ctx.fillRect(0, 40, canvas.width * 0.35, canvas.height - 40);
+             ctx.fillStyle = "white"; ctx.fillText("¡DESLIZA A LA IZQUIERDA! >>", 50, canvas.height - 20);
+          } else if (gestureState.current === "LEFT_ZONE") {
+             ctx.fillStyle = "rgba(59, 130, 246, 0.5)";
+             ctx.fillRect(canvas.width * 0.65, 40, canvas.width * 0.35, canvas.height - 40);
+             ctx.fillStyle = "white"; ctx.fillText("<< ¡DESLIZA A LA DERECHA!", 50, canvas.height - 20);
+          }
         }
-        
-        lastXRef.current = xPos;
-        lastTimeRef.current = nowInMs;
       } else {
-        lastXRef.current = null;
+        ctx.fillText("BUSCANDO MANO... 🔍", 10, 28);
+        // Reset state if hand is lost for 1s
+        if (nowInMs - stateTimestamp.current > 1000) gestureState.current = "NONE";
       }
     }
 

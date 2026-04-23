@@ -6,6 +6,7 @@ import { useGamification } from "@/context/GamificationContext";
 import { useLearning } from "@/context/LearningContext";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import {
   ChevronRight,
   ChevronLeft,
@@ -89,7 +90,17 @@ const getWeekNumber = (d: Date) => {
 };
 
 export default function DashboardPage() {
+  const router = useRouter();
   const { data: session, status } = useSession();
+  const role = (session?.user as any)?.role;
+
+  useEffect(() => {
+    if (status === "loading") return;
+    if (role === "ADMIN") router.replace("/dashboard/admin");
+    if (role === "SUPERADMIN") router.replace("/dashboard/superadmin");
+    if (role === "COORDINATOR") router.replace("/dashboard/coordinador");
+  }, [role, status, router]);
+
   const userName = session?.user?.name?.split(" ")[0] || "Estudiante";
   const { progress, addXp } = useGamification();
   const { userBooks } = useLearning();

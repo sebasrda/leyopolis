@@ -84,6 +84,7 @@ const coordinatorItems = [
 
 // School Admin sidebar
 const adminItems = [
+  { icon: LayoutDashboard, label: "Inicio", href: "/dashboard" },
   { icon: Building2, label: "Mi Colegio", href: "/dashboard/admin" },
   { icon: Users, label: "Usuarios", href: "/dashboard/admin/users" },
   { icon: GraduationCap, label: "Clases y Docentes", href: "/dashboard/admin/classes" },

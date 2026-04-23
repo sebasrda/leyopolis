@@ -15,6 +15,7 @@ export async function GET() {
       },
       orderBy: { createdAt: "desc" }
     });
+    console.log(`[API] Fetched ${institutions.length} institutions for SuperAdmin`);
 
     // Auto-update expired trials/plans before returning
     const today = new Date();

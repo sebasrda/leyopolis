@@ -57,7 +57,11 @@ export default function SuperAdminDashboard() {
     try {
       const res = await fetch("/api/superadmin/institutions");
       if (res.ok) {
-        setInstitutions(await res.json());
+        const data = await res.json();
+        console.log("[DEBUG] SuperAdmin institutions:", data);
+        setInstitutions(data);
+      } else {
+        console.error("[ERROR] Failed to fetch institutions:", res.status);
       }
     } catch (e) {
       console.error(e);

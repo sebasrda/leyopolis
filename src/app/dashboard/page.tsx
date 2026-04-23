@@ -96,9 +96,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (status === "loading") return;
-    if (role === "ADMIN") router.replace("/dashboard/admin");
-    if (role === "SUPERADMIN") router.replace("/dashboard/superadmin");
-    if (role === "COORDINATOR") router.replace("/dashboard/coordinador");
+    // Redirections removed to allow administrative roles to access the unified Home dashboard
   }, [role, status, router]);
 
   const userName = session?.user?.name?.split(" ")[0] || "Estudiante";

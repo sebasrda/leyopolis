@@ -60,10 +60,12 @@ const studentItems = [
 
 // Teacher sidebar
 const teacherItems = [
-  { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
+  { type: "header", label: "Menú Principal" },
+  { icon: LayoutDashboard, label: "Inicio", href: "/dashboard" },
   { icon: Library, label: "Biblioteca", href: "/dashboard/library" },
   { icon: BookOpen, label: "Mis Lecturas", href: "/dashboard/my-readings" },
-  { icon: GraduationCap, label: "Profesor", href: "/dashboard/profesor" },
+  { type: "header", label: "Herramientas Docente" },
+  { icon: GraduationCap, label: "Panel Profesor", href: "/dashboard/profesor" },
   { icon: Bot, label: "IA Docente", href: "/dashboard/profesor/ai-tools" },
   { icon: Sparkles, label: "Generador Quiz", href: "/dashboard/profesor/generador" },
   { icon: Users, label: "Mis Clases", href: "/dashboard/classes" },
@@ -73,10 +75,12 @@ const teacherItems = [
 
 // Coordinator sidebar
 const coordinatorItems = [
-  { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
+  { type: "header", label: "Menú Principal" },
+  { icon: LayoutDashboard, label: "Inicio", href: "/dashboard" },
   { icon: Library, label: "Biblioteca", href: "/dashboard/library" },
-  { icon: BarChart3, label: "Coordinador", href: "/dashboard/coordinador" },
-  { icon: GraduationCap, label: "Profesor", href: "/dashboard/profesor" },
+  { type: "header", label: "Coordinación" },
+  { icon: BarChart3, label: "Panel Coordinador", href: "/dashboard/coordinador" },
+  { icon: GraduationCap, label: "Vista Profesor", href: "/dashboard/profesor" },
   { icon: Bot, label: "IA Docente", href: "/dashboard/profesor/ai-tools" },
   { icon: Users, label: "Mis Clases", href: "/dashboard/classes" },
   { icon: BarChart3, label: "Reportes", href: "/dashboard/reports" },
@@ -84,19 +88,23 @@ const coordinatorItems = [
 
 // School Admin sidebar
 const adminItems = [
+  { type: "header", label: "Menú Principal" },
   { icon: LayoutDashboard, label: "Inicio", href: "/dashboard" },
+  { icon: Library, label: "Biblioteca", href: "/dashboard/library" },
+  { type: "header", label: "Administración" },
   { icon: Building2, label: "Mi Colegio", href: "/dashboard/admin" },
   { icon: Users, label: "Usuarios", href: "/dashboard/admin/users" },
   { icon: GraduationCap, label: "Clases y Docentes", href: "/dashboard/admin/classes" },
-  { icon: Library, label: "Biblioteca Local", href: "/dashboard/library" },
 ];
 
 // Super Admin sidebar
 const superAdminItems = [
+  { type: "header", label: "Menú Principal" },
   { icon: LayoutDashboard, label: "Inicio", href: "/dashboard" },
-  { icon: Crown, label: "Súper Admin", href: "/dashboard/superadmin" },
   { icon: Library, label: "Biblioteca", href: "/dashboard/library" },
   { icon: BookOpen, label: "Mis Lecturas", href: "/dashboard/my-readings" },
+  { type: "header", label: "Control Global" },
+  { icon: Crown, label: "Súper Admin", href: "/dashboard/superadmin" },
   { icon: Library, label: "Gestión Libros BBDD", href: "/dashboard/admin/books" },
   { icon: Users, label: "Todos los Usuarios", href: "/dashboard/admin/users" },
   { icon: BarChart3, label: "Métricas Reales", href: "/dashboard/admin/stats" },
@@ -272,7 +280,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         {/* Navigation */}
         <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-          {items.map((item) => {
+          {items.map((item: any, idx) => {
+            if (item.type === "header") {
+              return !collapsed ? (
+                <div key={item.label + idx} className="px-3 pt-5 pb-2">
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.15em]">{item.label}</p>
+                </div>
+              ) : (
+                <div key={item.label + idx} className="h-px bg-white/5 my-4 mx-2" />
+              );
+            }
+
             const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
             return (
               <Link 

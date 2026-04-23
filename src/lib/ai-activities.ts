@@ -275,39 +275,36 @@ export async function generateAndSaveActivities({
   if (genAI) {
     providersAttempted.push("Google Gemini (Direct)");
     for (const modelName of geminiModels) {
-      console.log(`[AI-STATS] Intentando con modelo: ${modelName}`);
       if (result) break;
       
       console.log(`[AI-STATS] Probando modelo Gemini: ${modelName}`);
-      for (let i = 0; i < 3; i++) { // 3 retries
-        try {
-          const model = genAI.getGenerativeModel({ model: modelName });
-          const contentParts: any[] = [prompt];
-          
-          if (isMultimodal && pdfDataPart) {
-            contentParts.push(pdfDataPart);
-          }
+      try {
+        const model = genAI.getGenerativeModel({ model: modelName });
+        const contentParts: any[] = [prompt];
+        
+        if (isMultimodal && pdfDataPart) {
+          contentParts.push(pdfDataPart);
+        }
 
-          const response = await model.generateContent(contentParts);
-          const text = response.response.text();
-          
-          const jsonMatch = text.match(/\{[\s\S]*\}/);
-          if (jsonMatch) {
-            parsedJson = JSON.parse(jsonMatch[0]);
-            result = { source: `gemini-${modelName}` };
-            console.log(`[AI-STATS] Éxito con Gemini: ${modelName}`);
-            break;
-          }
-        } catch (err: any) {
-          lastError = err;
-          const errMsg = err.message || String(err);
-          console.warn(`[AI-STATS] Intento ${i+1} falló para ${modelName}:`, errMsg.slice(0, 100));
-          
-          if (errMsg.includes("429") || errMsg.toLowerCase().includes("quota")) {
-            console.warn(`[AI-STATS] Límite de cuota en Gemini. Probando siguiente recurso...`);
-            break; 
-          }
-          await new Promise(r => setTimeout(r, 2000));
+        // Reduced timeout for the AI call itself
+        const response = await model.generateContent(contentParts);
+        const text = response.response.text();
+        
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          parsedJson = JSON.parse(jsonMatch[0]);
+          result = { source: `gemini-${modelName}` };
+          console.log(`[AI-STATS] Éxito con Gemini: ${modelName}`);
+          break;
+        }
+      } catch (err: any) {
+        lastError = err;
+        const errMsg = err.message || String(err);
+        console.warn(`[AI-STATS] Gemini ${modelName} falló:`, errMsg.slice(0, 100));
+        
+        // If it's a quota error, don't retry, just move to the next model or provider FAST
+        if (errMsg.includes("429") || errMsg.toLowerCase().includes("quota")) {
+          continue; 
         }
       }
     }

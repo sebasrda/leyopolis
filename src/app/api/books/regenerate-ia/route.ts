@@ -6,7 +6,7 @@ import { generateAndSaveActivities } from "@/lib/ai-activities";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const maxDuration = 300; // Increased for complex generation fallbacks
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);

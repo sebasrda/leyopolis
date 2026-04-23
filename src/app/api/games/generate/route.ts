@@ -28,16 +28,22 @@ export async function POST(req: Request) {
   const book = await (prisma as any).book.findUnique({ where: { id: bookId }, select: { id: true, title: true, author: true } });
   if (!book) return NextResponse.json({ message: "Book not found" }, { status: 404 });
 
-  let games = fallbackGames(book.title);
+  // 1. Fetch keys from DB
+  const settings = await prisma.systemSetting.findMany();
+  const settingsMap = settings.reduce((acc: Record<string, string>, curr) => {
+    acc[curr.key] = curr.value;
+    return acc;
+  }, {} as Record<string, string>);
 
-  const apiKey = process.env.GOOGLE_API_KEY;
-  if (apiKey) {
-    try {
-      const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-      const text = extractedText.slice(0, 6000);
-      const result = await model.generateContent(
-        `Genera configuraciones JSON para 3 juegos educativos basados en el libro "${book.title}".
+  const sanitize = (key?: string) => (key || "").trim().replace(/^["']|["']$/g, '');
+  const geminiKey = sanitize(settingsMap.GOOGLE_API_KEY || process.env.GOOGLE_API_KEY);
+  const openaiKey = sanitize(settingsMap.OPENAI_API_KEY || process.env.OPENAI_API_KEY);
+  const openrouterKey = sanitize(settingsMap.OPENROUTER_API_KEY || process.env.OPENROUTER_API_KEY);
+
+  let games = fallbackGames(book.title);
+  let jsonText = "";
+
+  const fullPrompt = `Genera configuraciones JSON para 3 juegos educativos basados en el libro "${book.title}".
 Devuelve SOLO JSON válido (sin markdown) con el formato:
 {
   "wordsearch": { "words": string[], "gridSize": number },
@@ -48,12 +54,51 @@ Palabras: extrae nombres, lugares o conceptos del contexto.
 Reorder: 3 frases con eventos ordenables.
 Match: 6 pares personaje↔descripción o concepto↔definición.
 Contexto:
-"""${text}"""`
-      );
-      const raw = result.response.text().trim();
-      const parsed = JSON.parse(raw) as any;
-      if (parsed && parsed.wordsearch && parsed.reorder && parsed.match) games = parsed;
-    } catch {
+"""${extractedText.slice(0, 10000)}"""`;
+
+  // PRIMARY: Gemini
+  if (geminiKey) {
+    try {
+      const genAI = new GoogleGenerativeAI(geminiKey);
+      const models = ["gemini-2.0-flash", "gemini-1.5-flash"];
+      for (const modelName of models) {
+        try {
+          const model = genAI.getGenerativeModel({ model: modelName });
+          const result = await model.generateContent(fullPrompt);
+          jsonText = result.response.text().trim();
+          if (jsonText) break;
+        } catch (e) { console.error(`[AI-GEN] Gemini ${modelName} failed:`, e); }
+      }
+    } catch (e) { console.error("[AI-GEN] Gemini Primary failed:", e); }
+  }
+
+  // SECONDARY: OpenRouter
+  if (!jsonText && openrouterKey) {
+    try {
+      const { generateWithOpenRouter } = await import("@/lib/ai/openrouter");
+      const result = await generateWithOpenRouter(fullPrompt, openrouterKey, "google/gemini-2.0-flash-001");
+      if (result) jsonText = JSON.stringify(result);
+    } catch (e) { console.error("[AI-GEN] OpenRouter Secondary failed:", e); }
+  }
+
+  // TERTIARY: OpenAI
+  if (!jsonText && openaiKey) {
+    try {
+      const { generateWithOpenAI } = await import("@/lib/ai/openai");
+      const result = await generateWithOpenAI(fullPrompt, "gpt-4o-mini", openaiKey);
+      if (result) jsonText = JSON.stringify(result);
+    } catch (e) { console.error("[AI-GEN] OpenAI Tertiary failed:", e); }
+  }
+
+  if (jsonText) {
+    try {
+      const cleanJson = jsonText.match(/\{[\s\S]*\}/);
+      const parsed = JSON.parse(cleanJson ? cleanJson[0] : jsonText) as any;
+      if (parsed && parsed.wordsearch && parsed.reorder && parsed.match) {
+        games = parsed;
+      }
+    } catch (e) {
+      console.error("[AI-GEN] JSON Parse failed, using fallback");
     }
   }
 

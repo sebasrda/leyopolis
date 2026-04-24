@@ -101,13 +101,7 @@ export default function DashboardPage() {
 
   const userName = session?.user?.name?.split(" ")[0] || (status === "loading" ? "..." : "Usuario");
   
-  if (status === "loading") {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
-      </div>
-    );
-  }
+  
   const { progress, addXp } = useGamification();
   const { userBooks } = useLearning();
 
@@ -225,6 +219,14 @@ export default function DashboardPage() {
       time: timeAgo(b.lastRead),
       type: b.progress >= 100 ? "complete" : "read",
     }));
+
+  if (status === "loading") {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="text-white space-y-0">

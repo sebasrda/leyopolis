@@ -136,8 +136,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
   const router = useRouter();
   const { data: session, status } = useSession();
-  const [stableRole, setStableRole] = useState<"STUDENT" | "TEACHER" | "COORDINATOR" | "ADMIN" | "SUPERADMIN">("STUDENT");
-  const role = session?.user?.role || stableRole;
+  const [stableRole, setStableRole] = useState<string | null>(null);
+  const role = session?.user?.role || stableRole || "STUDENT";
   const [searchQuery, setSearchQuery] = useState("");
   const { progress } = useGamification();
 

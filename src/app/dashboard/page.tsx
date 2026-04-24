@@ -99,7 +99,15 @@ export default function DashboardPage() {
     // Redirections removed to allow administrative roles to access the unified Home dashboard
   }, [role, status, router]);
 
-  const userName = session?.user?.name?.split(" ")[0] || "Estudiante";
+  const userName = session?.user?.name?.split(" ")[0] || (status === "loading" ? "..." : "Usuario");
+  
+  if (status === "loading") {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+      </div>
+    );
+  }
   const { progress, addXp } = useGamification();
   const { userBooks } = useLearning();
 

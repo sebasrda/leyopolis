@@ -1,36 +1,31 @@
 
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { 
-  X, 
-  BrainCircuit, 
-  Trophy, 
-  Timer, 
-  CheckCircle2, 
-  XCircle, 
-  RefreshCcw,
-  Gamepad2,
-  Puzzle,
-  Lightbulb,
-  GraduationCap,
-  Grid3X3,
-  PenTool,
-  Loader2,
-  History as HistoryIcon
+import { useState, useEffect } from "react";
+import {
+  X, BrainCircuit, Gamepad2, Grid3X3, PenTool, Loader2,
+  History as HistoryIcon, RefreshCcw, Hand, Calculator,
+  Scissors, Clock, User, Zap, HelpCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useSession } from "next-auth/react";
-import { QuizGame } from "@/components/learning/games/QuizGame";
+
+// Classic games
 import { TimelineGame } from "@/components/learning/games/TimelineGame";
 import { WordScrambleGame } from "@/components/learning/games/WordScrambleGame";
 import { WordSearchGame } from "@/components/learning/games/WordSearchGame";
 import { TrueFalseGame } from "@/components/learning/games/TrueFalseGame";
-import { EvaluationMode } from "@/components/learning/games/EvaluationMode";
+
+// Gesture games
+import { GestureQuiz } from "@/components/learning/games/gesture/GestureQuiz";
+import { GestureVerdaderoFalso } from "@/components/learning/games/gesture/GestureVerdaderoFalso";
+import { GestureContarDedos } from "@/components/learning/games/gesture/GestureContarDedos";
+import { GesturePPT } from "@/components/learning/games/gesture/GesturePPT";
+import { GestureTimeline } from "@/components/learning/games/gesture/GestureTimeline";
+import { GestureAdivinaPersonaje } from "@/components/learning/games/gesture/GestureAdivinaPersonaje";
+import { GestureSimonDice } from "@/components/learning/games/gesture/GestureSimonDice";
 
 interface GamesModalProps {
   isOpen: boolean;
@@ -39,7 +34,26 @@ interface GamesModalProps {
   bookId?: string;
 }
 
-type GameType = "truefalse" | "timeline" | "wordsearch" | "scramble" | null;
+type GameType =
+  // classic
+  | "truefalse" | "timeline" | "wordsearch" | "scramble"
+  // gesture
+  | "g-quiz" | "g-vf" | "g-dedos" | "g-ppt" | "g-timeline" | "g-adivina" | "g-simon"
+  | null;
+
+const GAME_TITLES: Record<string, string> = {
+  truefalse: "Verdad o Falso",
+  timeline: "Cronología Literaria",
+  wordsearch: "Sopa de Letras",
+  scramble: "Ordenar Frases",
+  "g-quiz": "Quiz con Gestos",
+  "g-vf": "V/F Gestual",
+  "g-dedos": "Contar Dedos",
+  "g-ppt": "Piedra Papel Tijeras",
+  "g-timeline": "Cronología Gestual",
+  "g-adivina": "Adivina el Personaje",
+  "g-simon": "Simón Dice",
+};
 
 export default function GamesModal({ isOpen, onClose, bookTitle, bookId }: GamesModalProps) {
   const { data: session } = useSession();
@@ -52,10 +66,10 @@ export default function GamesModal({ isOpen, onClose, bookTitle, bookId }: Games
     if (!bookId) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/books/${bookId}/quiz${forceRegenerate ? '?regenerate=true' : ''}`);
+      const res = await fetch(`/api/books/${bookId}/quiz${forceRegenerate ? "?regenerate=true" : ""}`);
       const data = await res.json();
-      if (data.quiz && data.quiz.content) {
-        setQuizData(typeof data.quiz.content === 'string' ? JSON.parse(data.quiz.content) : data.quiz.content);
+      if (data.quiz?.content) {
+        setQuizData(typeof data.quiz.content === "string" ? JSON.parse(data.quiz.content) : data.quiz.content);
       }
     } catch (err) {
       console.error("Error fetching games data:", err);
@@ -66,73 +80,69 @@ export default function GamesModal({ isOpen, onClose, bookTitle, bookId }: Games
 
   const handleRegenerate = async () => {
     if (!bookId) return;
-    const confirm = window.confirm("¿Estás seguro? Esto reemplazará las actividades actuales con una nueva versión generada por IA (20 preguntas + juegos).");
-    if (!confirm) return;
-
+    if (!window.confirm("¿Regenerar todas las actividades con IA?")) return;
     setLoading(true);
     try {
       const res = await fetch("/api/books/regenerate-ia", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bookId })
+        body: JSON.stringify({ bookId }),
       });
-      const data = await res.json();
       if (res.ok) {
-        alert("¡Actividades regeneradas con éxito!");
+        alert("¡Actividades regeneradas!");
         await fetchQuiz();
-      } else {
-        alert(data.message || "Error al regenerar");
       }
-    } catch (err) {
-      console.error("Error de conexión");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (!isOpen) {
-      setActiveGame(null);
-    } else if (bookId) {
-      fetchQuiz();
-    }
+    if (!isOpen) { setActiveGame(null); }
+    else if (bookId) { fetchQuiz(); }
   }, [isOpen, bookId]);
 
   if (!isOpen) return null;
 
+  const isGesture = activeGame?.startsWith("g-");
+
   return (
     <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-300">
-      <div className="w-full max-w-5xl h-[90vh] bg-card dark:bg-gray-900 rounded-3xl overflow-hidden shadow-2xl flex flex-col relative">
-        
+      <div className="w-full max-w-5xl h-[92vh] bg-card dark:bg-gray-900 rounded-3xl overflow-hidden shadow-2xl flex flex-col">
+
+        {/* Header */}
         <div className="h-20 bg-gradient-to-r from-indigo-600 to-purple-600 flex items-center justify-between px-8 text-white shrink-0">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-card/20 rounded-xl backdrop-blur-md">
+            <div className="p-2 bg-white/20 rounded-xl">
               <Gamepad2 className="h-8 w-8 text-yellow-300" />
             </div>
             <div>
               <h2 className="text-xl font-bold">Zona Interactiva: {bookTitle}</h2>
-              <p className="text-indigo-100 text-sm">Contenido dinámico basado en tu lectura</p>
+              <p className="text-indigo-100 text-sm">
+                {isGesture ? "✋ Modo Gestos — usa tu cámara" : "Juegos basados en tu lectura"}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             {isAdmin && !activeGame && (
-              <Button 
+              <Button
                 onClick={handleRegenerate}
                 disabled={loading}
-                variant="outline" 
-                className="bg-card/10 hover:bg-card/20 border-white/20 text-white gap-2 transition-all hover:scale-105 active:scale-95"
+                variant="outline"
+                className="bg-white/10 hover:bg-white/20 border-white/20 text-white gap-2"
               >
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
-                <span className="hidden sm:inline">Regenerar (IA)</span>
+                <span className="hidden sm:inline">Regenerar IA</span>
               </Button>
             )}
-            <Button variant="ghost" size="icon" onClick={onClose} className="hover:bg-card/20 text-white rounded-full h-10 w-10">
+            <Button variant="ghost" size="icon" onClick={onClose} className="hover:bg-white/20 text-white rounded-full h-10 w-10">
               <X className="h-6 w-6" />
             </Button>
           </div>
         </div>
 
-        <div className="flex-1 overflow-hidden bg-indigo-500/10/10">
+        {/* Content */}
+        <div className="flex-1 overflow-hidden">
           {!activeGame ? (
             <GameMenu onSelectGame={setActiveGame} />
           ) : (
@@ -141,47 +151,55 @@ export default function GamesModal({ isOpen, onClose, bookTitle, bookId }: Games
                 <Button variant="ghost" onClick={() => setActiveGame(null)}>← Menú</Button>
                 <div className="h-6 w-px bg-gray-200" />
                 <h3 className="font-bold text-lg text-indigo-200 dark:text-indigo-300">
-                  {activeGame === 'truefalse' && 'Reto: ¿Verdad o Falso?'}
-                  {activeGame === 'timeline' && 'Cronología Literaria'}
-                  {activeGame === 'wordsearch' && 'Busca las Palabras Clave'}
-                  {activeGame === 'scramble' && 'Reordenar e Ilustrar'}
+                  {activeGame && GAME_TITLES[activeGame]}
+                  {isGesture && <span className="ml-2 text-xs bg-purple-600/30 text-purple-300 px-2 py-0.5 rounded-full">✋ GESTOS</span>}
                 </h3>
               </div>
-              <div className="flex-1 overflow-y-auto p-6 flex justify-center items-center">
-                {quizData ? (
+              <div className="flex-1 overflow-y-auto p-6 flex justify-center items-start">
+                {loading && !quizData ? (
+                  <div className="text-center mt-20">
+                    <Loader2 className="h-10 w-10 animate-spin text-indigo-400 mx-auto mb-4" />
+                    <p className="text-slate-400">Cargando actividades personalizadas...</p>
+                  </div>
+                ) : (
                   <>
-                    {activeGame === 'truefalse' && (
-                      <TrueFalseGame 
-                        statements={quizData.statements || []} 
-                        onComplete={() => {}} 
-                        onExit={() => setActiveGame(null)} 
-                      />
+                    {/* Classic games */}
+                    {activeGame === "truefalse" && (
+                      <TrueFalseGame statements={quizData?.statements || []} onComplete={() => {}} onExit={() => setActiveGame(null)} />
                     )}
-                    {activeGame === 'timeline' && (
-                      <TimelineGame 
-                        events={quizData.timelineEvents || []} 
-                        onComplete={() => {}} 
-                      />
+                    {activeGame === "timeline" && (
+                      <TimelineGame events={quizData?.timelineEvents || []} onComplete={() => {}} />
                     )}
-                    {activeGame === 'wordsearch' && (
-                      <WordSearchGame 
-                        words={quizData.keywords || ["LEYOPOLIS", "LECTURA"]} 
-                        onComplete={() => {}} 
-                      />
+                    {activeGame === "wordsearch" && (
+                      <WordSearchGame words={quizData?.keywords || ["LEYOPOLIS", "LECTURA"]} onComplete={() => {}} />
                     )}
-                    {activeGame === 'scramble' && (
-                      <WordScrambleGame 
-                        sentences={quizData.sentences || []}
-                        onComplete={() => {}}
-                        onExit={() => setActiveGame(null)}
-                      />
+                    {activeGame === "scramble" && (
+                      <WordScrambleGame sentences={quizData?.sentences || []} onComplete={() => {}} onExit={() => setActiveGame(null)} />
+                    )}
+
+                    {/* Gesture games */}
+                    {activeGame === "g-quiz" && (
+                      <GestureQuiz questions={quizData?.questions || []} onComplete={() => {}} onExit={() => setActiveGame(null)} />
+                    )}
+                    {activeGame === "g-vf" && (
+                      <GestureVerdaderoFalso statements={quizData?.statements || []} onComplete={() => {}} onExit={() => setActiveGame(null)} />
+                    )}
+                    {activeGame === "g-dedos" && (
+                      <GestureContarDedos questions={quizData?.countingQuestions || []} onComplete={() => {}} onExit={() => setActiveGame(null)} />
+                    )}
+                    {activeGame === "g-ppt" && (
+                      <GesturePPT questions={quizData?.questions || []} onComplete={() => {}} onExit={() => setActiveGame(null)} />
+                    )}
+                    {activeGame === "g-timeline" && (
+                      <GestureTimeline events={quizData?.timelineEvents || []} onComplete={() => {}} onExit={() => setActiveGame(null)} />
+                    )}
+                    {activeGame === "g-adivina" && (
+                      <GestureAdivinaPersonaje characters={quizData?.characterClues || []} onComplete={() => {}} onExit={() => setActiveGame(null)} />
+                    )}
+                    {activeGame === "g-simon" && (
+                      <GestureSimonDice keywords={quizData?.keywords || []} onComplete={() => {}} onExit={() => setActiveGame(null)} />
                     )}
                   </>
-                ) : (
-                  <div className="text-center">
-                    <Loader2 className="h-10 w-10 animate-spin text-indigo-400 mx-auto mb-4" />
-                    <p>Cargando actividades personalizadas...</p>
-                  </div>
                 )}
               </div>
             </div>
@@ -193,40 +211,77 @@ export default function GamesModal({ isOpen, onClose, bookTitle, bookId }: Games
 }
 
 function GameMenu({ onSelectGame }: { onSelectGame: (g: GameType) => void }) {
-  const games = [
-    { id: "truefalse", title: "Verdad o Falso", description: "Reto rápido de afirmaciones.", icon: BrainCircuit, color: "bg-orange-600", gradient: "from-orange-600 to-amber-500" },
-    { id: "wordsearch", title: "Sopa de Letras", description: "Encuentra los conceptos clave.", icon: Grid3X3, color: "bg-emerald-600", gradient: "from-emerald-600 to-teal-500" },
-    { id: "timeline", title: "Cronología", description: "Ordena los hechos de la historia.", icon: HistoryIcon, color: "bg-purple-600", gradient: "from-purple-600 to-pink-500" },
-    { id: "scramble", title: "Ordenar Frases", description: "Reconstruye la historia.", icon: PenTool, color: "bg-amber-600", gradient: "from-amber-600 to-orange-500" },
+  const classicGames = [
+    { id: "truefalse", title: "Verdad o Falso", desc: "Reto de afirmaciones.", icon: BrainCircuit, gradient: "from-orange-600 to-amber-500", color: "bg-orange-600" },
+    { id: "wordsearch", title: "Sopa de Letras", desc: "Encuentra conceptos clave.", icon: Grid3X3, gradient: "from-emerald-600 to-teal-500", color: "bg-emerald-600" },
+    { id: "timeline", title: "Cronología", desc: "Ordena los hechos.", icon: HistoryIcon, gradient: "from-purple-600 to-pink-500", color: "bg-purple-600" },
+    { id: "scramble", title: "Ordenar Frases", desc: "Reconstruye la historia.", icon: PenTool, gradient: "from-amber-600 to-orange-500", color: "bg-amber-600" },
+  ];
+
+  const gestureGames = [
+    { id: "g-quiz", title: "Quiz Gestual", desc: "4 zonas · señala tu respuesta con la mano.", icon: HelpCircle, gradient: "from-blue-600 to-indigo-600", color: "bg-blue-600" },
+    { id: "g-vf", title: "V/F con Manos", desc: "Izquierda=Falso · Derecha=Verdadero.", icon: Hand, gradient: "from-rose-600 to-pink-600", color: "bg-rose-600" },
+    { id: "g-dedos", title: "Contar Dedos", desc: "Muestra la respuesta numérica.", icon: Calculator, gradient: "from-violet-600 to-purple-600", color: "bg-violet-600" },
+    { id: "g-ppt", title: "Piedra Papel Tijeras", desc: "✊🖐✌️ temático del libro.", icon: Scissors, gradient: "from-cyan-600 to-blue-600", color: "bg-cyan-600" },
+    { id: "g-timeline", title: "Cronología Gestual", desc: "¿Cuál ocurrió primero? izq/der.", icon: Clock, gradient: "from-teal-600 to-emerald-600", color: "bg-teal-600" },
+    { id: "g-adivina", title: "Adivina el Personaje", desc: "Pistas automáticas · 4 zonas.", icon: User, gradient: "from-fuchsia-600 to-purple-700", color: "bg-fuchsia-600" },
+    { id: "g-simon", title: "Simón Dice", desc: "Reproduce gestos con tema literario.", icon: Zap, gradient: "from-yellow-600 to-orange-600", color: "bg-yellow-600" },
   ];
 
   return (
-    <div className="h-full flex flex-col items-center justify-center p-8 overflow-y-auto">
-      <h3 className="text-3xl font-bold text-foreground dark:text-gray-100 mb-12 text-center">Zona de Juegos Literarios</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 w-full max-w-5xl">
-        {games.map((game) => (
-          <motion.div
-            key={game.id}
-            whileHover={{ scale: 1.05, y: -10 }}
-            whileTap={{ scale: 0.95 }}
-            className="cursor-pointer"
-            onClick={() => onSelectGame(game.id as GameType)}
-          >
-            <Card className="h-full overflow-hidden border-none shadow-xl flex flex-col">
-              <div className={`h-32 bg-gradient-to-br ${game.gradient} flex items-center justify-center`}>
-                <game.icon className="h-16 w-16 text-white opacity-90" />
-              </div>
-              <CardContent className="p-6 text-center flex-1 flex flex-col">
-                <h4 className="text-xl font-bold text-foreground dark:text-gray-100 mb-2">{game.title}</h4>
-                <p className="text-sm text-muted-foreground flex-1">{game.description}</p>
-                <Button className={`mt-6 w-full ${game.color} hover:opacity-90 text-white font-bold rounded-full`}>
-                  Jugar
-                </Button>
-              </CardContent>
-            </Card>
-          </motion.div>
-        ))}
+    <div className="h-full overflow-y-auto p-8 space-y-10">
+      {/* Classic section */}
+      <div>
+        <h3 className="text-lg font-bold text-slate-300 mb-5 flex items-center gap-2">
+          <Gamepad2 className="h-5 w-5 text-indigo-400" /> Juegos Clásicos
+        </h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
+          {classicGames.map((g) => (
+            <GameCard key={g.id} game={g} onClick={() => onSelectGame(g.id as GameType)} />
+          ))}
+        </div>
+      </div>
+
+      {/* Gesture section */}
+      <div>
+        <h3 className="text-lg font-bold text-slate-300 mb-2 flex items-center gap-2">
+          <Hand className="h-5 w-5 text-purple-400" /> Juegos con Gestos IA ✋
+          <span className="text-xs bg-purple-600/30 text-purple-300 px-2 py-0.5 rounded-full font-normal">NUEVO</span>
+        </h3>
+        <p className="text-xs text-slate-500 mb-5">Activa la cámara dentro del juego y controla todo con tu mano</p>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+          {gestureGames.map((g) => (
+            <GameCard key={g.id} game={g} onClick={() => onSelectGame(g.id as GameType)} gesture />
+          ))}
+        </div>
       </div>
     </div>
+  );
+}
+
+function GameCard({ game, onClick, gesture = false }: { game: any; onClick: () => void; gesture?: boolean }) {
+  return (
+    <motion.div
+      whileHover={{ scale: 1.05, y: -6 }}
+      whileTap={{ scale: 0.97 }}
+      className="cursor-pointer"
+      onClick={onClick}
+    >
+      <Card className="h-full overflow-hidden border-none shadow-xl flex flex-col">
+        <div className={`h-28 bg-gradient-to-br ${game.gradient} flex items-center justify-center relative`}>
+          <game.icon className="h-14 w-14 text-white opacity-90" />
+          {gesture && (
+            <span className="absolute top-2 right-2 text-xs bg-black/30 text-white px-1.5 py-0.5 rounded font-bold">✋</span>
+          )}
+        </div>
+        <CardContent className="p-4 text-center flex-1 flex flex-col">
+          <h4 className="text-sm font-bold text-foreground dark:text-gray-100 mb-1">{game.title}</h4>
+          <p className="text-xs text-muted-foreground flex-1">{game.desc}</p>
+          <Button className={`mt-4 w-full ${game.color} hover:opacity-90 text-white font-bold rounded-full text-xs`}>
+            {gesture ? "✋ Jugar" : "Jugar"}
+          </Button>
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 }

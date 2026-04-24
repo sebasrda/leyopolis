@@ -58,7 +58,9 @@ export async function GET(
       timelineEvents: [],
       keywords: [],
       sentences: [],
-      statements: []
+      statements: [],
+      characterClues: [],
+      countingQuestions: [],
     };
 
     let mainQuizId = book.quizId;
@@ -75,7 +77,9 @@ export async function GET(
           consolidatedContent.timelineEvents = content.timelineEvents || consolidatedContent.timelineEvents;
           consolidatedContent.sentences = content.sentences || consolidatedContent.sentences;
           consolidatedContent.statements = content.statements || consolidatedContent.statements;
-          
+          consolidatedContent.characterClues = content.characterClues || consolidatedContent.characterClues;
+          consolidatedContent.countingQuestions = content.countingQuestions || consolidatedContent.countingQuestions;
+
           if (!mainQuizId) mainQuizId = activity.id;
         } else if (activity.type === "MATCH") {
           // Check if it's the new Timeline format (events) or legacy Memory (pairs)

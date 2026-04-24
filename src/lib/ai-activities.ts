@@ -213,25 +213,27 @@ export async function generateAndSaveActivities({
     ${extract}
     """`;
   } else if (stage === "games-1") {
-    prompt = `Libro: "${title}" de "${author}". 
+    prompt = `Libro: "${title}" de "${author}".
     CONTEXTO: ${extract}
     TAREA: Genera datos para juegos interactivos literarios (Parte 1).
-    
+
     INSTRUCCIONES:
-    1. keywords: 15 palabras clave únicas e importantes (mínimo 4 letras, máximo 12).
-    2. timelineEvents: Una lista de exactamente 6 eventos CRUCIALES del libro en ESTRICTO ORDEN CRONOLÓGICO. Cada evento debe ser una frase clara (máximo 15 palabras).
-    
-    SALIDA: Responde SOLO un JSON: {"keywords": ["word1",...], "timelineEvents": ["evento1", "evento2", ...]}`;
+    1. keywords: 15 palabras clave únicas e importantes del libro (mínimo 4 letras, máximo 12).
+    2. timelineEvents: Exactamente 6 eventos CRUCIALES en ESTRICTO ORDEN CRONOLÓGICO. Frase clara (máximo 15 palabras cada una).
+    3. characterClues: 4 personajes, conceptos o elementos importantes del libro. Para cada uno, 3 pistas progresivas (de más vaga a más específica) sin revelar el nombre directamente. Formato: [{"name": "Nombre", "clues": ["Pista vaga", "Pista media", "Pista clara"]}]
+
+    SALIDA: Responde SOLO un JSON válido: {"keywords": [...], "timelineEvents": [...], "characterClues": [...]}`;
   } else if (stage === "games-2") {
-    prompt = `Libro: "${title}" de "${author}". 
+    prompt = `Libro: "${title}" de "${author}".
     CONTEXTO: ${extract}
     TAREA: Genera datos para juegos interactivos literarios (Parte 2).
-    
+
     INSTRUCCIONES:
-    1. sentences: 6 frases CORTAS y SIGNIFICATIVAS extraídas o basadas en el libro para reordenar (entre 5 y 10 palabras por frase).
-    2. statements: 10 afirmaciones sobre el libro (algunas verdaderas y otras falsas) con un campo "isTrue" (boolean).
-    
-    SALIDA: Responde SOLO un JSON: {"sentences": ["frase1", ...], "statements": [{"text": "...", "isTrue": true/false}]}`;
+    1. sentences: 6 frases CORTAS y SIGNIFICATIVAS del libro para reordenar (entre 5 y 10 palabras por frase).
+    2. statements: 10 afirmaciones sobre el libro (algunas verdaderas y otras falsas) con campo "isTrue" (boolean).
+    3. countingQuestions: 5 preguntas numéricas sobre el libro cuya respuesta sea un número del 1 al 5. Formato: [{"question": "¿Cuántos...?", "answer": 3, "hint": "Pista corta"}]
+
+    SALIDA: Responde SOLO un JSON válido: {"sentences": [...], "statements": [...], "countingQuestions": [...]}`;
   } else if (stage === "games" || (stage as any) === "games-all") {
     // Stage 'games' is now deprecated but kept for safety, redirecting to games-all logic if called directly
     // but the orchestration is handled in the if statement above. 
@@ -477,7 +479,9 @@ export async function generateAndSaveActivities({
         keywords: (parsed.keywords && parsed.keywords.length > 0) ? parsed.keywords : currentContent.keywords || [],
         timelineEvents: (parsed.timelineEvents && parsed.timelineEvents.length > 0) ? parsed.timelineEvents : currentContent.timelineEvents || [],
         sentences: (parsed.sentences && parsed.sentences.length > 0) ? (parsed.sentences || []).map((s: string, i: number) => ({ id: i, sentence: s })) : currentContent.sentences || [],
-        statements: (parsed.statements && parsed.statements.length > 0) ? parsed.statements : currentContent.statements || []
+        statements: (parsed.statements && parsed.statements.length > 0) ? parsed.statements : currentContent.statements || [],
+        characterClues: (parsed.characterClues && parsed.characterClues.length > 0) ? parsed.characterClues : currentContent.characterClues || [],
+        countingQuestions: (parsed.countingQuestions && parsed.countingQuestions.length > 0) ? parsed.countingQuestions : currentContent.countingQuestions || [],
       };
 
       await (prisma as any).activity.update({

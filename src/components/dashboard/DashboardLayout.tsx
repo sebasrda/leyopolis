@@ -48,6 +48,11 @@ const FloatingAiTutor = dynamic(() => import("@/components/dashboard/FloatingAiT
   ssr: false,
 });
 
+const GestureMenuNavigator = dynamic(
+  () => import("@/components/dashboard/GestureMenuNavigator").then((m) => m.GestureMenuNavigator),
+  { ssr: false }
+);
+
 // Student sidebar
 const studentItems = [
   { icon: LayoutDashboard, label: "Inicio", href: "/dashboard" },
@@ -133,6 +138,7 @@ const LEVEL_THRESHOLDS = [0, 100, 300, 600, 1000, 1500, 2100, 2800, 3600, 4500];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
+  const [gestureHighlightIdx, setGestureHighlightIdx] = useState<number | null>(null);
   const pathname = usePathname();
   const router = useRouter();
   const { data: session, status } = useSession();
@@ -165,6 +171,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   } else if (role === "TEACHER") {
     items = teacherItems;
   }
+
+  // Items navigable by gesture (no section headers)
+  const gestureNavItems = items
+    .filter((i: any) => i.href && !i.type)
+    .map((i: any) => ({ label: i.label, href: i.href }));
 
   const isStudent = role === "STUDENT";
   
@@ -292,14 +303,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             }
 
             const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
+            const isGestureHighlighted = gestureHighlightIdx !== null && gestureNavItems[gestureHighlightIdx]?.href === item.href;
             return (
-              <Link 
-                key={item.href + item.label} 
+              <Link
+                key={item.href + item.label}
                 href={item.href}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 group",
                   isActive
-                    ? "bg-[#311A4D] text-[#D8B4FE] border border-[#D8B4FE]/20" 
+                    ? "bg-[#311A4D] text-[#D8B4FE] border border-[#D8B4FE]/20"
+                    : isGestureHighlighted
+                    ? "bg-purple-500/10 text-white ring-1 ring-purple-500/50"
                     : "text-slate-400 hover:text-white hover:bg-card/5"
                 )}
               >
@@ -482,6 +496,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* Only show floating AI for non-students, non-demos, and non-reader pages */}
       {!pathname.includes("/reader/") && role !== "STUDENT" && (session?.user as any)?.licenseType !== "DEMO" && (
         <FloatingAiTutor role={role as any} />
+      )}
+
+      {/* Gesture menu navigator — hidden on reader pages */}
+      {!pathname.includes("/reader/") && (
+        <GestureMenuNavigator
+          navItems={gestureNavItems}
+          onNavigate={(href) => router.push(href)}
+          onHighlightChange={setGestureHighlightIdx}
+        />
       )}
     </div>
   );

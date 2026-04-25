@@ -51,8 +51,16 @@ export function countFingers(lm: any[]): number {
 
 /**
  * Classify hand gesture.
- * Palm-width normalization prevents the arm/wrist from being mistaken for
- * an open hand — a common failure when the camera sees the forearm.
+ *
+ * Uses TWO separate per-finger checks with different thresholds:
+ *
+ * • "extended" (strict + palm-width normalised) — used only for "open".
+ *   The palmW guard prevents arm/wrist length from faking a flat hand.
+ *
+ * • "curled" (lenient) — used only for "fist".
+ *   A finger is curled when its tip does NOT extend significantly past the
+ *   PIP joint (125 % tolerance).  This matches the natural grip/claw shape
+ *   a student makes on a laptop camera, not just a tight boxer's fist.
  */
 export function detectGesture(lm: any[]): GestureType {
   const palmW = d2(lm[5], lm[17]);
@@ -65,19 +73,24 @@ export function detectGesture(lm: any[]): GestureType {
     [20, 18, 17],
   ];
 
-  // A finger is "extended" only if its tip is:
-  //   • farther from its MCP than the PIP joint is (basic extension)
-  //   • AND at least 50 % of palm width away from the MCP (rules out curled fingers
-  //     that look extended just because the palm is large in frame)
-  const ext = FINGERS.map(([tip, pip, mcp]) => {
+  // Extended: tip clearly past PIP AND far enough from MCP (blocks arm-length noise)
+  const extended = FINGERS.map(([tip, pip, mcp]) => {
     const tipD = d2(lm[tip], lm[mcp]);
     const pipD = d2(lm[pip], lm[mcp]);
     return tipD > pipD * 1.05 && tipD > palmW * 0.5;
   });
 
-  const allCurled = ext.every(e => !e);
-  const allOpen   = ext.every(e => e);
-  const peaceSign = ext[0] && ext[1] && !ext[2] && !ext[3];
+  // Curled: tip does NOT significantly extend past PIP — lenient threshold
+  // catches the natural bent-finger "claw" grip, not only a fully closed fist
+  const curled = FINGERS.map(([tip, pip, mcp]) => {
+    const tipD = d2(lm[tip], lm[mcp]);
+    const pipD = d2(lm[pip], lm[mcp]);
+    return tipD <= pipD * 1.25;
+  });
+
+  const allCurled = curled.every(e => e);    // all 4 fingers bent → fist / grip
+  const allOpen   = extended.every(e => e);  // all 4 fingers clearly spread → open
+  const peaceSign = extended[0] && extended[1] && curled[2] && curled[3];
 
   const thumbTipD = d2(lm[4], lm[2]);
   const thumbIpD  = d2(lm[3], lm[2]);

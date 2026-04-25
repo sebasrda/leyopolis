@@ -11,18 +11,17 @@ import type { GestureState } from "./useGestureCam";
 // ─── Layout ───────────────────────────────────────────────────────────────────
 const GRID      = 3;
 const PIECE_SZ  = 110;
-const BOARD_SZ  = GRID * PIECE_SZ; // 330
+const BOARD_SZ  = GRID * PIECE_SZ;   // 330
 const CW        = 700;
 const CH        = 430;
 const BX        = 10;
 const BY        = 52;
 const TX        = BX + BOARD_SZ + 20; // 360
-const SNAP_DIST = 70;
+const SNAP_DIST = 80;   // px — distance to nearest slot centre for auto-snap on drop click
+const HOVER_R   = 65;   // px — hover highlight radius around cursor
 
-// How long the fist must be held continuously before a piece is grabbed.
-// The hook already smooths over ~100 ms of flicker, so this is the extra
-// intentional hold that the student needs to make — total ≈ 500 ms.
-const GRAB_MS   = 400;
+// ms the fist must be held for a confirmed "click"
+const CLICK_MS  = 500;
 
 const boardSlots = Array.from({ length: 9 }, (_, i) => ({
   x: BX + (i % GRID) * PIECE_SZ,
@@ -91,26 +90,30 @@ export function GestureRompecabezas({ onComplete, onExit }: Props) {
   const gameStartRef    = useRef(0);
   const onCompleteRef   = useRef(onComplete);
 
-  // Interaction refs — all game state lives here so the RAF loop can read them
-  const hoveredRef  = useRef<number | null>(null);
-  const grabbedRef  = useRef<number | null>(null);
+  // ── Interaction refs ───────────────────────────────────────────────────────
+  // hoveredRef  : piece highlighted near cursor (updated every frame, any gesture)
+  // grabbedRef  : piece currently attached to the cursor after a grab-click
+  // fistStartRef: timestamp when current fist started, null = not fisting
+  // fistFiredRef: true = this fist-hold already triggered a click — wait for release
+  // clickProgRef: 0-1 progress of the current fist hold
+  const hoveredRef   = useRef<number | null>(null);
+  const grabbedRef   = useRef<number | null>(null);
+  const fistStartRef = useRef<number | null>(null);
+  const fistFiredRef = useRef(false);
+  const clickProgRef = useRef(0);
 
-  // Grab timer — tracked in the RAF loop, NOT in React state
-  // This avoids the problem where gestureState null-flickers cancel a setTimeout.
-  const fistStartRef    = useRef<number | null>(null);
-  const fistProgressRef = useRef<number>(0);
-
-  // Mirror of gestureState for the RAF loop (avoids stale closures)
+  // Mirror gestureState into a ref so the RAF loop always reads fresh values
+  // without being a dependency of the effect.
   const gestureStateRef = useRef<GestureState>({ gesture: null, fingerCount: 0, isHandDetected: false });
 
   const { isActive, isLoading, error, gestureState, getPosition,
           videoRef, canvasRef, startCamera, stopCamera } = useGestureCam();
 
-  useEffect(() => { phaseRef.current       = phase;     }, [phase]);
+  useEffect(() => { phaseRef.current      = phase;       }, [phase]);
   useEffect(() => { gestureStateRef.current = gestureState; }, [gestureState]);
-  useEffect(() => { onCompleteRef.current   = onComplete; }, [onComplete]);
+  useEffect(() => { onCompleteRef.current  = onComplete;  }, [onComplete]);
 
-  // ── Hit-test helper ───────────────────────────────────────────────────────
+  // ── Piece hit-test ────────────────────────────────────────────────────────
   const findPiece = useCallback((cx: number, cy: number, extra = 0): Piece | null => {
     for (const p of piecesRef.current) {
       if (p.slot !== null) continue;
@@ -135,23 +138,35 @@ export function GestureRompecabezas({ onComplete, onExit }: Props) {
     img.crossOrigin = "anonymous";
     img.src = PUZZLE_IMAGES[imgIdx].src;
     const init = () => {
-      piecesRef.current    = shuffle(Array.from({ length: 9 }, (_, i) => i))
+      piecesRef.current  = shuffle(Array.from({ length: 9 }, (_, i) => i))
         .map((id, trayPos) => ({ id, trayPos, slot: null }));
-      grabbedRef.current   = null;
-      hoveredRef.current   = null;
+      grabbedRef.current = null;
+      hoveredRef.current = null;
       fistStartRef.current = null;
-      fistProgressRef.current = 0;
+      fistFiredRef.current = false;
+      clickProgRef.current = 0;
       gameStartRef.current = Date.now();
       setPhase("playing");
       phaseRef.current = "playing";
     };
-    img.onload  = () => { imgRef.current = img;   init(); };
-    img.onerror = () => { imgRef.current = null;  init(); };
+    img.onload  = () => { imgRef.current = img;  init(); };
+    img.onerror = () => { imgRef.current = null; init(); };
   }, [imgIdx]);
 
   // ── RAF draw + interaction loop ───────────────────────────────────────────
-  // All grab/drop logic lives here so the 60 fps loop accumulates the fist
-  // hold time directly — React state flickers between frames never reset it.
+  //
+  // INTERACTION MODEL
+  // ─────────────────
+  // • Piece NOT grabbed:
+  //     – Open hand → cursor moves, nearest piece within HOVER_R highlights
+  //     – Fist held for CLICK_MS → GRAB the highlighted (or nearest) piece
+  //
+  // • Piece IS grabbed:
+  //     – ANY gesture → piece follows cursor (no need to hold fist)
+  //     – Fist held for CLICK_MS → DROP: snap to nearest board slot, or back to tray
+  //
+  // The fist-click fires once per fist-hold (fistFiredRef prevents re-fire).
+  // Timer runs entirely in the RAF loop → never interrupted by React re-renders.
   useEffect(() => {
     if (phase !== "playing") return;
     let raf: number;
@@ -162,102 +177,88 @@ export function GestureRompecabezas({ onComplete, onExit }: Props) {
       const ctx = canvas.getContext("2d");
       if (!ctx)   { raf = requestAnimationFrame(tick); return; }
 
-      const img      = imgRef.current;
-      const pos      = getPosition();
-      const gs       = gestureStateRef.current;
-      const gesture  = gs.gesture;
-      const isHand   = gs.isHandDetected;
-      const isFist   = gesture === "fist";
-      const cx       = (pos?.vx ?? 0.5) * CW;
-      const cy       = (pos?.vy ?? 0.5) * CH;
-      const grabbed  = grabbedRef.current;
-      const now      = performance.now();
+      const img     = imgRef.current;
+      const pos     = getPosition();
+      const gs      = gestureStateRef.current;
+      const isHand  = gs.isHandDetected;
+      const isFist  = gs.gesture === "fist";
+      const cx      = (pos?.vx ?? 0.5) * CW;
+      const cy      = (pos?.vy ?? 0.5) * CH;
+      const grabbed = grabbedRef.current;
+      const now     = performance.now();
 
-      // ── Hover: only update while open hand, not fist ─────────────────────
-      // Freezing hover during fist preserves the pre-selected piece even if
-      // the palm shifts slightly when closing the fingers.
-      if (isHand && !isFist && grabbed === null) {
-        hoveredRef.current = null;
-        for (const p of piecesRef.current) {
-          if (p.slot !== null) continue;
-          const { x, y } = traySlots[p.trayPos];
-          if (cx >= x - 8 && cx < x + PIECE_SZ + 8 && cy >= y - 8 && cy < y + PIECE_SZ + 8) {
-            hoveredRef.current = p.id; break;
-          }
-        }
-        if (hoveredRef.current === null) {
-          for (let s = 0; s < 9; s++) {
-            const { x, y } = boardSlots[s];
-            if (cx >= x - 8 && cx < x + PIECE_SZ + 8 && cy >= y - 8 && cy < y + PIECE_SZ + 8) {
-              const p = piecesRef.current.find(pp => pp.slot === s);
-              if (p) { hoveredRef.current = p.id; break; }
-            }
-          }
-        }
-      } else if (!isHand && grabbed === null) {
+      // ── Hover: nearest piece to cursor (any gesture, only when nothing grabbed) ──
+      if (isHand && grabbed === null) {
+        hoveredRef.current = findPiece(cx, cy, HOVER_R)?.id ?? null;
+      } else if (!isHand) {
         hoveredRef.current = null;
       }
+      // When grabbed: no hover needed (cursor carries the piece)
 
-      // ── Grab timer (fist) ─────────────────────────────────────────────────
-      // Timer runs entirely in the RAF loop — null flickers in gestureState
-      // that last only 1–2 frames never reach here thanks to hook smoothing,
-      // so the accumulated hold time is monotonically increasing while fist held.
-      if (isHand && isFist && grabbed === null) {
-        if (fistStartRef.current === null) fistStartRef.current = now;
-        const held = now - fistStartRef.current;
-        fistProgressRef.current = Math.min(held / GRAB_MS, 1);
+      // ── Fist click timer ─────────────────────────────────────────────────
+      if (isHand && isFist) {
+        if (fistFiredRef.current) {
+          // Fist already triggered this hold — wait for release
+          clickProgRef.current = 0;
+        } else {
+          if (fistStartRef.current === null) fistStartRef.current = now;
+          const held = now - fistStartRef.current;
+          clickProgRef.current = Math.min(held / CLICK_MS, 1);
 
-        if (held >= GRAB_MS) {
-          // Try pre-selected hover piece first; fallback: generous hit area
-          let target = hoveredRef.current;
-          if (target === null) {
-            target = findPiece(cx, cy, 45)?.id ?? null;
-          }
-          if (target !== null) {
-            const piece = piecesRef.current.find(p => p.id === target);
-            if (piece?.slot !== null) {
-              piecesRef.current = piecesRef.current.map(p =>
-                p.id === target ? { ...p, slot: null } : p);
+          if (held >= CLICK_MS) {
+            // ── CLICK FIRED ──────────────────────────────────────────────
+            fistFiredRef.current = true;
+            fistStartRef.current = null;
+            clickProgRef.current = 0;
+
+            if (grabbed === null) {
+              // ── GRAB: first click ─────────────────────────────────────
+              let target = hoveredRef.current;
+              if (target === null) target = findPiece(cx, cy, 55)?.id ?? null;
+              if (target !== null) {
+                const piece = piecesRef.current.find(p => p.id === target);
+                if (piece?.slot !== null) {
+                  piecesRef.current = piecesRef.current.map(p =>
+                    p.id === target ? { ...p, slot: null } : p);
+                }
+                grabbedRef.current = target;
+                hoveredRef.current = null;
+              }
+            } else {
+              // ── DROP: second click ────────────────────────────────────
+              const pieceId = grabbed;
+              let bestSlot = -1; let bestDist = SNAP_DIST;
+              for (let s = 0; s < 9; s++) {
+                const { x, y } = boardSlots[s];
+                const sc = { x: x + PIECE_SZ / 2, y: y + PIECE_SZ / 2 };
+                const dist = Math.hypot(cx - sc.x, cy - sc.y);
+                if (!piecesRef.current.some(p => p.slot === s && p.id !== pieceId) && dist < bestDist) {
+                  bestDist = dist; bestSlot = s;
+                }
+              }
+              if (bestSlot >= 0) {
+                // Place on slot
+                piecesRef.current = piecesRef.current.map(p =>
+                  p.id === pieceId ? { ...p, slot: bestSlot } : p);
+                if (piecesRef.current.every(p => p.slot === p.id) && phaseRef.current === "playing") {
+                  const elapsed = (Date.now() - gameStartRef.current) / 1000;
+                  setCompletionTime(elapsed);
+                  setPhase("complete");
+                  phaseRef.current = "complete";
+                  onCompleteRef.current?.(10, 10);
+                }
+              }
+              // Whether snapped or not, release the piece
+              grabbedRef.current = null;
+              hoveredRef.current = null;
             }
-            grabbedRef.current = target;
-            hoveredRef.current = null;
-          }
-          fistStartRef.current    = null;
-          fistProgressRef.current = 0;
-        }
-      } else if (gesture === "open" && grabbed !== null) {
-        // ── Drop (open hand only) ────────────────────────────────────────────
-        fistStartRef.current    = null;
-        fistProgressRef.current = 0;
-        const pieceId = grabbed;
-        let bestSlot = -1; let bestDist = SNAP_DIST;
-        for (let s = 0; s < 9; s++) {
-          const { x, y } = boardSlots[s];
-          const sc = { x: x + PIECE_SZ / 2, y: y + PIECE_SZ / 2 };
-          const dist = Math.hypot(cx - sc.x, cy - sc.y);
-          if (!piecesRef.current.some(p => p.slot === s && p.id !== pieceId) && dist < bestDist) {
-            bestDist = dist; bestSlot = s;
           }
         }
-        if (bestSlot >= 0) {
-          piecesRef.current = piecesRef.current.map(p =>
-            p.id === pieceId ? { ...p, slot: bestSlot } : p);
-          if (piecesRef.current.every(p => p.slot === p.id) && phaseRef.current === "playing") {
-            const elapsed = (Date.now() - gameStartRef.current) / 1000;
-            setCompletionTime(elapsed);
-            setPhase("complete");
-            phaseRef.current = "complete";
-            onCompleteRef.current?.(10, 10);
-          }
-        }
-        grabbedRef.current = null;
-        hoveredRef.current = null;
-      } else if (!isHand || (!isFist && grabbed === null)) {
-        // Reset grab timer only when hand is absent or clearly not fist
-        if (!isFist) {
-          fistStartRef.current    = null;
-          fistProgressRef.current = 0;
-        }
+      } else {
+        // Fist released → ready for next click
+        fistFiredRef.current = false;
+        fistStartRef.current = null;
+        clickProgRef.current = 0;
       }
 
       // ── Draw piece helper ─────────────────────────────────────────────────
@@ -269,15 +270,14 @@ export function GestureRompecabezas({ onComplete, onExit }: Props) {
           c.drawImage(img, (id % GRID) * PIECE_SZ, Math.floor(id / GRID) * PIECE_SZ,
             PIECE_SZ, PIECE_SZ, dx, dy, PIECE_SZ, PIECE_SZ);
         } else {
-          c.fillStyle = PIECE_COLORS[id];
-          c.fillRect(dx, dy, PIECE_SZ, PIECE_SZ);
+          c.fillStyle = PIECE_COLORS[id]; c.fillRect(dx, dy, PIECE_SZ, PIECE_SZ);
           c.fillStyle = "rgba(255,255,255,0.9)"; c.font = "bold 30px sans-serif"; c.textAlign = "center";
           c.fillText((id + 1).toString(), dx + PIECE_SZ / 2, dy + PIECE_SZ / 2 + 10);
         }
         c.restore();
       };
 
-      // ── Background + panel labels ─────────────────────────────────────────
+      // ── Background ────────────────────────────────────────────────────────
       ctx.clearRect(0, 0, CW, CH);
       ctx.fillStyle = "#0d0a1e"; ctx.fillRect(0, 0, CW, CH);
 
@@ -327,60 +327,64 @@ export function GestureRompecabezas({ onComplete, onExit }: Props) {
           ctx.strokeStyle = "#fbbf24"; ctx.lineWidth = 3;
           ctx.strokeRect(x + 1, y + 1, PIECE_SZ - 2, PIECE_SZ - 2);
           ctx.fillStyle = "#fbbf24"; ctx.font = "bold 11px sans-serif"; ctx.textAlign = "center";
-          ctx.fillText("✊ cierra el puño", x + PIECE_SZ / 2, y + PIECE_SZ - 5);
+          ctx.fillText("✊ click para agarrar", x + PIECE_SZ / 2, y + PIECE_SZ - 5);
         } else {
           ctx.strokeStyle = "#7c3aed"; ctx.lineWidth = 2;
           ctx.strokeRect(x + 1, y + 1, PIECE_SZ - 2, PIECE_SZ - 2);
         }
       }
 
-      // ── Grabbed piece ─────────────────────────────────────────────────────
+      // ── Grabbed piece — follows cursor at any gesture ─────────────────────
       if (grabbedRef.current !== null) {
         const dx = cx - PIECE_SZ / 2; const dy = cy - PIECE_SZ / 2;
-        ctx.save(); ctx.shadowColor = "#fbbf24"; ctx.shadowBlur = 22;
+        ctx.save(); ctx.shadowColor = "#fbbf24"; ctx.shadowBlur = 24;
         dp(grabbedRef.current, dx, dy, 0.92); ctx.restore();
         ctx.strokeStyle = "#fbbf24"; ctx.lineWidth = 3;
         ctx.strokeRect(dx + 1, dy + 1, PIECE_SZ - 2, PIECE_SZ - 2);
-        // Snap target highlight
+
+        // Snap highlight — shows where the piece will land
+        let snapSlot = -1; let snapDist = SNAP_DIST;
         for (let s = 0; s < 9; s++) {
           const { x, y } = boardSlots[s];
           const sc = { x: x + PIECE_SZ / 2, y: y + PIECE_SZ / 2 };
-          if (Math.hypot(cx - sc.x, cy - sc.y) < SNAP_DIST &&
-              !piecesRef.current.some(p => p.slot === s && p.id !== grabbedRef.current)) {
-            ctx.fillStyle  = "rgba(167,139,250,0.22)"; ctx.fillRect(x, y, PIECE_SZ, PIECE_SZ);
-            ctx.strokeStyle = "#a78bfa"; ctx.lineWidth = 2.5;
-            ctx.setLineDash([6, 4]); ctx.strokeRect(x + 2, y + 2, PIECE_SZ - 4, PIECE_SZ - 4);
-            ctx.setLineDash([]);
-            ctx.fillStyle = "#a78bfa"; ctx.font = "bold 11px sans-serif"; ctx.textAlign = "center";
-            ctx.fillText("🖐 abre la mano", x + PIECE_SZ / 2, y + PIECE_SZ / 2 + 4);
-            break;
+          const d  = Math.hypot(cx - sc.x, cy - sc.y);
+          if (!piecesRef.current.some(p => p.slot === s && p.id !== grabbedRef.current) && d < snapDist) {
+            snapDist = d; snapSlot = s;
           }
+        }
+        if (snapSlot >= 0) {
+          const { x, y } = boardSlots[snapSlot];
+          ctx.fillStyle  = "rgba(167,139,250,0.25)"; ctx.fillRect(x, y, PIECE_SZ, PIECE_SZ);
+          ctx.strokeStyle = "#a78bfa"; ctx.lineWidth = 2.5;
+          ctx.setLineDash([6, 4]); ctx.strokeRect(x + 2, y + 2, PIECE_SZ - 4, PIECE_SZ - 4);
+          ctx.setLineDash([]);
+          ctx.fillStyle = "#a78bfa"; ctx.font = "bold 11px sans-serif"; ctx.textAlign = "center";
+          ctx.fillText("✊ click para colocar", x + PIECE_SZ / 2, y + PIECE_SZ / 2 + 4);
         }
       }
 
       // ── Cursor ────────────────────────────────────────────────────────────
       if (isHand) {
-        const col = grabbedRef.current !== null || hoveredRef.current !== null ? "#fbbf24" : "#a78bfa";
-        // Outer ring
-        ctx.beginPath(); ctx.arc(cx, cy, grabbedRef.current !== null ? 20 : 13, 0, Math.PI * 2);
+        const hasAction = grabbedRef.current !== null || hoveredRef.current !== null;
+        const col = hasAction ? "#fbbf24" : "#a78bfa";
+        const R   = grabbedRef.current !== null ? 20 : 13;
+
+        ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2);
         ctx.strokeStyle = col; ctx.lineWidth = 2.5; ctx.stroke();
-        // Centre dot
         ctx.beginPath(); ctx.arc(cx, cy, 4, 0, Math.PI * 2);
         ctx.fillStyle = col; ctx.fill();
-        // Gesture emoji
         ctx.font = "16px sans-serif"; ctx.textAlign = "left";
-        ctx.fillText(isFist ? "✊" : "🖐", cx + 15, cy - 4);
+        ctx.fillText(isFist ? "✊" : "🖐", cx + 16, cy - 4);
 
-        // Grab progress arc — shows how long the fist has been held
-        const prog = fistProgressRef.current;
-        if (isFist && grabbedRef.current === null && prog > 0) {
-          const R = 26;
-          // Background track
-          ctx.beginPath(); ctx.arc(cx, cy, R, 0, 2 * Math.PI);
-          ctx.strokeStyle = "rgba(167,139,250,0.25)"; ctx.lineWidth = 5; ctx.stroke();
-          // Progress fill
-          ctx.beginPath(); ctx.arc(cx, cy, R, -Math.PI / 2, -Math.PI / 2 + prog * 2 * Math.PI);
-          ctx.strokeStyle = "#a78bfa"; ctx.lineWidth = 5; ctx.stroke();
+        // Click progress arc — fills while fist is held
+        const prog = clickProgRef.current;
+        if (isFist && prog > 0) {
+          const ARC_R = 30;
+          ctx.beginPath(); ctx.arc(cx, cy, ARC_R, 0, 2 * Math.PI);
+          ctx.strokeStyle = "rgba(167,139,250,0.2)"; ctx.lineWidth = 5; ctx.stroke();
+          ctx.beginPath(); ctx.arc(cx, cy, ARC_R, -Math.PI / 2, -Math.PI / 2 + prog * 2 * Math.PI);
+          ctx.strokeStyle = grabbedRef.current !== null ? "#fbbf24" : "#a78bfa";
+          ctx.lineWidth = 5; ctx.stroke();
         }
       }
 
@@ -405,7 +409,7 @@ export function GestureRompecabezas({ onComplete, onExit }: Props) {
       <div className="flex flex-col items-center gap-6 p-6 w-full max-w-3xl mx-auto">
         <div className="text-center">
           <h3 className="text-2xl font-bold text-white mb-1">🧩 Rompecabezas Gestual</h3>
-          <p className="text-slate-400 text-sm">🖐 Mano abierta sobre pieza · ✊ Mantén puño para agarrar · 🖐 Abre para soltar</p>
+          <p className="text-slate-400 text-sm">Dos clicks con el puño para agarrar y colocar cada pieza</p>
         </div>
 
         <div className="flex items-center gap-3 w-full">
@@ -441,11 +445,12 @@ export function GestureRompecabezas({ onComplete, onExit }: Props) {
 
         <div className="bg-slate-800/60 border border-slate-700 rounded-xl p-4 text-sm text-slate-300 space-y-1.5 w-full max-w-lg">
           <p className="font-bold text-purple-300 mb-2">Cómo jugar:</p>
-          <p>① Activa la cámara · muestra la mano abierta 🖐</p>
-          <p>② Muévela sobre una pieza — se resalta en amarillo</p>
-          <p>③ <strong>Cierra el puño ✊ y mantenlo</strong> — verás el arco llenarse (~0.5 s)</p>
-          <p>④ Mueve al tablero · <strong>abre la mano 🖐</strong> para soltar</p>
-          <p>⑤ ¿Mal puesta? Pasa la mano abierta encima y vuelve a agarrar</p>
+          <p>① Activa la cámara y muestra tu mano 🖐</p>
+          <p>② Mueve la mano sobre una pieza — se resalta en amarillo</p>
+          <p>③ <strong>Cierra el puño ✊ y mantén (~0.5 s)</strong> — el arco se llena → ¡AGARRADA!</p>
+          <p>④ Abre la mano y mueve la pieza a su lugar en el tablero</p>
+          <p>⑤ <strong>Cierra el puño ✊ otra vez</strong> sobre la ranura para colocarla</p>
+          <p>⑥ ¿Mal puesta? Pasa la mano encima y repite el click ✊</p>
           <p className="text-purple-400 text-xs">💡 Haz clic en la imagen de referencia para verla grande</p>
         </div>
       </div>
@@ -478,31 +483,28 @@ export function GestureRompecabezas({ onComplete, onExit }: Props) {
 
   // ── PLAYING ───────────────────────────────────────────────────────────────
   const gs = gestureState;
+  const isGrabbing = grabbedRef.current !== null;
   const statusLabel =
-    !isActive                    ? "Activa la cámara para jugar" :
-    !gs.isHandDetected           ? "Muestra tu mano a la cámara" :
-    grabbedRef.current !== null  ? "✊ Pieza agarrada — abre la mano 🖐 para soltar" :
-    gs.gesture === "fist"        ? "✊ Manteniendo puño…" :
-    hoveredRef.current !== null  ? "🟡 Pieza lista — cierra el puño ✊ y mantén" :
-                                   "🖐 Mueve la mano abierta sobre una pieza";
+    !isActive          ? "Activa la cámara para jugar" :
+    !gs.isHandDetected ? "Muestra tu mano a la cámara" :
+    isGrabbing         ? "Pieza agarrada 🧩 — muévela y ✊ click para colocar" :
+    gs.gesture === "fist" ? "✊ Manteniendo puño…" :
+    hoveredRef.current !== null ? "🟡 Pieza seleccionada — ✊ click para agarrar" :
+                         "🖐 Mueve la mano sobre una pieza";
 
   return (
     <div className="flex flex-col gap-3 w-full max-w-3xl mx-auto">
       {/* Toolbar */}
       <div className="flex items-center justify-between px-1">
         <span className="text-sm font-bold text-purple-300">🧩 {PUZZLE_IMAGES[imgIdx].label}</span>
-        <button
-          onClick={() => setRefModalOpen(true)}
-          className="flex items-center gap-1.5 group"
-          title="Ver imagen de referencia grande">
+        <button onClick={() => setRefModalOpen(true)}
+          className="flex items-center gap-1.5 group" title="Ver imagen de referencia grande">
           <span className="text-xs text-slate-500 group-hover:text-slate-300 transition-colors">Referencia (clic):</span>
           <img src={PUZZLE_IMAGES[imgIdx].src} alt="ref" crossOrigin="anonymous"
             className="w-16 h-16 rounded-lg object-cover border-2 border-purple-500/40 group-hover:border-purple-400 group-hover:scale-105 transition-all cursor-zoom-in" />
         </button>
         <Button variant="ghost" size="sm" onClick={() => setPhase("selecting")}
-          className="text-slate-400 hover:text-white text-xs">
-          Cambiar imagen
-        </Button>
+          className="text-slate-400 hover:text-white text-xs">Cambiar imagen</Button>
       </div>
 
       <canvas ref={puzzleCanvasRef} width={CW} height={CH}
@@ -526,8 +528,7 @@ export function GestureRompecabezas({ onComplete, onExit }: Props) {
             <motion.div
               initial={{ scale: 0.7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.7, opacity: 0 }} transition={{ type: "spring", bounce: 0.3 }}
-              onClick={e => e.stopPropagation()}
-              className="relative">
+              onClick={e => e.stopPropagation()} className="relative">
               <img src={PUZZLE_IMAGES[imgIdx].src} alt={PUZZLE_IMAGES[imgIdx].label}
                 crossOrigin="anonymous" className="rounded-2xl shadow-2xl border-2 border-purple-500/40"
                 style={{ maxWidth: "min(90vw, 480px)", maxHeight: "70vh", objectFit: "contain" }} />

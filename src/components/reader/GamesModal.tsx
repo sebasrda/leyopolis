@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import {
   X, BrainCircuit, Gamepad2, Grid3X3, PenTool, Loader2,
-  History as HistoryIcon, RefreshCcw, Hand, Calculator,
+  History as HistoryIcon, RefreshCcw, Hand, Puzzle,
   Scissors, Clock, User, Zap, HelpCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,7 +21,7 @@ import { TrueFalseGame } from "@/components/learning/games/TrueFalseGame";
 // Gesture games
 import { GestureQuiz } from "@/components/learning/games/gesture/GestureQuiz";
 import { GestureVerdaderoFalso } from "@/components/learning/games/gesture/GestureVerdaderoFalso";
-import { GestureContarDedos } from "@/components/learning/games/gesture/GestureContarDedos";
+import { GestureRompecabezas } from "@/components/learning/games/gesture/GestureRompecabezas";
 import { GesturePPT } from "@/components/learning/games/gesture/GesturePPT";
 import { GestureTimeline } from "@/components/learning/games/gesture/GestureTimeline";
 import { GestureAdivinaPersonaje } from "@/components/learning/games/gesture/GestureAdivinaPersonaje";
@@ -38,7 +38,7 @@ type GameType =
   // classic
   | "truefalse" | "timeline" | "wordsearch" | "scramble"
   // gesture
-  | "g-quiz" | "g-vf" | "g-dedos" | "g-ppt" | "g-timeline" | "g-adivina" | "g-simon"
+  | "g-quiz" | "g-vf" | "g-puzzle" | "g-ppt" | "g-timeline" | "g-adivina" | "g-simon"
   | null;
 
 const GAME_TITLES: Record<string, string> = {
@@ -48,7 +48,7 @@ const GAME_TITLES: Record<string, string> = {
   scramble: "Ordenar Frases",
   "g-quiz": "Quiz con Gestos",
   "g-vf": "V/F Gestual",
-  "g-dedos": "Contar Dedos",
+  "g-puzzle": "Rompecabezas",
   "g-ppt": "Piedra Papel Tijeras",
   "g-timeline": "Cronología Gestual",
   "g-adivina": "Adivina el Personaje",
@@ -184,8 +184,8 @@ export default function GamesModal({ isOpen, onClose, bookTitle, bookId }: Games
                     {activeGame === "g-vf" && (
                       <GestureVerdaderoFalso statements={quizData?.statements || []} onComplete={() => {}} onExit={() => setActiveGame(null)} />
                     )}
-                    {activeGame === "g-dedos" && (
-                      <GestureContarDedos questions={quizData?.countingQuestions || []} onComplete={() => {}} onExit={() => setActiveGame(null)} />
+                    {activeGame === "g-puzzle" && (
+                      <GestureRompecabezas onComplete={() => {}} onExit={() => setActiveGame(null)} />
                     )}
                     {activeGame === "g-ppt" && (
                       <GesturePPT questions={quizData?.questions || []} onComplete={() => {}} onExit={() => setActiveGame(null)} />
@@ -221,7 +221,7 @@ function GameMenu({ onSelectGame }: { onSelectGame: (g: GameType) => void }) {
   const gestureGames = [
     { id: "g-quiz", title: "Quiz Gestual", desc: "4 zonas · señala tu respuesta con la mano.", icon: HelpCircle, gradient: "from-blue-600 to-indigo-600", color: "bg-blue-600" },
     { id: "g-vf", title: "V/F con Manos", desc: "Izquierda=Falso · Derecha=Verdadero.", icon: Hand, gradient: "from-rose-600 to-pink-600", color: "bg-rose-600" },
-    { id: "g-dedos", title: "Contar Dedos", desc: "Muestra la respuesta numérica.", icon: Calculator, gradient: "from-violet-600 to-purple-600", color: "bg-violet-600" },
+    { id: "g-puzzle", title: "Rompecabezas", desc: "Arma 15 imágenes con el puño ✊", icon: Puzzle, gradient: "from-violet-600 to-purple-600", color: "bg-violet-600" },
     { id: "g-ppt", title: "Piedra Papel Tijeras", desc: "✊🖐✌️ temático del libro.", icon: Scissors, gradient: "from-cyan-600 to-blue-600", color: "bg-cyan-600" },
     { id: "g-timeline", title: "Cronología Gestual", desc: "¿Cuál ocurrió primero? izq/der.", icon: Clock, gradient: "from-teal-600 to-emerald-600", color: "bg-teal-600" },
     { id: "g-adivina", title: "Adivina el Personaje", desc: "Pistas automáticas · 4 zonas.", icon: User, gradient: "from-fuchsia-600 to-purple-700", color: "bg-fuchsia-600" },

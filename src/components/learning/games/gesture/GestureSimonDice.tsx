@@ -23,7 +23,7 @@ interface GestureChallenge {
 
 const MAX_ROUNDS = 8;
 const HOLD_MS = 2000;
-const ROUND_TIME_MS = 4000;
+const ROUND_TIME_MS = 7000;
 
 const GESTURE_POOL: Omit<GestureChallenge, "theme">[] = [
   { gesture: "open", icon: "🖐", name: "Mano Abierta" },

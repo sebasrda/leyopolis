@@ -20,9 +20,9 @@ interface Props {
   onExit?: () => void;
 }
 
-const DWELL_MS = 1500;
+const DWELL_MS = 2000;
 const COOLDOWN_MS = 2000;
-const TIMER_S = 10;
+const TIMER_S = 15;
 
 export function GestureVerdaderoFalso({ statements, onComplete, onExit }: Props) {
   const pool = statements.slice(0, 10);

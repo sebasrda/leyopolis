@@ -24,6 +24,8 @@ export function BookCover({
             <img 
                 src={src} 
                 alt={alt} 
+                loading="lazy"
+                decoding="async"
                 className="relative z-10 max-w-full max-h-full object-contain group-hover:scale-105 transition-transform duration-500 shadow-md"
             />
             

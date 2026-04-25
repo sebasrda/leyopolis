@@ -844,6 +844,8 @@ export default function AdminBooksPage() {
                         `https://placehold.co/80x120?text=PDF`
                       }
                       alt={book.title}
+                      loading="lazy"
+                      decoding="async"
                       className="h-16 w-12 object-cover rounded-md shadow-md border"
                     />
                   </TableCell>

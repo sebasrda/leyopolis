@@ -6,21 +6,20 @@ import { Trophy, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GestureCamUI } from "./GestureCamUI";
 import { useGestureCam } from "./useGestureCam";
+import { GestureType } from "./gestureUtils";
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// ─── Layout constants ─────────────────────────────────────────────────────────
 const GRID = 3;
-const PIECE_SZ = 90;
-const BOARD_SZ = GRID * PIECE_SZ; // 270px
-const CW = 580;
-const CH = 365;
+const PIECE_SZ = 110;              // larger pieces for better visibility
+const BOARD_SZ = GRID * PIECE_SZ;  // 330 px
+const CW = 700;
+const CH = 430;
 const BX = 10;
-const BY = 48;
-const TX = BX + BOARD_SZ + 30; // 310
+const BY = 52;
+const TX = BX + BOARD_SZ + 20;    // 360  (tray starts right of board)
+const SNAP_DIST = 65;              // px from slot centre to snap
 
-const GRAB_MS = 480;   // ms holding fist over piece to grab
-const SNAP_DIST = 58;  // px from slot center to snap-drop
-
-// Pre-computed slot positions (outside component, stable)
+// Pre-computed positions — stable, outside component
 const boardSlots = Array.from({ length: 9 }, (_, i) => ({
   x: BX + (i % GRID) * PIECE_SZ,
   y: BY + Math.floor(i / GRID) * PIECE_SZ,
@@ -30,35 +29,35 @@ const traySlots = Array.from({ length: 9 }, (_, i) => ({
   y: BY + Math.floor(i / GRID) * PIECE_SZ,
 }));
 
-// ─── 15 puzzle images ─────────────────────────────────────────────────────────
+// ─── 15 puzzle images (330×330 from picsum.photos) ────────────────────────────
 const PUZZLE_IMAGES = [
-  { src: "https://picsum.photos/seed/mntpzl/270/270",    label: "Montañas"    },
-  { src: "https://picsum.photos/seed/ocnpzl/270/270",    label: "Océano"      },
-  { src: "https://picsum.photos/seed/frstpzl/270/270",   label: "Bosque"      },
-  { src: "https://picsum.photos/seed/flwrpzl/270/270",   label: "Flores"      },
-  { src: "https://picsum.photos/seed/ctypzl/270/270",    label: "Ciudad"      },
-  { src: "https://picsum.photos/seed/anmlpzl/270/270",   label: "Animales"    },
-  { src: "https://picsum.photos/seed/bchpzl/270/270",    label: "Playa"       },
-  { src: "https://picsum.photos/seed/spcpzl/270/270",    label: "Espacio"     },
-  { src: "https://picsum.photos/seed/foodpzl/270/270",   label: "Comida"      },
-  { src: "https://picsum.photos/seed/wntpzl/270/270",    label: "Invierno"    },
-  { src: "https://picsum.photos/seed/snstpzl/270/270",   label: "Atardecer"   },
-  { src: "https://picsum.photos/seed/advpzl/270/270",    label: "Aventura"    },
-  { src: "https://picsum.photos/seed/hstpzl/270/270",    label: "Historia"    },
-  { src: "https://picsum.photos/seed/grdnpzl/270/270",   label: "Jardín"      },
-  { src: "https://picsum.photos/seed/rnbwpzl/270/270",   label: "Arcoíris"   },
+  { src: "https://picsum.photos/seed/mntpzl/330/330",  label: "Montañas"   },
+  { src: "https://picsum.photos/seed/ocnpzl/330/330",  label: "Océano"     },
+  { src: "https://picsum.photos/seed/frstpzl/330/330", label: "Bosque"     },
+  { src: "https://picsum.photos/seed/flwrpzl/330/330", label: "Flores"     },
+  { src: "https://picsum.photos/seed/ctypzl/330/330",  label: "Ciudad"     },
+  { src: "https://picsum.photos/seed/anmlpzl/330/330", label: "Animales"   },
+  { src: "https://picsum.photos/seed/bchpzl/330/330",  label: "Playa"      },
+  { src: "https://picsum.photos/seed/spcpzl/330/330",  label: "Espacio"    },
+  { src: "https://picsum.photos/seed/foodpzl/330/330", label: "Comida"     },
+  { src: "https://picsum.photos/seed/wntpzl/330/330",  label: "Invierno"   },
+  { src: "https://picsum.photos/seed/snstpzl/330/330", label: "Atardecer"  },
+  { src: "https://picsum.photos/seed/advpzl/330/330",  label: "Aventura"   },
+  { src: "https://picsum.photos/seed/hstpzl/330/330",  label: "Historia"   },
+  { src: "https://picsum.photos/seed/grdnpzl/330/330", label: "Jardín"     },
+  { src: "https://picsum.photos/seed/rnbwpzl/330/330", label: "Arcoíris"  },
+];
+
+const PIECE_COLORS = [
+  "#6366f1","#8b5cf6","#ec4899","#f97316","#eab308",
+  "#22c55e","#14b8a6","#3b82f6","#a855f7",
 ];
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Piece {
   id: number;       // 0-8 → its "home" board slot
   trayPos: number;  // fixed tray position 0-8
-  slot: number | null; // current board slot, or null (in tray)
-}
-
-interface GrabStart {
-  time: number;
-  pieceId: number;
+  slot: number | null;
 }
 
 interface Props {
@@ -68,7 +67,6 @@ interface Props {
 
 type Phase = "selecting" | "playing" | "complete";
 
-// ─── Helper ───────────────────────────────────────────────────────────────────
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -78,17 +76,13 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-function drawRoundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+function drawRR(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
   ctx.beginPath();
   ctx.moveTo(x + r, y);
-  ctx.lineTo(x + w - r, y);
-  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-  ctx.lineTo(x + w, y + h - r);
-  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-  ctx.lineTo(x + r, y + h);
-  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-  ctx.lineTo(x, y + r);
-  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
   ctx.closePath();
 }
 
@@ -97,14 +91,13 @@ export function GestureRompecabezas({ onComplete, onExit }: Props) {
   const [phase, setPhase] = useState<Phase>("selecting");
   const [imgIdx, setImgIdx] = useState(0);
   const [completionTime, setCompletionTime] = useState(0);
-  const [correctCount, setCorrectCount] = useState(0);
 
   const puzzleCanvasRef = useRef<HTMLCanvasElement>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);
   const piecesRef = useRef<Piece[]>([]);
-  const grabbedRef = useRef<number | null>(null);
-  const grabStartRef = useRef<GrabStart | null>(null);
-  const grabProgressRef = useRef(0);
+  const grabbedRef = useRef<number | null>(null);   // piece.id being dragged
+  const hoveredRef = useRef<number | null>(null);   // piece.id under cursor (open hand)
+  const lastGestureRef = useRef<GestureType>(null); // previous frame gesture (for transition detection)
   const gameStartRef = useRef(0);
   const phaseRef = useRef<Phase>("selecting");
   const gestureStateRef = useRef<any>({ gesture: null, isHandDetected: false });
@@ -117,45 +110,47 @@ export function GestureRompecabezas({ onComplete, onExit }: Props) {
   useEffect(() => { gestureStateRef.current = gestureState; }, [gestureState]);
   useEffect(() => { onCompleteRef.current = onComplete; }, [onComplete]);
 
+  // ── Find piece under cursor ───────────────────────────────────────────────
+  function findPieceAt(cx: number, cy: number): Piece | null {
+    // Check tray pieces
+    for (const p of piecesRef.current) {
+      if (p.slot !== null) continue;
+      const { x, y } = traySlots[p.trayPos];
+      if (cx >= x && cx < x + PIECE_SZ && cy >= y && cy < y + PIECE_SZ) return p;
+    }
+    // Check board pieces
+    for (let s = 0; s < 9; s++) {
+      const { x, y } = boardSlots[s];
+      if (cx >= x && cx < x + PIECE_SZ && cy >= y && cy < y + PIECE_SZ) {
+        const p = piecesRef.current.find(pp => pp.slot === s);
+        if (p) return p;
+      }
+    }
+    return null;
+  }
+
   // ── Start puzzle ──────────────────────────────────────────────────────────
   const startPuzzle = useCallback(() => {
     const img = new Image();
     img.crossOrigin = "anonymous";
     img.src = PUZZLE_IMAGES[imgIdx].src;
-    img.onload = () => {
-      imgRef.current = img;
+
+    const init = () => {
       const ids = shuffle(Array.from({ length: 9 }, (_, i) => i));
       piecesRef.current = ids.map((id, trayPos) => ({ id, trayPos, slot: null }));
       grabbedRef.current = null;
-      grabStartRef.current = null;
-      grabProgressRef.current = 0;
+      hoveredRef.current = null;
+      lastGestureRef.current = null;
       gameStartRef.current = Date.now();
-      setCorrectCount(0);
       setPhase("playing");
       phaseRef.current = "playing";
     };
-    img.onerror = () => {
-      // Fallback: start without image (shapes will be drawn as colored squares)
-      imgRef.current = null;
-      const ids = shuffle(Array.from({ length: 9 }, (_, i) => i));
-      piecesRef.current = ids.map((id, trayPos) => ({ id, trayPos, slot: null }));
-      grabbedRef.current = null;
-      grabStartRef.current = null;
-      grabProgressRef.current = 0;
-      gameStartRef.current = Date.now();
-      setCorrectCount(0);
-      setPhase("playing");
-      phaseRef.current = "playing";
-    };
+
+    img.onload = () => { imgRef.current = img; init(); };
+    img.onerror = () => { imgRef.current = null; init(); };
   }, [imgIdx]);
 
-  // ── Piece colors (fallback if no image) ──────────────────────────────────
-  const PIECE_COLORS = [
-    "#6366f1","#8b5cf6","#ec4899","#f97316","#eab308",
-    "#22c55e","#14b8a6","#3b82f6","#a855f7",
-  ];
-
-  // ── Main RAF loop (draw + interact) ───────────────────────────────────────
+  // ── Main RAF loop ─────────────────────────────────────────────────────────
   useEffect(() => {
     if (phase !== "playing") return;
     let raf: number;
@@ -167,80 +162,41 @@ export function GestureRompecabezas({ onComplete, onExit }: Props) {
       if (!ctx) { raf = requestAnimationFrame(tick); return; }
 
       const img = imgRef.current;
-      const pieces = piecesRef.current;
       const pos = getPosition();
-      const gesture = gestureStateRef.current?.gesture ?? null;
-      const isHand = gestureStateRef.current?.isHandDetected ?? false;
+      const gesture: GestureType = gestureStateRef.current?.gesture ?? null;
+      const isHand: boolean = gestureStateRef.current?.isHandDetected ?? false;
       const cx = (pos?.vx ?? 0.5) * CW;
       const cy = (pos?.vy ?? 0.5) * CH;
 
+      const isFist = gesture === "fist";
+      const wasFist = lastGestureRef.current === "fist";
+
       // ── Interaction ──────────────────────────────────────────────────────
-      if (isHand && phaseRef.current === "playing") {
-        if (gesture === "fist") {
-          if (grabbedRef.current === null) {
-            // Find piece under cursor
-            let found: Piece | null = null;
-            for (const p of pieces) {
-              if (p.slot !== null) continue;
-              const { x, y } = traySlots[p.trayPos];
-              if (cx >= x && cx < x + PIECE_SZ && cy >= y && cy < y + PIECE_SZ) { found = p; break; }
+      if (phaseRef.current === "playing") {
+        if (isHand) {
+          if (!isFist) {
+            // Open hand: update hover highlight
+            if (grabbedRef.current === null) {
+              hoveredRef.current = findPieceAt(cx, cy)?.id ?? null;
             }
-            if (!found) {
+
+            // Drop: transition fist → open while holding a piece
+            if (wasFist && grabbedRef.current !== null) {
+              const pieceId = grabbedRef.current;
+              let bestSlot = -1;
+              let bestDist = SNAP_DIST;
               for (let s = 0; s < 9; s++) {
                 const { x, y } = boardSlots[s];
-                if (cx >= x && cx < x + PIECE_SZ && cy >= y && cy < y + PIECE_SZ) {
-                  found = pieces.find(p => p.slot === s) ?? null;
-                  if (found) break;
-                }
+                const sc = { x: x + PIECE_SZ / 2, y: y + PIECE_SZ / 2 };
+                const dist = Math.hypot(cx - sc.x, cy - sc.y);
+                const occupied = piecesRef.current.some(p => p.slot === s && p.id !== pieceId);
+                if (!occupied && dist < bestDist) { bestDist = dist; bestSlot = s; }
               }
-            }
-
-            if (found) {
-              if (grabStartRef.current === null) {
-                grabStartRef.current = { time: Date.now(), pieceId: found.id };
-              } else if (grabStartRef.current.pieceId !== found.id) {
-                grabStartRef.current = { time: Date.now(), pieceId: found.id };
-              } else {
-                const elapsed = Date.now() - grabStartRef.current.time;
-                grabProgressRef.current = Math.min(elapsed / GRAB_MS, 1);
-                if (elapsed >= GRAB_MS) {
-                  // Confirm grab
-                  const target = pieces.find(p => p.id === grabStartRef.current!.pieceId);
-                  if (target) {
-                    if (target.slot !== null) {
-                      piecesRef.current = pieces.map(p => p.id === target.id ? { ...p, slot: null } : p);
-                    }
-                    grabbedRef.current = target.id;
-                  }
-                  grabStartRef.current = null;
-                  grabProgressRef.current = 0;
-                }
-              }
-            } else {
-              grabStartRef.current = null;
-              grabProgressRef.current = 0;
-            }
-          }
-        } else {
-          grabStartRef.current = null;
-          grabProgressRef.current = 0;
-
-          if (grabbedRef.current !== null) {
-            const pieceId = grabbedRef.current;
-            let placed = false;
-
-            for (let s = 0; s < 9; s++) {
-              const { x, y } = boardSlots[s];
-              const sc = { x: x + PIECE_SZ / 2, y: y + PIECE_SZ / 2 };
-              const dist = Math.hypot(cx - sc.x, cy - sc.y);
-              const occupied = piecesRef.current.some(p => p.slot === s && p.id !== pieceId);
-              if (!occupied && dist < SNAP_DIST) {
-                piecesRef.current = piecesRef.current.map(p => p.id === pieceId ? { ...p, slot: s } : p);
-                placed = true;
-
+              if (bestSlot >= 0) {
+                piecesRef.current = piecesRef.current.map(p =>
+                  p.id === pieceId ? { ...p, slot: bestSlot } : p
+                );
                 const correct = piecesRef.current.filter(p => p.slot === p.id).length;
-                setCorrectCount(correct);
-
                 if (correct === 9) {
                   const elapsed = (Date.now() - gameStartRef.current) / 1000;
                   setCompletionTime(elapsed);
@@ -250,16 +206,33 @@ export function GestureRompecabezas({ onComplete, onExit }: Props) {
                   cancelAnimationFrame(raf);
                   return;
                 }
-                break;
+              }
+              grabbedRef.current = null;
+              hoveredRef.current = null;
+            }
+          } else {
+            // Fist: grab on transition (open → fist)
+            if (!wasFist && grabbedRef.current === null) {
+              const found = findPieceAt(cx, cy);
+              if (found) {
+                // Remove from board slot if placed there
+                if (found.slot !== null) {
+                  piecesRef.current = piecesRef.current.map(p =>
+                    p.id === found.id ? { ...p, slot: null } : p
+                  );
+                }
+                grabbedRef.current = found.id;
+                hoveredRef.current = null;
               }
             }
-
-            if (!placed) {
-              // Piece stays where it was (in tray slot) — no action needed since slot is still null
-            }
-            grabbedRef.current = null;
           }
+        } else {
+          // Hand lost: drop piece back (remains in tray since slot is null)
+          if (grabbedRef.current !== null) grabbedRef.current = null;
+          hoveredRef.current = null;
         }
+
+        lastGestureRef.current = gesture;
       }
 
       // ── Draw ─────────────────────────────────────────────────────────────
@@ -269,106 +242,108 @@ export function GestureRompecabezas({ onComplete, onExit }: Props) {
       ctx.fillStyle = "#0d0a1e";
       ctx.fillRect(0, 0, CW, CH);
 
-      // Board panel
+      // Board panel background
       ctx.fillStyle = "#13103a";
-      drawRoundRect(ctx, BX - 6, BY - 26, BOARD_SZ + 12, BOARD_SZ + 32, 10);
+      drawRR(ctx, BX - 6, BY - 28, BOARD_SZ + 12, BOARD_SZ + 34, 10);
       ctx.fill();
       ctx.fillStyle = "#6366f1";
-      ctx.font = "bold 11px sans-serif";
+      ctx.font = "bold 12px sans-serif";
       ctx.textAlign = "center";
-      ctx.fillText("TABLERO", BX + BOARD_SZ / 2, BY - 10);
+      ctx.fillText("📋 TABLERO", BX + BOARD_SZ / 2, BY - 12);
 
-      // Tray panel
+      // Tray panel background
       ctx.fillStyle = "#13103a";
-      drawRoundRect(ctx, TX - 6, BY - 26, BOARD_SZ + 12, BOARD_SZ + 32, 10);
+      drawRR(ctx, TX - 6, BY - 28, BOARD_SZ + 12, BOARD_SZ + 34, 10);
       ctx.fill();
       ctx.fillStyle = "#a78bfa";
-      ctx.font = "bold 11px sans-serif";
+      ctx.font = "bold 12px sans-serif";
       ctx.textAlign = "center";
-      ctx.fillText("PIEZAS", TX + BOARD_SZ / 2, BY - 10);
+      ctx.fillText("🧩 PIEZAS", TX + BOARD_SZ / 2, BY - 12);
+
+      // Helper: draw one piece image clip
+      const drawPiece = (id: number, dx: number, dy: number, alpha = 1) => {
+        const c = ctx as CanvasRenderingContext2D;
+        c.save();
+        c.globalAlpha = alpha;
+        if (img) {
+          const srcX = (id % GRID) * PIECE_SZ;
+          const srcY = Math.floor(id / GRID) * PIECE_SZ;
+          c.beginPath();
+          c.rect(dx, dy, PIECE_SZ, PIECE_SZ);
+          c.clip();
+          c.drawImage(img, srcX, srcY, PIECE_SZ, PIECE_SZ, dx, dy, PIECE_SZ, PIECE_SZ);
+        } else {
+          c.fillStyle = PIECE_COLORS[id];
+          c.fillRect(dx, dy, PIECE_SZ, PIECE_SZ);
+          c.fillStyle = "rgba(255,255,255,0.9)";
+          c.font = "bold 28px sans-serif";
+          c.textAlign = "center";
+          c.fillText((id + 1).toString(), dx + PIECE_SZ / 2, dy + PIECE_SZ / 2 + 10);
+        }
+        c.restore();
+      };
 
       // ── Board slots ──────────────────────────────────────────────────────
       for (let s = 0; s < 9; s++) {
         const { x, y } = boardSlots[s];
-        const placedPiece = piecesRef.current.find(p => p.slot === s);
+        const placed = piecesRef.current.find(p => p.slot === s);
 
-        if (placedPiece) {
-          if (img) {
-            ctx.save();
-            ctx.beginPath();
-            ctx.rect(x, y, PIECE_SZ, PIECE_SZ);
-            ctx.clip();
-            ctx.drawImage(img,
-              (placedPiece.id % GRID) * PIECE_SZ, Math.floor(placedPiece.id / GRID) * PIECE_SZ,
-              PIECE_SZ, PIECE_SZ, x, y, PIECE_SZ, PIECE_SZ);
-            ctx.restore();
-          } else {
-            ctx.fillStyle = PIECE_COLORS[placedPiece.id];
-            ctx.fillRect(x, y, PIECE_SZ, PIECE_SZ);
-            ctx.fillStyle = "rgba(255,255,255,0.8)";
-            ctx.font = "bold 24px sans-serif";
-            ctx.textAlign = "center";
-            ctx.fillText((placedPiece.id + 1).toString(), x + PIECE_SZ / 2, y + PIECE_SZ / 2 + 8);
-          }
-
-          ctx.strokeStyle = placedPiece.id === s ? "#4ade80" : "#f59e0b";
-          ctx.lineWidth = placedPiece.id === s ? 3 : 2;
+        if (placed && placed.id !== grabbedRef.current) {
+          drawPiece(placed.id, x, y);
+          // Border: green if correct, amber if wrong
+          const isCorrect = placed.id === s;
+          ctx.strokeStyle = isCorrect ? "#4ade80" : "#f59e0b";
+          ctx.lineWidth = isCorrect ? 3 : 2;
           ctx.strokeRect(x + 1, y + 1, PIECE_SZ - 2, PIECE_SZ - 2);
+
+          // Hover highlight (piece can be re-grabbed from board)
+          if (hoveredRef.current === placed.id) {
+            ctx.strokeStyle = "#fbbf24";
+            ctx.lineWidth = 3;
+            ctx.strokeRect(x + 1, y + 1, PIECE_SZ - 2, PIECE_SZ - 2);
+            ctx.fillStyle = "rgba(251,191,36,0.12)";
+            ctx.fillRect(x, y, PIECE_SZ, PIECE_SZ);
+          }
         } else {
           // Empty slot
           ctx.fillStyle = "#1a1640";
           ctx.fillRect(x, y, PIECE_SZ, PIECE_SZ);
           ctx.strokeStyle = "#3730a3";
           ctx.lineWidth = 1;
-          ctx.setLineDash([4, 4]);
-          ctx.strokeRect(x, y, PIECE_SZ, PIECE_SZ);
+          ctx.setLineDash([5, 4]);
+          ctx.strokeRect(x + 0.5, y + 0.5, PIECE_SZ - 1, PIECE_SZ - 1);
           ctx.setLineDash([]);
           ctx.fillStyle = "#3730a355";
-          ctx.font = "16px sans-serif";
+          ctx.font = "18px sans-serif";
           ctx.textAlign = "center";
-          ctx.fillText((s + 1).toString(), x + PIECE_SZ / 2, y + PIECE_SZ / 2 + 6);
+          ctx.fillText((s + 1).toString(), x + PIECE_SZ / 2, y + PIECE_SZ / 2 + 7);
         }
       }
 
       // ── Tray pieces ──────────────────────────────────────────────────────
       for (const piece of piecesRef.current) {
-        if (piece.slot !== null) continue;
-        if (piece.id === grabbedRef.current) continue;
+        if (piece.slot !== null) continue;          // placed on board
+        if (piece.id === grabbedRef.current) continue; // being dragged
 
         const { x, y } = traySlots[piece.trayPos];
+        drawPiece(piece.id, x, y);
 
-        if (img) {
-          ctx.save();
-          ctx.beginPath();
-          ctx.rect(x, y, PIECE_SZ, PIECE_SZ);
-          ctx.clip();
-          ctx.drawImage(img,
-            (piece.id % GRID) * PIECE_SZ, Math.floor(piece.id / GRID) * PIECE_SZ,
-            PIECE_SZ, PIECE_SZ, x, y, PIECE_SZ, PIECE_SZ);
-          ctx.restore();
-        } else {
-          ctx.fillStyle = PIECE_COLORS[piece.id];
-          ctx.fillRect(x, y, PIECE_SZ, PIECE_SZ);
-          ctx.fillStyle = "rgba(255,255,255,0.8)";
-          ctx.font = "bold 24px sans-serif";
-          ctx.textAlign = "center";
-          ctx.fillText((piece.id + 1).toString(), x + PIECE_SZ / 2, y + PIECE_SZ / 2 + 8);
-        }
-
-        // Hover/grab highlight
-        const hovered = grabStartRef.current?.pieceId === piece.id;
-        ctx.strokeStyle = hovered ? "#fbbf24" : "#7c3aed";
-        ctx.lineWidth = hovered ? 3 : 2;
-        ctx.strokeRect(x + 1, y + 1, PIECE_SZ - 2, PIECE_SZ - 2);
-
-        // Grab progress arc
-        if (hovered && grabProgressRef.current > 0) {
-          ctx.beginPath();
-          ctx.arc(x + PIECE_SZ / 2, y + PIECE_SZ / 2, 22,
-            -Math.PI / 2, -Math.PI / 2 + grabProgressRef.current * Math.PI * 2);
+        const isHovered = hoveredRef.current === piece.id;
+        if (isHovered) {
           ctx.strokeStyle = "#fbbf24";
-          ctx.lineWidth = 5;
-          ctx.stroke();
+          ctx.lineWidth = 3;
+          ctx.strokeRect(x + 1, y + 1, PIECE_SZ - 2, PIECE_SZ - 2);
+          ctx.fillStyle = "rgba(251,191,36,0.12)";
+          ctx.fillRect(x, y, PIECE_SZ, PIECE_SZ);
+          // "✊ para agarrar" hint
+          ctx.fillStyle = "#fbbf24";
+          ctx.font = "bold 11px sans-serif";
+          ctx.textAlign = "center";
+          ctx.fillText("✊ agarrar", x + PIECE_SZ / 2, y + PIECE_SZ - 6);
+        } else {
+          ctx.strokeStyle = "#7c3aed";
+          ctx.lineWidth = 2;
+          ctx.strokeRect(x + 1, y + 1, PIECE_SZ - 2, PIECE_SZ - 2);
         }
       }
 
@@ -378,40 +353,34 @@ export function GestureRompecabezas({ onComplete, onExit }: Props) {
         const dx = cx - PIECE_SZ / 2;
         const dy = cy - PIECE_SZ / 2;
 
-        if (img) {
-          ctx.save();
-          ctx.globalAlpha = 0.88;
-          ctx.shadowColor = "#fbbf24";
-          ctx.shadowBlur = 16;
-          ctx.beginPath();
-          ctx.rect(dx, dy, PIECE_SZ, PIECE_SZ);
-          ctx.clip();
-          ctx.drawImage(img,
-            (gid % GRID) * PIECE_SZ, Math.floor(gid / GRID) * PIECE_SZ,
-            PIECE_SZ, PIECE_SZ, dx, dy, PIECE_SZ, PIECE_SZ);
-          ctx.restore();
-        } else {
-          ctx.globalAlpha = 0.88;
-          ctx.fillStyle = PIECE_COLORS[gid];
-          ctx.fillRect(dx, dy, PIECE_SZ, PIECE_SZ);
-          ctx.globalAlpha = 1;
-        }
+        // Shadow glow
+        ctx.save();
+        ctx.shadowColor = "#fbbf24";
+        ctx.shadowBlur = 20;
+        drawPiece(gid, dx, dy, 0.92);
+        ctx.restore();
+
         ctx.strokeStyle = "#fbbf24";
         ctx.lineWidth = 3;
         ctx.strokeRect(dx + 1, dy + 1, PIECE_SZ - 2, PIECE_SZ - 2);
-        ctx.globalAlpha = 1;
 
-        // Snap target highlight
+        // Snap target highlight on board
         for (let s = 0; s < 9; s++) {
           const { x, y } = boardSlots[s];
           const sc = { x: x + PIECE_SZ / 2, y: y + PIECE_SZ / 2 };
           const dist = Math.hypot(cx - sc.x, cy - sc.y);
           if (dist < SNAP_DIST && !piecesRef.current.some(p => p.slot === s && p.id !== gid)) {
+            ctx.fillStyle = "rgba(167,139,250,0.2)";
+            ctx.fillRect(x, y, PIECE_SZ, PIECE_SZ);
             ctx.strokeStyle = "#a78bfa";
-            ctx.lineWidth = 2;
-            ctx.setLineDash([5, 4]);
+            ctx.lineWidth = 2.5;
+            ctx.setLineDash([6, 4]);
             ctx.strokeRect(x + 2, y + 2, PIECE_SZ - 4, PIECE_SZ - 4);
             ctx.setLineDash([]);
+            ctx.fillStyle = "#a78bfa";
+            ctx.font = "bold 11px sans-serif";
+            ctx.textAlign = "center";
+            ctx.fillText("🖐 soltar", x + PIECE_SZ / 2, y + PIECE_SZ / 2 + 4);
             break;
           }
         }
@@ -420,89 +389,110 @@ export function GestureRompecabezas({ onComplete, onExit }: Props) {
       // ── Cursor ───────────────────────────────────────────────────────────
       if (isHand) {
         const grabbed = grabbedRef.current !== null;
+        const hovered = hoveredRef.current !== null;
+        const color = grabbed ? "#fbbf24" : hovered ? "#fbbf24" : "#a78bfa";
+
         ctx.beginPath();
-        ctx.arc(cx, cy, grabbed ? 18 : 11, 0, Math.PI * 2);
-        ctx.strokeStyle = grabbed ? "#fbbf24" : "#a78bfa";
+        ctx.arc(cx, cy, grabbed ? 20 : 12, 0, Math.PI * 2);
+        ctx.strokeStyle = color;
         ctx.lineWidth = 2.5;
         ctx.stroke();
+
         ctx.beginPath();
-        ctx.arc(cx, cy, 3.5, 0, Math.PI * 2);
-        ctx.fillStyle = grabbed ? "#fbbf24" : "#a78bfa";
+        ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+        ctx.fillStyle = color;
         ctx.fill();
+
+        // Gesture label near cursor
+        if (!grabbed) {
+          ctx.fillStyle = color + "cc";
+          ctx.font = "13px sans-serif";
+          ctx.textAlign = "left";
+          ctx.fillText(isFist ? "✊" : "🖐", cx + 14, cy - 6);
+        }
       }
 
       // ── Progress bar ─────────────────────────────────────────────────────
       const correct = piecesRef.current.filter(p => p.slot === p.id).length;
-      const barY = CH - 14;
+      const barY = CH - 16;
+      const barW = CW - 20;
       ctx.fillStyle = "#1a1640";
-      ctx.fillRect(10, barY, CW - 20, 8);
-      ctx.fillStyle = "#4ade80";
-      ctx.fillRect(10, barY, ((CW - 20) * correct) / 9, 8);
+      ctx.fillRect(10, barY, barW, 10);
+      if (correct > 0) {
+        ctx.fillStyle = "#4ade80";
+        ctx.fillRect(10, barY, (barW * correct) / 9, 10);
+      }
       ctx.fillStyle = "#a5b4fc";
-      ctx.font = "10px sans-serif";
+      ctx.font = "11px sans-serif";
       ctx.textAlign = "right";
-      ctx.fillText(`${correct}/9 en su lugar`, CW - 10, barY - 3);
+      ctx.fillText(`${correct}/9 correctas`, CW - 10, barY - 4);
 
       raf = requestAnimationFrame(tick);
     }
 
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [phase]);
+  }, [phase, getPosition]);
 
-  // ── Render: selecting ─────────────────────────────────────────────────────
+  // ── SELECTING screen ──────────────────────────────────────────────────────
   if (phase === "selecting") {
     return (
-      <div className="flex flex-col items-center gap-6 p-6 w-full max-w-2xl mx-auto">
+      <div className="flex flex-col items-center gap-6 p-6 w-full max-w-3xl mx-auto">
         <div className="text-center">
           <h3 className="text-2xl font-bold text-white mb-1">🧩 Rompecabezas Gestual</h3>
-          <p className="text-slate-400 text-sm">Haz ✊ sobre una pieza y mantenla para agarrarla · abre la mano 🖐 para soltar</p>
+          <p className="text-slate-400 text-sm">
+            🖐 Mano abierta sobre una pieza para seleccionarla · ✊ Cierra el puño para agarrar · 🖐 Abre para soltar
+          </p>
         </div>
 
         <div className="flex items-center gap-3 w-full">
-          <Button variant="ghost" size="icon" onClick={() => setImgIdx(i => (i - 1 + PUZZLE_IMAGES.length) % PUZZLE_IMAGES.length)} className="text-white hover:bg-white/10 shrink-0">
+          <Button variant="ghost" size="icon"
+            onClick={() => setImgIdx(i => (i - 1 + PUZZLE_IMAGES.length) % PUZZLE_IMAGES.length)}
+            className="text-white hover:bg-white/10 shrink-0">
             <ChevronLeft className="h-6 w-6" />
           </Button>
 
           <div className="flex-1 flex flex-col items-center gap-3">
             <div className="grid grid-cols-5 gap-2">
               {PUZZLE_IMAGES.map((img, i) => (
-                <button
-                  key={i}
-                  onClick={() => setImgIdx(i)}
-                  className={`w-14 h-14 rounded-lg overflow-hidden border-2 transition-all ${
-                    i === imgIdx ? "border-purple-400 scale-110 shadow-lg shadow-purple-500/40" : "border-slate-700 opacity-60 hover:opacity-90"
-                  }`}
-                >
+                <button key={i} onClick={() => setImgIdx(i)}
+                  className={`w-16 h-16 rounded-xl overflow-hidden border-2 transition-all ${
+                    i === imgIdx
+                      ? "border-purple-400 scale-110 shadow-lg shadow-purple-500/50"
+                      : "border-slate-700 opacity-55 hover:opacity-80 hover:border-slate-500"
+                  }`}>
                   <img src={img.src} alt={img.label} className="w-full h-full object-cover" crossOrigin="anonymous" />
                 </button>
               ))}
             </div>
-            <p className="text-white font-bold text-lg">{PUZZLE_IMAGES[imgIdx].label}</p>
+            <p className="text-white font-bold text-xl">{PUZZLE_IMAGES[imgIdx].label}</p>
           </div>
 
-          <Button variant="ghost" size="icon" onClick={() => setImgIdx(i => (i + 1) % PUZZLE_IMAGES.length)} className="text-white hover:bg-white/10 shrink-0">
+          <Button variant="ghost" size="icon"
+            onClick={() => setImgIdx(i => (i + 1) % PUZZLE_IMAGES.length)}
+            className="text-white hover:bg-white/10 shrink-0">
             <ChevronRight className="h-6 w-6" />
           </Button>
         </div>
 
-        <Button onClick={startPuzzle} className="bg-purple-600 hover:bg-purple-500 text-white font-bold px-12 py-5 text-lg rounded-2xl shadow-lg shadow-purple-500/30">
-          ✊ ¡Jugar!
+        <Button onClick={startPuzzle}
+          className="bg-purple-600 hover:bg-purple-500 text-white font-bold px-14 py-5 text-lg rounded-2xl shadow-lg shadow-purple-500/30">
+          🧩 ¡Jugar!
         </Button>
 
-        <div className="bg-slate-800/60 border border-slate-700 rounded-xl p-4 text-sm text-slate-300 space-y-1.5 w-full">
+        <div className="bg-slate-800/60 border border-slate-700 rounded-xl p-4 text-sm text-slate-300 space-y-1.5 w-full max-w-lg">
           <p className="font-bold text-purple-300 mb-2">Cómo jugar:</p>
           <p>① Activa la cámara dentro del juego</p>
-          <p>② Apunta tu mano a una pieza del panel <span className="text-purple-300">PIEZAS</span></p>
-          <p>③ Haz un <strong>puño ✊</strong> y mantenlo ~0.5s para agarrar</p>
-          <p>④ Mueve la mano al panel <span className="text-indigo-300">TABLERO</span></p>
-          <p>⑤ <strong>Abre la mano 🖐</strong> cerca de un espacio para soltar</p>
+          <p>② Mueve tu <strong>mano abierta 🖐</strong> sobre una pieza — se resalta en amarillo</p>
+          <p>③ Cierra el <strong>puño ✊</strong> para agarrarla instantáneamente</p>
+          <p>④ Mueve el puño al tablero izquierdo hasta ver el espacio en morado</p>
+          <p>⑤ <strong>Abre la mano 🖐</strong> para soltar · ¿La pusiste mal? ¡Agárrala de nuevo!</p>
         </div>
       </div>
     );
   }
 
-  // ── Render: complete ──────────────────────────────────────────────────────
+  // ── COMPLETE screen ───────────────────────────────────────────────────────
   if (phase === "complete") {
     const mins = Math.floor(completionTime / 60);
     const secs = Math.floor(completionTime % 60);
@@ -517,13 +507,13 @@ export function GestureRompecabezas({ onComplete, onExit }: Props) {
             {mins > 0 ? `${mins}m ` : ""}{secs}s
           </span>
         </p>
-        <div className="flex gap-4 flex-wrap justify-center">
+        <div className="flex gap-3 flex-wrap justify-center">
           <Button
             onClick={() => { setPhase("selecting"); setImgIdx(i => (i + 1) % PUZZLE_IMAGES.length); }}
             className="bg-purple-600 hover:bg-purple-500 text-white rounded-full px-8 font-bold">
             Siguiente imagen 🧩
           </Button>
-          <Button onClick={() => { setPhase("selecting"); }} variant="ghost" className="text-slate-300">
+          <Button onClick={() => setPhase("selecting")} variant="ghost" className="text-slate-300">
             Elegir imagen
           </Button>
           <Button onClick={onExit} variant="ghost" className="text-slate-400">Salir</Button>
@@ -532,32 +522,34 @@ export function GestureRompecabezas({ onComplete, onExit }: Props) {
     );
   }
 
-  // ── Render: playing ───────────────────────────────────────────────────────
+  // ── PLAYING screen ────────────────────────────────────────────────────────
+  const grabbed = grabbedRef.current !== null;
   const statusLabel = !isActive
     ? "Activa la cámara para jugar"
     : !gestureState.isHandDetected
     ? "Muestra tu mano a la cámara"
-    : grabbedRef.current !== null
-    ? "✊ Moviendo pieza… abre la mano para soltar"
+    : grabbed
+    ? "✊ Moviendo pieza — abre la mano 🖐 para soltar"
     : gestureState.gesture === "fist"
-    ? "✊ Apunta a una pieza y mantén el puño"
-    : "Mueve la mano sobre una pieza y haz ✊";
+    ? "✊ Apunta tu puño cerrado a una pieza"
+    : "🖐 Abre la mano sobre una pieza, luego cierra el puño ✊";
 
   return (
-    <div className="flex flex-col gap-3 w-full max-w-2xl mx-auto">
+    <div className="flex flex-col gap-3 w-full max-w-3xl mx-auto">
       <div className="flex items-center justify-between px-1">
-        <span className="text-sm font-bold text-purple-300">{PUZZLE_IMAGES[imgIdx].label}</span>
+        <span className="text-sm font-bold text-purple-300">🧩 {PUZZLE_IMAGES[imgIdx].label}</span>
         <div className="flex items-center gap-2">
           <span className="text-xs text-slate-500">Referencia:</span>
           <img
             src={PUZZLE_IMAGES[imgIdx].src}
             alt="ref"
             crossOrigin="anonymous"
-            className="w-12 h-12 rounded object-cover border border-purple-500/40"
+            className="w-16 h-16 rounded-lg object-cover border-2 border-purple-500/40"
           />
         </div>
-        <Button variant="ghost" size="sm" onClick={() => setPhase("selecting")} className="text-slate-400 hover:text-white text-xs">
-          Cambiar
+        <Button variant="ghost" size="sm" onClick={() => setPhase("selecting")}
+          className="text-slate-400 hover:text-white text-xs">
+          Cambiar imagen
         </Button>
       </div>
 
@@ -566,7 +558,7 @@ export function GestureRompecabezas({ onComplete, onExit }: Props) {
         width={CW}
         height={CH}
         className="rounded-2xl border border-purple-500/20 w-full"
-        style={{ maxWidth: CW, display: "block", margin: "0 auto" }}
+        style={{ display: "block", margin: "0 auto" }}
       />
 
       <div className="flex justify-center">

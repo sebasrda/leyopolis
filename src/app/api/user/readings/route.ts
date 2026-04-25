@@ -157,8 +157,16 @@ export async function POST(request: Request) {
           streak: newStreak,
           lastActive: now,
           xp: { increment: xpToAdd },
-          // Level up logic: simplistic level = floor(xp / 500) + 1
-          level: Math.floor((user.xp + xpToAdd) / 500) + 1
+          // Level up logic matching GamificationContext LEVEL_THRESHOLDS = [0, 100, 300, 600, 1000, 1500, 2100, 2800, 3600, 4500]
+          level: (() => {
+            const thresholds = [0, 100, 300, 600, 1000, 1500, 2100, 2800, 3600, 4500];
+            const newXp = user.xp + xpToAdd;
+            let lvl = 1;
+            while (lvl < thresholds.length && newXp >= thresholds[lvl]) {
+              lvl++;
+            }
+            return lvl;
+          })()
         }
       });
     }

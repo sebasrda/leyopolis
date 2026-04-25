@@ -55,7 +55,7 @@ export function GamificationProvider({ children }: { children: React.ReactNode }
 
     const fetchProgress = async () => {
         try {
-            const res = await fetch('/api/user/progress');
+            const res = await fetch('/api/user/progress', { cache: 'no-store' });
             if (res.ok) {
                 const data = await res.json();
                 // Merge API data with default structure (in case some fields are missing in DB or partial)
@@ -113,7 +113,7 @@ export function GamificationProvider({ children }: { children: React.ReactNode }
       // Simple logic: if newXp > threshold of current level
       // Note: LEVEL_THRESHOLDS index is level-1 (e.g. index 0 is lvl 1 start, index 1 is lvl 2 start)
       // If we have 10 levels, max index is 9.
-      if (newLevel < LEVEL_THRESHOLDS.length && newXp >= LEVEL_THRESHOLDS[newLevel]) {
+      while (newLevel < LEVEL_THRESHOLDS.length && newXp >= LEVEL_THRESHOLDS[newLevel]) {
         newLevel++;
         // TODO: Trigger Level Up Modal/Sound here
         alert(`¡Nivel Subido! Ahora eres Nivel ${newLevel}`);
@@ -129,7 +129,7 @@ export function GamificationProvider({ children }: { children: React.ReactNode }
   useEffect(() => {
     const pollInterval = setInterval(async () => {
         try {
-            const res = await fetch('/api/user/progress');
+            const res = await fetch('/api/user/progress', { cache: 'no-store' });
             if (res.ok) {
                 const data = await res.json();
                 setProgress(prev => {

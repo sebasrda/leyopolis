@@ -19,77 +19,94 @@ export interface GestureState {
 }
 
 export function useGestureCam() {
-  const [isActive, setIsActive] = useState(false);
+  const [isActive, setIsActive]   = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError]         = useState<string | null>(null);
   const [gestureState, setGestureState] = useState<GestureState>({
-    gesture: null,
-    fingerCount: 0,
-    isHandDetected: false,
+    gesture: null, fingerCount: 0, isHandDetected: false,
   });
 
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const videoRef      = useRef<HTMLVideoElement>(null);
+  const canvasRef     = useRef<HTMLCanvasElement>(null);
   const landmarkerRef = useRef<HandLandmarker | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const rafRef = useRef<number>(0);
-  const isActiveRef = useRef(false);
+  const streamRef     = useRef<MediaStream | null>(null);
+  const rafRef        = useRef<number>(0);
+  const isActiveRef   = useRef(false);
 
-  // Position ref — updated every frame, NOT pushed to React state
+  // Updated every frame — NOT pushed to React state (avoids 60-fps re-renders)
   const positionRef = useRef<HandPos | null>(null);
 
-  // Previous values to avoid unnecessary re-renders
-  const prevGestureRef = useRef<GestureType>(null);
-  const prevFingerRef = useRef(0);
+  // Previous emitted values — used to skip no-op setState calls
+  const prevGestureRef  = useRef<GestureType>(null);
+  const prevFingerRef   = useRef(0);
   const prevDetectedRef = useRef(false);
+
+  // 6-frame rolling buffer for gesture smoothing.
+  // Requires a 3/6 majority before emitting a state change, which eliminates
+  // 1–2 frame flickers without introducing noticeable latency (~100 ms at 30 fps).
+  const gestBufferRef = useRef<GestureType[]>([]);
 
   const detectFrame = () => {
     if (!videoRef.current || !landmarkerRef.current || !isActiveRef.current || !canvasRef.current) return;
 
-    const video = videoRef.current;
+    const video  = videoRef.current;
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
+    const ctx    = canvas.getContext("2d");
 
     if (video.videoWidth > 0 && video.videoHeight > 0 && ctx) {
-      canvas.width = video.videoWidth;
+      canvas.width  = video.videoWidth;
       canvas.height = video.videoHeight;
-      const now = performance.now();
-      const results = landmarkerRef.current.detectForVideo(video, now);
 
+      const results = landmarkerRef.current.detectForVideo(video, performance.now());
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       if (results.landmarks?.length > 0) {
         const lm = results.landmarks[0];
+
         const dutils = new DrawingUtils(ctx);
         dutils.drawConnectors(lm, HandLandmarker.HAND_CONNECTIONS, { color: "#a78bfa", lineWidth: 2 });
         dutils.drawLandmarks(lm, { color: "#ffffff", lineWidth: 1, radius: 3 });
 
-        const g = detectGesture(lm);
-        const fc = countFingers(lm);
-        const pos = getHandPos(lm);
+        const rawG = detectGesture(lm);
+        const fc   = countFingers(lm);
+        const pos  = getHandPos(lm);
 
         positionRef.current = pos;
 
-        if (g !== prevGestureRef.current || fc !== prevFingerRef.current || !prevDetectedRef.current) {
-          prevGestureRef.current = g;
-          prevFingerRef.current = fc;
+        // ── Gesture smoothing ──────────────────────────────────────────────
+        gestBufferRef.current.push(rawG);
+        if (gestBufferRef.current.length > 6) gestBufferRef.current.shift();
+
+        // Majority vote over the buffer
+        const counts = new Map<string, number>();
+        for (const g of gestBufferRef.current) counts.set(g ?? "__", (counts.get(g ?? "__") ?? 0) + 1);
+        let topKey = "__"; let topCnt = 0;
+        for (const [k, c] of counts) { if (c > topCnt) { topCnt = c; topKey = k; } }
+
+        // If no clear majority, keep the previously emitted gesture (avoids thrashing)
+        const smoothG: GestureType = topCnt >= 3
+          ? (topKey === "__" ? null : topKey as GestureType)
+          : prevGestureRef.current;
+
+        if (smoothG !== prevGestureRef.current || fc !== prevFingerRef.current || !prevDetectedRef.current) {
+          prevGestureRef.current  = smoothG;
+          prevFingerRef.current   = fc;
           prevDetectedRef.current = true;
-          setGestureState({ gesture: g, fingerCount: fc, isHandDetected: true });
+          setGestureState({ gesture: smoothG, fingerCount: fc, isHandDetected: true });
         }
       } else {
-        positionRef.current = null;
+        positionRef.current     = null;
+        gestBufferRef.current   = []; // clear buffer so old votes don't linger
         if (prevDetectedRef.current || prevGestureRef.current !== null) {
-          prevGestureRef.current = null;
-          prevFingerRef.current = 0;
+          prevGestureRef.current  = null;
+          prevFingerRef.current   = 0;
           prevDetectedRef.current = false;
           setGestureState({ gesture: null, fingerCount: 0, isHandDetected: false });
         }
       }
     }
 
-    if (isActiveRef.current) {
-      rafRef.current = requestAnimationFrame(detectFrame);
-    }
+    if (isActiveRef.current) rafRef.current = requestAnimationFrame(detectFrame);
   };
 
   const startCamera = async () => {
@@ -129,27 +146,19 @@ export function useGestureCam() {
     isActiveRef.current = false;
     setIsActive(false);
     setGestureState({ gesture: null, fingerCount: 0, isHandDetected: false });
-    positionRef.current = null;
+    positionRef.current    = null;
     prevGestureRef.current = null;
-    prevFingerRef.current = 0;
+    prevFingerRef.current  = 0;
     prevDetectedRef.current = false;
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(t => t.stop());
-      streamRef.current = null;
-    }
-    if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    if (videoRef.current) videoRef.current.srcObject = null;
+    gestBufferRef.current  = [];
+    if (streamRef.current) { streamRef.current.getTracks().forEach(t => t.stop()); streamRef.current = null; }
+    if (rafRef.current)     cancelAnimationFrame(rafRef.current);
+    if (videoRef.current)   videoRef.current.srcObject = null;
   }, []);
 
   useEffect(() => () => { stopCamera(); }, [stopCamera]);
 
   const getPosition = useCallback(() => positionRef.current, []);
 
-  return {
-    isActive, isLoading, error,
-    gestureState,
-    getPosition,
-    videoRef, canvasRef,
-    startCamera, stopCamera,
-  };
+  return { isActive, isLoading, error, gestureState, getPosition, videoRef, canvasRef, startCamera, stopCamera };
 }

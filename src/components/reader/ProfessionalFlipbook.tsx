@@ -1562,6 +1562,41 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
                         </div>
                         ))}
                     </HTMLFlipBook>
+
+                    {/* Translated-text overlay — shown when a language flag is active, bilingual window is closed, and we're on a real PDF page */}
+                    {translatedLanguage && !bilingualMode && currentPage >= VIRTUAL_PAGES && (
+                      <div
+                        className="absolute inset-0 z-40 flex overflow-hidden"
+                        style={{ borderRadius: 2 }}
+                      >
+                        {isTranslating ? (
+                          <div className={cn(
+                            "flex-1 flex flex-col items-center justify-center gap-3",
+                            isDarkMode ? "bg-gray-900" : "bg-white"
+                          )}>
+                            <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+                            <span className="text-xs text-gray-400">Traduciendo...</span>
+                          </div>
+                        ) : (
+                          <div
+                            className={cn(
+                              "flex-1 h-full overflow-y-auto px-14 py-10 font-serif leading-8 text-[0.92rem] tracking-wide",
+                              isDarkMode ? "bg-gray-900 text-gray-100" : "bg-white text-gray-900",
+                              "shadow-[inset_4px_0_12px_rgba(0,0,0,0.08)]"
+                            )}
+                            style={{ columnCount: isSinglePage ? 1 : 2, columnGap: "3rem" }}
+                          >
+                            <p className="whitespace-pre-wrap m-0">
+                              {translationOverlay || ""}
+                            </p>
+                            <div className="text-center text-xs text-gray-400 mt-10 break-after-column">
+                              — {translatedLanguage} —
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
                     </div>
                 )}
                 </Document>

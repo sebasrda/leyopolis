@@ -4,7 +4,8 @@
       "Bash(npm run *)",
       "Bash(git commit -m ' *)",
       "Bash(grep -E \"\\\\.\\(tsx?|jsx?\\)$\")",
-      "Bash(xargs grep *)"
+      "Bash(xargs grep *)",
+      "Bash(taskkill /F /IM node.exe)"
     ]
   }
 }

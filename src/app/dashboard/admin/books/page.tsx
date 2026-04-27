@@ -403,39 +403,50 @@ export default function AdminBooksPage() {
       setTranslationProgress({ current: 0, total: pages.length });
       setTranslationStatus(`Traduciendo páginas (0/${pages.length})...`);
 
-      // 2. Traducir página por página (Loop en el cliente para evitar timeouts)
-      for (let i = 0; i < pages.length; i++) {
-        const text = pages[i].trim();
-        if (!text || text.length < 5) {
-          setTranslationProgress(prev => ({ ...prev, current: i + 1 }));
-          continue;
-        }
+      // 2. Traducir con concurrencia controlada (5 páginas a la vez)
+      const CONCURRENCY = 5;
+      const chunks = [];
+      for (let i = 0; i < pages.length; i += CONCURRENCY) {
+        chunks.push(pages.slice(i, i + CONCURRENCY).map((text, index) => ({
+          text: text.trim(),
+          index: i + index
+        })));
+      }
 
-        setTranslationStatus(`Traduciendo página ${i + 1} de ${pages.length}...`);
+      for (const chunk of chunks) {
+        await Promise.all(chunk.map(async ({ text, index }) => {
+          if (!text || text.length < 5) {
+            setTranslationProgress(prev => ({ ...prev, current: prev.current + 1 }));
+            return;
+          }
+
+          try {
+            // Traducir página individual
+            await fetch("/api/translate", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ text, targetLanguage }),
+            });
+
+            // Traducir spread (si no es la primera página)
+            if (index > 0 && pages[index - 1]) {
+              const spreadText = `${pages[index - 1].trim()}\n\n---\n\n${text}`;
+              await fetch("/api/translate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text: spreadText, targetLanguage }),
+              });
+            }
+          } catch (e) {
+            console.warn(`Error en página ${index + 1}:`, e);
+          } finally {
+            setTranslationProgress(prev => ({ ...prev, current: prev.current + 1 }));
+            setTranslationStatus(`Traduciendo página ${index + 1} de ${pages.length}...`);
+          }
+        }));
         
-        const transRes = await fetch("/api/translate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text, targetLanguage }),
-        });
-        
-        if (!transRes.ok) {
-          console.warn(`Error en página ${i+1}`);
-        }
-
-        // También traducir el "spread" (esta página + la anterior) para el lector dual
-        if (i > 0) {
-           const spreadText = `${pages[i-1].trim()}\n\n---\n\n${pages[i].trim()}`;
-           await fetch("/api/translate", {
-             method: "POST",
-             headers: { "Content-Type": "application/json" },
-             body: JSON.stringify({ text: spreadText, targetLanguage }),
-           });
-        }
-
-        setTranslationProgress(prev => ({ ...prev, current: i + 1 }));
-        // Pequeña pausa para no saturar la API
-        await new Promise(r => setTimeout(r, 200));
+        // Pequeño respiro entre bloques para no saturar
+        await new Promise(r => setTimeout(r, 500));
       }
       
       setSuccess(`Libro de ${pages.length} páginas traducido al ${targetLanguage} correctamente.`);

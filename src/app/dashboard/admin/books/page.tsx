@@ -407,14 +407,14 @@ export default function AdminBooksPage() {
       const CONCURRENCY = 5;
       const chunks = [];
       for (let i = 0; i < pages.length; i += CONCURRENCY) {
-        chunks.push(pages.slice(i, i + CONCURRENCY).map((text, index) => ({
+        chunks.push(pages.slice(i, i + CONCURRENCY).map((text: string, index: number) => ({
           text: text.trim(),
           index: i + index
         })));
       }
 
       for (const chunk of chunks) {
-        await Promise.all(chunk.map(async ({ text, index }) => {
+        await Promise.all(chunk.map(async ({ text, index }: { text: string, index: number }) => {
           if (!text || text.length < 5) {
             setTranslationProgress(prev => ({ ...prev, current: prev.current + 1 }));
             return;

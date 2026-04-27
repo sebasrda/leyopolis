@@ -380,32 +380,69 @@ export default function AdminBooksPage() {
     }
   };
 
+  const [translationProgress, setTranslationProgress] = useState({ current: 0, total: 0 });
+
   const handleTranslateBook = async (bookId: string, targetLanguage: string) => {
     if (translatingBookId) return;
     
     setTranslatingBookId(bookId);
-    setTranslationStatus("Iniciando...");
+    setTranslationStatus("Extrayendo texto del PDF...");
+    setTranslationProgress({ current: 0, total: 0 });
     
     try {
-      const res = await fetch("/api/admin/books/translate-book", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bookId, targetLanguage }),
-      });
+      // 1. Extraer todas las páginas
+      const extractRes = await fetch(`/api/admin/books/${bookId}/extract`);
+      if (!extractRes.ok) throw new Error("Fallo al extraer texto del libro");
+      const { pages } = await extractRes.json();
       
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.message || "Fallo en la traducción");
+      if (!pages || pages.length === 0) throw new Error("No se encontró texto en el libro");
+      
+      setTranslationProgress({ current: 0, total: pages.length });
+      setTranslationStatus(`Traduciendo páginas (0/${pages.length})...`);
+
+      // 2. Traducir página por página (Loop en el cliente para evitar timeouts)
+      for (let i = 0; i < pages.length; i++) {
+        const text = pages[i].trim();
+        if (!text || text.length < 5) {
+          setTranslationProgress(prev => ({ ...prev, current: i + 1 }));
+          continue;
+        }
+
+        setTranslationStatus(`Traduciendo página ${i + 1} de ${pages.length}...`);
+        
+        const transRes = await fetch("/api/translate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text, targetLanguage }),
+        });
+        
+        if (!transRes.ok) {
+          console.warn(`Error en página ${i+1}`);
+        }
+
+        // También traducir el "spread" (esta página + la anterior) para el lector dual
+        if (i > 0) {
+           const spreadText = `${pages[i-1].trim()}\n\n---\n\n${pages[i].trim()}`;
+           await fetch("/api/translate", {
+             method: "POST",
+             headers: { "Content-Type": "application/json" },
+             body: JSON.stringify({ text: spreadText, targetLanguage }),
+           });
+        }
+
+        setTranslationProgress(prev => ({ ...prev, current: i + 1 }));
+        // Pequeña pausa para no saturar la API
+        await new Promise(r => setTimeout(r, 200));
       }
       
-      setSuccess(`Libro traducido al ${targetLanguage} correctamente.`);
-      fetchBooks();
+      setSuccess(`Libro de ${pages.length} páginas traducido al ${targetLanguage} correctamente.`);
     } catch (err: any) {
       console.error(err);
       setError(`Error al traducir: ${err.message}`);
     } finally {
       setTranslatingBookId(null);
       setTranslationStatus("");
+      setTranslationProgress({ current: 0, total: 0 });
     }
   };
 
@@ -562,9 +599,32 @@ export default function AdminBooksPage() {
           </button>
         </div>
       )}
+      {translatingBookId && (
+        <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg space-y-2">
+          <div className="flex items-center gap-2 text-blue-700 text-sm font-medium">
+            <Loader2 className="h-4 w-4 animate-spin" /> {translationStatus}
+          </div>
+          {translationProgress.total > 0 && (
+            <div className="space-y-1">
+              <div className="w-full bg-blue-200 rounded-full h-1.5">
+                <div 
+                  className="bg-blue-600 h-1.5 rounded-full transition-all duration-300" 
+                  style={{ width: `${(translationProgress.current / translationProgress.total) * 100}%` }}
+                />
+              </div>
+              <p className="text-[10px] text-blue-500 text-right">
+                {translationProgress.current} de {translationProgress.total} páginas
+              </p>
+            </div>
+          )}
+        </div>
+      )}
       {success && (
         <div className="bg-green-50 border border-green-200 p-3 rounded-lg flex items-center gap-2 text-green-700 text-sm">
           <CheckCircle2 className="h-4 w-4" /> {success}
+          <button onClick={() => setSuccess(null)} className="ml-auto">
+            ✕
+          </button>
         </div>
       )}
 

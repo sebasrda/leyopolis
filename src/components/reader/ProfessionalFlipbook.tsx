@@ -981,16 +981,19 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
     return () => { isMounted = false; };
   }, [currentPage, pdfDocument, isSinglePage]);
 
-  // Servicio de Traducción — siempre abre en modo bilingüe
+  // Servicio de Traducción — traduce silenciosamente, sin abrir la ventana flotante
   const handleTranslate = async (lang: string, force: boolean = false) => {
     if (translatedLanguage === lang && !force) {
-        closeTranslation();
+        // Deselect: apagar idioma activo y cerrar ventana
+        setTranslatedLanguage(null);
+        setTranslationOverlay(null);
+        setTranslationSource(null);
+        setBilingualMode(false);
+        bilingualModeRef.current = false;
+        setTranslationEngine(null);
+        setIsTranslationExpanded(false);
         return;
     }
-
-    // Bilingual is always on — no toggle needed
-    bilingualModeRef.current = true;
-    setBilingualMode(true);
 
     setIsTranslating(true);
     setTranslatedLanguage(lang);
@@ -1038,14 +1041,25 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
     }
   };
 
+  // Cierra solo la ventana flotante bilingüe (mantiene idioma activo)
   const closeTranslation = () => {
-    setTranslatedLanguage(null);
-    setTranslationOverlay(null);
     setBilingualMode(false);
     bilingualModeRef.current = false;
-    setTranslationSource(null);
     setIsTranslationExpanded(false);
-    setTranslationEngine(null);
+  };
+
+  // Abre/cierra la ventana bilingüe (botón separado de las banderas)
+  const toggleBilingualWindow = () => {
+    if (!translatedLanguage) {
+        // Sin idioma activo, activar EN por defecto y abrir ventana
+        void handleTranslate("EN");
+        setBilingualMode(true);
+        bilingualModeRef.current = true;
+        return;
+    }
+    const next = !bilingualMode;
+    setBilingualMode(next);
+    bilingualModeRef.current = next;
   };
 
   // Auto-retranslate when the page changes.
@@ -1304,23 +1318,38 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
         {/* Derecha: Herramientas de Lectura */}
         <div className="flex items-center gap-3 shrink-0">
             
-            {/* Traductor */}
+            {/* Banderas de idioma — click silencioso, sin ventana */}
             <div className="flex items-center gap-1 bg-black/20 rounded-lg p-1">
-                <span className="text-xs text-gray-400 px-1.5"><Languages size={14} /></span>
-                {['EN', 'ZH', 'FR', 'DE'].map((lang) => (
-                    <button 
+                {([['EN','🇺🇸'],['ZH','🇨🇳'],['FR','🇫🇷'],['DE','🇩🇪']] as [string,string][]).map(([lang, flag]) => (
+                    <button
                         key={lang}
-                        onClick={() => handleTranslate(lang)} 
+                        onClick={() => handleTranslate(lang)}
+                        title={lang}
                         className={cn(
-                            "w-7 h-6 text-[10px] rounded font-bold transition-all",
-                            translatedLanguage === lang 
-                                ? "bg-indigo-600 text-white shadow-sm" 
-                                : "hover:bg-card/10 text-gray-400"
+                            "w-7 h-6 text-base rounded transition-all flex items-center justify-center",
+                            translatedLanguage === lang
+                                ? "bg-indigo-600 shadow-sm ring-1 ring-indigo-400"
+                                : "hover:bg-card/10 opacity-60 hover:opacity-100"
                         )}
                     >
-                        {lang}
+                        {flag}
                     </button>
                 ))}
+                {/* Botón bilingüe separado */}
+                <button
+                    onClick={toggleBilingualWindow}
+                    title="Modo Bilingüe"
+                    className={cn(
+                        "px-2 h-6 text-[9px] rounded font-bold transition-all ml-1",
+                        bilingualMode
+                            ? "bg-purple-600 text-white shadow-sm ring-1 ring-purple-400"
+                            : translatedLanguage
+                                ? "bg-black/30 text-purple-300 hover:bg-purple-900/40"
+                                : "bg-black/30 text-gray-500 hover:bg-card/10"
+                    )}
+                >
+                    BI
+                </button>
             </div>
 
             <div className="h-6 w-px bg-card/10" />
@@ -1559,9 +1588,9 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
             </div>
         </div>
 
-        {/* Draggable/Floating Translation Modal */}
+        {/* Draggable/Floating Translation Modal — solo visible en modo bilingüe */}
         <AnimatePresence>
-            {translatedLanguage && (
+            {bilingualMode && translatedLanguage && (
                 <motion.div 
                     initial={{ y: 100, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}

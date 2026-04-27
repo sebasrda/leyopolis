@@ -388,10 +388,11 @@ export default function AdminBooksPage() {
         throw new Error(data.message || "Fallo en la traducción");
       }
       
-      toast.success(`Libro traducido al ${targetLanguage} correctamente.`);
+      setSuccess(`Libro traducido al ${targetLanguage} correctamente.`);
+      fetchBooks();
     } catch (err: any) {
       console.error(err);
-      toast.error(`Error: ${err.message}`);
+      setError(`Error al traducir: ${err.message}`);
     } finally {
       setTranslatingBookId(null);
       setTranslationStatus("");

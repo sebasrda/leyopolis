@@ -400,9 +400,12 @@ export default function AdminBooksPage() {
         absoluteUrl = `${baseUrl}${book.contentUrl}`;
       }
 
+      const { pdfjs: pdfjsLib } = await import("react-pdf");
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+
       const res = await fetch(absoluteUrl);
       const arrayBuffer = await res.arrayBuffer();
-      const loadingTask = pdfjs.getDocument({ data: arrayBuffer });
+      const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
       const pdf = await loadingTask.promise;
       
       const numPages = pdf.numPages;

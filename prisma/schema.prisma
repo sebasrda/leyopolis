@@ -518,3 +518,15 @@ model PasswordResetToken {
   expires DateTime
   createdAt DateTime @default(now())
 }
+
+model Translation {
+  id             String   @id @default(cuid())
+  hash           String   @unique // sha1(originalText + targetLanguage)
+  originalText   String   // Optional: stored for reference or debugging
+  translatedText String
+  targetLanguage String
+  engine         String   // e.g. "claude", "openai"
+  createdAt      DateTime @default(now())
+
+  @@index([hash])
+}

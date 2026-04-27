@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
 
-const CACHE_VERSION = "v6";
+const CACHE_VERSION = "v7";
 
 function normalizeTarget(input: string) {
   const t = input.trim();
@@ -22,22 +22,9 @@ function normalizeTarget(input: string) {
   return { prompt: t, iso: lower || t };
 }
 
-// ─── In-Memory Cache ───────────────────────────────────────────────
-type CacheEntry = { translation: string; expiresAtMs: number };
-const cache = new Map<string, CacheEntry>();
-
 function cacheKey(text: string, targetLanguage: string) {
   const hash = createHash("sha1").update(text).digest("hex");
   return `${CACHE_VERSION}::${targetLanguage}::${hash}`;
-}
-function getCached(key: string) {
-  const entry = cache.get(key);
-  if (!entry) return null;
-  if (Date.now() > entry.expiresAtMs) { cache.delete(key); return null; }
-  return entry.translation;
-}
-function setCached(key: string, translation: string, ttlMs: number) {
-  cache.set(key, { translation, expiresAtMs: Date.now() + ttlMs });
 }
 
 // ─── Build the prompt ──────────────────────────────────────────────
@@ -88,17 +75,10 @@ async function translateWithClaude(text: string, targetLangPrompt: string, apiKe
       }),
     });
 
-    if (!response.ok) {
-      console.error(`[TRANSLATE] Anthropic API returned ${response.status}`);
-      return null;
-    }
-
+    if (!response.ok) return null;
     const data = await response.json();
     const translation = data.content?.[0]?.text;
-    if (translation && translation.trim().length > 10) {
-      console.log(`[TRANSLATE] ✓ Claude 3.5 Sonnet succeeded (${translation.length} chars)`);
-      return translation.trim();
-    }
+    if (translation && translation.trim().length > 10) return translation.trim();
   } catch (error) {
     console.error("[TRANSLATE] Claude error:", error);
   }
@@ -122,7 +102,7 @@ async function translateWithOpenAI(text: string, targetLangPrompt: string, apiKe
         messages: [
           {
             role: "system",
-            content: `You are a professional literary translator. You translate text into ${targetLangPrompt} with perfect fluency. Return ONLY the translation.`,
+            content: `You are a professional literary translator. You translate text into ${targetLangPrompt} with perfect fluency.`,
           },
           {
             role: "user",
@@ -130,17 +110,13 @@ async function translateWithOpenAI(text: string, targetLangPrompt: string, apiKe
           },
         ],
         temperature: 0.3,
-        max_tokens: 16384,
       }),
     });
 
     if (!response.ok) return null;
     const data = await response.json();
     const translation = data.choices?.[0]?.message?.content;
-    if (translation && translation.trim().length > 10) {
-      console.log(`[TRANSLATE] ✓ OpenAI gpt-4o-mini succeeded (${translation.length} chars)`);
-      return translation.trim();
-    }
+    if (translation && translation.trim().length > 10) return translation.trim();
   } catch (error) {
     console.error("[TRANSLATE] OpenAI error:", error);
   }
@@ -169,10 +145,7 @@ async function translateWithOpenRouter(text: string, targetLangPrompt: string, a
     if (!response.ok) return null;
     const data = await response.json();
     const translation = data.choices?.[0]?.message?.content;
-    if (translation && translation.trim().length > 10) {
-      console.log(`[TRANSLATE] ✓ OpenRouter succeeded (${translation.length} chars)`);
-      return translation.trim();
-    }
+    if (translation && translation.trim().length > 10) return translation.trim();
   } catch (error) {
     console.error("[TRANSLATE] OpenRouter error:", error);
   }
@@ -187,13 +160,9 @@ async function translateWithGemini(text: string, targetLangPrompt: string, apiKe
   try {
     const genAI = new GoogleGenerativeAI(key);
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    const prompt = buildTranslationPrompt(text, targetLangPrompt);
-    const result = await model.generateContent(prompt);
+    const result = await model.generateContent(buildTranslationPrompt(text, targetLangPrompt));
     const translation = result.response.text();
-    if (translation && translation.trim().length > 10) {
-      console.log(`[TRANSLATE] ✓ Gemini succeeded (${translation.length} chars)`);
-      return translation.trim();
-    }
+    if (translation && translation.trim().length > 10) return translation.trim();
   } catch (error) {
     console.error("[TRANSLATE] Gemini failed");
   }
@@ -210,10 +179,7 @@ async function translateWithGoogleFree(text: string, targetIso: string): Promise
     const translated = Array.isArray(data) && Array.isArray(data[0])
       ? data[0].map((p: any) => p[0]).join("")
       : "";
-    if (translated.trim().length > 10) {
-      console.log(`[TRANSLATE] ✓ Google Free API succeeded`);
-      return translated;
-    }
+    if (translated.trim().length > 10) return translated;
   } catch (error) {
     console.error("[TRANSLATE] Google Free API failed");
   }
@@ -232,8 +198,49 @@ export async function POST(req: Request) {
 
     const safeText = text.length > 60000 ? text.slice(0, 60000) : text;
     const key = cacheKey(safeText, target.iso);
-    const cached = getCached(key);
-    if (cached) return NextResponse.json({ translation: cached, engine: "cache" });
+
+    // 1. CHECK PERSISTENT DB CACHE (FULL TEXT)
+    const dbCached = await prisma.translation.findUnique({ where: { hash: key } });
+    if (dbCached) {
+      return NextResponse.json({ translation: dbCached.translatedText, engine: "db-cache" });
+    }
+
+    // 2. CHECK IF IT'S A SPREAD (---) AND ASSEMBLE FROM INDIVIDUAL PAGES
+    if (safeText.includes("\n\n---\n\n")) {
+      const parts = safeText.split("\n\n---\n\n");
+      const translatedParts = [];
+      let allFound = true;
+
+      for (const part of parts) {
+        const partText = part.trim();
+        if (!partText) continue;
+        const partKey = cacheKey(partText, target.iso);
+        const cachedPart = await prisma.translation.findUnique({ where: { hash: partKey } });
+        if (cachedPart) {
+          translatedParts.push(cachedPart.translatedText);
+        } else {
+          allFound = false;
+          break;
+        }
+      }
+
+      if (allFound && translatedParts.length > 0) {
+        const combinedTranslation = translatedParts.join("\n\n---\n\n");
+        // Save the combined result for next time
+        await prisma.translation.upsert({
+          where: { hash: key },
+          update: {},
+          create: {
+            hash: key,
+            originalText: safeText.slice(0, 500),
+            translatedText: combinedTranslation,
+            targetLanguage: target.iso,
+            engine: "db-cache-assembled"
+          }
+        });
+        return NextResponse.json({ translation: combinedTranslation, engine: "db-cache-assembled" });
+      }
+    }
 
     // Fetch keys from DB
     const settings = await prisma.systemSetting.findMany();
@@ -250,37 +257,48 @@ export async function POST(req: Request) {
       gemini: sanitize(settingsMap.GOOGLE_API_KEY)
     };
 
-    // 1. Claude (Primary)
-    const claudeResult = await translateWithClaude(safeText, target.prompt, keys.anthropic);
-    if (claudeResult) {
-      setCached(key, claudeResult, 12 * 60 * 60 * 1000);
-      return NextResponse.json({ translation: claudeResult, engine: "claude" });
+    let resultText: string | null = null;
+    let engineUsed = "";
+
+    // Chain of engines
+    resultText = await translateWithClaude(safeText, target.prompt, keys.anthropic);
+    if (resultText) engineUsed = "claude";
+    else {
+      resultText = await translateWithOpenAI(safeText, target.prompt, keys.openai);
+      if (resultText) engineUsed = "openai";
+      else {
+        resultText = await translateWithOpenRouter(safeText, target.prompt, keys.openrouter);
+        if (resultText) engineUsed = "openrouter";
+        else {
+          resultText = await translateWithGemini(safeText, target.prompt, keys.gemini);
+          if (resultText) engineUsed = "gemini";
+          else {
+            resultText = await translateWithGoogleFree(safeText, target.iso);
+            if (resultText) engineUsed = "google-free";
+          }
+        }
+      }
     }
 
-    // 2. OpenAI (Fallback)
-    const openaiResult = await translateWithOpenAI(safeText, target.prompt, keys.openai);
-    if (openaiResult) {
-      setCached(key, openaiResult, 12 * 60 * 60 * 1000);
-      return NextResponse.json({ translation: openaiResult, engine: "openai" });
+    if (resultText) {
+      // SAVE TO PERSISTENT CACHE (FOR FUTURE SAVINGS)
+      try {
+        await prisma.translation.upsert({
+          where: { hash: key },
+          update: {},
+          create: {
+            hash: key,
+            originalText: safeText.slice(0, 500),
+            translatedText: resultText,
+            targetLanguage: target.iso,
+            engine: engineUsed
+          }
+        });
+      } catch (dbError) {
+        console.error("[TRANSLATE] DB Save error:", dbError);
+      }
+      return NextResponse.json({ translation: resultText, engine: engineUsed });
     }
-
-    // 3. OpenRouter (Fallback)
-    const orResult = await translateWithOpenRouter(safeText, target.prompt, keys.openrouter);
-    if (orResult) {
-      setCached(key, orResult, 12 * 60 * 60 * 1000);
-      return NextResponse.json({ translation: orResult, engine: "openrouter" });
-    }
-
-    // 4. Gemini (Legacy)
-    const geminiResult = await translateWithGemini(safeText, target.prompt, keys.gemini);
-    if (geminiResult) {
-      setCached(key, geminiResult, 12 * 60 * 60 * 1000);
-      return NextResponse.json({ translation: geminiResult, engine: "gemini" });
-    }
-
-    // 5. Google Free (Last resort)
-    const googleResult = await translateWithGoogleFree(safeText, target.iso);
-    if (googleResult) return NextResponse.json({ translation: googleResult, engine: "google-free" });
 
     return NextResponse.json({ translation: safeText, degraded: true });
 

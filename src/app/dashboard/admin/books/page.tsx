@@ -69,6 +69,8 @@ export default function AdminBooksPage() {
   const [quizFile, setQuizFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadingQuizFor, setUploadingQuizFor] = useState<string | null>(null);
+  const [translatingBookId, setTranslatingBookId] = useState<string | null>(null);
+  const [translationStatus, setTranslationStatus] = useState<string>("");
   const quizInputRef = useRef<HTMLInputElement>(null);
 
   // Audio states
@@ -362,9 +364,37 @@ export default function AdminBooksPage() {
       fetchBooks();
     } catch (err: any) {
       console.error(err);
-      setError(err.message || "Error en la generación con IA");
+      setError(err.message || "Error al regenerar actividades");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleTranslateBook = async (bookId: string, targetLanguage: string) => {
+    if (translatingBookId) return;
+    
+    setTranslatingBookId(bookId);
+    setTranslationStatus("Iniciando...");
+    
+    try {
+      const res = await fetch("/api/admin/books/translate-book", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookId, targetLanguage }),
+      });
+      
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || "Fallo en la traducción");
+      }
+      
+      toast.success(`Libro traducido al ${targetLanguage} correctamente.`);
+    } catch (err: any) {
+      console.error(err);
+      toast.error(`Error: ${err.message}`);
+    } finally {
+      setTranslatingBookId(null);
+      setTranslationStatus("");
     }
   };
 
@@ -1001,6 +1031,48 @@ export default function AdminBooksPage() {
                       >
                         <Sparkles className="h-5 w-5" />
                       </Button>
+
+                      {/* Botón de Traducción Previa */}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className={cn(
+                              "text-blue-400 hover:text-blue-700 hover:bg-blue-50 rounded-full",
+                              translatingBookId === book.id && "animate-pulse"
+                            )}
+                            title="Pre-traducir libro (Caché global)"
+                            disabled={translatingBookId !== null}
+                          >
+                            {translatingBookId === book.id ? (
+                              <Loader2 className="h-5 w-5 animate-spin" />
+                            ) : (
+                              <Languages className="h-5 w-5" />
+                            )}
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48 bg-slate-900 border-slate-800 text-white">
+                          <DropdownMenuLabel className="text-[10px] uppercase text-gray-400">Traducir a:</DropdownMenuLabel>
+                          <DropdownMenuSeparator className="bg-slate-800" />
+                          <DropdownMenuItem className="hover:bg-slate-800 cursor-pointer" onClick={() => handleTranslateBook(book.id, "EN")}>
+                            🇺🇸 Inglés (EN)
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="hover:bg-slate-800 cursor-pointer" onClick={() => handleTranslateBook(book.id, "FR")}>
+                            🇫🇷 Francés (FR)
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="hover:bg-slate-800 cursor-pointer" onClick={() => handleTranslateBook(book.id, "DE")}>
+                            🇩🇪 Alemán (DE)
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="hover:bg-slate-800 cursor-pointer" onClick={() => handleTranslateBook(book.id, "ZH")}>
+                            🇨🇳 Chino (ZH)
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="hover:bg-slate-800 cursor-pointer" onClick={() => handleTranslateBook(book.id, "ES")}>
+                            🇪🇸 Español (ES)
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+
                       <Button
                         variant="ghost"
                         size="icon"

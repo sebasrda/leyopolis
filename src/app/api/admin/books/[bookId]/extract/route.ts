@@ -15,8 +15,9 @@ export async function GET(
     return NextResponse.json({ message: "No autorizado" }, { status: 401 });
   }
 
+  const { bookId } = await params;
+
   try {
-    const { bookId } = await params;
 
     const book = await (prisma as any).book.findUnique({
       where: { id: bookId }
@@ -78,7 +79,7 @@ export async function GET(
     return NextResponse.json({ 
       message: "Fallo en la extracción de texto", 
       error: error.message,
-      bookId: params.bookId
+      bookId
     }, { status: 500 });
   }
 }

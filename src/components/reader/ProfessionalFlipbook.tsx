@@ -981,22 +981,24 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
     return () => { isMounted = false; };
   }, [currentPage, pdfDocument, isSinglePage]);
 
-  // Servicio de Traducción con Gemini API
+  // Servicio de Traducción — siempre abre en modo bilingüe
   const handleTranslate = async (lang: string, force: boolean = false) => {
     if (translatedLanguage === lang && !force) {
         closeTranslation();
         return;
     }
 
-    const bilingual = bilingualModeRef.current;
+    // Bilingual is always on — no toggle needed
+    bilingualModeRef.current = true;
+    setBilingualMode(true);
+
     setIsTranslating(true);
     setTranslatedLanguage(lang);
-    if (!bilingual) setTranslationSource(null);
-    
+
     try {
         // 1. Get text content from BOTH visible pages
         let textToTranslate = currentTextContent;
-        
+
         if (!textToTranslate && pdfDocument) {
             textToTranslate = await extractVisiblePagesText();
             if (textToTranslate) {
@@ -1008,11 +1010,10 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
             }
         }
 
-        if (bilingual) {
-            setTranslationSource(textToTranslate);
-        }
+        // Always set source text for bilingual display
+        setTranslationSource(textToTranslate);
 
-        // 2. Call API
+        // 2. Call API (hits cache when superadmin pre-translated the book)
         const response = await fetch('/api/translate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1023,7 +1024,7 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
         });
 
         if (!response.ok) throw new Error("Translation failed");
-        
+
         const data = await response.json();
         setTranslationOverlay(data.translation);
         setTranslationEngine(data.engine || null);
@@ -1047,17 +1048,29 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
     setTranslationEngine(null);
   };
 
+  // Auto-retranslate when the page changes.
+  // Handles both: UI-language auto-translate AND manual language selection.
+  // When the book is pre-translated by superadmin all calls hit the cache instantly.
   useEffect(() => {
-    const lang = uiI18n.language;
-    if (lang === "es") return;
+    if (!pdfDocument) return;
 
     const map: Record<string, string> = { en: "EN", fr: "FR", de: "DE", zh: "ZH" };
-    const target = map[lang];
+    const uiTarget = map[uiI18n.language];
+
+    // Manual selection takes priority; fall back to UI language
+    const target = translatedLanguage ?? uiTarget;
     if (!target) return;
-    if (!pdfDocument) return;
-    if (translatedLanguage && translatedLanguage !== target) return;
+
+    // Avoid conflicting with a manually selected language
+    if (uiTarget && translatedLanguage && uiTarget !== translatedLanguage) {
+        // User chose a different language than the UI — respect their choice
+        void handleTranslate(translatedLanguage, true);
+        return;
+    }
+
     void handleTranslate(target, true);
-  }, [uiI18n.language, currentPage, pdfDocument]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uiI18n.language, currentPage, pdfDocument, translatedLanguage]);
 
   // Manejo de Selección de Texto
   const handleTextSelection = (selection: TextSelection | null) => {
@@ -1308,29 +1321,6 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
                         {lang}
                     </button>
                 ))}
-                <div className="w-px h-6 bg-card/10 mx-1" />
-                <button
-                    onClick={() => {
-                        const next = !bilingualMode;
-                        bilingualModeRef.current = next;
-                        setBilingualMode(next);
-                        if (next) {
-                            const map: Record<string, string> = { en: "EN", fr: "FR", de: "DE", zh: "ZH" };
-                            const target = translatedLanguage || map[uiI18n.language] || "EN";
-                            setTranslationSource(currentTextContent || null);
-                            void handleTranslate(target, true);
-                        } else {
-                            setTranslationSource(null);
-                        }
-                    }}
-                    className={cn(
-                        "h-6 px-2 text-[10px] rounded font-bold transition-all",
-                        bilingualMode ? "bg-emerald-600 text-white shadow-sm" : "hover:bg-card/10 text-gray-400"
-                    )}
-                    title="Modo bilingüe"
-                >
-                    BI
-                </button>
             </div>
 
             <div className="h-6 w-px bg-card/10" />
@@ -1592,7 +1582,7 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
                         <div className="flex items-center gap-2">
                             <Languages size={16} />
                             <span className="font-bold text-xs tracking-wide uppercase">
-                                {bilingualMode ? `Bilingüe (Original + ${translatedLanguage})` : `Traducción (${translatedLanguage})`}
+                                Bilingüe · {translatedLanguage}
                             </span>
                             {translationEngine && (
                               <span className="text-[9px] bg-card/20 rounded-full px-2 py-0.5 font-medium">
@@ -1626,66 +1616,41 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
                                 <span className="text-xs text-gray-400">Analizando ambas páginas</span>
                             </div>
                         ) : (
-                            bilingualMode ? (
-                                <div className={cn("grid gap-6", isTranslationExpanded ? "grid-cols-2" : "grid-cols-1")}>
-                                    <div className={cn(
-                                        "rounded-lg border p-4",
-                                        isDarkMode ? "border-gray-700 bg-gray-800/50" : "border-indigo-500/50/20 bg-indigo-500/10"
-                                    )}>
-                                        <div className={cn("text-[11px] font-bold uppercase tracking-wider mb-3 flex items-center gap-1.5", isDarkMode ? "text-indigo-400" : "text-indigo-400")}>
-                                            <BookMarked size={12} /> Original (ES)
-                                        </div>
-                                        <div className={cn(
-                                            "prose prose-sm max-w-none font-serif leading-relaxed",
-                                            isDarkMode ? "prose-invert text-gray-300" : "text-foreground",
-                                            isTranslationExpanded ? "text-base leading-7" : "text-sm"
-                                        )}>
-                                            <p className="whitespace-pre-line">
-                                                {translationSource || currentTextContent || "Extrae texto de la página para ver el original."}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div className={cn(
-                                        "rounded-lg border p-4",
-                                        isDarkMode ? "border-gray-700 bg-gray-800/50" : "border-purple-100 bg-purple-50/30"
-                                    )}>
-                                        <div className={cn("text-[11px] font-bold uppercase tracking-wider mb-3 flex items-center gap-1.5", isDarkMode ? "text-purple-400" : "text-purple-600")}>
-                                            <Languages size={12} /> Traducción ({translatedLanguage})
-                                        </div>
-                                        <div className={cn(
-                                            "prose prose-sm max-w-none font-serif leading-relaxed",
-                                            isDarkMode ? "prose-invert text-gray-300" : "text-foreground",
-                                            isTranslationExpanded ? "text-base leading-7" : "text-sm"
-                                        )}>
-                                            <p className="whitespace-pre-line">{translationOverlay}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            ) : (
+                            /* Always bilingual: original (ES) + translation side by side */
+                            <div className={cn("grid gap-6", isTranslationExpanded ? "grid-cols-2" : "grid-cols-1")}>
                                 <div className={cn(
-                                    "prose max-w-none font-serif text-justify",
-                                    isDarkMode ? "prose-invert text-gray-300" : "text-foreground",
-                                    isTranslationExpanded ? "prose-lg leading-8" : "prose-sm leading-relaxed"
+                                    "rounded-lg border p-4",
+                                    isDarkMode ? "border-gray-700 bg-gray-800/50" : "border-indigo-200 bg-indigo-50/40"
                                 )}>
-                                    {translationSource && !bilingualMode && (
-                                        <details className="not-prose mb-4">
-                                          <summary className={cn(
-                                            "text-xs cursor-pointer rounded-md px-3 py-2 border font-medium",
-                                            isDarkMode ? "border-gray-700 bg-gray-800/50 text-gray-400 hover:text-gray-200" : "border-border bg-muted text-muted-foreground hover:text-foreground"
-                                          )}>
-                                            Ver texto original
-                                          </summary>
-                                          <p className={cn(
-                                            "text-xs mt-2 rounded-md px-3 py-2 border whitespace-pre-line",
-                                            isDarkMode ? "border-gray-700 bg-gray-900/40 text-gray-400" : "border-border bg-muted text-muted-foreground"
-                                          )}>
-                                            {translationSource}
-                                          </p>
-                                        </details>
-                                    )}
-                                    <p className="whitespace-pre-line">{translationOverlay}</p>
+                                    <div className={cn("text-[11px] font-bold uppercase tracking-wider mb-3 flex items-center gap-1.5", "text-indigo-400")}>
+                                        <BookMarked size={12} /> Original (ES)
+                                    </div>
+                                    <div className={cn(
+                                        "prose prose-sm max-w-none font-serif leading-relaxed",
+                                        isDarkMode ? "prose-invert text-gray-300" : "text-foreground",
+                                        isTranslationExpanded ? "text-base leading-7" : "text-sm"
+                                    )}>
+                                        <p className="whitespace-pre-line">
+                                            {translationSource || currentTextContent || "Navega a una página del libro para ver el texto original."}
+                                        </p>
+                                    </div>
                                 </div>
-                            )
+                                <div className={cn(
+                                    "rounded-lg border p-4",
+                                    isDarkMode ? "border-gray-700 bg-gray-800/50" : "border-purple-200 bg-purple-50/40"
+                                )}>
+                                    <div className={cn("text-[11px] font-bold uppercase tracking-wider mb-3 flex items-center gap-1.5", isDarkMode ? "text-purple-400" : "text-purple-600")}>
+                                        <Languages size={12} /> {translatedLanguage}
+                                    </div>
+                                    <div className={cn(
+                                        "prose prose-sm max-w-none font-serif leading-relaxed",
+                                        isDarkMode ? "prose-invert text-gray-300" : "text-foreground",
+                                        isTranslationExpanded ? "text-base leading-7" : "text-sm"
+                                    )}>
+                                        <p className="whitespace-pre-line">{translationOverlay}</p>
+                                    </div>
+                                </div>
+                            </div>
                         )}
                     </div>
                 </motion.div>

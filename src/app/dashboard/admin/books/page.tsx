@@ -392,7 +392,10 @@ export default function AdminBooksPage() {
     try {
       // 1. Extraer todas las páginas
       const extractRes = await fetch(`/api/admin/books/${bookId}/extract`);
-      if (!extractRes.ok) throw new Error("Fallo al extraer texto del libro");
+      if (!extractRes.ok) {
+        const errData = await extractRes.json();
+        throw new Error(errData.error || "Fallo al extraer texto del libro");
+      }
       const { pages } = await extractRes.json();
       
       if (!pages || pages.length === 0) throw new Error("No se encontró texto en el libro");

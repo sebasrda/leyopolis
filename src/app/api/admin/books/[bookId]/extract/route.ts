@@ -33,33 +33,52 @@ export async function GET(
     }
 
     const pdfRes = await fetch(absoluteUrl);
-    if (!pdfRes.ok) throw new Error("No se pudo descargar el PDF");
+    if (!pdfRes.ok) throw new Error(`No se pudo descargar el PDF de la URL: ${absoluteUrl} (Status: ${pdfRes.status})`);
+    
     const pdfBuffer = Buffer.from(await pdfRes.arrayBuffer());
+    console.log(`[EXTRACT] PDF descargado. Tamaño: ${pdfBuffer.length} bytes`);
 
     const pdfParse = require("pdf-parse");
     const pages: string[] = [];
     
-    await pdfParse(pdfBuffer, {
-      pagerender: (pageData: any) => {
-        return pageData.getTextContent().then((textContent: any) => {
-          let lastY, text = '';
-          for (let item of textContent.items) {
-            if (lastY == item.transform[5] || !lastY) {
-              text += item.str;
-            } else {
-              text += '\n' + item.str;
+    try {
+      await pdfParse(pdfBuffer, {
+        pagerender: (pageData: any) => {
+          return pageData.getTextContent().then((textContent: any) => {
+            let lastY, text = '';
+            for (let item of textContent.items) {
+              if (lastY == item.transform[5] || !lastY) {
+                text += item.str;
+              } else {
+                text += '\n' + item.str;
+              }
+              lastY = item.transform[5];
             }
-            lastY = item.transform[5];
-          }
-          pages.push(text);
-          return text;
-        });
-      }
-    });
+            pages.push(text);
+            return text;
+          });
+        }
+      });
+    } catch (parseErr: any) {
+      console.error("[EXTRACT] PDF Parse error:", parseErr);
+      throw new Error(`Error en el motor de lectura de PDF: ${parseErr.message}`);
+    }
 
-    return NextResponse.json({ pages });
+    if (pages.length === 0) {
+      throw new Error("El motor de extracción no encontró ninguna página con texto en este PDF.");
+    }
+
+    return NextResponse.json({ 
+      pages, 
+      count: pages.length,
+      title: book.title 
+    });
   } catch (error: any) {
     console.error("Error extracting text:", error);
-    return NextResponse.json({ message: "Error al extraer texto", error: error.message }, { status: 500 });
+    return NextResponse.json({ 
+      message: "Fallo en la extracción de texto", 
+      error: error.message,
+      bookId: params.bookId
+    }, { status: 500 });
   }
 }

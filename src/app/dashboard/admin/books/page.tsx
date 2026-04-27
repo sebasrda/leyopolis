@@ -386,28 +386,46 @@ export default function AdminBooksPage() {
     if (translatingBookId) return;
     
     setTranslatingBookId(bookId);
-    setTranslationStatus("Extrayendo texto del PDF...");
+    setTranslationStatus("Descargando libro para extracción...");
     setTranslationProgress({ current: 0, total: 0 });
     
     try {
-      // 1. Extraer todas las páginas
-      const extractRes = await fetch(`/api/admin/books/${bookId}/extract`);
-      if (!extractRes.ok) {
-        const errData = await extractRes.json();
-        throw new Error(errData.error || "Fallo al extraer texto del libro");
+      const book = books.find(b => b.id === bookId);
+      if (!book || !book.contentUrl) throw new Error("Libro no encontrado o sin URL");
+
+      // 1. Descargar PDF y extraer texto en el CLIENTE (mucho más fiable)
+      let absoluteUrl = book.contentUrl;
+      if (book.contentUrl.startsWith("/")) {
+        const baseUrl = window.location.origin;
+        absoluteUrl = `${baseUrl}${book.contentUrl}`;
       }
-      const { pages } = await extractRes.json();
+
+      const res = await fetch(absoluteUrl);
+      const arrayBuffer = await res.arrayBuffer();
+      const loadingTask = pdfjs.getDocument({ data: arrayBuffer });
+      const pdf = await loadingTask.promise;
       
-      if (!pages || pages.length === 0) throw new Error("No se encontró texto en el libro");
+      const numPages = pdf.numPages;
+      const extractedPages: string[] = [];
       
-      setTranslationProgress({ current: 0, total: pages.length });
-      setTranslationStatus(`Traduciendo páginas (0/${pages.length})...`);
+      setTranslationStatus(`Extrayendo texto (${numPages} páginas)...`);
+      for (let i = 1; i <= numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        const text = content.items.map((item: any) => item.str).join(" ");
+        extractedPages.push(text);
+      }
+      
+      if (extractedPages.length === 0) throw new Error("No se pudo extraer texto del PDF");
+      
+      setTranslationProgress({ current: 0, total: extractedPages.length });
+      setTranslationStatus(`Traduciendo páginas (0/${extractedPages.length})...`);
 
       // 2. Traducir con concurrencia controlada (5 páginas a la vez)
       const CONCURRENCY = 5;
       const chunks = [];
-      for (let i = 0; i < pages.length; i += CONCURRENCY) {
-        chunks.push(pages.slice(i, i + CONCURRENCY).map((text: string, index: number) => ({
+      for (let i = 0; i < extractedPages.length; i += CONCURRENCY) {
+        chunks.push(extractedPages.slice(i, i + CONCURRENCY).map((text: string, index: number) => ({
           text: text.trim(),
           index: i + index
         })));
@@ -429,8 +447,8 @@ export default function AdminBooksPage() {
             });
 
             // Traducir spread (si no es la primera página)
-            if (index > 0 && pages[index - 1]) {
-              const spreadText = `${pages[index - 1].trim()}\n\n---\n\n${text}`;
+            if (index > 0 && extractedPages[index - 1]) {
+              const spreadText = `${extractedPages[index - 1].trim()}\n\n---\n\n${text}`;
               await fetch("/api/translate", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -441,7 +459,7 @@ export default function AdminBooksPage() {
             console.warn(`Error en página ${index + 1}:`, e);
           } finally {
             setTranslationProgress(prev => ({ ...prev, current: prev.current + 1 }));
-            setTranslationStatus(`Traduciendo página ${index + 1} de ${pages.length}...`);
+            setTranslationStatus(`Traduciendo página ${index + 1} de ${extractedPages.length}...`);
           }
         }));
         
@@ -449,7 +467,7 @@ export default function AdminBooksPage() {
         await new Promise(r => setTimeout(r, 500));
       }
       
-      setSuccess(`Libro de ${pages.length} páginas traducido al ${targetLanguage} correctamente.`);
+      setSuccess(`Libro de ${extractedPages.length} páginas traducido al ${targetLanguage} correctamente.`);
     } catch (err: any) {
       console.error(err);
       setError(`Error al traducir: ${err.message}`);

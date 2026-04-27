@@ -8,7 +8,7 @@ export const maxDuration = 300;
 
 export async function GET(
   req: Request,
-  { params }: { params: { bookId: string } }
+  { params }: { params: Promise<{ bookId: string }> }
 ) {
   const session = await getServerSession(authOptions);
   if (!session?.user || (session.user as any).role !== "SUPERADMIN") {
@@ -16,7 +16,7 @@ export async function GET(
   }
 
   try {
-    const { bookId } = params;
+    const { bookId } = await params;
 
     const book = await (prisma as any).book.findUnique({
       where: { id: bookId }

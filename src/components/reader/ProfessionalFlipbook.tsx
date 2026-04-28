@@ -229,6 +229,7 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
   const [translatedLanguage, setTranslatedLanguage] = useState<string | null>(null);
   const [isTranslating, setIsTranslating] = useState(false);
   const [translationOverlay, setTranslationOverlay] = useState<string | null>(null);
+  const [translationPages, setTranslationPages] = useState<Record<number, string>>({});
   const [currentTextContent, setCurrentTextContent] = useState<string>("");
   const [bilingualMode, setBilingualMode] = useState(false);
   const [translationSource, setTranslationSource] = useState<string | null>(null);
@@ -981,12 +982,12 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
     return () => { isMounted = false; };
   }, [currentPage, pdfDocument, isSinglePage]);
 
-  // Servicio de Traducción — traduce silenciosamente, sin abrir la ventana flotante
+  // Servicio de Traducción — traduce cada página por separado para alineación exacta
   const handleTranslate = async (lang: string, force: boolean = false) => {
     if (translatedLanguage === lang && !force) {
-        // Deselect: apagar idioma activo y cerrar ventana
         setTranslatedLanguage(null);
         setTranslationOverlay(null);
+        setTranslationPages({});
         setTranslationSource(null);
         setBilingualMode(false);
         bilingualModeRef.current = false;
@@ -998,43 +999,49 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
     setIsTranslating(true);
     setTranslatedLanguage(lang);
 
+    // Capturar números de página reales al inicio de la llamada (evita closures obsoletos)
+    const leftPageNum  = currentPage - VIRTUAL_PAGES + 1;
+    const rightPageNum = isSinglePage ? 0 : currentPage - VIRTUAL_PAGES + 2;
+
     try {
-        // 1. Get text content from BOTH visible pages
-        let textToTranslate = currentTextContent;
+        // Extraer texto de cada página por separado
+        const [leftText, rightText] = await Promise.all([
+            leftPageNum  >= 1 ? extractPageText(leftPageNum)  : Promise.resolve(""),
+            rightPageNum >= 1 ? extractPageText(rightPageNum) : Promise.resolve(""),
+        ]);
 
-        if (!textToTranslate && pdfDocument) {
-            textToTranslate = await extractVisiblePagesText();
-            if (textToTranslate) {
-                setCurrentTextContent(textToTranslate);
-            } else {
-                const leftReal = currentPage - VIRTUAL_PAGES + 1;
-                const rightReal = isSinglePage ? leftReal : leftReal + 1;
-                textToTranslate = `[Contenido de las páginas ${leftReal}-${rightReal} del libro ${bookTitle}]`;
-            }
-        }
+        const translateOne = async (text: string): Promise<string> => {
+            if (!text || text.length < 5) return "";
+            const resp = await fetch("/api/translate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text, targetLanguage: lang }),
+            });
+            if (!resp.ok) return "";
+            const d = await resp.json();
+            if (d.engine) setTranslationEngine(d.engine);
+            return d.translation || "";
+        };
 
-        // Always set source text for bilingual display
-        setTranslationSource(textToTranslate);
+        // Traducir en paralelo — si superadmin pre-tradujo, son cache hits instantáneos
+        const [leftTrans, rightTrans] = await Promise.all([
+            translateOne(leftText),
+            rightPageNum >= 1 ? translateOne(rightText) : Promise.resolve(""),
+        ]);
 
-        // 2. Call API (hits cache when superadmin pre-translated the book)
-        const response = await fetch('/api/translate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                text: textToTranslate,
-                targetLanguage: lang
-            })
-        });
+        // Guardar traducciones indexadas por número de página real
+        setTranslationPages(prev => ({
+            ...prev,
+            ...(leftPageNum  >= 1 ? { [leftPageNum]:  leftTrans  } : {}),
+            ...(rightPageNum >= 1 ? { [rightPageNum]: rightTrans } : {}),
+        }));
 
-        if (!response.ok) throw new Error("Translation failed");
-
-        const data = await response.json();
-        setTranslationOverlay(data.translation);
-        setTranslationEngine(data.engine || null);
+        // Bilingual window: combinado
+        setTranslationOverlay([leftTrans, rightTrans].filter(Boolean).join("\n\n"));
+        setTranslationSource([leftText, rightText].filter(Boolean).join("\n\n---\n\n"));
 
     } catch (error) {
         console.error("Translation error:", error);
-        setTranslationOverlay("Error al traducir el contenido. Por favor intenta de nuevo.");
         setTranslationEngine(null);
     } finally {
         setIsTranslating(false);
@@ -1563,39 +1570,54 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
                         ))}
                     </HTMLFlipBook>
 
-                    {/* Translated-text overlay — shown when a language flag is active, bilingual window is closed, and we're on a real PDF page */}
-                    {translatedLanguage && !bilingualMode && currentPage >= VIRTUAL_PAGES && (
-                      <div
-                        className="absolute inset-0 z-40 flex overflow-hidden"
-                        style={{ borderRadius: 2 }}
-                      >
-                        {isTranslating ? (
-                          <div className={cn(
-                            "flex-1 flex flex-col items-center justify-center gap-3",
-                            isDarkMode ? "bg-gray-900" : "bg-white"
-                          )}>
-                            <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
-                            <span className="text-xs text-gray-400">Traduciendo...</span>
-                          </div>
-                        ) : (
-                          <div
-                            className={cn(
-                              "flex-1 h-full overflow-y-auto px-14 py-10 font-serif leading-8 text-[0.92rem] tracking-wide",
-                              isDarkMode ? "bg-gray-900 text-gray-100" : "bg-white text-gray-900",
-                              "shadow-[inset_4px_0_12px_rgba(0,0,0,0.08)]"
-                            )}
-                            style={{ columnCount: isSinglePage ? 1 : 2, columnGap: "3rem" }}
-                          >
-                            <p className="whitespace-pre-wrap m-0">
-                              {translationOverlay || ""}
-                            </p>
-                            <div className="text-center text-xs text-gray-400 mt-10 break-after-column">
-                              — {translatedLanguage} —
+                    {/* Translated-text overlay — cada página en su propio panel con coordenación exacta */}
+                    {translatedLanguage && !bilingualMode && currentPage >= VIRTUAL_PAGES && (() => {
+                      const lp = currentPage - VIRTUAL_PAGES + 1;
+                      const rp = isSinglePage ? 0 : currentPage - VIRTUAL_PAGES + 2;
+                      const pageBg  = isDarkMode ? "#111827" : "#ffffff";
+                      const pageTxt = isDarkMode ? "#e5e7eb" : "#1a1a1a";
+                      const borderC = isDarkMode ? "#374151" : "#e5e7eb";
+
+                      const PagePanel = ({ pageNum, side }: { pageNum: number; side: "left" | "right" }) => (
+                        <div
+                          className="h-full overflow-hidden flex flex-col"
+                          style={{
+                            width: pageWidth * scale,
+                            background: pageBg,
+                            borderLeft: side === "right" ? `1px solid ${borderC}` : undefined,
+                          }}
+                        >
+                          {isTranslating ? (
+                            <div className="flex-1 flex items-center justify-center">
+                              <Loader2 className="h-6 w-6 animate-spin text-indigo-400" />
                             </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
+                          ) : (
+                            <>
+                              <div
+                                className="flex-1 overflow-hidden px-10 pt-10 pb-6 font-serif text-[0.88rem] leading-[1.85] tracking-wide"
+                                style={{ color: pageTxt }}
+                              >
+                                <p className="whitespace-pre-wrap m-0">
+                                  {translationPages[pageNum] ?? ""}
+                                </p>
+                              </div>
+                              <div className="text-center pb-4 text-xs" style={{ color: isDarkMode ? "#6b7280" : "#9ca3af" }}>
+                                {pageNum}
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      );
+
+                      return (
+                        <div className="absolute inset-0 z-40 flex" style={{ borderRadius: 2 }}>
+                          <PagePanel pageNum={lp} side="left" />
+                          {!isSinglePage && rp >= 1 && rp <= (pdfDocument?.numPages ?? 0) && (
+                            <PagePanel pageNum={rp} side="right" />
+                          )}
+                        </div>
+                      );
+                    })()}
 
                     </div>
                 )}

@@ -133,8 +133,7 @@ function getLevelName(level: number): string {
   return names[level] || `Nivel ${level}`;
 }
 
-// XP thresholds for levels
-const LEVEL_THRESHOLDS = [0, 100, 300, 600, 1000, 1500, 2100, 2800, 3600, 4500];
+import { LEVEL_THRESHOLDS } from "@/context/GamificationContext";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
@@ -145,7 +144,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [stableRole, setStableRole] = useState<string | null>(null);
   const role = session?.user?.role || stableRole || "STUDENT";
   const [searchQuery, setSearchQuery] = useState("");
-  const { progress } = useGamification();
+  const { progress, levelUpNotice, clearLevelUp } = useGamification();
 
   useEffect(() => {
     const nextRole = session?.user?.role as any;
@@ -491,6 +490,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {children}
           </div>
         </main>
+
+        {/* Level-up toast */}
+        {levelUpNotice && (
+          <div
+            className="fixed bottom-6 right-6 z-[9999] flex items-center gap-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-5 py-4 rounded-2xl shadow-2xl shadow-purple-900/50 animate-bounce cursor-pointer"
+            onClick={clearLevelUp}
+          >
+            <span className="text-2xl">🎉</span>
+            <div>
+              <p className="font-bold text-sm">¡Subiste de Nivel!</p>
+              <p className="text-xs opacity-90">Ahora eres Nivel {levelUpNotice.level} · {getLevelName(levelUpNotice.level)}</p>
+            </div>
+            <span className="text-xs opacity-60 ml-2">✕</span>
+          </div>
+        )}
       </div>
 
       {/* Only show floating AI for non-students, non-demos, and non-reader pages */}

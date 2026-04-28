@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getUserIdAndRole } from "@/lib/access";
+import { grantXp } from "@/lib/gamification";
 
 export const dynamic = "force-dynamic";
 const eduDb = prisma as any;
@@ -12,10 +13,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const { id } = await params;
   const activity = await eduDb.activity.findUnique({
     where: { id },
-    select: { id: true, published: true, content: true, points: true },
+    select: { id: true, published: true, points: true },
   });
   if (!activity) return NextResponse.json({ message: "Not found" }, { status: 404 });
-  if (!activity.published && user.role !== "ADMIN") {
+  if (!activity.published && user.role !== "ADMIN" && user.role !== "SUPERADMIN") {
     return NextResponse.json({ message: "Forbidden" }, { status: 403 });
   }
 
@@ -34,5 +35,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     select: { id: true, score: true, createdAt: true, completedAt: true },
   });
 
-  return NextResponse.json(created);
+  const xpGain = Math.max(1, Math.round(score * 0.5));
+  const { xp, level } = await grantXp(user.userId, xpGain);
+
+  return NextResponse.json({ ...created, xpGained: xpGain, xp, level });
 }

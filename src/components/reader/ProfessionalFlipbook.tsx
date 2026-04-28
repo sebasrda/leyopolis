@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback, forwardRef } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect, useCallback, forwardRef, memo } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import HTMLFlipBook from 'react-pageflip';
 import Link from 'next/link';
@@ -205,6 +205,69 @@ function formatTime(seconds: number): string {
   const secs = Math.floor(seconds % 60);
   return `${mins}:${secs.toString().padStart(2, "0")}`;
 }
+
+// Renders one translated page, auto-scaling font until text fits without clipping
+const TranslatedPage = memo(function TranslatedPage({
+  pageNum, text, width, height, isDarkMode, side, isLoading,
+}: {
+  pageNum: number; text: string; width: number; height: number;
+  isDarkMode: boolean; side: "left" | "right"; isLoading: boolean;
+}) {
+  const textRef  = useRef<HTMLParagraphElement>(null);
+  const wrapRef  = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    const textEl = textRef.current;
+    const wrapEl = wrapRef.current;
+    if (!textEl || !wrapEl || isLoading) return;
+    // Reset to max font size then shrink until content fits
+    let fs = 14;
+    textEl.style.fontSize = `${fs}px`;
+    while (textEl.scrollHeight > wrapEl.clientHeight && fs > 8) {
+      fs -= 0.4;
+      textEl.style.fontSize = `${fs}px`;
+    }
+  }, [text, width, height, isLoading]);
+
+  const bg  = isDarkMode ? "#111827" : "#ffffff";
+  const clr = isDarkMode ? "#e5e7eb" : "#1a1a1a";
+  const bdr = isDarkMode ? "#374151" : "#e5e7eb";
+
+  return (
+    <div
+      style={{
+        width, height, background: bg,
+        borderLeft: side === "right" ? `1px solid ${bdr}` : undefined,
+        display: "flex", flexDirection: "column", overflow: "hidden",
+      }}
+    >
+      {isLoading ? (
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <Loader2 className="h-6 w-6 animate-spin text-indigo-400" />
+        </div>
+      ) : (
+        <>
+          <div ref={wrapRef} style={{ flex: 1, overflow: "hidden", padding: "2.5rem 2.5rem 1.5rem" }}>
+            <p
+              ref={textRef}
+              style={{
+                margin: 0, color: clr,
+                fontFamily: "Georgia, 'Times New Roman', serif",
+                lineHeight: 1.85, letterSpacing: "0.01em",
+                whiteSpace: "pre-wrap",
+              }}
+            >
+              {text}
+            </p>
+          </div>
+          <div style={{ textAlign: "center", paddingBottom: "1rem", fontSize: "0.72rem", color: isDarkMode ? "#6b7280" : "#9ca3af" }}>
+            {pageNum}
+          </div>
+        </>
+      )}
+    </div>
+  );
+});
 
 export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", author, bookId, quizId, selWorkshopId, audioUrl, audioSyncMap }: ProfessionalFlipbookProps) {
   const [numPages, setNumPages] = useState<number>(0);
@@ -1570,54 +1633,31 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
                         ))}
                     </HTMLFlipBook>
 
-                    {/* Translated-text overlay — cada página en su propio panel con coordenación exacta */}
-                    {translatedLanguage && !bilingualMode && currentPage >= VIRTUAL_PAGES && (() => {
-                      const lp = currentPage - VIRTUAL_PAGES + 1;
-                      const rp = isSinglePage ? 0 : currentPage - VIRTUAL_PAGES + 2;
-                      const pageBg  = isDarkMode ? "#111827" : "#ffffff";
-                      const pageTxt = isDarkMode ? "#e5e7eb" : "#1a1a1a";
-                      const borderC = isDarkMode ? "#374151" : "#e5e7eb";
-
-                      const PagePanel = ({ pageNum, side }: { pageNum: number; side: "left" | "right" }) => (
-                        <div
-                          className="h-full overflow-hidden flex flex-col"
-                          style={{
-                            width: pageWidth * scale,
-                            background: pageBg,
-                            borderLeft: side === "right" ? `1px solid ${borderC}` : undefined,
-                          }}
-                        >
-                          {isTranslating ? (
-                            <div className="flex-1 flex items-center justify-center">
-                              <Loader2 className="h-6 w-6 animate-spin text-indigo-400" />
-                            </div>
-                          ) : (
-                            <>
-                              <div
-                                className="flex-1 overflow-hidden px-10 pt-10 pb-6 font-serif text-[0.88rem] leading-[1.85] tracking-wide"
-                                style={{ color: pageTxt }}
-                              >
-                                <p className="whitespace-pre-wrap m-0">
-                                  {translationPages[pageNum] ?? ""}
-                                </p>
-                              </div>
-                              <div className="text-center pb-4 text-xs" style={{ color: isDarkMode ? "#6b7280" : "#9ca3af" }}>
-                                {pageNum}
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      );
-
-                      return (
-                        <div className="absolute inset-0 z-40 flex" style={{ borderRadius: 2 }}>
-                          <PagePanel pageNum={lp} side="left" />
-                          {!isSinglePage && rp >= 1 && rp <= (pdfDocument?.numPages ?? 0) && (
-                            <PagePanel pageNum={rp} side="right" />
-                          )}
-                        </div>
-                      );
-                    })()}
+                    {/* Translated-text overlay — auto-scales font to fit, exact page coordination */}
+                    {translatedLanguage && !bilingualMode && currentPage >= VIRTUAL_PAGES && (
+                      <div className="absolute inset-0 z-40 flex" style={{ borderRadius: 2 }}>
+                        <TranslatedPage
+                          pageNum={currentPage - VIRTUAL_PAGES + 1}
+                          text={translationPages[currentPage - VIRTUAL_PAGES + 1] ?? ""}
+                          width={pageWidth * scale}
+                          height={pageHeight * scale}
+                          isDarkMode={isDarkMode}
+                          side="left"
+                          isLoading={isTranslating}
+                        />
+                        {!isSinglePage && (currentPage - VIRTUAL_PAGES + 2) >= 1 && (currentPage - VIRTUAL_PAGES + 2) <= (pdfDocument?.numPages ?? 0) && (
+                          <TranslatedPage
+                            pageNum={currentPage - VIRTUAL_PAGES + 2}
+                            text={translationPages[currentPage - VIRTUAL_PAGES + 2] ?? ""}
+                            width={pageWidth * scale}
+                            height={pageHeight * scale}
+                            isDarkMode={isDarkMode}
+                            side="right"
+                            isLoading={isTranslating}
+                          />
+                        )}
+                      </div>
+                    )}
 
                     </div>
                 )}

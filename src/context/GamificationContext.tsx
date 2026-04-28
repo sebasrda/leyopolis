@@ -53,18 +53,26 @@ export function GamificationProvider({ children }: { children: React.ReactNode }
       setProgress(prev => {
         const newLevel = data.level ?? calcLevel(data.xp ?? prev.xp);
         if (newLevel > prev.level) setLevelUpNotice({ level: newLevel });
-        return {
-          ...prev,
-          xp: data.xp ?? prev.xp,
-          level: newLevel,
-          streakDays: data.streak ?? prev.streakDays,
-        };
+        return { ...prev, xp: data.xp ?? prev.xp, level: newLevel, streakDays: data.streak ?? prev.streakDays };
       });
+      return data;
     } catch { /* silent */ }
   }, [status]);
 
-  // Initial load
-  useEffect(() => { syncFromApi(); }, [syncFromApi]);
+  // Initial load — if user has 0 XP, repair from existing activity history
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    (async () => {
+      const data = await syncFromApi();
+      if (data && (data.xp ?? 0) === 0) {
+        try {
+          const r = await fetch('/api/user/repair-xp', { method: 'POST' });
+          if (r.ok) await syncFromApi();
+        } catch { /* silent */ }
+      }
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status]);
 
   // Poll every 5 seconds to pick up server-side XP grants (reading, quiz, etc.)
   useEffect(() => {

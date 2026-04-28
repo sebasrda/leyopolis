@@ -206,26 +206,23 @@ function formatTime(seconds: number): string {
   return `${mins}:${secs.toString().padStart(2, "0")}`;
 }
 
-// Renders one translated page, auto-scaling font until text fits without clipping
+// Renders one translated page with zoom support and text selection for SmartMenu
 const TranslatedPage = memo(function TranslatedPage({
-  pageNum, text, width, height, isDarkMode, side, isLoading,
+  pageNum, text, width, height, isDarkMode, side, isLoading, onTextSelection,
 }: {
   pageNum: number; text: string; width: number; height: number;
   isDarkMode: boolean; side: "left" | "right"; isLoading: boolean;
+  onTextSelection: (sel: TextSelection | null) => void;
 }) {
-  const textRef  = useRef<HTMLParagraphElement>(null);
-  const wrapRef  = useRef<HTMLDivElement>(null);
+  const textRef = useRef<HTMLParagraphElement>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
     const textEl = textRef.current;
     const wrapEl = wrapRef.current;
     if (!textEl || !wrapEl || isLoading) return;
-    // Available height = clientHeight minus the container's own padding
     const cs = window.getComputedStyle(wrapEl);
-    const availH = wrapEl.clientHeight
-      - parseFloat(cs.paddingTop)
-      - parseFloat(cs.paddingBottom);
-    // Reset to max font size then shrink until every line fits
+    const availH = wrapEl.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
     let fs = 14;
     textEl.style.fontSize = `${fs}px`;
     while (textEl.scrollHeight > availH && fs > 8) {
@@ -234,12 +231,22 @@ const TranslatedPage = memo(function TranslatedPage({
     }
   }, [text, width, height, isLoading]);
 
+  const handleMouseUp = () => {
+    const sel = window.getSelection();
+    if (sel && sel.toString().trim().length > 0) {
+      const range = sel.getRangeAt(0);
+      const rect  = range.getBoundingClientRect();
+      onTextSelection({ text: sel.toString(), x: rect.left, y: rect.top, width: rect.width, height: rect.height });
+    }
+  };
+
   const bg  = isDarkMode ? "#111827" : "#ffffff";
   const clr = isDarkMode ? "#e5e7eb" : "#1a1a1a";
   const bdr = isDarkMode ? "#374151" : "#e5e7eb";
 
   return (
     <div
+      onMouseUp={handleMouseUp}
       style={{
         width, height, background: bg,
         borderLeft: side === "right" ? `1px solid ${bdr}` : undefined,
@@ -253,17 +260,30 @@ const TranslatedPage = memo(function TranslatedPage({
       ) : (
         <>
           <div ref={wrapRef} style={{ flex: 1, overflow: "hidden", padding: "2.5rem 2.5rem 1.5rem" }}>
-            <p
-              ref={textRef}
-              style={{
-                margin: 0, color: clr,
-                fontFamily: "Georgia, 'Times New Roman', serif",
-                lineHeight: 1.85, letterSpacing: "0.01em",
-                whiteSpace: "pre-wrap",
-              }}
+            <TransformWrapper
+              minScale={1} maxScale={3}
+              centerOnInit={false}
+              wheel={{ step: 0.1 }}
+              doubleClick={{ disabled: false, mode: "zoomIn" }}
+              pinch={{ disabled: false }}
             >
-              {text}
-            </p>
+              <TransformComponent
+                wrapperStyle={{ width: "100%", height: "100%" }}
+                contentStyle={{ width: "100%", height: "100%", cursor: "text" }}
+              >
+                <p
+                  ref={textRef}
+                  style={{
+                    margin: 0, color: clr,
+                    fontFamily: "Georgia, 'Times New Roman', serif",
+                    lineHeight: 1.85, letterSpacing: "0.01em",
+                    whiteSpace: "pre-wrap", userSelect: "text",
+                  }}
+                >
+                  {text}
+                </p>
+              </TransformComponent>
+            </TransformWrapper>
           </div>
           <div style={{ textAlign: "center", paddingBottom: "1rem", fontSize: "0.72rem", color: isDarkMode ? "#6b7280" : "#9ca3af" }}>
             {pageNum}
@@ -1649,6 +1669,7 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
                           isDarkMode={isDarkMode}
                           side="left"
                           isLoading={isTranslating}
+                          onTextSelection={handleTextSelection}
                         />
                         {!isSinglePage && (currentPage - VIRTUAL_PAGES + 2) >= 1 && (currentPage - VIRTUAL_PAGES + 2) <= (pdfDocument?.numPages ?? 0) && (
                           <TranslatedPage
@@ -1659,6 +1680,7 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
                             isDarkMode={isDarkMode}
                             side="right"
                             isLoading={isTranslating}
+                            onTextSelection={handleTextSelection}
                           />
                         )}
                       </div>

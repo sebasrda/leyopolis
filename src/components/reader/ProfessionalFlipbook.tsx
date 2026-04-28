@@ -220,10 +220,15 @@ const TranslatedPage = memo(function TranslatedPage({
     const textEl = textRef.current;
     const wrapEl = wrapRef.current;
     if (!textEl || !wrapEl || isLoading) return;
-    // Reset to max font size then shrink until content fits
+    // Available height = clientHeight minus the container's own padding
+    const cs = window.getComputedStyle(wrapEl);
+    const availH = wrapEl.clientHeight
+      - parseFloat(cs.paddingTop)
+      - parseFloat(cs.paddingBottom);
+    // Reset to max font size then shrink until every line fits
     let fs = 14;
     textEl.style.fontSize = `${fs}px`;
-    while (textEl.scrollHeight > wrapEl.clientHeight && fs > 8) {
+    while (textEl.scrollHeight > availH && fs > 8) {
       fs -= 0.4;
       textEl.style.fontSize = `${fs}px`;
     }

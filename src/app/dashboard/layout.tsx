@@ -5,6 +5,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 export default async function Layout({ children }: { children: React.ReactNode }) {
   // Fetch XP/level/stats on the SERVER — bypasses all client-side caching issues
   let serverXp = 0;

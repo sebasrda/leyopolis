@@ -14,6 +14,7 @@ export default async function Layout({ children }: { children: React.ReactNode }
   let serverStreak = 0;
   let serverTotalMinutes = 0;
   let serverTotalChallenges = 0;
+  let serverBooks: any[] = [];
 
   try {
     const session = await getServerSession(authOptions);
@@ -40,9 +41,20 @@ export default async function Layout({ children }: { children: React.ReactNode }
       serverTotalChallenges = await prisma.userChallenge.count({
         where: { userId }
       });
+
+      // Fetch books
+      serverBooks = await prisma.userBook.findMany({
+        where: { userId },
+        include: {
+          book: {
+            select: { id: true, title: true, author: true, coverImage: true, category: true }
+          }
+        },
+        orderBy: { lastRead: 'desc' }
+      });
     }
   } catch (e) {
-    console.error("[Layout] Failed to fetch user progress/stats:", e);
+    console.error("[Layout] Failed to fetch user progress/stats/books:", e);
   }
 
   return (
@@ -56,7 +68,8 @@ export default async function Layout({ children }: { children: React.ReactNode }
               level: serverLevel, 
               streak: serverStreak,
               totalMinutes: serverTotalMinutes,
-              totalChallenges: serverTotalChallenges
+              totalChallenges: serverTotalChallenges,
+              books: serverBooks
             })};`
           }}
         />

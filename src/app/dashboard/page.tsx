@@ -212,14 +212,19 @@ export default function DashboardPage() {
   };
 
   // ── Computed values ──────────────────────────────────────────────
-  const completedBooks = userBooks.filter((b) => b.progress >= 100).length;
-  const inProgressBooks = userBooks.filter((b) => b.progress > 0 && b.progress < 100).length;
-  const toReadBooks = Math.max(0, userBooks.length - completedBooks - inProgressBooks);
+  // Use server-injected books if available, otherwise fall back to context userBooks
+  const displayBooks = typeof window !== 'undefined' && (window as any).__SERVER_PROGRESS__?.books 
+    ? (window as any).__SERVER_PROGRESS__.books 
+    : userBooks;
+
+  const completedBooks = displayBooks.filter((b: any) => b.progress >= 100).length;
+  const inProgressBooks = displayBooks.filter((b: any) => b.progress > 0 && b.progress < 100).length;
+  const toReadBooks = Math.max(0, displayBooks.length - completedBooks - inProgressBooks);
 
   // Hero book: most recently read in-progress
-  const heroBook = userBooks
-    .filter((b) => b.progress > 0 && b.progress < 100)
-    .sort((a, b) => new Date(b.lastRead).getTime() - new Date(a.lastRead).getTime())[0];
+  const heroBook = displayBooks
+    .filter((b: any) => b.progress > 0 && b.progress < 100)
+    .sort((a: any, b: any) => new Date(b.lastRead).getTime() - new Date(a.lastRead).getTime())[0];
 
   const heroBookData = heroBook?.book || null;
   const heroProgress = heroBook?.progress || 0;

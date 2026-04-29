@@ -105,10 +105,17 @@ export default function DashboardPage() {
   const { progress, addXp } = useGamification();
   const { userBooks } = useLearning();
 
-  // Direct XP fetch — bypasses GamificationContext as failsafe
+  // Direct XP — read from server-injected window global (guaranteed data)
   const [directProgress, setDirectProgress] = useState<{xp: number, level: number, streak: number} | null>(null);
 
   useEffect(() => {
+    // Read server-injected data first (instant, no fetch needed)
+    const serverData = (window as any).__SERVER_PROGRESS__;
+    if (serverData && typeof serverData.xp === 'number' && serverData.xp > 0) {
+      setDirectProgress(serverData);
+    }
+    
+    // Also try live fetch as backup
     if (status !== "authenticated") return;
     const fetchDirect = async () => {
       try {

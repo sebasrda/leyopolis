@@ -134,7 +134,7 @@ function getLevelName(level: number): string {
 
 import { LEVEL_THRESHOLDS } from "@/context/GamificationContext";
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default function DashboardLayout({ children, serverXp, serverLevel, serverStreak }: { children: React.ReactNode; serverXp?: number; serverLevel?: number; serverStreak?: number }) {
   const [collapsed, setCollapsed] = useState(false);
   const [gestureHighlightIdx, setGestureHighlightIdx] = useState<number | null>(null);
   const pathname = usePathname();
@@ -150,6 +150,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [directLevel, setDirectLevel] = useState<number | null>(null);
 
   useEffect(() => {
+    // Read server-injected data first (instant, no fetch)
+    const serverData = (window as any).__SERVER_PROGRESS__;
+    if (serverData && typeof serverData.xp === 'number') {
+      setDirectXp(serverData.xp);
+      setDirectLevel(serverData.level);
+    }
+
     if (status !== "authenticated") return;
     const fetchDirect = async () => {
       try {
@@ -169,8 +176,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return () => clearInterval(iv);
   }, [status]);
 
-  const displayXp = directXp ?? progress.xp;
-  const displayLevel = directLevel ?? progress.level;
+  // Priority: live client fetch > server props > context > defaults
+  const displayXp = directXp ?? (serverXp && serverXp > 0 ? serverXp : null) ?? progress.xp;
+  const displayLevel = directLevel ?? (serverLevel && serverLevel > 0 ? serverLevel : null) ?? progress.level;
 
   useEffect(() => {
     const nextRole = session?.user?.role as any;

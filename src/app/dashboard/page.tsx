@@ -155,13 +155,24 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
+    // Inject server stats immediately
+    const serverData = (window as any).__SERVER_PROGRESS__;
+    if (serverData) {
+      if (typeof serverData.totalMinutes === 'number') {
+        setStats(prev => ({ ...prev, totalMinutes: serverData.totalMinutes }));
+      }
+      if (typeof serverData.totalChallenges === 'number') {
+        setTotalChallengesClaimed(serverData.totalChallenges);
+      }
+    }
+
     if (status !== "authenticated") return;
 
     const fetchStatsAndChallenges = () => {
       fetch(`/api/user/stats?t=${Date.now()}`, { cache: 'no-store' })
         .then((r) => (r.ok ? r.json() : null))
         .then((d) => {
-          if (d && !d.error) setStats({ totalPages: d.totalPages || 0, totalMinutes: d.totalMinutes || 0 });
+          if (d && !d.error) setStats(prev => ({ ...prev, totalPages: d.totalPages || 0, totalMinutes: d.totalMinutes || prev.totalMinutes }));
         });
 
       fetch(`/api/user/challenges?week=${currentWeek}&t=${Date.now()}`, { cache: 'no-store' })
@@ -175,7 +186,7 @@ export default function DashboardPage() {
     };
 
     fetchStatsAndChallenges();
-    const interval = setInterval(fetchStatsAndChallenges, 10000); // Poll every 10s
+    const interval = setInterval(fetchStatsAndChallenges, 30000); // Poll every 30s
     return () => clearInterval(interval);
   }, [currentWeek, status]);
 

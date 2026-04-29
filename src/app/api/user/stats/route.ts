@@ -1,88 +1,68 @@
-
 export const dynamic = 'force-dynamic';
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
-const DEMO_USER_ID = "clt_demo_user_001";
-
 export async function GET() {
   const session = await getServerSession(authOptions);
-  
-  // Demo fallback
-  const userId = session?.user?.id || DEMO_USER_ID;
+  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const userId = session.user.id;
 
   try {
-    if (userId === DEMO_USER_ID) {
-      await prisma.user.upsert({
-        where: { id: DEMO_USER_ID },
-        update: {},
-        create: {
-          id: DEMO_USER_ID,
-          name: "Estudiante Demo",
-          email: "demo@leyopolis.edu",
-          role: "STUDENT",
-        },
-      });
-    }
+    // Read xp/level/streak directly from DB — session JWT tokens are stale after DB updates
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { xp: true, level: true, streak: true },
+    });
 
-    // 1. Get Reading Sessions Aggregate
     const sessions = await prisma.readingSession.findMany({
       where: { userId },
-      select: {
-        durationSeconds: true,
-        pagesRead: true,
-        startTime: true,
-        bookId: true
-      }
+      select: { durationSeconds: true, pagesRead: true, startTime: true, endTime: true, bookId: true },
     });
 
-    // 2. Get UserBooks to calculate completed count
-    const userBooks = await prisma.userBook.findMany({
-      where: { userId },
-    });
-
+    const userBooks = await prisma.userBook.findMany({ where: { userId } });
     const completedBooks = userBooks.filter(b => b.status === "COMPLETED").length;
-    
-    // Aggregate stats
-    const totalSeconds = sessions.reduce((acc, s) => acc + (s.durationSeconds || 0), 0);
+
+    // Estimate seconds from endTime-startTime when durationSeconds is missing/zero
+    const totalSeconds = sessions.reduce((acc, s) => {
+      let secs = s.durationSeconds ?? 0;
+      if (secs === 0 && s.endTime && s.startTime) {
+        secs = Math.min(
+          Math.floor((new Date(s.endTime).getTime() - new Date(s.startTime).getTime()) / 1000),
+          7200 // cap at 2 hours per session
+        );
+      }
+      return acc + Math.max(0, secs);
+    }, 0);
+
     const totalPages = sessions.reduce((acc, s) => acc + (s.pagesRead || 0), 0);
-    const averageDailySeconds = sessions.length > 0 ? totalSeconds / sessions.length : 0;
-    
-    // Count unique books with sessions and merge with UserBooks
+    const totalMinutes = Math.round(totalSeconds / 60);
+
     const booksInSessions = new Set(sessions.map(s => s.bookId));
     const userBookIds = userBooks.map(ub => ub.bookId);
-    const allUniqueBookIds = new Set([...Array.from(booksInSessions), ...userBookIds]);
+    const allUniqueBooks = new Set([...Array.from(booksInSessions), ...userBookIds]);
 
     const formatTime = (seconds: number) => {
       const hrs = Math.floor(seconds / 3600);
       const mins = Math.floor((seconds % 3600) / 60);
-      if (hrs > 0) return `${hrs}h ${mins}m`;
-      return `${mins}m`;
+      return hrs > 0 ? `${hrs}h ${mins}m` : `${mins}m`;
     };
 
-    // Final Result Object - The single source of truth for ALL dashboards
-    const responseData = {
+    return NextResponse.json({
       totalTime: formatTime(totalSeconds),
       totalSeconds,
       totalPages,
-      averageDailyMinutes: Math.round(averageDailySeconds / 60),
-      totalMinutes: Math.round(totalSeconds / 60),
+      averageDailyMinutes: sessions.length > 0 ? Math.round(totalMinutes / sessions.length) : 0,
+      totalMinutes,
       completedBooks: completedBooks || 0,
-      totalBooks: allUniqueBookIds.size,
-      streak: (session?.user as any)?.streak || 0,
-      level: (session?.user as any)?.level || 1,
-      xp: (session?.user as any)?.xp || 0
-    };
-
-    return NextResponse.json(responseData);
-
+      totalBooks: allUniqueBooks.size,
+      streak: user?.streak ?? 0,
+      level: user?.level ?? 1,
+      xp: user?.xp ?? 0,
+    });
   } catch (error) {
     console.error("Error fetching user stats:", error);
     return NextResponse.json({ error: "Failed to fetch stats" }, { status: 500 });
   }
 }
-
-
-

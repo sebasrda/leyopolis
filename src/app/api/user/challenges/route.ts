@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { grantXp } from "@/lib/gamification";
 
 export async function GET(req: Request) {
     const session = await getServerSession(authOptions);
@@ -51,13 +52,8 @@ export async function POST(req: Request) {
             }
         });
 
-        // 2. Add XP to user
-        await prisma.user.update({
-            where: { id: (session.user as any).id },
-            data: {
-                xp: { increment: xp }
-            }
-        });
+        // 2. Add XP and recalculate level
+        await grantXp((session.user as any).id, xp);
 
         return NextResponse.json({ success: true });
     } catch (error: any) {

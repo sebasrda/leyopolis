@@ -76,8 +76,8 @@ export function GamificationProvider({ children }: { children: React.ReactNode }
         prevLevelRef.current = newLevel;
         setProgress(prev => ({ ...prev, xp: newXp, level: newLevel, streakDays: newStreak }));
 
-        // If still 0 XP, try to repair from history
-        if (newXp === 0) {
+        // If XP is 0 or suspiciously low (< 50), repair from activity history
+        if (newXp < 50) {
           try {
             const r = await fetch('/api/user/repair-xp', { method: 'POST' });
             if (r.ok) {

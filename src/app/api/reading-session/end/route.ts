@@ -27,13 +27,8 @@ export async function POST(req: Request) {
         create: { userId, bookId, progress, status: progress >= 100 ? "COMPLETED" : "IN_PROGRESS", lastRead: new Date() },
       });
 
-      // +1 XP per minute read (minimum 1 XP per session)
-      if (durationSeconds > 30) {
-        const xpGain = Math.max(1, Math.floor(durationSeconds / 60));
-        await grantXp(userId, xpGain);
-      }
-
-      // Bonus XP for book completion
+      // Per-minute XP is now handled in the UPDATE route (delta-based) to survive beacon failures.
+      // Here we only grant the book completion bonus.
       if (progress >= 100) {
         await grantXp(userId, 100);
       }

@@ -63,7 +63,7 @@ export default function TeacherDashboard() {
 
     const fetchClasses = async () => {
         try {
-            const res = await fetch('/api/teacher/classes');
+            const res = await fetch(`/api/teacher/classes?t=${Date.now()}`, { cache: 'no-store', headers: { 'Cache-Control': 'no-cache' } });
             if (res.ok) {
                 const data = await res.json();
                 setClasses(data);
@@ -77,7 +77,7 @@ export default function TeacherDashboard() {
 
     const fetchEduOverview = async () => {
         try {
-            const res = await fetch('/api/teacher/education/overview');
+            const res = await fetch(`/api/teacher/education/overview?t=${Date.now()}`, { cache: 'no-store', headers: { 'Cache-Control': 'no-cache' } });
             if (res.ok) {
                 const data = await res.json();
                 setEduOverview(data);

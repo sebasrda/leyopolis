@@ -55,7 +55,7 @@ export default function SuperAdminDashboard() {
 
   const fetchInstitutions = async () => {
     try {
-      const res = await fetch("/api/superadmin/institutions");
+      const res = await fetch(`/api/superadmin/institutions?t=${Date.now()}`, { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         console.log("[DEBUG] SuperAdmin institutions:", data);

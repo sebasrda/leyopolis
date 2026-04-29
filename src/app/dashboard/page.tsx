@@ -125,13 +125,13 @@ export default function DashboardPage() {
     if (status !== "authenticated") return;
 
     const fetchStatsAndChallenges = () => {
-      fetch("/api/user/stats")
+      fetch(`/api/user/stats?t=${Date.now()}`, { cache: 'no-store' })
         .then((r) => (r.ok ? r.json() : null))
         .then((d) => {
           if (d && !d.error) setStats({ totalPages: d.totalPages || 0, totalMinutes: d.totalMinutes || 0 });
         });
 
-      fetch(`/api/user/challenges?week=${currentWeek}`)
+      fetch(`/api/user/challenges?week=${currentWeek}&t=${Date.now()}`, { cache: 'no-store' })
         .then(r => r.ok ? r.json() : {})
         .then((d: any) => {
           const { __totalClaimed, ...weeklyMap } = d;

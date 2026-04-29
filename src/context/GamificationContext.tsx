@@ -48,7 +48,7 @@ export function GamificationProvider({ children }: { children: React.ReactNode }
   const syncFromApi = useCallback(async () => {
     if (status !== "authenticated") return;
     try {
-      const res = await fetch('/api/user/progress', { cache: 'no-store' });
+      const res = await fetch(`/api/user/progress?t=${Date.now()}`, { cache: 'no-store' });
       if (!res.ok) return;
       const data = await res.json();
       const newXp: number = data.xp ?? 0;
@@ -67,7 +67,7 @@ export function GamificationProvider({ children }: { children: React.ReactNode }
 
     const loadInitial = async () => {
       try {
-        const res = await fetch('/api/user/progress', { cache: 'no-store' });
+        const res = await fetch(`/api/user/progress?t=${Date.now()}`, { cache: 'no-store' });
         if (!res.ok) return;
         const data = await res.json();
         const newXp: number = data.xp ?? 0;
@@ -81,7 +81,7 @@ export function GamificationProvider({ children }: { children: React.ReactNode }
           try {
             const r = await fetch('/api/user/repair-xp', { method: 'POST' });
             if (r.ok) {
-              const res2 = await fetch('/api/user/progress', { cache: 'no-store' });
+              const res2 = await fetch(`/api/user/progress?t=${Date.now()}`, { cache: 'no-store' });
               if (res2.ok) {
                 const data2 = await res2.json();
                 const xp2: number = data2.xp ?? 0;

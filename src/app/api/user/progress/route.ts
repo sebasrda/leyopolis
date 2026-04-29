@@ -38,8 +38,8 @@ export async function GET() {
     }
 
     return NextResponse.json({ xp: user.xp, level: correctLevel, streak: currentStreak });
-  } catch (error) {
-    return NextResponse.json({ error: 'Failed to fetch progress' }, { status: 500 });
+  } catch (error: any) {
+    return NextResponse.json({ error: 'Failed to fetch progress', details: error.message }, { status: 500 });
   }
 }
 

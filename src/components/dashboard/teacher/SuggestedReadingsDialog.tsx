@@ -78,7 +78,7 @@ export function SuggestedReadingsDialog({ isOpen, onClose, onSuccess, classes }:
     };
 
     const handleAssign = async () => {
-        if (!assigningTo || !selectedClass || !dueDate) return;
+        if (!assigningTo || !selectedClass) return;
 
         setSubmitting(true);
         try {
@@ -90,7 +90,7 @@ export function SuggestedReadingsDialog({ isOpen, onClose, onSuccess, classes }:
                     bookId: assigningTo.id,
                     title: `Lectura sugerida: ${assigningTo.title}`,
                     description: "Lectura asignada desde el panel de sugerencias inteligentes.",
-                    dueDate: new Date(dueDate).toISOString()
+                    dueDate: dueDate ? new Date(dueDate).toISOString() : null
                 })
             });
 
@@ -215,7 +215,7 @@ export function SuggestedReadingsDialog({ isOpen, onClose, onSuccess, classes }:
                                         </Select>
                                     </div>
                                     <div className="space-y-2">
-                                        <Label>Fecha Límite</Label>
+                                        <Label>Fecha Límite (Opcional)</Label>
                                         <div className="relative">
                                             <Calendar className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
                                             <Input 
@@ -233,7 +233,7 @@ export function SuggestedReadingsDialog({ isOpen, onClose, onSuccess, classes }:
                                     <Button variant="ghost" className="flex-1" onClick={() => setAssigningTo(null)}>Cancelar</Button>
                                     <Button 
                                         className="flex-1 bg-indigo-600 hover:bg-indigo-700"
-                                        disabled={!selectedClass || !dueDate || submitting}
+                                        disabled={!selectedClass || submitting}
                                         onClick={handleAssign}
                                     >
                                         {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

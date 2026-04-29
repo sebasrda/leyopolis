@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getUserIdAndRole } from '@/lib/access';
 
 // Hardcoded demo teacher for prototype
 const DEMO_TEACHER_ID = "clt_demo_teacher_001";
@@ -40,8 +41,13 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { classId, bookId, title, dueDate, description } = body;
 
-    if (!classId || !bookId || !title || !dueDate) {
+    if (!classId || !bookId || !title) {
         return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    }
+
+    const auth = await getUserIdAndRole();
+    if (!auth) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Verify ownership
@@ -49,7 +55,8 @@ export async function POST(request: Request) {
         where: { id: classId }
     });
 
-    if (!classExists || classExists.teacherId !== DEMO_TEACHER_ID) {
+    // Only allow if SuperAdmin, Admin, Coordinator, or the actual teacher of the class
+    if (!classExists || (!['SUPERADMIN', 'ADMIN', 'COORDINATOR'].includes(auth.role) && classExists.teacherId !== auth.userId)) {
         return NextResponse.json({ error: "Unauthorized access to class" }, { status: 403 });
     }
 
@@ -58,7 +65,7 @@ export async function POST(request: Request) {
             classId,
             bookId,
             title,
-            dueDate: new Date(dueDate),
+            dueDate: dueDate ? new Date(dueDate) : null,
             description
         },
         include: {

@@ -71,7 +71,7 @@ export function CreateAssignmentDialog({ isOpen, onClose, onSuccess, classes }: 
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!selectedClass || !selectedBook || !title || !dueDate) return;
+        if (!selectedClass || !selectedBook || !title) return;
 
         setSubmitting(true);
         try {
@@ -83,7 +83,7 @@ export function CreateAssignmentDialog({ isOpen, onClose, onSuccess, classes }: 
                     bookId: selectedBook,
                     title,
                     description,
-                    dueDate: dueDate.toISOString()
+                    dueDate: dueDate ? dueDate.toISOString() : null
                 })
             });
 
@@ -160,7 +160,7 @@ export function CreateAssignmentDialog({ isOpen, onClose, onSuccess, classes }: 
 
                     {/* Due Date */}
                     <div className="space-y-2">
-                        <Label htmlFor="dueDate">Fecha de Entrega</Label>
+                        <Label htmlFor="dueDate">Fecha de Entrega (Opcional)</Label>
                         <Input 
                             id="dueDate"
                             type="date"
@@ -169,8 +169,8 @@ export function CreateAssignmentDialog({ isOpen, onClose, onSuccess, classes }: 
                             onChange={(e) => {
                                 const date = e.target.valueAsDate;
                                 if (date) setDueDate(date);
+                                else setDueDate(undefined);
                             }}
-                            required
                         />
                     </div>
 
@@ -187,7 +187,7 @@ export function CreateAssignmentDialog({ isOpen, onClose, onSuccess, classes }: 
 
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
-                        <Button type="submit" disabled={submitting || !selectedClass || !selectedBook || !title || !dueDate}>
+                        <Button type="submit" disabled={submitting || !selectedClass || !selectedBook || !title}>
                             {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             Crear Asignación
                         </Button>

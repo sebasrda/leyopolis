@@ -111,6 +111,7 @@ export default function DashboardPage() {
   
   const currentWeek = getWeekNumber(new Date());
   const [claimedChallenges, setClaimedChallenges] = useState<Record<number, boolean>>({});
+  const [totalChallengesClaimed, setTotalChallengesClaimed] = useState(0);
   const [stats, setStats] = useState({ totalPages: 0, totalMinutes: 0 });
 
   useEffect(() => {
@@ -132,7 +133,11 @@ export default function DashboardPage() {
 
       fetch(`/api/user/challenges?week=${currentWeek}`)
         .then(r => r.ok ? r.json() : {})
-        .then(d => setClaimedChallenges(d))
+        .then(d => {
+          const { __totalClaimed, ...weeklyMap } = d;
+          setClaimedChallenges(weeklyMap);
+          if (typeof __totalClaimed === 'number') setTotalChallengesClaimed(__totalClaimed);
+        })
         .catch(() => {});
     };
 
@@ -186,7 +191,7 @@ export default function DashboardPage() {
     WEEKLY_CHALLENGES[(startIndex + 1) % WEEKLY_CHALLENGES.length],
     WEEKLY_CHALLENGES[(startIndex + 2) % WEEKLY_CHALLENGES.length],
   ];
-  const completedAssignments = Object.keys(claimedChallenges).length;
+  const completedAssignments = totalChallengesClaimed;
 
   // Determine landscape based on book id
   const landscapes = [
@@ -607,7 +612,7 @@ export default function DashboardPage() {
             {/* Stats Row */}
             <div className="grid grid-cols-3 gap-2 mt-5 pt-4 border-t border-white/5">
               <div className="text-center">
-                <p className="text-lg font-black text-white">{Math.round((progress.xp / 2) * 0.7) || 0}</p>
+                <p className="text-lg font-black text-white">{stats.totalMinutes || 0}</p>
                 <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">Minutos de lectura</p>
               </div>
               <div className="text-center border-x border-white/5">

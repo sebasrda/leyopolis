@@ -9,22 +9,26 @@ export async function GET(req: Request) {
 
     const { searchParams } = new URL(req.url);
     const week = parseInt(searchParams.get("week") || "0");
+    const userId = (session.user as any).id;
 
     try {
+        // Weekly challenges (for UI state)
         const claimed = await prisma.userChallenge.findMany({
-            where: {
-                userId: (session.user as any).id,
-                weekNumber: week
-            }
+            where: { userId, weekNumber: week }
         });
 
-        // Return as a Record<number, boolean> for compatibility with UI
+        // Total historical count (for stats widget)
+        const totalClaimed = await prisma.userChallenge.count({
+            where: { userId }
+        });
+
+        // Return as a Record<number, boolean> + totalClaimed
         const claimedMap = claimed.reduce((acc, curr) => {
             acc[curr.challengeId] = true;
             return acc;
         }, {} as Record<number, boolean>);
 
-        return NextResponse.json(claimedMap);
+        return NextResponse.json({ ...claimedMap, __totalClaimed: totalClaimed });
     } catch (error) {
         console.error("Error fetching claimed challenges:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });

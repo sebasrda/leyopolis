@@ -95,8 +95,8 @@ export function MyAssignments() {
             </CardHeader>
             <CardContent className="space-y-4">
                 {assignments.map((assignment) => {
-                    const isOverdue = new Date(assignment.dueDate) < new Date() && assignment.status !== 'COMPLETED';
-                    const daysLeft = Math.ceil((new Date(assignment.dueDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                    const isOverdue = assignment.dueDate ? new Date(assignment.dueDate) < new Date() && assignment.status !== 'COMPLETED' : false;
+                    const daysLeft = assignment.dueDate ? Math.ceil((new Date(assignment.dueDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
                     
                     return (
                         <div key={assignment.id} className="group flex items-start gap-4 p-4 rounded-xl border bg-card hover:border-indigo-500/50/30 hover:shadow-md transition-all">
@@ -128,14 +128,14 @@ export function MyAssignments() {
                                 <div className="flex items-center gap-4 text-xs">
                                     <div className={cn(
                                         "flex items-center gap-1 font-medium",
-                                        isOverdue ? "text-red-500" : daysLeft <= 3 ? "text-orange-500" : "text-muted-foreground"
+                                        isOverdue ? "text-red-500" : daysLeft !== null && daysLeft <= 3 ? "text-orange-500" : "text-muted-foreground"
                                     )}>
                                         <Calendar className="h-3 w-3" />
-                                        {isOverdue ? 'Vencida' : `${daysLeft} días restantes`}
+                                        {assignment.dueDate ? (isOverdue ? 'Vencida' : `${daysLeft} días restantes`) : 'Sin límite de tiempo'}
                                     </div>
                                     <div className="flex items-center gap-1 text-gray-400">
                                         <Clock className="h-3 w-3" />
-                                        {new Date(assignment.dueDate).toLocaleDateString()}
+                                        {assignment.dueDate ? new Date(assignment.dueDate).toLocaleDateString() : 'Opcional'}
                                     </div>
                                 </div>
 

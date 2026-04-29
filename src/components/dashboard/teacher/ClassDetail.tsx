@@ -163,7 +163,7 @@ export default function ClassDetail({ classId }: { classId: string }) {
                                 <p className="text-xs text-muted-foreground mb-1">{assignment.book.title}</p>
                                 <div className="flex items-center gap-1 text-xs text-indigo-400 mt-auto">
                                     <Calendar size={12} />
-                                    {new Date(assignment.dueDate).toLocaleDateString()}
+                                    {assignment.dueDate ? new Date(assignment.dueDate).toLocaleDateString() : 'Sin fecha límite'}
                                 </div>
                             </div>
                         </Card>

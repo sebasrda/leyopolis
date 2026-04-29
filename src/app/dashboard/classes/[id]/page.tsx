@@ -93,8 +93,8 @@ export default function ClassDetailsPage({ params }: { params: Promise<{ id: str
   };
 
   const handleAssignReading = async () => {
-    if (!selectedBookId || !dueDate || !assignmentTitle) {
-      alert("Por favor completa todos los campos.");
+    if (!selectedBookId || !assignmentTitle) {
+      alert("Por favor completa el título y selecciona un libro.");
       return;
     }
     try {
@@ -105,7 +105,7 @@ export default function ClassDetailsPage({ params }: { params: Promise<{ id: str
           classId: id,
           bookId: selectedBookId,
           title: assignmentTitle,
-          dueDate: dueDate,
+          dueDate: dueDate || null,
         })
       });
 
@@ -321,7 +321,7 @@ export default function ClassDetailsPage({ params }: { params: Promise<{ id: str
                       </select>
                     </div>
                     <div className="space-y-2">
-                      <Label className="font-bold">Fecha de Entrega Límite</Label>
+                      <Label className="font-bold">Fecha de Entrega Límite (Opcional)</Label>
                       <Input 
                         type="date"
                         value={dueDate}
@@ -360,7 +360,7 @@ export default function ClassDetailsPage({ params }: { params: Promise<{ id: str
                       <div className="flex items-center gap-2 bg-muted px-4 py-2 rounded-lg shrink-0 w-full md:w-auto mt-2 md:mt-0">
                         <Calendar className="h-4 w-4 text-gray-400" />
                         <span className="text-sm font-medium text-muted-foreground">
-                          Entrega: <span className="font-bold text-foreground">{new Date(assign.dueDate).toLocaleDateString()}</span>
+                          Entrega: <span className="font-bold text-foreground">{assign.dueDate ? new Date(assign.dueDate).toLocaleDateString() : 'Sin fecha límite'}</span>
                         </span>
                       </div>
                     </div>

@@ -71,7 +71,10 @@ export async function GET() {
   const activeReadingsCount = await prisma.assignment.count({
     where: {
       class: whereTeacher,
-      dueDate: { gte: new Date() }
+      OR: [
+        { dueDate: { gte: new Date() } },
+        { dueDate: null }
+      ]
     }
   });
 

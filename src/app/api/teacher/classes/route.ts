@@ -20,7 +20,10 @@ export async function GET() {
         },
         assignments: {
             where: {
-                dueDate: { gte: new Date() }
+                OR: [
+                    { dueDate: { gte: new Date() } },
+                    { dueDate: null }
+                ]
             },
             orderBy: { dueDate: 'asc' },
             take: 1,
@@ -37,7 +40,7 @@ export async function GET() {
         students: cls._count.students,
         activeAssignment: cls.assignments[0] ? `${cls.assignments[0].book.title}` : "Sin tarea activa",
         progress: Math.floor(Math.random() * 40) + 40, // Mock progress for now as we don't have aggregation yet
-        nextDeadline: cls.assignments[0] ? cls.assignments[0].dueDate.toISOString() : null
+        nextDeadline: cls.assignments[0]?.dueDate ? cls.assignments[0].dueDate.toISOString() : null
     }));
 
     return NextResponse.json(formattedClasses);

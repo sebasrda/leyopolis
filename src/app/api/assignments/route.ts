@@ -10,7 +10,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { classId, bookId, title, dueDate, description } = body;
 
-    if (!classId || !bookId || !title || !dueDate) {
+    if (!classId || !bookId || !title) {
       return NextResponse.json({ message: "Faltan campos obligatorios" }, { status: 400 });
     }
 
@@ -19,7 +19,7 @@ export async function POST(req: Request) {
         classId,
         bookId,
         title,
-        dueDate: new Date(dueDate),
+        dueDate: dueDate ? new Date(dueDate) : null,
         description: description || null,
       },
       include: { book: true }

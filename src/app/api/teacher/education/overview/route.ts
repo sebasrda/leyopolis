@@ -21,17 +21,31 @@ export async function GET() {
   const teacherId = user.userId;
   const instId = dbUser?.institutionId;
 
-  // For SUPERADMIN or ADMIN with no institution, we might want global, but usually they belong to an inst.
-  const whereTeacher: any = user.role === "SUPERADMIN" ? {} : { institutionId: instId };
-  if (user.role === "TEACHER") whereTeacher.teacherId = teacherId;
+  let whereTeacher: any = {};
+  if (user.role === "TEACHER") {
+    whereTeacher = { teacherId: teacherId };
+  } else if (user.role !== "SUPERADMIN") {
+    whereTeacher = { institutionId: instId };
+  }
 
-  const whereCreator: any = user.role === "SUPERADMIN" ? {} : { createdBy: { institutionId: instId } };
-  if (user.role === "TEACHER") whereCreator.createdById = teacherId;
+  let whereCourseAndVideo: any = {};
+  if (user.role === "TEACHER") {
+    whereCourseAndVideo = { teacherId: teacherId };
+  } else if (user.role !== "SUPERADMIN") {
+    whereCourseAndVideo = { teacher: { institutionId: instId } };
+  }
+
+  let whereCreator: any = {};
+  if (user.role === "TEACHER") {
+    whereCreator = { createdById: teacherId };
+  } else if (user.role !== "SUPERADMIN") {
+    whereCreator = { createdBy: { institutionId: instId } };
+  }
 
   const [courses, activities, videos, attempts7d] = await prisma.$transaction([
-    eduDb.course.count({ where: whereTeacher }),
+    eduDb.course.count({ where: whereCourseAndVideo }),
     (prisma as any).activity.count({ where: whereCreator }),
-    eduDb.video.count({ where: whereTeacher }),
+    eduDb.video.count({ where: whereCourseAndVideo }),
     eduDb.activityAttempt.count({
       where: { 
         createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) }, 

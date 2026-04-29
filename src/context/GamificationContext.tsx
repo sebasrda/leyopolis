@@ -61,25 +61,48 @@ export function GamificationProvider({ children }: { children: React.ReactNode }
     } catch { /* silent */ }
   }, [status]);
 
-  // Initial load — if user has 0 XP, repair from existing activity history
+  // Initial load on mount — fetch immediately when authenticated
   useEffect(() => {
     if (status !== "authenticated") return;
-    (async () => {
-      const data = await syncFromApi();
-      if (data && (data.xp ?? 0) === 0) {
-        try {
-          const r = await fetch('/api/user/repair-xp', { method: 'POST' });
-          if (r.ok) await syncFromApi();
-        } catch { /* silent */ }
-      }
-    })();
+
+    const loadInitial = async () => {
+      try {
+        const res = await fetch('/api/user/progress', { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json();
+        const newXp: number = data.xp ?? 0;
+        const newLevel: number = data.level ?? calcLevel(newXp);
+        const newStreak: number = data.streak ?? 0;
+        prevLevelRef.current = newLevel;
+        setProgress(prev => ({ ...prev, xp: newXp, level: newLevel, streakDays: newStreak }));
+
+        // If still 0 XP, try to repair from history
+        if (newXp === 0) {
+          try {
+            const r = await fetch('/api/user/repair-xp', { method: 'POST' });
+            if (r.ok) {
+              const res2 = await fetch('/api/user/progress', { cache: 'no-store' });
+              if (res2.ok) {
+                const data2 = await res2.json();
+                const xp2: number = data2.xp ?? 0;
+                const level2: number = data2.level ?? calcLevel(xp2);
+                prevLevelRef.current = level2;
+                setProgress(prev => ({ ...prev, xp: xp2, level: level2, streakDays: data2.streak ?? 0 }));
+              }
+            }
+          } catch { /* silent */ }
+        }
+      } catch { /* silent */ }
+    };
+
+    loadInitial();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status]);
 
-  // Poll every 5 seconds to pick up server-side XP grants (reading, quiz, etc.)
+  // Poll every 10 seconds to pick up server-side XP grants (reading, quiz, etc.)
   useEffect(() => {
     if (status !== "authenticated") return;
-    const id = setInterval(syncFromApi, 5000);
+    const id = setInterval(syncFromApi, 10000);
     return () => clearInterval(id);
   }, [status, syncFromApi]);
 

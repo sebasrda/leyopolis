@@ -368,11 +368,11 @@ export default function DashboardLayout({ children, serverXp, serverLevel, serve
               <p className="text-xs text-orange-300/70 font-medium mb-0.5">Racha actual</p>
               <div className="flex items-center gap-2">
                 <Flame className="h-5 w-5 text-orange-400" />
-                <span className="text-2xl font-black text-white">{progress.streakDays}</span>
+                <span className="text-2xl font-black text-white">{displayStreak}</span>
                 <span className="text-sm text-orange-300/80 font-medium">días</span>
               </div>
               <p className="text-[10px] text-orange-300/50 mt-1">
-                {progress.streakDays >= 7 ? "¡Sigue así, vas increíble!" : "¡No pierdas tu racha!"}
+                {displayStreak >= 7 ? "¡Sigue así, vas increíble!" : "¡No pierdas tu racha!"}
               </p>
             </div>
           )}
@@ -382,7 +382,7 @@ export default function DashboardLayout({ children, serverXp, serverLevel, serve
             <div className="flex justify-center mb-2">
               <div className="flex flex-col items-center gap-0.5">
                 <Flame className="h-5 w-5 text-orange-400" />
-                <span className="text-xs font-bold text-orange-300">{progress.streakDays}</span>
+                <span className="text-xs font-bold text-orange-300">{displayStreak}</span>
               </div>
             </div>
           )}

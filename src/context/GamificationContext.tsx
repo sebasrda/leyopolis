@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
 
 export interface Achievement {
@@ -43,6 +43,7 @@ export function GamificationProvider({ children }: { children: React.ReactNode }
   const [progress, setProgress] = useState<UserProgress>(DEFAULT_PROGRESS);
   const [levelUpNotice, setLevelUpNotice] = useState<{ level: number } | null>(null);
   const { status } = useSession();
+  const prevLevelRef = useRef<number>(1);
 
   const syncFromApi = useCallback(async () => {
     if (status !== "authenticated") return;
@@ -50,11 +51,12 @@ export function GamificationProvider({ children }: { children: React.ReactNode }
       const res = await fetch('/api/user/progress', { cache: 'no-store' });
       if (!res.ok) return;
       const data = await res.json();
-      setProgress(prev => {
-        const newLevel = data.level ?? calcLevel(data.xp ?? prev.xp);
-        if (newLevel > prev.level) setLevelUpNotice({ level: newLevel });
-        return { ...prev, xp: data.xp ?? prev.xp, level: newLevel, streakDays: data.streak ?? prev.streakDays };
-      });
+      const newXp: number = data.xp ?? 0;
+      const newLevel: number = data.level ?? calcLevel(newXp);
+      const newStreak: number = data.streak ?? 0;
+      if (newLevel > prevLevelRef.current) setLevelUpNotice({ level: newLevel });
+      prevLevelRef.current = newLevel;
+      setProgress(prev => ({ ...prev, xp: newXp, level: newLevel, streakDays: newStreak }));
       return data;
     } catch { /* silent */ }
   }, [status]);
@@ -91,11 +93,11 @@ export function GamificationProvider({ children }: { children: React.ReactNode }
       });
       if (res.ok) {
         const data = await res.json();
-        setProgress(prev => {
-          const newLevel = data.level ?? calcLevel(data.xp ?? prev.xp);
-          if (newLevel > prev.level) setLevelUpNotice({ level: newLevel });
-          return { ...prev, xp: data.xp ?? prev.xp, level: newLevel };
-        });
+        const newXp: number = data.xp ?? 0;
+        const newLevel: number = data.level ?? calcLevel(newXp);
+        if (newLevel > prevLevelRef.current) setLevelUpNotice({ level: newLevel });
+        prevLevelRef.current = newLevel;
+        setProgress(prev => ({ ...prev, xp: newXp, level: newLevel }));
       }
     } catch { /* silent */ }
   }, []);

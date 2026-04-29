@@ -294,6 +294,103 @@ const TranslatedPage = memo(function TranslatedPage({
   );
 });
 
+// Renders a comic page image with AI-detected speech bubble translations overlaid
+const ComicTranslatedPage = memo(function ComicTranslatedPage({
+  pageNum, pdfDocument, width, height, isDarkMode, targetLang, bookId, side,
+}: {
+  pageNum: number; pdfDocument: any; width: number; height: number;
+  isDarkMode: boolean; targetLang: string; bookId?: string; side?: "left" | "right";
+}) {
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [bubbles, setBubbles] = useState<Array<{ x: number; y: number; width: number; height: number; text: string; translatedText: string }>>([]);
+  const [analyzing, setAnalyzing] = useState(false);
+
+  useEffect(() => {
+    if (!pdfDocument || pageNum < 1) return;
+    let cancelled = false;
+    (async () => {
+      setAnalyzing(true);
+      setBubbles([]);
+      setImageUrl(null);
+      try {
+        const page = await pdfDocument.getPage(pageNum);
+        const viewport = page.getViewport({ scale: 2 });
+        const canvas = document.createElement("canvas");
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        const ctx = canvas.getContext("2d")!;
+        await page.render({ canvasContext: ctx, viewport }).promise;
+        const imgUrl = canvas.toDataURL("image/jpeg", 0.85);
+        if (cancelled) return;
+        setImageUrl(imgUrl);
+
+        const base64 = imgUrl.split(",")[1];
+        const res = await fetch("/api/translate/comic-vision", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ imageBase64: base64, targetLanguage: targetLang, pageNum, bookId }),
+        });
+        if (!res.ok || cancelled) return;
+        const data = await res.json();
+        if (!cancelled) setBubbles(data.bubbles || []);
+      } catch { /* silent */ }
+      finally { if (!cancelled) setAnalyzing(false); }
+    })();
+    return () => { cancelled = true; };
+  }, [pageNum, pdfDocument, targetLang, bookId]);
+
+  const bdr = isDarkMode ? "#374151" : "#e5e7eb";
+
+  return (
+    <div style={{
+      width, height, position: "relative", overflow: "hidden", flexShrink: 0,
+      background: isDarkMode ? "#111827" : "#ffffff",
+      borderLeft: side === "right" ? `1px solid ${bdr}` : undefined,
+    }}>
+      {imageUrl ? (
+        <img src={imageUrl} style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }} alt={`Page ${pageNum}`} />
+      ) : (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
+          <Loader2 className="animate-spin text-indigo-400" size={28} />
+        </div>
+      )}
+
+      {bubbles.map((b, i) => (
+        <div key={i} title={b.text} style={{
+          position: "absolute",
+          left: `${b.x}%`, top: `${b.y}%`,
+          width: `${b.width}%`, height: `${b.height}%`,
+          background: "rgba(255,255,255,0.93)",
+          borderRadius: 4,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          padding: "2px 4px", boxSizing: "border-box", overflow: "hidden",
+        }}>
+          <span style={{
+            fontSize: "clamp(7px, 1.1vw, 11px)", lineHeight: 1.25,
+            textAlign: "center", color: "#111",
+            fontFamily: "Arial, sans-serif", fontWeight: 700,
+            display: "-webkit-box",
+            WebkitLineClamp: 6, WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+          }}>
+            {b.translatedText}
+          </span>
+        </div>
+      ))}
+
+      {analyzing && imageUrl && (
+        <div style={{
+          position: "absolute", bottom: 8, right: 8,
+          background: "rgba(0,0,0,0.7)", borderRadius: 20, padding: "3px 10px",
+          color: "white", fontSize: 10, display: "flex", alignItems: "center", gap: 4,
+        }}>
+          <Loader2 size={10} className="animate-spin" /> Analizando...
+        </div>
+      )}
+    </div>
+  );
+});
+
 export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", author, bookId, quizId, selWorkshopId, audioUrl, audioSyncMap }: ProfessionalFlipbookProps) {
   const [numPages, setNumPages] = useState<number>(0);
   const [pageWidth, setPageWidth] = useState<number>(0);
@@ -315,6 +412,7 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
 
   // Estados para Traducción
   const [translatedLanguage, setTranslatedLanguage] = useState<string | null>(null);
+  const [isComicMode, setIsComicMode] = useState(false);
   const [isTranslating, setIsTranslating] = useState(false);
   const [translationOverlay, setTranslationOverlay] = useState<string | null>(null);
   const [translationPages, setTranslationPages] = useState<Record<number, string>>({});
@@ -955,11 +1053,23 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
 
   useEffect(() => {
     const handleFullscreenChange = () => {
+      const savedPage = currentPageRef.current;
       setIsFullscreen(!!document.fullscreenElement);
-      // Forzar recálculo después de la transición
-      setTimeout(calculateScale, 200); 
+      setTimeout(() => {
+        calculateScale();
+        // Restore page after flipbook re-initializes with new dimensions
+        setTimeout(() => {
+          if (flipBookRef.current && savedPage > 0) {
+            try {
+              flipBookRef.current.pageFlip().turnToPage(savedPage);
+            } catch {
+              try { flipBookRef.current.pageFlip().flip(savedPage); } catch { /* ignore */ }
+            }
+          }
+        }, 150);
+      }, 200);
     };
-    
+
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, [calculateScale]);
@@ -1081,6 +1191,7 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
         bilingualModeRef.current = false;
         setTranslationEngine(null);
         setIsTranslationExpanded(false);
+        setIsComicMode(false);
         return;
     }
 
@@ -1097,6 +1208,13 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
             leftPageNum  >= 1 ? extractPageText(leftPageNum)  : Promise.resolve(""),
             rightPageNum >= 1 ? extractPageText(rightPageNum) : Promise.resolve(""),
         ]);
+
+        // Auto-detect image-based comic pages (very little extractable text)
+        if ((leftText + rightText).trim().length < 30) {
+            setIsComicMode(true);
+            setIsTranslating(false);
+            return;
+        }
 
         const translateOne = async (text: string): Promise<string> => {
             if (!text || text.length < 5) return "";
@@ -1345,7 +1463,6 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
             </button>
             <div className="flex flex-col">
                 <h1 className="text-sm font-medium truncate max-w-[150px] opacity-90">{bookTitle}</h1>
-                <span className="text-[10px] text-gray-400">Página {currentPage + 1} de {numPages}</span>
             </div>
             
             <div className="h-8 w-px bg-card/10 mx-1" />
@@ -1444,6 +1561,21 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
                     )}
                 >
                     BI
+                </button>
+                {/* Botón modo cómic — analiza imagen con IA de visión */}
+                <button
+                    onClick={() => setIsComicMode(prev => !prev)}
+                    title={isComicMode ? "Desactivar modo cómic" : "Modo cómic: traduce los globos de texto con IA visual"}
+                    className={cn(
+                        "px-1.5 h-6 text-xs rounded font-bold transition-all ml-1",
+                        isComicMode
+                            ? "bg-orange-600 text-white shadow-sm ring-1 ring-orange-400"
+                            : translatedLanguage
+                                ? "bg-black/30 text-orange-300/70 hover:bg-orange-900/30 hover:text-orange-300"
+                                : "bg-black/30 text-gray-500 hover:bg-card/10"
+                    )}
+                >
+                    🎭
                 </button>
             </div>
 
@@ -1661,27 +1793,55 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
                     {/* Translated-text overlay — auto-scales font to fit, exact page coordination */}
                     {translatedLanguage && !bilingualMode && currentPage >= VIRTUAL_PAGES && (
                       <div className="absolute inset-0 z-40 flex" style={{ borderRadius: 2 }}>
-                        <TranslatedPage
-                          pageNum={currentPage - VIRTUAL_PAGES + 1}
-                          text={translationPages[currentPage - VIRTUAL_PAGES + 1] ?? ""}
-                          width={pageWidth * scale}
-                          height={pageHeight * scale}
-                          isDarkMode={isDarkMode}
-                          side="left"
-                          isLoading={isTranslating}
-                          onTextSelection={handleTextSelection}
-                        />
-                        {!isSinglePage && (currentPage - VIRTUAL_PAGES + 2) >= 1 && (currentPage - VIRTUAL_PAGES + 2) <= (pdfDocument?.numPages ?? 0) && (
-                          <TranslatedPage
-                            pageNum={currentPage - VIRTUAL_PAGES + 2}
-                            text={translationPages[currentPage - VIRTUAL_PAGES + 2] ?? ""}
-                            width={pageWidth * scale}
-                            height={pageHeight * scale}
-                            isDarkMode={isDarkMode}
-                            side="right"
-                            isLoading={isTranslating}
-                            onTextSelection={handleTextSelection}
-                          />
+                        {isComicMode ? (
+                          <>
+                            <ComicTranslatedPage
+                              pageNum={currentPage - VIRTUAL_PAGES + 1}
+                              pdfDocument={pdfDocument}
+                              width={pageWidth * scale}
+                              height={pageHeight * scale}
+                              isDarkMode={isDarkMode}
+                              targetLang={translatedLanguage}
+                              bookId={bookId}
+                            />
+                            {!isSinglePage && (currentPage - VIRTUAL_PAGES + 2) >= 1 && (currentPage - VIRTUAL_PAGES + 2) <= (pdfDocument?.numPages ?? 0) && (
+                              <ComicTranslatedPage
+                                pageNum={currentPage - VIRTUAL_PAGES + 2}
+                                pdfDocument={pdfDocument}
+                                width={pageWidth * scale}
+                                height={pageHeight * scale}
+                                isDarkMode={isDarkMode}
+                                targetLang={translatedLanguage}
+                                bookId={bookId}
+                                side="right"
+                              />
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            <TranslatedPage
+                              pageNum={currentPage - VIRTUAL_PAGES + 1}
+                              text={translationPages[currentPage - VIRTUAL_PAGES + 1] ?? ""}
+                              width={pageWidth * scale}
+                              height={pageHeight * scale}
+                              isDarkMode={isDarkMode}
+                              side="left"
+                              isLoading={isTranslating}
+                              onTextSelection={handleTextSelection}
+                            />
+                            {!isSinglePage && (currentPage - VIRTUAL_PAGES + 2) >= 1 && (currentPage - VIRTUAL_PAGES + 2) <= (pdfDocument?.numPages ?? 0) && (
+                              <TranslatedPage
+                                pageNum={currentPage - VIRTUAL_PAGES + 2}
+                                text={translationPages[currentPage - VIRTUAL_PAGES + 2] ?? ""}
+                                width={pageWidth * scale}
+                                height={pageHeight * scale}
+                                isDarkMode={isDarkMode}
+                                side="right"
+                                isLoading={isTranslating}
+                                onTextSelection={handleTextSelection}
+                              />
+                            )}
+                          </>
                         )}
                       </div>
                     )}
@@ -1942,18 +2102,7 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
       
       {/* Footer Info */}
       <footer className={cn("h-10 text-xs flex items-center justify-between px-6 border-t font-medium transition-colors duration-300", isDarkMode ? "bg-gray-900 border-gray-800 text-muted-foreground" : "bg-[#1c1c1c] border-white/5 text-gray-400")}>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1.5">
-            <span className="opacity-60">Visualizando:</span>
-            <span className={cn("px-2 py-0.5 rounded-full", isDarkMode ? "bg-gray-800 text-gray-300" : "bg-card/10 text-white")}>
-              {loading || numPages === 0 ? (
-                <span className="flex items-center gap-1 animate-pulse"><Loader2 size={10} className="animate-spin" /> Sincronizando páginas...</span>
-              ) : (
-                <>Páginas {currentPage + 1} - {Math.min(currentPage + 2, numPages + VIRTUAL_PAGES)} de {numPages + VIRTUAL_PAGES}</>
-              )}
-            </span>
-          </div>
-        </div>
+        <div />
 
         <div className="flex items-center gap-2">
           <span className="opacity-60">Ir a página:</span>

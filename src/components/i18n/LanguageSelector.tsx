@@ -31,7 +31,7 @@ export function LanguageSelector() {
           data-i18n-skip="true"
         >
           <Globe className="h-4 w-4" />
-          <span className="hidden md:inline">🌐 Idioma</span>
+          <span className="hidden md:inline">Idioma</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56" data-i18n-skip="true">

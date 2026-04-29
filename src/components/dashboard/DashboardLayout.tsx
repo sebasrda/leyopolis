@@ -3,14 +3,13 @@
 import { useEffect, useState } from "react";
 import { 
   Building2,
-  BookOpen, 
-  LayoutDashboard, 
-  Library, 
-  Users, 
-  Settings, 
-  LogOut, 
-  Search, 
-  Bell,
+  BookOpen,
+  LayoutDashboard,
+  Library,
+  Users,
+  Settings,
+  LogOut,
+  Search,
   Menu,
   ChevronLeft,
   GraduationCap,
@@ -409,11 +408,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   ⚡ Súper Admin
                 </Badge>
             )}
-
-            <Button variant="ghost" size="icon" className="relative text-slate-400 hover:text-white hover:bg-card/10 rounded-xl">
-              <Bell className="h-5 w-5" />
-              <span className="absolute top-2 right-2 h-2 w-2 bg-red-500 rounded-full border-2 border-[#0f1623]"></span>
-            </Button>
 
             {/* AI Tutor Header Button */}
             {!pathname.includes("/reader/") && role !== "STUDENT" && (

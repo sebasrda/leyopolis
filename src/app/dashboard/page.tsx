@@ -133,7 +133,7 @@ export default function DashboardPage() {
 
       fetch(`/api/user/challenges?week=${currentWeek}`)
         .then(r => r.ok ? r.json() : {})
-        .then(d => {
+        .then((d: any) => {
           const { __totalClaimed, ...weeklyMap } = d;
           setClaimedChallenges(weeklyMap);
           if (typeof __totalClaimed === 'number') setTotalChallengesClaimed(__totalClaimed);

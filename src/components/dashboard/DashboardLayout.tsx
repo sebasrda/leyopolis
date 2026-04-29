@@ -148,6 +148,7 @@ export default function DashboardLayout({ children, serverXp, serverLevel, serve
   // Direct XP fetch — bypasses GamificationContext as failsafe
   const [directXp, setDirectXp] = useState<number | null>(null);
   const [directLevel, setDirectLevel] = useState<number | null>(null);
+  const [directStreak, setDirectStreak] = useState<number | null>(null);
 
   useEffect(() => {
     // Read server-injected data first (instant, no fetch)
@@ -155,6 +156,7 @@ export default function DashboardLayout({ children, serverXp, serverLevel, serve
     if (serverData && typeof serverData.xp === 'number') {
       setDirectXp(serverData.xp);
       setDirectLevel(serverData.level);
+      setDirectStreak(serverData.streak);
     }
 
     if (status !== "authenticated") return;
@@ -168,6 +170,7 @@ export default function DashboardLayout({ children, serverXp, serverLevel, serve
           const data = await res.json();
           if (typeof data.xp === 'number') setDirectXp(data.xp);
           if (typeof data.level === 'number') setDirectLevel(data.level);
+          if (typeof data.streak === 'number') setDirectStreak(data.streak);
         }
       } catch (e) { console.error('[Sidebar] XP fetch fail:', e); }
     };
@@ -179,6 +182,7 @@ export default function DashboardLayout({ children, serverXp, serverLevel, serve
   // Priority: live client fetch > server props > context > defaults
   const displayXp = directXp ?? (serverXp && serverXp > 0 ? serverXp : null) ?? progress.xp;
   const displayLevel = directLevel ?? (serverLevel && serverLevel > 0 ? serverLevel : null) ?? progress.level;
+  const displayStreak = directStreak ?? (serverStreak && serverStreak > 0 ? serverStreak : null) ?? progress.streakDays;
 
   useEffect(() => {
     const nextRole = session?.user?.role as any;

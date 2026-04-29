@@ -105,6 +105,32 @@ export default function DashboardPage() {
   const { progress, addXp } = useGamification();
   const { userBooks } = useLearning();
 
+  // Direct XP fetch — bypasses GamificationContext as failsafe
+  const [directProgress, setDirectProgress] = useState<{xp: number, level: number, streak: number} | null>(null);
+
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    const fetchDirect = async () => {
+      try {
+        const res = await fetch(`/api/user/progress?_=${Date.now()}`, {
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache' }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (typeof data.xp === 'number') {
+            setDirectProgress({ xp: data.xp, level: data.level, streak: data.streak });
+          }
+        }
+      } catch (e) { console.error('[Dashboard] XP fetch fail:', e); }
+    };
+    fetchDirect();
+  }, [status]);
+
+  const displayXp = directProgress?.xp ?? progress.xp;
+  const displayLevel = directProgress?.level ?? progress.level;
+  const displayStreak = directProgress?.streak ?? progress.streakDays;
+
   const [recommendations, setRecommendations] = useState<Book[]>([]);
   const [loadingRec, setLoadingRec] = useState(true);
   const [recPage, setRecPage] = useState(0);
@@ -181,8 +207,8 @@ export default function DashboardPage() {
   const heroProgress = heroBook?.progress || 0;
 
   // Weekly goal progress (streak / 7 days)
-  const weeklyGoalPct = Math.min(100, Math.round((progress.streakDays / WEEKLY_GOAL_DAYS) * 100));
-  const weekDaysLeft = Math.max(0, WEEKLY_GOAL_DAYS - progress.streakDays);
+  const weeklyGoalPct = Math.min(100, Math.round((displayStreak / WEEKLY_GOAL_DAYS) * 100));
+  const weekDaysLeft = Math.max(0, WEEKLY_GOAL_DAYS - displayStreak);
 
   // Weekly challenges
   const startIndex = (currentWeek * 3) % WEEKLY_CHALLENGES.length;
@@ -620,7 +646,7 @@ export default function DashboardPage() {
                 <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">Retos completados</p>
               </div>
               <div className="text-center">
-                <p className="text-lg font-black text-white">{progress.streakDays}</p>
+                <p className="text-lg font-black text-white">{displayStreak}</p>
                 <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">Días de racha</p>
               </div>
             </div>

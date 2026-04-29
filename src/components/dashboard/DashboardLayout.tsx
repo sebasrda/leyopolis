@@ -145,6 +145,33 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [searchQuery, setSearchQuery] = useState("");
   const { progress, levelUpNotice, clearLevelUp } = useGamification();
 
+  // Direct XP fetch — bypasses GamificationContext as failsafe
+  const [directXp, setDirectXp] = useState<number | null>(null);
+  const [directLevel, setDirectLevel] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    const fetchDirect = async () => {
+      try {
+        const res = await fetch(`/api/user/progress?_=${Date.now()}`, {
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache' }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (typeof data.xp === 'number') setDirectXp(data.xp);
+          if (typeof data.level === 'number') setDirectLevel(data.level);
+        }
+      } catch (e) { console.error('[Sidebar] XP fetch fail:', e); }
+    };
+    fetchDirect();
+    const iv = setInterval(fetchDirect, 15000);
+    return () => clearInterval(iv);
+  }, [status]);
+
+  const displayXp = directXp ?? progress.xp;
+  const displayLevel = directLevel ?? progress.level;
+
   useEffect(() => {
     const nextRole = session?.user?.role as any;
     if (nextRole && nextRole !== stableRole) {
@@ -190,10 +217,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const isFemale = firstName.endsWith("a");
   const defaultAvatar = isFemale ? "/images/avatars/girl.png" : "/images/avatars/boy.png";
 
-  // XP progress within current level
-  const currentLevelXp = LEVEL_THRESHOLDS[Math.min(progress.level - 1, LEVEL_THRESHOLDS.length - 1)] || 0;
-  const nextLevelXp = LEVEL_THRESHOLDS[Math.min(progress.level, LEVEL_THRESHOLDS.length - 1)] || currentLevelXp + 500;
-  const xpInLevel = progress.xp - currentLevelXp;
+  // XP progress within current level — using DIRECT fetched values
+  const currentLevelXp = LEVEL_THRESHOLDS[Math.min(displayLevel - 1, LEVEL_THRESHOLDS.length - 1)] || 0;
+  const nextLevelXp = LEVEL_THRESHOLDS[Math.min(displayLevel, LEVEL_THRESHOLDS.length - 1)] || currentLevelXp + 500;
+  const xpInLevel = displayXp - currentLevelXp;
   const xpNeeded = nextLevelXp - currentLevelXp;
   const xpPercent = xpNeeded > 0 ? Math.min(100, Math.round((xpInLevel / xpNeeded) * 100)) : 100;
 
@@ -257,9 +284,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <div className="bg-card/5 rounded-xl p-3">
               <div className="flex items-center justify-between mb-1.5">
                 <span className="text-xs font-semibold text-indigo-300">
-                  Nivel {progress.level} · {getLevelName(progress.level)}
+                  Nivel {displayLevel} · {getLevelName(displayLevel)}
                 </span>
-                <span className="text-xs text-slate-400">{progress.xp} XP</span>
+                <span className="text-xs text-slate-400">{displayXp} XP</span>
               </div>
               <div className="w-full bg-card/10 rounded-full h-1.5 overflow-hidden">
                 <div

@@ -1667,6 +1667,23 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
                     <p className="text-sm text-gray-400">Cargando libro...</p>
                     </div>
                 }
+                error={
+                    <div className="flex flex-col items-center justify-center gap-4 p-8 text-center min-h-[400px]">
+                    <div className="h-16 w-16 rounded-full bg-red-500/10 flex items-center justify-center">
+                        <X className="h-8 w-8 text-red-400" />
+                    </div>
+                    <div>
+                        <p className="text-gray-200 font-semibold text-lg mb-1">No se pudo cargar el libro</p>
+                        <p className="text-gray-500 text-sm max-w-xs">El archivo no está disponible en este momento. Intenta de nuevo o contacta al administrador.</p>
+                    </div>
+                    <button
+                        onClick={() => setDocumentKey(k => k + 1)}
+                        className="px-5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold transition-colors"
+                    >
+                        Reintentar
+                    </button>
+                    </div>
+                }
                 className="flex items-center justify-center w-full h-full"
                 onLoadError={(error) => console.error("Error loading PDF:", error)}
                 >

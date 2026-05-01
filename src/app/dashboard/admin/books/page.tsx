@@ -81,6 +81,7 @@ export default function AdminBooksPage() {
   const [uploadingQuizFor, setUploadingQuizFor] = useState<string | null>(null);
   const [translatingBookId, setTranslatingBookId] = useState<string | null>(null);
   const [translationStatus, setTranslationStatus] = useState<string>("");
+  const [selectedTranslationLangs, setSelectedTranslationLangs] = useState<string[]>([]);
   const quizInputRef = useRef<HTMLInputElement>(null);
 
   // Audio states
@@ -183,44 +184,24 @@ export default function AdminBooksPage() {
 
       if (res.ok) {
         const bookData = data;
-        setUploadProgress(80);
-        setSuccess("Libro registrado. Generando actividades (Paso 1/3)...");
+        setUploadProgress(100);
+        setUploadOpen(false);
+        setUploadProgress(0);
+        resetForm();
+        fetchBooks();
+        setSuccess("¡Éxito! Libro subido correctamente.");
 
-        try {
-          // Trigger the unified, hybrid AI generation (replacing the old 3-step sequence)
-          const genRes = await fetch("/api/books/regenerate-ia", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ bookId: bookData.book.id }),
-          });
-
-          const genData = await genRes.json();
-
-          if (!genRes.ok) {
-            throw new Error(
-              genData.message || "Error en la generación automática de IA",
-            );
-          }
-
-          setUploadProgress(100);
-          setTimeout(() => {
-            setUploadOpen(false);
-            setUploadProgress(0);
-            resetForm();
-            fetchBooks();
-            setSuccess(
-              `¡Éxito! Libro subido y ${genData.activityCount} actividades generadas.`,
-            );
-          }, 500);
-        } catch (genErr: any) {
-          console.error("AI Generation error after upload:", genErr);
-          setUploadOpen(false);
-          setUploadProgress(0);
-          resetForm();
-          fetchBooks();
-          setError(
-            `El libro se subió, pero hubo un error de IA: ${genErr.message || "Prueba Regenerar manualmente"}`,
-          );
+        // Disparar traducciones automáticas si se seleccionaron idiomas
+        if (selectedTranslationLangs.length > 0) {
+            // Esto se ejecuta en el fondo, handleTranslateBook mostrará su propia barra de progreso en el UI
+            const runTranslations = async () => {
+                const langs = [...selectedTranslationLangs]; // copy state
+                for (const lang of langs) {
+                    await handleTranslateBook(bookData.book.id, lang);
+                }
+                setSuccess("¡Todas las traducciones globales automáticas han finalizado!");
+            };
+            runTranslations();
         }
       } else {
         setError(
@@ -289,6 +270,7 @@ export default function AdminBooksPage() {
     setBookDescription("");
     setSynopsisFile(null);
     setQuizFile(null);
+    setSelectedTranslationLangs([]);
   };
 
   const handleDelete = async (id: string) => {
@@ -386,91 +368,20 @@ export default function AdminBooksPage() {
     if (translatingBookId) return;
     
     setTranslatingBookId(bookId);
-    setTranslationStatus("Descargando libro para extracción...");
-    setTranslationProgress({ current: 0, total: 0 });
+    setTranslationStatus("Traduciendo libro completo en el servidor... Por favor, no cierres esta ventana.");
+    setTranslationProgress({ current: 0, total: 100 });
     
     try {
-      const book = books.find(b => b.id === bookId);
-      if (!book || !book.contentUrl) throw new Error("Libro no encontrado o sin URL");
-
-      // 1. Descargar PDF y extraer texto en el CLIENTE (mucho más fiable)
-      let absoluteUrl = book.contentUrl;
-      if (book.contentUrl.startsWith("/")) {
-        const baseUrl = window.location.origin;
-        absoluteUrl = `${baseUrl}${book.contentUrl}`;
-      }
-
-      const { pdfjs: pdfjsLib } = await import("react-pdf");
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
-
-      const res = await fetch(absoluteUrl);
-      const arrayBuffer = await res.arrayBuffer();
-      const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
-      const pdf = await loadingTask.promise;
+      const res = await fetch("/api/admin/books/translate-book", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookId, targetLanguage })
+      });
       
-      const numPages = pdf.numPages;
-      const extractedPages: string[] = [];
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || data.message || "Error desconocido");
       
-      setTranslationStatus(`Extrayendo texto (${numPages} páginas)...`);
-      for (let i = 1; i <= numPages; i++) {
-        const page = await pdf.getPage(i);
-        const content = await page.getTextContent();
-        const text = content.items.map((item: any) => item.str).join(" ");
-        extractedPages.push(text);
-      }
-      
-      if (extractedPages.length === 0) throw new Error("No se pudo extraer texto del PDF");
-      
-      setTranslationProgress({ current: 0, total: extractedPages.length });
-      setTranslationStatus(`Traduciendo páginas (0/${extractedPages.length})...`);
-
-      // 2. Traducir con concurrencia controlada (5 páginas a la vez)
-      const CONCURRENCY = 5;
-      const chunks = [];
-      for (let i = 0; i < extractedPages.length; i += CONCURRENCY) {
-        chunks.push(extractedPages.slice(i, i + CONCURRENCY).map((text: string, index: number) => ({
-          text: text.trim(),
-          index: i + index
-        })));
-      }
-
-      for (const chunk of chunks) {
-        await Promise.all(chunk.map(async ({ text, index }: { text: string, index: number }) => {
-          if (!text || text.length < 5) {
-            setTranslationProgress(prev => ({ ...prev, current: prev.current + 1 }));
-            return;
-          }
-
-          try {
-            // Traducir página individual
-            await fetch("/api/translate", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ text, targetLanguage }),
-            });
-
-            // Traducir spread (si no es la primera página)
-            if (index > 0 && extractedPages[index - 1]) {
-              const spreadText = `${extractedPages[index - 1].trim()}\n\n---\n\n${text}`;
-              await fetch("/api/translate", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ text: spreadText, targetLanguage }),
-              });
-            }
-          } catch (e) {
-            console.warn(`Error en página ${index + 1}:`, e);
-          } finally {
-            setTranslationProgress(prev => ({ ...prev, current: prev.current + 1 }));
-            setTranslationStatus(`Traduciendo página ${index + 1} de ${extractedPages.length}...`);
-          }
-        }));
-        
-        // Pequeño respiro entre bloques para no saturar
-        await new Promise(r => setTimeout(r, 500));
-      }
-      
-      setSuccess(`Libro de ${extractedPages.length} páginas traducido al ${targetLanguage} correctamente.`);
+      setSuccess(`¡Libro traducido exitosamente! ${data.pagesProcessed} páginas guardadas en caché global.`);
     } catch (err: any) {
       console.error(err);
       setError(`Error al traducir: ${err.message}`);
@@ -693,8 +604,7 @@ export default function AdminBooksPage() {
               <DialogHeader>
                 <DialogTitle>Subir Nuevo Libro</DialogTitle>
                 <DialogDescription>
-                  Completa los datos. Si no subes un quiz, la IA generará uno
-                  automático.
+                  Sube el PDF de tu libro. Podrás generar las actividades interactivas luego desde el botón de regenerar IA para ahorrar tokens.
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-3 py-2">
@@ -877,16 +787,40 @@ export default function AdminBooksPage() {
                   </div>
                 </div>
 
+                <div className="space-y-2 border border-indigo-100 p-3 rounded-md bg-indigo-50/50 mt-2">
+                  <Label className="text-sm font-semibold text-indigo-900">Traducción Global Automática (Opcional)</Label>
+                  <p className="text-xs text-indigo-700">Selecciona los idiomas a los que deseas traducir el libro completo ahora mismo (Ahorra tokens de los estudiantes en el futuro).</p>
+                  <div className="flex flex-wrap gap-4 mt-2">
+                    {["en", "fr", "de", "zh"].map(lang => {
+                       const labels: any = { en: "Inglés", fr: "Francés", de: "Alemán", zh: "Chino" };
+                       return (
+                         <label key={lang} className="flex items-center gap-1.5 text-sm cursor-pointer text-indigo-900">
+                           <input 
+                             type="checkbox" 
+                             checked={selectedTranslationLangs.includes(lang)}
+                             onChange={(e) => {
+                               if (e.target.checked) setSelectedTranslationLangs([...selectedTranslationLangs, lang]);
+                               else setSelectedTranslationLangs(selectedTranslationLangs.filter(l => l !== lang));
+                             }}
+                             className="rounded border-indigo-300 text-indigo-600 focus:ring-indigo-500"
+                           />
+                           {labels[lang]}
+                         </label>
+                       )
+                    })}
+                  </div>
+                </div>
+
                 <Button
                   onClick={handleUpload}
                   disabled={
                     !selectedPdf || (uploadProgress > 0 && uploadProgress < 100)
                   }
-                  className="w-full mt-2 bg-indigo-600"
+                  className="w-full mt-2 bg-indigo-600 hover:bg-indigo-700"
                 >
                   {uploadProgress > 0
                     ? `Procesando... ${uploadProgress}%`
-                    : "Subir y Generar Actividades"}
+                    : "Subir Libro"}
                 </Button>
               </div>
             </DialogContent>

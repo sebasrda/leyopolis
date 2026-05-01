@@ -39,6 +39,7 @@ export async function POST(req: Request) {
   const geminiKey = sanitize(settingsMap.GOOGLE_API_KEY || process.env.GOOGLE_API_KEY);
   const openaiKey = sanitize(settingsMap.OPENAI_API_KEY || process.env.OPENAI_API_KEY);
   const openrouterKey = sanitize(settingsMap.OPENROUTER_API_KEY || process.env.OPENROUTER_API_KEY);
+  const anthropicKey = sanitize(settingsMap.ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY);
 
   let games = fallbackGames(book.title);
   let jsonText = "";
@@ -56,8 +57,39 @@ Match: 6 pares personaje↔descripción o concepto↔definición.
 Contexto:
 """${extractedText.slice(0, 10000)}"""`;
 
-  // PRIMARY: Gemini
-  if (geminiKey) {
+  // PRIMARY: Anthropic (Claude)
+  if (anthropicKey) {
+    try {
+      const { OpenAI: OpenAIClient } = await import("openai");
+      const anthropicClient = new OpenAIClient({
+        apiKey: anthropicKey,
+        baseURL: "https://api.anthropic.com/v1/",
+        defaultHeaders: {
+          "anthropic-version": "2023-06-01",
+          "x-api-key": anthropicKey,
+        }
+      });
+      const response = await anthropicClient.chat.completions.create({
+        model: "claude-3-5-sonnet-20240620",
+        messages: [{ role: "user", content: fullPrompt }],
+        max_tokens: 4096,
+      });
+      const content = response.choices[0]?.message?.content;
+      if (content) jsonText = content.trim();
+    } catch (e) { console.error("[AI-GEN] Anthropic Primary failed:", e); }
+  }
+
+  // SECONDARY: OpenRouter
+  if (!jsonText && openrouterKey) {
+    try {
+      const { generateWithOpenRouter } = await import("@/lib/ai/openrouter");
+      const result = await generateWithOpenRouter(fullPrompt, openrouterKey, "anthropic/claude-3.5-sonnet");
+      if (result) jsonText = JSON.stringify(result);
+    } catch (e) { console.error("[AI-GEN] OpenRouter Secondary failed:", e); }
+  }
+
+  // TERTIARY: Gemini
+  if (!jsonText && geminiKey) {
     try {
       const genAI = new GoogleGenerativeAI(geminiKey);
       const models = ["gemini-2.0-flash", "gemini-1.5-flash"];
@@ -69,16 +101,7 @@ Contexto:
           if (jsonText) break;
         } catch (e) { console.error(`[AI-GEN] Gemini ${modelName} failed:`, e); }
       }
-    } catch (e) { console.error("[AI-GEN] Gemini Primary failed:", e); }
-  }
-
-  // SECONDARY: OpenRouter
-  if (!jsonText && openrouterKey) {
-    try {
-      const { generateWithOpenRouter } = await import("@/lib/ai/openrouter");
-      const result = await generateWithOpenRouter(fullPrompt, openrouterKey, "google/gemini-2.0-flash-001");
-      if (result) jsonText = JSON.stringify(result);
-    } catch (e) { console.error("[AI-GEN] OpenRouter Secondary failed:", e); }
+    } catch (e) { console.error("[AI-GEN] Gemini Tertiary failed:", e); }
   }
 
   // TERTIARY: OpenAI

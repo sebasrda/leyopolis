@@ -268,78 +268,13 @@ export async function generateAndSaveActivities({
   
   let result: any;
   let parsedJson: any;
-  let lastError: any;
+  let allErrors: string[] = [];
   // Use a tiered list of models. If one is 429 (quota) or 404 (not found), we pivot.
   const geminiModels = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-flash-8b"];
   const providersAttempted: string[] = [];
   
-  // PRIMARY ATTEMPT: Gemini
-  if (genAI) {
-    providersAttempted.push("Google Gemini (Direct)");
-    for (const modelName of geminiModels) {
-      if (result) break;
-      
-      console.log(`[AI-STATS] Probando modelo Gemini: ${modelName}`);
-      try {
-        const model = genAI.getGenerativeModel({ model: modelName });
-        const contentParts: any[] = [prompt];
-        
-        if (isMultimodal && pdfDataPart) {
-          contentParts.push(pdfDataPart);
-        }
-
-        // Reduced timeout for the AI call itself
-        const response = await model.generateContent(contentParts);
-        const text = response.response.text();
-        
-        const jsonMatch = text.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          parsedJson = JSON.parse(jsonMatch[0]);
-          result = { source: `gemini-${modelName}` };
-          console.log(`[AI-STATS] Éxito con Gemini: ${modelName}`);
-          break;
-        }
-      } catch (err: any) {
-        lastError = err;
-        const errMsg = err.message || String(err);
-        console.warn(`[AI-STATS] Gemini ${modelName} falló:`, errMsg.slice(0, 100));
-        
-        // If it's a quota error, don't retry, just move to the next model or provider FAST
-        if (errMsg.includes("429") || errMsg.toLowerCase().includes("quota")) {
-          continue; 
-        }
-      }
-    }
-  }
-
-  // SECONDARY ATTEMPT: OpenRouter (High availability)
-  if (!result && openrouterKey) {
-    providersAttempted.push("OpenRouter");
-    console.log(`[AI-STATS] Intentando con OpenRouter (Modelo: google/gemini-2.0-flash-001)`);
-    try {
-      parsedJson = await generateWithOpenRouter(prompt, openrouterKey, "google/gemini-2.0-flash-001");
-      if (parsedJson) {
-        result = { source: "openrouter" };
-        console.log(`[AI-STATS] Éxito con OpenRouter`);
-      }
-    } catch (err: any) {
-      lastError = err;
-      console.error("[AI-STATS] OpenRouter falló:", err.message);
-      
-      // Fallback to a cheaper/more available model on OpenRouter if Gemini-2.0 fails there too
-      try {
-        console.log("[AI-STATS] Re-intentando OpenRouter con gpt-4o-mini...");
-        parsedJson = await generateWithOpenRouter(prompt, openrouterKey, "openai/gpt-4o-mini");
-        if (parsedJson) {
-          result = { source: "openrouter-fallback" };
-          console.log("[AI-STATS] Éxito con OpenRouter (GPT-4o-mini fallback)");
-        }
-      } catch (e2) {}
-    }
-  }
-
-  // TERTIARY ATTEMPT: Anthropic/Claude
-  if (!result && anthropicKey) {
+  // PRIMARY ATTEMPT: Anthropic/Claude (Most powerful, prompt caching optimized)
+  if (anthropicKey) {
     providersAttempted.push("Anthropic Claude");
     console.log(`[AI-STATS] Intentando con Anthropic Claude para: ${title}`);
     try {
@@ -372,8 +307,73 @@ export async function generateAndSaveActivities({
         }
       }
     } catch (err: any) {
-      lastError = err;
+      allErrors.push(`Anthropic: ${err.message || String(err)}`);
       console.error("[AI-STATS] Anthropic Claude falló:", err.message);
+    }
+  }
+
+  // SECONDARY ATTEMPT: OpenRouter (High availability, using Claude or fallback)
+  if (!result && openrouterKey) {
+    providersAttempted.push("OpenRouter");
+    console.log(`[AI-STATS] Intentando con OpenRouter (Modelo: anthropic/claude-3.5-sonnet)`);
+    try {
+      parsedJson = await generateWithOpenRouter(prompt, openrouterKey, "anthropic/claude-3.5-sonnet");
+      if (parsedJson) {
+        result = { source: "openrouter" };
+        console.log(`[AI-STATS] Éxito con OpenRouter`);
+      }
+    } catch (err: any) {
+      allErrors.push(`OpenRouter (claude-3.5-sonnet): ${err.message || String(err)}`);
+      console.error("[AI-STATS] OpenRouter falló:", err.message);
+      
+      // Fallback to a cheaper/more available model on OpenRouter if Claude fails
+      try {
+        console.log("[AI-STATS] Re-intentando OpenRouter con google/gemini-2.0-flash-001...");
+        parsedJson = await generateWithOpenRouter(prompt, openrouterKey, "google/gemini-2.0-flash-001");
+        if (parsedJson) {
+          result = { source: "openrouter-fallback" };
+          console.log("[AI-STATS] Éxito con OpenRouter (Gemini fallback)");
+        }
+      } catch (e2: any) {
+        allErrors.push(`OpenRouter (gemini-2.0-flash): ${e2.message || String(e2)}`);
+      }
+    }
+  }
+
+  // TERTIARY ATTEMPT: Gemini
+  if (!result && genAI) {
+    providersAttempted.push("Google Gemini (Direct)");
+    for (const modelName of geminiModels) {
+      if (result) break;
+      
+      console.log(`[AI-STATS] Probando modelo Gemini: ${modelName}`);
+      try {
+        const model = genAI.getGenerativeModel({ model: modelName });
+        const contentParts: any[] = [prompt];
+        
+        if (isMultimodal && pdfDataPart) {
+          contentParts.push(pdfDataPart);
+        }
+
+        const response = await model.generateContent(contentParts);
+        const text = response.response.text();
+        
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          parsedJson = JSON.parse(jsonMatch[0]);
+          result = { source: `gemini-${modelName}` };
+          console.log(`[AI-STATS] Éxito con Gemini: ${modelName}`);
+          break;
+        }
+      } catch (err: any) {
+        const errMsg = err.message || String(err);
+        allErrors.push(`Gemini (${modelName}): ${errMsg}`);
+        console.warn(`[AI-STATS] Gemini ${modelName} falló:`, errMsg.slice(0, 100));
+        
+        if (errMsg.includes("429") || errMsg.toLowerCase().includes("quota")) {
+          continue; 
+        }
+      }
     }
   }
 
@@ -388,21 +388,24 @@ export async function generateAndSaveActivities({
         console.log("[AI-STATS] Éxito con OpenAI");
       }
     } catch (err: any) {
-      lastError = err;
+      allErrors.push(`OpenAI: ${err.message || String(err)}`);
       console.error("[AI-STATS] Fallback OpenAI falló:", err.message);
     }
   }
 
   if (!result || !parsedJson) {
     const errorPrefix = `Error en Generación IA (Híbrida): `;
-    const errorBody = lastError?.message || "Sin respuesta de ningún proveedor";
+    const errorBody = allErrors.join(" | ");
     const attemptedMsg = providersAttempted.length > 0 ? ` (Intentados: ${providersAttempted.join(", ")})` : "";
     
-    if (errorBody.includes("429") || errorBody.toLowerCase().includes("quota") || errorBody.toLowerCase().includes("limit")) {
-      throw new Error(`${errorPrefix} Límite de cuota alcanzado en TODOS los proveedores configurados${attemptedMsg}. Por favor, revisa tus llaves o saldos.`);
+    // Check if ALL of the attempted providers returned a quota/limit error
+    const allQuota = allErrors.length > 0 && allErrors.every(err => err.includes("429") || err.toLowerCase().includes("quota") || err.toLowerCase().includes("limit"));
+    
+    if (allQuota) {
+      throw new Error(`${errorPrefix} Límite de cuota alcanzado en TODOS los proveedores configurados${attemptedMsg}. Por favor, revisa tus saldos.`);
     }
     
-    throw new Error(`${errorPrefix}${errorBody}${attemptedMsg}`);
+    throw new Error(`${errorPrefix}${attemptedMsg}. Detalles: ${errorBody}`);
   }
 
   // DATA NORMALIZATION: Ensure all questions use 'correctAnswer' (UI standard)

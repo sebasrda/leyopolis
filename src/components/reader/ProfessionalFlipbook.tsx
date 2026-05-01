@@ -1216,8 +1216,12 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
             return;
         }
 
-        const translateOne = async (text: string): Promise<string> => {
+        const translateOne = async (text: string, pageNum: number): Promise<string> => {
             if (!text || text.length < 5) return "";
+            // Revisar caché en memoria primero para evitar llamadas de red redundantes y consumo de tokens
+            if (pageNum >= 1 && translationPages[pageNum]) {
+                return translationPages[pageNum];
+            }
             const resp = await fetch("/api/translate", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -1231,8 +1235,8 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
 
         // Traducir en paralelo — si superadmin pre-tradujo, son cache hits instantáneos
         const [leftTrans, rightTrans] = await Promise.all([
-            translateOne(leftText),
-            rightPageNum >= 1 ? translateOne(rightText) : Promise.resolve(""),
+            translateOne(leftText, leftPageNum),
+            rightPageNum >= 1 ? translateOne(rightText, rightPageNum) : Promise.resolve(""),
         ]);
 
         // Guardar traducciones indexadas por número de página real

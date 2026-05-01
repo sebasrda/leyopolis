@@ -57,15 +57,19 @@ export async function POST(req: Request) {
       await pdfParse(pdfBuffer, {
         pagerender: (pageData: any) => {
           return pageData.getTextContent().then((textContent: any) => {
-            let lastY, text = '';
-            for (let item of textContent.items) {
-              if (lastY == item.transform[5] || !lastY) {
-                text += item.str;
-              } else {
-                text += '\n' + item.str;
+            let result = "";
+            let lastY: number | null = null;
+            for (const item of textContent.items) {
+              if (lastY !== null && Math.abs(item.transform[5] - lastY) > 5) {
+                // Different vertical position = likely new line
+                result += "\n";
+              } else if (result.length > 0 && !result.endsWith(" ") && !result.endsWith("\n")) {
+                result += " ";
               }
+              result += item.str;
               lastY = item.transform[5];
             }
+            const text = result.trim();
             pages.push(text);
             return text;
           });

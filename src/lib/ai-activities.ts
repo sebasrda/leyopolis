@@ -270,7 +270,7 @@ export async function generateAndSaveActivities({
   let parsedJson: any;
   let allErrors: string[] = [];
   // Use a tiered list of models. If one is 429 (quota) or 404 (not found), we pivot.
-  const geminiModels = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-flash-8b"];
+  const geminiModels = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-flash-latest"];
   const providersAttempted: string[] = [];
   
   // PRIMARY ATTEMPT: Anthropic/Claude (Most powerful, prompt caching optimized)
@@ -289,7 +289,7 @@ export async function generateAndSaveActivities({
       });
       
       const response = await anthropicClient.chat.completions.create({
-        model: "claude-3-5-sonnet-20240620",
+        model: "claude-haiku-4-5-20251001",
         messages: [
           { role: "system", content: "Actúas como un experto pedagogo que genera contenido educativo en JSON estricto para una plataforma de lectura infantil." },
           { role: "user", content: prompt }
@@ -315,15 +315,15 @@ export async function generateAndSaveActivities({
   // SECONDARY ATTEMPT: OpenRouter (High availability, using Claude or fallback)
   if (!result && openrouterKey) {
     providersAttempted.push("OpenRouter");
-    console.log(`[AI-STATS] Intentando con OpenRouter (Modelo: anthropic/claude-3.5-sonnet)`);
+    console.log(`[AI-STATS] Intentando con OpenRouter (Modelo: anthropic/claude-haiku-4.5)`);
     try {
-      parsedJson = await generateWithOpenRouter(prompt, openrouterKey, "anthropic/claude-3.5-sonnet");
+      parsedJson = await generateWithOpenRouter(prompt, openrouterKey, "anthropic/claude-haiku-4.5");
       if (parsedJson) {
         result = { source: "openrouter" };
         console.log(`[AI-STATS] Éxito con OpenRouter`);
       }
     } catch (err: any) {
-      allErrors.push(`OpenRouter (claude-3.5-sonnet): ${err.message || String(err)}`);
+      allErrors.push(`OpenRouter (claude-haiku-4.5): ${err.message || String(err)}`);
       console.error("[AI-STATS] OpenRouter falló:", err.message);
       
       // Fallback to a cheaper/more available model on OpenRouter if Claude fails

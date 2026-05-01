@@ -63,7 +63,7 @@ async function translateWithClaude(text: string, targetLangPrompt: string, apiKe
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        model: "claude-3-5-sonnet-20240620",
+        model: "claude-sonnet-4-6",
         max_tokens: 8192,
         messages: [
           {
@@ -159,7 +159,7 @@ async function translateWithGemini(text: string, targetLangPrompt: string, apiKe
 
   try {
     const genAI = new GoogleGenerativeAI(key);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
     const result = await model.generateContent(buildTranslationPrompt(text, targetLangPrompt));
     const translation = result.response.text();
     if (translation && translation.trim().length > 10) return translation.trim();

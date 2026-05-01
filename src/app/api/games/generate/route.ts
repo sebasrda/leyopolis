@@ -70,7 +70,7 @@ Contexto:
         }
       });
       const response = await anthropicClient.chat.completions.create({
-        model: "claude-3-5-sonnet-20240620",
+        model: "claude-haiku-4-5-20251001",
         messages: [{ role: "user", content: fullPrompt }],
         max_tokens: 4096,
       });
@@ -83,7 +83,7 @@ Contexto:
   if (!jsonText && openrouterKey) {
     try {
       const { generateWithOpenRouter } = await import("@/lib/ai/openrouter");
-      const result = await generateWithOpenRouter(fullPrompt, openrouterKey, "anthropic/claude-3.5-sonnet");
+      const result = await generateWithOpenRouter(fullPrompt, openrouterKey, "anthropic/claude-haiku-4.5");
       if (result) jsonText = JSON.stringify(result);
     } catch (e) { console.error("[AI-GEN] OpenRouter Secondary failed:", e); }
   }
@@ -92,7 +92,7 @@ Contexto:
   if (!jsonText && geminiKey) {
     try {
       const genAI = new GoogleGenerativeAI(geminiKey);
-      const models = ["gemini-2.0-flash", "gemini-1.5-flash"];
+      const models = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-flash-latest"];
       for (const modelName of models) {
         try {
           const model = genAI.getGenerativeModel({ model: modelName });

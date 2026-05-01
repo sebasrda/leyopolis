@@ -20,19 +20,27 @@ export async function generateWithOpenRouter(prompt: string, apiKey: string, mod
   });
 
   try {
-    const response = await client.chat.completions.create({
+    const requestBody: any = {
       model: model,
       messages: [
-        { 
-          role: "system", 
-          content: "Actúas como un experto pedagogo que genera contenido educativo en JSON estricto para una plataforma de lectura infantil." 
+        {
+          role: "system",
+          content: "Actúas como un experto pedagogo que genera contenido educativo en JSON estricto para una plataforma de lectura infantil."
         },
         { role: "user", content: prompt }
       ],
-      response_format: { type: "json_object" },
       temperature: 0.7,
-      max_tokens: 4096 // More room for 20 questions
-    });
+      // 3500 keeps the request under the free-tier credit threshold on OpenRouter
+      // (free Gemini caps around ~3933 tokens). Increase only if you have paid credits.
+      max_tokens: 3500
+    };
+
+    // OpenRouter / Google Gemini models often do not support json_object via the OpenAI compatibility API
+    if (!model.includes("gemini")) {
+      requestBody.response_format = { type: "json_object" };
+    }
+
+    const response = await client.chat.completions.create(requestBody);
 
     const content = response.choices[0].message.content;
     if (!content) throw new Error("OpenRouter returned empty response");

@@ -76,7 +76,7 @@ Instrucción del profesor/coordinador: "${prompt}"`;
   if (geminiKey) {
     try {
       const genAI = new GoogleGenerativeAI(geminiKey);
-      const models = ["gemini-2.0-flash", "gemini-1.5-flash"];
+      const models = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-flash-latest"];
       for (const modelName of models) {
         try {
           const model = genAI.getGenerativeModel({ model: modelName });

@@ -80,6 +80,7 @@ export default function AdminBooksPage() {
   const [quizFile, setQuizFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadingQuizFor, setUploadingQuizFor] = useState<string | null>(null);
+  const [editSynopsisFile, setEditSynopsisFile] = useState<File | null>(null);
   const [translatingBookId, setTranslatingBookId] = useState<string | null>(null);
   const [translationStatus, setTranslationStatus] = useState<string>("");
   const [selectedTranslationLangs, setSelectedTranslationLangs] = useState<string[]>([]);
@@ -165,6 +166,17 @@ export default function AdminBooksPage() {
         quizUrl = quizBlob.url;
       }
 
+      // Stage 3.5: Upload Synopsis File if exists
+      let synopsisUrl = "";
+      if (synopsisFile) {
+        setUploadProgress(60);
+        const synopsisBlob = await upload(synopsisFile.name, synopsisFile, {
+          access: "public",
+          handleUploadUrl: "/api/upload/blob-token",
+        });
+        synopsisUrl = synopsisBlob.url;
+      }
+
       // Stage 4: Send meta-data to our API
       setUploadProgress(70);
       const res = await fetch("/api/upload", {
@@ -181,6 +193,7 @@ export default function AdminBooksPage() {
           contentUrl: pdfBlob.url,
           coverImage: coverUrl,
           quizFileUrl: quizUrl,
+          synopsisFileUrl: synopsisUrl,
           description: bookDescription || "",
         }),
       });
@@ -290,6 +303,7 @@ export default function AdminBooksPage() {
   };
 
   const openEditDialog = (book: any) => {
+    setEditSynopsisFile(null);
     setEditBookId(book.id);
     setEditTitle(book.title || "");
     setEditAuthor(book.author || "");
@@ -313,6 +327,16 @@ export default function AdminBooksPage() {
     setSavingEdit(true);
     setError(null);
     try {
+      let synopsisFileUrl = "";
+      if (editSynopsisFile) {
+        const { upload } = await import("@vercel/blob/client");
+        const blob = await upload(editSynopsisFile.name, editSynopsisFile, {
+          access: "public",
+          handleUploadUrl: "/api/upload/blob-token",
+        });
+        synopsisFileUrl = blob.url;
+      }
+
       const res = await fetch(`/api/books/${editBookId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -327,6 +351,7 @@ export default function AdminBooksPage() {
           description: editDescription,
           passScore: editPassScore,
           published: editPublished,
+          synopsisFileUrl
         }),
       });
       const data = await res.json();
@@ -337,6 +362,7 @@ export default function AdminBooksPage() {
       setSuccess("Unidad actualizada correctamente");
       setEditOpen(false);
       setEditBookId(null);
+      setEditSynopsisFile(null);
     } catch (err: any) {
       setError(err.message || "Error al guardar cambios");
     } finally {
@@ -1313,12 +1339,39 @@ export default function AdminBooksPage() {
 
             <div className="space-y-1">
               <Label>Sinopsis</Label>
-              <textarea
-                className="w-full min-h-[80px] p-2 border rounded-md text-sm bg-background outline-none focus:ring-1 focus:ring-emerald-500"
-                value={editDescription}
-                onChange={(e) => setEditDescription(e.target.value)}
-                placeholder="Resumen del libro..."
-              />
+              <div className="flex flex-col gap-2">
+                <textarea
+                  className="w-full min-h-[80px] p-2 border rounded-md text-sm bg-background outline-none focus:ring-1 focus:ring-emerald-500"
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  placeholder="Resumen del libro..."
+                />
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="file"
+                    accept=".pdf,.doc,.docx,.txt"
+                    className="hidden"
+                    id="edit-synopsis-upload"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        setEditSynopsisFile(file);
+                        setEditDescription(`[Extrayendo del archivo: ${file.name}] ... (El sistema procesará este documento para generar la mejor sinopsis)`);
+                      }
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full border-dashed text-xs h-8 border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                    onClick={() => document.getElementById("edit-synopsis-upload")?.click()}
+                  >
+                    <Upload className="h-3 w-3 mr-2" />
+                    {editSynopsisFile ? `Archivo: ${editSynopsisFile.name}` : "Actualizar sinopsis mediante archivo (PDF/Word)"}
+                  </Button>
+                </div>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3 pt-1">

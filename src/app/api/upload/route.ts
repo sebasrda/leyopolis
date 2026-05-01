@@ -129,6 +129,50 @@ export async function POST(req: Request) {
             console.error("Error fetching manual quiz file:", qFetchErr);
           }
         }
+
+        // If a manual synopsis file was uploaded
+        if (body.synopsisFileUrl) {
+          try {
+            const sFileRes = await fetch(body.synopsisFileUrl);
+            if (sFileRes.ok) {
+              const sBuffer = Buffer.from(await sFileRes.arrayBuffer());
+              let extractedSynopsis = "";
+              
+              if (body.synopsisFileUrl.endsWith(".pdf")) {
+              try {
+                const { PDFParse } = require("pdf-parse");
+                let parser: any = null;
+                try {
+                  parser = new PDFParse({ data: new Uint8Array(sBuffer) });
+                  const result = await parser.getText();
+                  extractedSynopsis = result.text || "";
+                } finally {
+                  try { await parser?.destroy?.(); } catch {}
+                }
+              } catch (pdfErr) {
+                console.error("Error parsing PDF synopsis:", pdfErr);
+              }
+            } else if (body.synopsisFileUrl.endsWith(".docx") || body.synopsisFileUrl.endsWith(".doc")) {
+                const mammoth = require("mammoth");
+                const sResult = await mammoth.extractRawText({ buffer: sBuffer });
+                extractedSynopsis = sResult.value;
+              } else if (body.synopsisFileUrl.endsWith(".txt")) {
+                extractedSynopsis = new TextDecoder().decode(sBuffer);
+              }
+
+              if (extractedSynopsis.trim()) {
+                description = extractedSynopsis.trim();
+                // Actualizar descripción del libro ya creado
+                await (prisma as any).book.update({
+                  where: { id: book.id },
+                  data: { description }
+                });
+              }
+            }
+          } catch (sErr) {
+            console.error("Error processing synopsis file:", sErr);
+          }
+        }
       } catch (dbErr) {
         console.error("Database error creating book from URL:", dbErr);
         return NextResponse.json({ message: "Error al registrar el libro con la URL proporcionada", error: String(dbErr) }, { status: 500 });

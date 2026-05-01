@@ -27,4 +27,12 @@ if (typeof (globalThis as any).DOMMatrix === "undefined") {
   (globalThis as any).DOMMatrix = DOMMatrixStub;
 }
 
+// Fix for pdfjs-dist / pdf-parse "Cannot find module as expression is too dynamic"
+// This tells PDF.js to use the fake worker instead of trying to load a worker file.
+if (typeof (globalThis as any).PDFJS === "undefined") {
+  (globalThis as any).PDFJS = {};
+}
+(globalThis as any).PDFJS.disableWorker = true;
+(globalThis as any).PDFJS.workerSrc = "";
+
 export {};

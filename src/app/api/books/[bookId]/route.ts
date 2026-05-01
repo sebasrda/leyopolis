@@ -128,11 +128,50 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ bookId
     }
   }
 
-  if (Object.keys(data).length === 0) {
+  if (Object.keys(data).length === 0 && !body.synopsisFileUrl) {
     return NextResponse.json({ message: "No hay cambios válidos para aplicar" }, { status: 400 });
   }
 
   try {
+    // If a manual synopsis file was uploaded
+    if (body.synopsisFileUrl) {
+      try {
+        const sFileRes = await fetch(body.synopsisFileUrl);
+        if (sFileRes.ok) {
+          const sBuffer = Buffer.from(await sFileRes.arrayBuffer());
+          let extractedSynopsis = "";
+          
+          if (body.synopsisFileUrl.endsWith(".pdf")) {
+            try {
+              const { PDFParse } = require("pdf-parse");
+              let parser: any = null;
+              try {
+                parser = new PDFParse({ data: new Uint8Array(sBuffer) });
+                const result = await parser.getText();
+                extractedSynopsis = result.text || "";
+              } finally {
+                try { await parser?.destroy?.(); } catch {}
+              }
+            } catch (pdfErr) {
+              console.error("Error parsing PDF synopsis:", pdfErr);
+            }
+          } else if (body.synopsisFileUrl.endsWith(".docx") || body.synopsisFileUrl.endsWith(".doc")) {
+            const mammoth = require("mammoth");
+            const sResult = await mammoth.extractRawText({ buffer: sBuffer });
+            extractedSynopsis = sResult.value;
+          } else if (body.synopsisFileUrl.endsWith(".txt")) {
+            extractedSynopsis = new TextDecoder().decode(sBuffer);
+          }
+
+          if (extractedSynopsis.trim()) {
+            data.description = extractedSynopsis.trim();
+          }
+        }
+      } catch (sErr) {
+        console.error("Error processing synopsis file:", sErr);
+      }
+    }
+
     const book = await (prisma as any).book.update({
       where: { id: bookId },
       data,

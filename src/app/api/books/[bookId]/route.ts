@@ -78,7 +78,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ bookId
   const session = await getServerSession(authOptions);
   const userRole = (session?.user as any)?.role;
   const isAuthorized = userRole === "ADMIN" || userRole === "SUPERADMIN";
-  
+
   if (!session || !isAuthorized) {
     return NextResponse.json({ message: "No autorizado" }, { status: 401 });
   }
@@ -86,13 +86,56 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ bookId
   const { bookId } = await params;
   const body = await req.json();
 
+  const allowedStringFields = [
+    "title",
+    "author",
+    "description",
+    "category",
+    "difficulty",
+    "ageRange",
+    "grade",
+    "subject",
+    "language",
+    "coverImage",
+  ] as const;
+
+  const data: Record<string, any> = {};
+
+  for (const field of allowedStringFields) {
+    if (body[field] !== undefined) {
+      const value = body[field];
+      if (value === null) {
+        data[field] = null;
+      } else if (typeof value === "string") {
+        const trimmed = value.trim();
+        data[field] = trimmed.length === 0 ? null : trimmed;
+      }
+    }
+  }
+
+  if (body.allowMultipleAttempts !== undefined) {
+    data.allowMultipleAttempts = Boolean(body.allowMultipleAttempts);
+  }
+
+  if (body.published !== undefined) {
+    data.published = Boolean(body.published);
+  }
+
+  if (body.passScore !== undefined) {
+    const score = Number(body.passScore);
+    if (!Number.isNaN(score) && score >= 0 && score <= 100) {
+      data.passScore = Math.round(score);
+    }
+  }
+
+  if (Object.keys(data).length === 0) {
+    return NextResponse.json({ message: "No hay cambios válidos para aplicar" }, { status: 400 });
+  }
+
   try {
     const book = await (prisma as any).book.update({
       where: { id: bookId },
-      data: {
-        allowMultipleAttempts: body.allowMultipleAttempts !== undefined ? body.allowMultipleAttempts : undefined,
-        passScore: body.passScore !== undefined ? body.passScore : undefined,
-      }
+      data,
     });
 
     return NextResponse.json({ message: "Libro actualizado", book });

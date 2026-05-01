@@ -188,7 +188,14 @@ export default function GamesModal({ isOpen, onClose, bookTitle, bookId }: Games
                       <GestureRompecabezas onComplete={() => {}} onExit={() => setActiveGame(null)} />
                     )}
                     {activeGame === "g-ppt" && (
-                      <GesturePPT questions={quizData?.questions || []} onComplete={() => {}} onExit={() => setActiveGame(null)} />
+                      <GesturePPT
+                        questions={quizData?.questions || []}
+                        keywords={quizData?.keywords || []}
+                        statements={quizData?.statements || []}
+                        bookTitle={bookTitle}
+                        onComplete={() => {}}
+                        onExit={() => setActiveGame(null)}
+                      />
                     )}
                     {activeGame === "g-timeline" && (
                       <GestureTimeline events={quizData?.timelineEvents || []} onComplete={() => {}} onExit={() => setActiveGame(null)} />

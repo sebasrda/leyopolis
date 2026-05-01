@@ -17,6 +17,7 @@ import {
   Volume2,
   X as XIcon,
   Languages,
+  Pencil,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -87,6 +88,21 @@ export default function AdminBooksPage() {
   // Audio states
   const [uploadingAudioFor, setUploadingAudioFor] = useState<string | null>(null);
   const [audioProgress, setAudioProgress] = useState<string>("");
+
+  // Edit (unidad) states
+  const [editOpen, setEditOpen] = useState(false);
+  const [editBookId, setEditBookId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editAuthor, setEditAuthor] = useState("");
+  const [editCategory, setEditCategory] = useState("Literatura");
+  const [editDifficulty, setEditDifficulty] = useState("Intermedio");
+  const [editAgeRange, setEditAgeRange] = useState("9-12");
+  const [editGrade, setEditGrade] = useState("");
+  const [editSubject, setEditSubject] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editPassScore, setEditPassScore] = useState<number>(60);
+  const [editPublished, setEditPublished] = useState(true);
+  const [savingEdit, setSavingEdit] = useState(false);
 
   useEffect(() => {
     fetchBooks();
@@ -271,6 +287,61 @@ export default function AdminBooksPage() {
     setSynopsisFile(null);
     setQuizFile(null);
     setSelectedTranslationLangs([]);
+  };
+
+  const openEditDialog = (book: any) => {
+    setEditBookId(book.id);
+    setEditTitle(book.title || "");
+    setEditAuthor(book.author || "");
+    setEditCategory(book.category || "Literatura");
+    setEditDifficulty(book.difficulty || "Intermedio");
+    setEditAgeRange(book.ageRange || "9-12");
+    setEditGrade(book.grade || "");
+    setEditSubject(book.subject || "");
+    setEditDescription(book.description || "");
+    setEditPassScore(typeof book.passScore === "number" ? book.passScore : 60);
+    setEditPublished(book.published !== false);
+    setEditOpen(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editBookId) return;
+    if (!editTitle.trim()) {
+      setError("El título es obligatorio");
+      return;
+    }
+    setSavingEdit(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/books/${editBookId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: editTitle,
+          author: editAuthor,
+          category: editCategory,
+          difficulty: editDifficulty,
+          ageRange: editAgeRange,
+          grade: editGrade,
+          subject: editSubject,
+          description: editDescription,
+          passScore: editPassScore,
+          published: editPublished,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Error al guardar cambios");
+      setBooks((prev) =>
+        prev.map((b) => (b.id === editBookId ? { ...b, ...data.book } : b)),
+      );
+      setSuccess("Unidad actualizada correctamente");
+      setEditOpen(false);
+      setEditBookId(null);
+    } catch (err: any) {
+      setError(err.message || "Error al guardar cambios");
+    } finally {
+      setSavingEdit(false);
+    }
   };
 
   const handleDelete = async (id: string) => {
@@ -1125,6 +1196,15 @@ export default function AdminBooksPage() {
                       <Button
                         variant="ghost"
                         size="icon"
+                        className="text-emerald-400 hover:text-emerald-700 hover:bg-emerald-50 rounded-full"
+                        title="Editar unidad (metadatos del libro)"
+                        onClick={() => openEditDialog(book)}
+                      >
+                        <Pencil className="h-5 w-5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         className="text-red-400 hover:text-red-700 hover:bg-red-50 rounded-full"
                         onClick={() => handleDelete(book.id)}
                       >
@@ -1138,6 +1218,161 @@ export default function AdminBooksPage() {
           </TableBody>
         </Table>
       </Card>
+
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="sm:max-w-[560px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pencil className="h-5 w-5 text-emerald-500" /> Editar Unidad
+            </DialogTitle>
+            <DialogDescription>
+              Modifica los datos de esta unidad de lectura. Los cambios se aplican de inmediato a profesores y estudiantes.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-3 py-2">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label>Título *</Label>
+                <Input
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  placeholder="Título del libro"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label>Autor</Label>
+                <Input
+                  value={editAuthor}
+                  onChange={(e) => setEditAuthor(e.target.value)}
+                  placeholder="Autor"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-1">
+                <Label>Categoría</Label>
+                <select
+                  className="w-full p-2 border rounded-md text-sm bg-background"
+                  value={editCategory}
+                  onChange={(e) => setEditCategory(e.target.value)}
+                >
+                  <option value="Infantil">Infantil</option>
+                  <option value="Literatura">Literatura</option>
+                  <option value="Académico">Académico</option>
+                  <option value="General">General</option>
+                </select>
+              </div>
+              <div className="space-y-1">
+                <Label>Dificultad</Label>
+                <select
+                  className="w-full p-2 border rounded-md text-sm bg-background"
+                  value={editDifficulty}
+                  onChange={(e) => setEditDifficulty(e.target.value)}
+                >
+                  <option value="Principiante">Principiante</option>
+                  <option value="Intermedio">Intermedio</option>
+                  <option value="Avanzado">Avanzado</option>
+                </select>
+              </div>
+              <div className="space-y-1">
+                <Label>Edad</Label>
+                <select
+                  className="w-full p-2 border rounded-md text-sm bg-background"
+                  value={editAgeRange}
+                  onChange={(e) => setEditAgeRange(e.target.value)}
+                >
+                  <option value="3-5">3-5</option>
+                  <option value="6-8">6-8</option>
+                  <option value="9-12">9-12</option>
+                  <option value="13-15">13-15</option>
+                  <option value="16+">16+</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label>Grado</Label>
+                <Input
+                  value={editGrade}
+                  onChange={(e) => setEditGrade(e.target.value)}
+                  placeholder="Ej. 6to"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label>Materia</Label>
+                <Input
+                  value={editSubject}
+                  onChange={(e) => setEditSubject(e.target.value)}
+                  placeholder="Ej. Español"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <Label>Sinopsis</Label>
+              <textarea
+                className="w-full min-h-[80px] p-2 border rounded-md text-sm bg-background outline-none focus:ring-1 focus:ring-emerald-500"
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+                placeholder="Resumen del libro..."
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 pt-1">
+              <div className="space-y-1">
+                <Label>Nota mínima de aprobación (%)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={editPassScore}
+                  onChange={(e) => setEditPassScore(Number(e.target.value))}
+                />
+              </div>
+              <div className="space-y-1 flex flex-col justify-end">
+                <Label className="flex items-center justify-between gap-3">
+                  <span>Publicada (visible)</span>
+                  <Switch
+                    checked={editPublished}
+                    onCheckedChange={setEditPublished}
+                  />
+                </Label>
+                <p className="text-[10px] text-muted-foreground">
+                  Si la desactivas, los estudiantes no verán esta unidad.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button
+                variant="outline"
+                onClick={() => setEditOpen(false)}
+                disabled={savingEdit}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleSaveEdit}
+                disabled={savingEdit || !editTitle.trim()}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
+              >
+                {savingEdit ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" /> Guardando...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="h-4 w-4" /> Guardar cambios
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

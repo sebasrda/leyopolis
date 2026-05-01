@@ -1,3 +1,4 @@
+import "@/lib/pdf-polyfill";
 import { prisma } from "@/lib/prisma";
 import { generateWithOpenAI } from "./ai/openai";
 import { generateWithOpenRouter } from "./ai/openrouter";

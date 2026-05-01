@@ -1,4 +1,5 @@
 
+import "@/lib/pdf-polyfill";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { writeFile, appendFile } from "fs/promises";

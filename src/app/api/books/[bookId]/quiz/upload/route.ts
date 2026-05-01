@@ -40,10 +40,13 @@ export async function POST(req: Request, { params }: { params: Promise<{ bookId:
     } else {
       const quizBuffer = Buffer.from(await quizFile.arrayBuffer());
       if (quizFile.name.endsWith(".pdf")) {
+        let parser: any = null;
         try {
-          const pdfParse = require("pdf-parse");
-          rawText = (await pdfParse(quizBuffer)).text;
+          const { PDFParse } = require("pdf-parse");
+          parser = new PDFParse({ data: new Uint8Array(quizBuffer) });
+          rawText = (await parser.getText()).text || "";
         } catch (e) { console.error("PDF parse error:", e); }
+        finally { try { await parser?.destroy?.(); } catch {} }
       } else if (quizFile.name.endsWith(".docx") || quizFile.name.endsWith(".doc")) {
         try {
           const mammoth = require("mammoth");

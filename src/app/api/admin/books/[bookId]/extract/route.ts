@@ -40,30 +40,21 @@ export async function GET(
     const pdfBuffer = Buffer.from(await pdfRes.arrayBuffer());
     console.log(`[EXTRACT] PDF descargado. Tamaño: ${pdfBuffer.length} bytes`);
 
-    const pdfParse = require("pdf-parse");
+    const { PDFParse } = require("pdf-parse");
     const pages: string[] = [];
-    
+    let parser: any = null;
+
     try {
-      await pdfParse(pdfBuffer, {
-        pagerender: (pageData: any) => {
-          return pageData.getTextContent().then((textContent: any) => {
-            let lastY, text = '';
-            for (let item of textContent.items) {
-              if (lastY == item.transform[5] || !lastY) {
-                text += item.str;
-              } else {
-                text += '\n' + item.str;
-              }
-              lastY = item.transform[5];
-            }
-            pages.push(text);
-            return text;
-          });
-        }
-      });
+      parser = new PDFParse({ data: new Uint8Array(pdfBuffer) });
+      const textResult = await parser.getText();
+      for (const p of textResult.pages || []) {
+        pages.push((p.text || "").trim());
+      }
     } catch (parseErr: any) {
       console.error("[EXTRACT] PDF Parse error:", parseErr);
       throw new Error(`Error en el motor de lectura de PDF: ${parseErr.message}`);
+    } finally {
+      try { await parser?.destroy?.(); } catch {}
     }
 
     if (pages.length === 0) {

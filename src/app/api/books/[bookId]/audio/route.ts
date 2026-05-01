@@ -200,27 +200,25 @@ async function extractPdfPageTexts(contentUrl: string): Promise<string[]> {
     }
 
     const pdfBuffer = Buffer.from(await pdfRes.arrayBuffer());
-    
-    // Use pdf-parse to get page-by-page text
-    // pdf-parse doesn't natively give per-page text, so we use a custom page render
-    const pdfParse = require("pdf-parse");
-    
-    const pageTexts: string[] = [];
-    
-    // First pass: get total pages
-    const data = await pdfParse(pdfBuffer, {
-      // Custom page renderer to capture per-page text
-      pagerender: async function(pageData: any) {
-        const textContent = await pageData.getTextContent();
-        const text = textContent.items
-          .map((item: any) => item.str)
-          .join(" ");
-        pageTexts.push(text);
-        return text;
-      }
-    });
 
-    console.log(`[AUDIO-API] PDF parsed: ${pageTexts.length} pages, ${data.text?.length || 0} total chars`);
+    // pdf-parse v2 PDFParse class API (returns per-page text natively)
+    const { PDFParse } = require("pdf-parse");
+    const pageTexts: string[] = [];
+    let parser: any = null;
+    let totalChars = 0;
+
+    try {
+      parser = new PDFParse({ data: new Uint8Array(pdfBuffer) });
+      const textResult = await parser.getText();
+      for (const p of textResult.pages || []) {
+        pageTexts.push((p.text || "").trim());
+      }
+      totalChars = textResult.text?.length || 0;
+    } finally {
+      try { await parser?.destroy?.(); } catch {}
+    }
+
+    console.log(`[AUDIO-API] PDF parsed: ${pageTexts.length} pages, ${totalChars} total chars`);
     return pageTexts;
   } catch (error: any) {
     console.error("[AUDIO-API] PDF extraction error:", error.message);

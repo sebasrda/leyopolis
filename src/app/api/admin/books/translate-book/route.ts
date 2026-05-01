@@ -49,36 +49,23 @@ export async function POST(req: Request) {
     if (!pdfRes.ok) throw new Error(`No se pudo descargar el PDF (${pdfRes.status})`);
     const pdfBuffer = Buffer.from(await pdfRes.arrayBuffer());
 
-    // 2. Parse PDF page by page
+    // 2. Parse PDF page by page (pdf-parse v2 PDFParse class API)
     console.log(`[ADMIN-TRANSLATE] Parseando PDF...`);
-    const pdfParse = require("pdf-parse");
-    
+    const { PDFParse } = require("pdf-parse");
+
     const pages: string[] = [];
+    let parser: any = null;
     try {
-      await pdfParse(pdfBuffer, {
-        pagerender: (pageData: any) => {
-          return pageData.getTextContent().then((textContent: any) => {
-            let result = "";
-            let lastY: number | null = null;
-            for (const item of textContent.items) {
-              if (lastY !== null && Math.abs(item.transform[5] - lastY) > 5) {
-                // Different vertical position = likely new line
-                result += "\n";
-              } else if (result.length > 0 && !result.endsWith(" ") && !result.endsWith("\n")) {
-                result += " ";
-              }
-              result += item.str;
-              lastY = item.transform[5];
-            }
-            const text = result.trim();
-            pages.push(text);
-            return text;
-          });
-        }
-      });
+      parser = new PDFParse({ data: new Uint8Array(pdfBuffer) });
+      const textResult = await parser.getText();
+      for (const p of textResult.pages || []) {
+        pages.push((p.text || "").trim());
+      }
     } catch (parseErr: any) {
       console.error("[ADMIN-TRANSLATE] PDF Parse error:", parseErr);
       throw new Error(`Fallo al extraer texto del PDF: ${parseErr.message}`);
+    } finally {
+      try { await parser?.destroy?.(); } catch {}
     }
 
     console.log(`[ADMIN-TRANSLATE] Encontradas ${pages.length} páginas.`);

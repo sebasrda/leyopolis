@@ -67,10 +67,16 @@ export async function generateAndSaveActivities({
         const pdfRes = await fetch(absoluteUrl);
         if (pdfRes.ok) {
           const pdfBuffer = Buffer.from(await pdfRes.arrayBuffer());
-          const pdfParse = require("pdf-parse");
-          const data = await pdfParse(pdfBuffer);
-          finalRawText = data.text;
-          console.log(`[AI-STATS] Extracted ${finalRawText.length} chars from PDF.`);
+          const { PDFParse } = require("pdf-parse");
+          let parser: any = null;
+          try {
+            parser = new PDFParse({ data: new Uint8Array(pdfBuffer) });
+            const textResult = await parser.getText();
+            finalRawText = textResult.text || "";
+            console.log(`[AI-STATS] Extracted ${finalRawText.length} chars from PDF.`);
+          } finally {
+            try { await parser?.destroy?.(); } catch {}
+          }
         } else {
           console.error(`[AI-STATS] Failed to fetch PDF: ${pdfRes.status} ${pdfRes.statusText}`);
         }

@@ -84,9 +84,14 @@ export async function POST(req: Request) {
           const pdfRes = await fetch(contentUrl);
           if (pdfRes.ok) {
             const pdfBuffer = Buffer.from(await pdfRes.arrayBuffer());
-            const pdfParse = require("pdf-parse");
-            const data = await pdfParse(pdfBuffer);
-            rawText = data.text;
+            const { PDFParse } = require("pdf-parse");
+            let parser: any = null;
+            try {
+              parser = new PDFParse({ data: new Uint8Array(pdfBuffer) });
+              rawText = (await parser.getText()).text || "";
+            } finally {
+              try { await parser?.destroy?.(); } catch {}
+            }
           }
         } catch (fetchErr) {
           console.error("Error fetching PDF for AI text extraction:", fetchErr);
@@ -103,10 +108,15 @@ export async function POST(req: Request) {
               } else {
                 const qBuffer = Buffer.from(await qFileRes.arrayBuffer());
                 if (quizFileUrl.endsWith(".pdf")) {
-                   const pdfParse = require("pdf-parse");
-                   const qData = await pdfParse(qBuffer);
-                   rawText = qData.text; // Use this as source for AI
-                   quizFromFile = true;
+                   const { PDFParse } = require("pdf-parse");
+                   let parser: any = null;
+                   try {
+                     parser = new PDFParse({ data: new Uint8Array(qBuffer) });
+                     rawText = (await parser.getText()).text || ""; // Use this as source for AI
+                     quizFromFile = true;
+                   } finally {
+                     try { await parser?.destroy?.(); } catch {}
+                   }
                 } else if (quizFileUrl.endsWith(".docx") || quizFileUrl.endsWith(".doc")) {
                    const mammoth = require("mammoth");
                    const qResult = await mammoth.extractRawText({ buffer: qBuffer });
@@ -194,9 +204,14 @@ export async function POST(req: Request) {
 
         // Extract text from buffer for immediate AI generation
         try {
-          const pdfParse = require("pdf-parse");
-          const data = await pdfParse(buffer);
-          rawText = data.text;
+          const { PDFParse } = require("pdf-parse");
+          let parser: any = null;
+          try {
+            parser = new PDFParse({ data: new Uint8Array(buffer) });
+            rawText = (await parser.getText()).text || "";
+          } finally {
+            try { await parser?.destroy?.(); } catch {}
+          }
           await log(`Texto extraído exitosamente: ${rawText.length} caracteres`);
         } catch (parseErr) {
           console.error("Error parsing PDF text during upload:", parseErr);

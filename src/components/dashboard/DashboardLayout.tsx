@@ -136,6 +136,7 @@ import { LEVEL_THRESHOLDS } from "@/context/GamificationContext";
 
 export default function DashboardLayout({ children, serverXp, serverLevel, serverStreak }: { children: React.ReactNode; serverXp?: number; serverLevel?: number; serverStreak?: number }) {
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [gestureHighlightIdx, setGestureHighlightIdx] = useState<number | null>(null);
   const pathname = usePathname();
   const router = useRouter();
@@ -238,11 +239,18 @@ export default function DashboardLayout({ children, serverXp, serverLevel, serve
 
   return (
     <div className="flex h-screen bg-[#0d1117] overflow-hidden">
+      {/* Mobile Overlay */}
+      {mobileOpen && (
+        <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden" onClick={() => setMobileOpen(false)} />
+      )}
+
       {/* Sidebar */}
       <aside 
         className={cn(
           "bg-[#0f1623] border-r border-white/5 text-white transition-all duration-300 flex flex-col",
-          collapsed ? "w-20" : "w-64"
+          collapsed ? "w-20" : "w-64",
+          "fixed inset-y-0 left-0 z-50 md:static",
+          mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         )}
       >
         {/* Logo */}
@@ -345,6 +353,7 @@ export default function DashboardLayout({ children, serverXp, serverLevel, serve
               <Link
                 key={item.href + item.label}
                 href={item.href}
+                onClick={() => setMobileOpen(false)}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 group",
                   isActive
@@ -427,7 +436,11 @@ export default function DashboardLayout({ children, serverXp, serverLevel, serve
         <DemoBanner />
 
         {/* Top Bar */}
-        <header className="h-16 bg-[#0f1623] border-b border-white/5 px-8 flex items-center justify-between z-10">
+        <header className="h-14 md:h-16 bg-[#0f1623] border-b border-white/5 px-3 md:px-8 flex items-center justify-between z-10">
+          {/* Mobile hamburger */}
+          <Button variant="ghost" size="icon" className="md:hidden text-slate-400 hover:text-white mr-2 shrink-0" onClick={() => setMobileOpen(true)}>
+            <Menu className="h-5 w-5" />
+          </Button>
           <div className="flex-1 max-w-xl">
             <div className="relative">
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -518,7 +531,7 @@ export default function DashboardLayout({ children, serverXp, serverLevel, serve
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto p-8 bg-[#0d1117]">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-5 md:p-8 bg-[#0d1117]">
           <div className="max-w-7xl mx-auto">
             {children}
           </div>

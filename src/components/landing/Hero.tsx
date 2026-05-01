@@ -67,7 +67,7 @@ export default function Hero() {
       <div className="absolute top-40 left-[8%] w-2 h-2 rounded-full bg-purple-400 animate-bounce" style={{ animationDelay: "0.8s" }} />
       <div className="absolute bottom-32 right-[25%] w-2 h-2 rounded-full bg-fuchsia-400 animate-bounce" style={{ animationDelay: "1.2s" }} />
 
-      <div className="relative z-10 mx-auto max-w-7xl px-6 pt-24 pb-20 lg:flex lg:items-center lg:gap-x-16 lg:px-8 lg:pt-32">
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 pt-20 pb-16 lg:flex lg:items-center lg:gap-x-16 lg:px-8 lg:pt-32">
         {/* Left Column */}
         <div className="mx-auto max-w-2xl lg:mx-0 lg:flex-auto">
           {/* Badge */}
@@ -80,7 +80,7 @@ export default function Hero() {
           </div>
 
           {/* Headline */}
-          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black tracking-tight leading-[1.05]">
+          <h1 className="text-4xl sm:text-5xl lg:text-7xl font-black tracking-tight leading-[1.05]">
             <span className="text-white">La lectura </span>
             <span className="relative inline-block">
               <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-fuchsia-400 bg-clip-text text-transparent">
@@ -119,7 +119,7 @@ export default function Hero() {
           </div>
 
           {/* Stats Row */}
-          <div className="mt-14 flex items-center gap-8 flex-wrap">
+          <div className="mt-10 sm:mt-14 flex items-center gap-4 sm:gap-8 flex-wrap">
             {STATS.map(({ value, label, icon: Icon }) => (
               <div key={label} className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500/10 border border-indigo-500/50/20">
@@ -151,7 +151,7 @@ export default function Hero() {
                 <a
                   key={book.title}
                   href="/login"
-                  className="group relative w-[170px] h-[220px] rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-1"
+                  className="group relative w-[130px] sm:w-[170px] h-[180px] sm:h-[220px] rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-1"
                   style={{
                     opacity: mounted ? 1 : 0,
                     transform: mounted ? "translateY(0)" : "translateY(20px)",

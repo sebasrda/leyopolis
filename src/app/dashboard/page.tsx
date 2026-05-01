@@ -285,9 +285,9 @@ export default function DashboardPage() {
   return (
     <div className="text-white space-y-0">
       {/* ── TOP HEADER ─────────────────────────────── */}
-      <div className="flex items-start justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6 sm:mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-white">
+          <h1 className="text-2xl sm:text-3xl font-bold text-white">
             ¡Hola, {userName}! 👋
           </h1>
           <p className="text-slate-400 mt-1 text-sm">
@@ -327,7 +327,7 @@ export default function DashboardPage() {
             <h2 className="text-base font-bold text-white mb-3">Continúa tu aventura</h2>
 
             {heroBookData ? (
-              <div className="relative rounded-2xl overflow-hidden bg-[#0f1623] border border-white/10 h-[260px] flex items-center gap-8 px-8 group">
+              <div className="relative rounded-2xl overflow-hidden bg-[#0f1623] border border-white/10 h-[220px] sm:h-[260px] flex items-center gap-4 sm:gap-8 px-4 sm:px-8 group">
                 {/* Adventure Landscape Background */}
                 <div
                   className="absolute inset-0 opacity-60 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
@@ -337,7 +337,7 @@ export default function DashboardPage() {
 
                 {/* Book Cover */}
                 <div className="relative z-10 shrink-0">
-                  <div className="w-32 h-44 rounded-lg overflow-hidden shadow-2xl ring-1 ring-white/20 transition-transform duration-300 group-hover:-translate-y-1" style={{ perspective: "1000px" }}>
+                  <div className="w-24 sm:w-32 h-36 sm:h-44 rounded-lg overflow-hidden shadow-2xl ring-1 ring-white/20 transition-transform duration-300 group-hover:-translate-y-1" style={{ perspective: "1000px" }}>
                     {heroBookData.coverImage ? (
                       <img
                         src={heroBookData.coverImage}
@@ -582,9 +582,9 @@ export default function DashboardPage() {
           </section>
 
           {/* ── Community Banner ─── */}
-          <section className="bg-gradient-to-r from-[#1a2235] to-[#1e2d47] border border-white/10 rounded-2xl px-6 py-4 flex items-center justify-between">
+          <section className="bg-gradient-to-r from-[#1a2235] to-[#1e2d47] border border-white/10 rounded-2xl px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
-              <div className="flex -space-x-2">
+              <div className="hidden sm:flex -space-x-2">
                 {["🧒", "👦", "👧", "🧑"].map((emoji, i) => (
                   <div
                     key={i}
@@ -604,7 +604,7 @@ export default function DashboardPage() {
             </div>
             <Link
               href="/dashboard/community"
-              className="shrink-0 inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold px-4 py-2.5 rounded-xl transition-all shadow-lg shadow-indigo-500/20"
+              className="shrink-0 w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold px-4 py-2.5 rounded-xl transition-all shadow-lg shadow-indigo-500/20"
             >
               <Users className="h-4 w-4" />
               Ver comunidad

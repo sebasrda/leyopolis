@@ -1,7 +1,7 @@
 "use client";
 
 import Hero from "@/components/landing/Hero";
-import { BookOpen, Globe, Sparkles, Shield, Zap, BarChart3, Users, GraduationCap, CheckCircle2 } from "lucide-react";
+import { BookOpen, Globe, Sparkles, Shield, Zap, BarChart3, Users, GraduationCap, CheckCircle2, Menu, X } from "lucide-react";
 import { useState } from "react";
 
 const FEATURES = [
@@ -137,11 +137,13 @@ function DemoSection() {
 }
 
 export default function Home() {
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
   return (
     <main className="min-h-screen bg-[#0a0a1a] text-white">
       {/* NAV */}
       <nav className="fixed top-0 z-50 w-full border-b border-white/5 bg-[#0a0a1a]/80 backdrop-blur-xl">
-        <div className="container mx-auto flex h-16 items-center justify-between px-6">
+        <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-2.5">
             <div className="h-9 w-9 rounded-lg bg-card flex items-center justify-center shadow-lg shadow-indigo-500/20 overflow-hidden p-1">
               <img src="/leyopolis-logo.png" alt="Leyópolis Logo" className="h-full w-full object-contain" />
@@ -154,17 +156,31 @@ export default function Home() {
             <a href="#biblioteca" className="hover:text-white transition-colors">Biblioteca</a>
           </div>
           <div className="flex items-center gap-3">
-            <a href="/login" className="text-sm font-medium text-gray-300 hover:text-white transition-colors px-4 py-2">
+            <a href="/login" className="hidden sm:block text-sm font-medium text-gray-300 hover:text-white transition-colors px-4 py-2">
               Iniciar sesión
             </a>
             <a
               href="/register"
-              className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-2 text-sm font-bold text-white shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:scale-105 transition-all duration-200"
+              className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-2 text-sm font-bold text-white shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:scale-105 transition-all duration-200"
             >
               Registrarse →
             </a>
+            <button className="md:hidden text-gray-300 hover:text-white p-2" onClick={() => setMobileNavOpen(!mobileNavOpen)}>
+              {mobileNavOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </button>
           </div>
         </div>
+        {/* Mobile menu dropdown */}
+        {mobileNavOpen && (
+          <div className="md:hidden bg-[#0f1623] border-t border-white/5 px-4 py-4 space-y-3 animate-in slide-in-from-top-2 duration-200">
+            <a href="#features" className="block text-sm text-gray-300 hover:text-white py-2" onClick={() => setMobileNavOpen(false)}>Características</a>
+            <a href="#demo" className="block text-sm text-gray-300 hover:text-white py-2" onClick={() => setMobileNavOpen(false)}>Demo</a>
+            <a href="#biblioteca" className="block text-sm text-gray-300 hover:text-white py-2" onClick={() => setMobileNavOpen(false)}>Biblioteca</a>
+            <hr className="border-white/10" />
+            <a href="/login" className="block text-sm text-gray-300 hover:text-white py-2">Iniciar sesión</a>
+            <a href="/register" className="block text-center rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-2.5 text-sm font-bold text-white">Registrarse →</a>
+          </div>
+        )}
       </nav>
 
       {/* HERO */}
@@ -183,7 +199,7 @@ export default function Home() {
               { n: "99.9%", label: "Uptime garantizado" },
             ].map((s) => (
               <div key={s.label}>
-                <div className="text-4xl font-black bg-gradient-to-r from-indigo-400 to-fuchsia-400 bg-clip-text text-transparent">
+        <div className="text-3xl sm:text-4xl font-black bg-gradient-to-r from-indigo-400 to-fuchsia-400 bg-clip-text text-transparent">
                   {s.n}
                 </div>
                 <div className="text-sm text-muted-foreground mt-1">{s.label}</div>
@@ -295,11 +311,11 @@ export default function Home() {
         <div className="container mx-auto px-6 text-center">
           <div className="relative max-w-3xl mx-auto">
             <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 blur-2xl" />
-            <div className="relative rounded-3xl bg-gradient-to-br from-indigo-600/10 to-purple-600/10 border border-indigo-500/50/20 p-16 backdrop-blur-sm">
+            <div className="relative rounded-3xl bg-gradient-to-br from-indigo-600/10 to-purple-600/10 border border-indigo-500/50/20 p-8 sm:p-16 backdrop-blur-sm">
               <div className="h-16 w-16 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-2xl shadow-indigo-500/40">
                 <Sparkles className="h-8 w-8 text-white" />
               </div>
-              <h2 className="text-4xl sm:text-5xl font-black text-white mb-4">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4">
                 ¿Listo para transformar<br />tu institución?
               </h2>
               <p className="text-gray-400 mb-10 max-w-lg mx-auto">

@@ -6,6 +6,8 @@ import { isDemoMode } from "@/lib/access";
 
 import { normalizeGrade, getGradeVariants } from '@/lib/grades';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);

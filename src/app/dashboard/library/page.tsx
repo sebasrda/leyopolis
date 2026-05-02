@@ -56,7 +56,7 @@ export default function LibraryPage() {
       }
       if (selectedSubject !== "Todos") params.set("subject", selectedSubject);
       
-      const res = await fetch(`/api/books?${params.toString()}`);
+      const res = await fetch(`/api/books?${params.toString()}&_t=${Date.now()}`, { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         let formattedBooks = data.map((b: any) => ({

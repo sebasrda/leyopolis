@@ -117,7 +117,7 @@ export default function AdminBooksPage() {
 
   const fetchBooks = async () => {
     try {
-      const res = await fetch("/api/books");
+      const res = await fetch(`/api/books?_t=${Date.now()}`, { cache: 'no-store' });
       if (res.ok) setBooks(await res.json());
     } catch (err) {
       console.error("Error fetching books:", err);

@@ -16,6 +16,8 @@ function normalizeTarget(input: string) {
   if (upper === "ES" || lower === "es" || lower === "spanish") return { prompt: "Spanish", iso: "es" };
   if (upper === "FR" || lower === "fr" || lower === "french") return { prompt: "French", iso: "fr" };
   if (upper === "DE" || lower === "de" || lower === "german") return { prompt: "German", iso: "de" };
+  if (upper === "PT" || lower === "pt" || lower.includes("portuguese")) return { prompt: "Brazilian Portuguese", iso: "pt-BR" };
+  if (upper === "IT" || lower === "it" || lower === "italian") return { prompt: "Italian", iso: "it" };
   if (upper === "ZH" || lower === "zh" || lower.includes("chinese"))
     return { prompt: "Simplified Chinese", iso: "zh-CN" };
 

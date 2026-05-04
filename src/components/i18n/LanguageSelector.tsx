@@ -7,11 +7,13 @@ import i18n, { setStoredLanguage } from "@/i18n/i18n";
 import { useTranslation } from "react-i18next";
 
 const LANGUAGES = [
-  { code: "es", label: "Español (es)" },
-  { code: "en", label: "English (en)" },
-  { code: "fr", label: "Français (fr)" },
-  { code: "zh", label: "中文 Mandarín simplificado (zh)" },
-  { code: "de", label: "Deutsch (de)" },
+  { code: "es", label: "🇪🇸 Español (es)" },
+  { code: "en", label: "🇬🇧 English (en)" },
+  { code: "fr", label: "🇫🇷 Français (fr)" },
+  { code: "zh", label: "🇨🇳 中文 Mandarín (zh)" },
+  { code: "de", label: "🇩🇪 Deutsch (de)" },
+  { code: "pt", label: "🇧🇷 Português (pt)" },
+  { code: "it", label: "🇮🇹 Italiano (it)" },
 ];
 
 export function LanguageSelector() {

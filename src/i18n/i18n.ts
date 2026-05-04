@@ -8,6 +8,8 @@ import en from "../../locales/en/translation.json";
 import fr from "../../locales/fr/translation.json";
 import zh from "../../locales/zh/translation.json";
 import de from "../../locales/de/translation.json";
+import pt from "../../locales/pt/translation.json";
+import it from "../../locales/it/translation.json";
 
 const STORAGE_KEY = "leyopolis_language";
 const DYNAMIC_PREFIX = "leyopolis_i18n_dynamic_";
@@ -65,6 +67,8 @@ if (!i18n.isInitialized) {
   const dynamicFr = readDynamic("fr");
   const dynamicZh = readDynamic("zh");
   const dynamicDe = readDynamic("de");
+  const dynamicPt = readDynamic("pt");
+  const dynamicIt = readDynamic("it");
 
   i18n.use(initReactI18next).init({
     resources: {
@@ -73,6 +77,8 @@ if (!i18n.isInitialized) {
       fr: { translation: { ...(fr as Record<string, string>), ...dynamicFr } },
       zh: { translation: { ...(zh as Record<string, string>), ...dynamicZh } },
       de: { translation: { ...(de as Record<string, string>), ...dynamicDe } },
+      pt: { translation: { ...(pt as Record<string, string>), ...dynamicPt } },
+      it: { translation: { ...(it as Record<string, string>), ...dynamicIt } },
     },
     lng: getInitialLanguage(),
     fallbackLng: "es",

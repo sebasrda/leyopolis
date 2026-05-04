@@ -1536,7 +1536,7 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
             
             {/* Banderas de idioma — click silencioso, sin ventana */}
             <div className="flex items-center gap-1 bg-black/20 rounded-lg p-1">
-                {([['EN','🇺🇸'],['ZH','🇨🇳'],['FR','🇫🇷'],['DE','🇩🇪']] as [string,string][]).map(([lang, flag]) => (
+                {([['EN','🇺🇸'],['ZH','🇨🇳'],['FR','🇫🇷'],['DE','🇩🇪'],['PT','🇧🇷'],['IT','🇮🇹']] as [string,string][]).map(([lang, flag]) => (
                     <button
                         key={lang}
                         onClick={() => handleTranslate(lang)}

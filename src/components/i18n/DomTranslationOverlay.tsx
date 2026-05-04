@@ -12,6 +12,8 @@ const TARGET_LANGUAGE: Record<string, string> = {
   fr: "French",
   de: "German",
   zh: "Simplified Chinese (Mandarin)",
+  pt: "Brazilian Portuguese",
+  it: "Italian",
 };
 
 function shouldSkipNode(node: Text) {

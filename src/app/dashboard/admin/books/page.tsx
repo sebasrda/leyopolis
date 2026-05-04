@@ -81,6 +81,8 @@ export default function AdminBooksPage() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadingQuizFor, setUploadingQuizFor] = useState<string | null>(null);
   const [editSynopsisFile, setEditSynopsisFile] = useState<File | null>(null);
+  const [editPdfFile, setEditPdfFile] = useState<File | null>(null);
+  const [editCoverFile, setEditCoverFile] = useState<File | null>(null);
   const [translatingBookId, setTranslatingBookId] = useState<string | null>(null);
   const [translationStatus, setTranslationStatus] = useState<string>("");
   const [selectedTranslationLangs, setSelectedTranslationLangs] = useState<string[]>([]);
@@ -304,6 +306,8 @@ export default function AdminBooksPage() {
 
   const openEditDialog = (book: any) => {
     setEditSynopsisFile(null);
+    setEditPdfFile(null);
+    setEditCoverFile(null);
     setEditBookId(book.id);
     setEditTitle(book.title || "");
     setEditAuthor(book.author || "");
@@ -328,19 +332,36 @@ export default function AdminBooksPage() {
     setError(null);
     try {
       let synopsisFileUrl = "";
+      let pdfFileUrl = "";
+      let coverFileUrl = "";
+      
+      const { upload } = await import("@vercel/blob/client");
+
       if (editSynopsisFile) {
-        const { upload } = await import("@vercel/blob/client");
         const blob = await upload(editSynopsisFile.name, editSynopsisFile, {
           access: "public",
           handleUploadUrl: "/api/upload/blob-token",
         });
         synopsisFileUrl = blob.url;
       }
+      
+      if (editPdfFile) {
+        const blob = await upload(editPdfFile.name, editPdfFile, {
+          access: "public",
+          handleUploadUrl: "/api/upload/blob-token",
+        });
+        pdfFileUrl = blob.url;
+      }
 
-      const res = await fetch(`/api/books/${editBookId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      if (editCoverFile) {
+        const blob = await upload(editCoverFile.name, editCoverFile, {
+          access: "public",
+          handleUploadUrl: "/api/upload/blob-token",
+        });
+        coverFileUrl = blob.url;
+      }
+
+      const payload: any = {
           title: editTitle,
           author: editAuthor,
           category: editCategory,
@@ -352,7 +373,14 @@ export default function AdminBooksPage() {
           passScore: editPassScore,
           published: editPublished,
           synopsisFileUrl
-        }),
+      };
+      if (pdfFileUrl) payload.contentUrl = pdfFileUrl;
+      if (coverFileUrl) payload.coverImage = coverFileUrl;
+
+      const res = await fetch(`/api/books/${editBookId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Error al guardar cambios");
@@ -1273,6 +1301,59 @@ export default function AdminBooksPage() {
                   onChange={(e) => setEditAuthor(e.target.value)}
                   placeholder="Autor"
                 />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label>Actualizar Archivo PDF</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="file"
+                    accept=".pdf"
+                    className="hidden"
+                    id="edit-pdf-upload"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) setEditPdfFile(file);
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full border-dashed text-xs h-8"
+                    onClick={() => document.getElementById("edit-pdf-upload")?.click()}
+                  >
+                    <Upload className="h-3 w-3 mr-2" />
+                    {editPdfFile ? `PDF: ${editPdfFile.name}` : "Subir nuevo PDF (opcional)"}
+                  </Button>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <Label>Actualizar Portada</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    id="edit-cover-upload"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) setEditCoverFile(file);
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full border-dashed text-xs h-8"
+                    onClick={() => document.getElementById("edit-cover-upload")?.click()}
+                  >
+                    <Upload className="h-3 w-3 mr-2" />
+                    {editCoverFile ? `Portada: ${editCoverFile.name}` : "Subir nueva Portada (opc)"}
+                  </Button>
+                </div>
               </div>
             </div>
 

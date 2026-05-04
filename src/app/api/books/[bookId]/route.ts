@@ -97,6 +97,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ bookId
     "subject",
     "language",
     "coverImage",
+    "contentUrl",
   ] as const;
 
   const data: Record<string, any> = {};

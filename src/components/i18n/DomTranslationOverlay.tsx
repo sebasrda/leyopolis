@@ -128,6 +128,8 @@ export function DomTranslationOverlay() {
 
     schedule();
 
+    window.addEventListener("i18n-translation-added", schedule);
+
     const observer = new MutationObserver(() => schedule());
     observer.observe(document.body, {
       subtree: true,
@@ -137,6 +139,7 @@ export function DomTranslationOverlay() {
 
     return () => {
       observer.disconnect();
+      window.removeEventListener("i18n-translation-added", schedule);
       if (raf) window.cancelAnimationFrame(raf);
     };
   }, [originals, originalsByElement, reactI18n.language]);
@@ -199,7 +202,10 @@ export function DomTranslationOverlay() {
             if (!res.ok) continue;
             const data = (await res.json()) as { translation?: string };
             const translation = (data.translation ?? "").trim();
-            if (translation) addDynamicTranslation(lang, key, translation);
+            if (translation) {
+              addDynamicTranslation(lang, key, translation);
+              window.dispatchEvent(new CustomEvent("i18n-translation-added"));
+            }
           } catch {
           } finally {
             inflight.current.delete(key);

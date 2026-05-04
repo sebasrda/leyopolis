@@ -1210,40 +1210,60 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
         ]);
 
         // Auto-detect image-based comic pages (very little extractable text)
-        if ((leftText + rightText).trim().length < 30) {
+        // Only apply to individual pages, not the combined spread
+        const combinedLen = (leftText + rightText).trim().length;
+        const leftIsComic  = leftText.trim().length < 30;
+        const rightIsComic = rightPageNum < 1 || rightText.trim().length < 30;
+
+        if (combinedLen < 30) {
             setIsComicMode(true);
             setIsTranslating(false);
             return;
         }
 
+        // Cache key includes language to avoid cross-language contamination
+        const cacheKey = (pageNum: number) => `${lang}::${pageNum}`;
+
         const translateOne = async (text: string, pageNum: number): Promise<string> => {
-            if (!text || text.length < 5) return "";
-            // Revisar caché en memoria primero para evitar llamadas de red redundantes y consumo de tokens
-            if (pageNum >= 1 && translationPages[pageNum]) {
+            if (!text || text.trim().length < 5) return "";
+            const key = cacheKey(pageNum);
+            // Only return cached value if it's a non-empty string (don't cache failures)
+            if (pageNum >= 1 && translationPages[pageNum] && (translationPages as any)[key] === lang) {
                 return translationPages[pageNum];
             }
-            const resp = await fetch("/api/translate", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ text, targetLanguage: lang }),
-            });
-            if (!resp.ok) return "";
-            const d = await resp.json();
-            if (d.engine) setTranslationEngine(d.engine);
-            return d.translation || "";
+            let attempts = 0;
+            while (attempts < 2) {
+                try {
+                    const resp = await fetch("/api/translate", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ text, targetLanguage: lang }),
+                    });
+                    if (!resp.ok) { attempts++; continue; }
+                    const d = await resp.json();
+                    if (d.engine) setTranslationEngine(d.engine);
+                    const result = d.translation || "";
+                    if (result.trim().length > 5) return result;
+                    attempts++;
+                } catch {
+                    attempts++;
+                }
+            }
+            return "";
         };
 
         // Traducir en paralelo — si superadmin pre-tradujo, son cache hits instantáneos
         const [leftTrans, rightTrans] = await Promise.all([
-            translateOne(leftText, leftPageNum),
-            rightPageNum >= 1 ? translateOne(rightText, rightPageNum) : Promise.resolve(""),
+            leftIsComic  ? Promise.resolve("") : translateOne(leftText, leftPageNum),
+            rightPageNum >= 1 && !rightIsComic ? translateOne(rightText, rightPageNum) : Promise.resolve(""),
         ]);
 
         // Guardar traducciones indexadas por número de página real
+        // Also tag the language to avoid stale cache hits on language change
         setTranslationPages(prev => ({
             ...prev,
-            ...(leftPageNum  >= 1 ? { [leftPageNum]:  leftTrans  } : {}),
-            ...(rightPageNum >= 1 ? { [rightPageNum]: rightTrans } : {}),
+            ...(leftPageNum  >= 1 && leftTrans  ? { [leftPageNum]:  leftTrans,  [`lang_${leftPageNum}`]:  lang } : {}),
+            ...(rightPageNum >= 1 && rightTrans ? { [rightPageNum]: rightTrans, [`lang_${rightPageNum}`]: lang } : {}),
         }));
 
         // Bilingual window: combinado
@@ -1285,7 +1305,7 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
   useEffect(() => {
     if (!pdfDocument) return;
 
-    const map: Record<string, string> = { en: "EN", fr: "FR", de: "DE", zh: "ZH" };
+    const map: Record<string, string> = { en: "EN", fr: "FR", de: "DE", zh: "ZH", pt: "PT", it: "IT" };
     const uiTarget = map[uiI18n.language];
 
     // Manual selection takes priority; fall back to UI language
@@ -1847,7 +1867,7 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
                               height={pageHeight * scale}
                               isDarkMode={isDarkMode}
                               side="left"
-                              isLoading={isTranslating}
+                              isLoading={isTranslating || (!translationPages[currentPage - VIRTUAL_PAGES + 1] && isTranslating)}
                               onTextSelection={handleTextSelection}
                             />
                             {!isSinglePage && (currentPage - VIRTUAL_PAGES + 2) >= 1 && (currentPage - VIRTUAL_PAGES + 2) <= (pdfDocument?.numPages ?? 0) && (

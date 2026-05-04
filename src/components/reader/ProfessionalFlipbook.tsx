@@ -253,8 +253,8 @@ const TranslatedPage = memo(function TranslatedPage({
         display: "flex", flexDirection: "column", overflow: "hidden",
       }}
     >
-      {isLoading ? (
-        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      {(isLoading || !text) ? (
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", background: bg }}>
           <Loader2 className="h-6 w-6 animate-spin text-indigo-400" />
         </div>
       ) : (
@@ -1831,9 +1831,9 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
                         ))}
                     </HTMLFlipBook>
 
-                    {/* Translated-text overlay — auto-scales font to fit, exact page coordination */}
+                    {/* Translated-text overlay — always above flipbook z-index */}
                     {translatedLanguage && !bilingualMode && currentPage >= VIRTUAL_PAGES && (
-                      <div className="absolute inset-0 z-40 flex" style={{ borderRadius: 2 }}>
+                      <div className="absolute inset-0 z-[999] flex" style={{ borderRadius: 2 }}>
                         {isComicMode ? (
                           <>
                             <ComicTranslatedPage
@@ -1867,7 +1867,7 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
                               height={pageHeight * scale}
                               isDarkMode={isDarkMode}
                               side="left"
-                              isLoading={isTranslating || (!translationPages[currentPage - VIRTUAL_PAGES + 1] && isTranslating)}
+                              isLoading={isTranslating || !translationPages[currentPage - VIRTUAL_PAGES + 1]}
                               onTextSelection={handleTextSelection}
                             />
                             {!isSinglePage && (currentPage - VIRTUAL_PAGES + 2) >= 1 && (currentPage - VIRTUAL_PAGES + 2) <= (pdfDocument?.numPages ?? 0) && (
@@ -1878,7 +1878,7 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
                                 height={pageHeight * scale}
                                 isDarkMode={isDarkMode}
                                 side="right"
-                                isLoading={isTranslating}
+                                isLoading={isTranslating || !translationPages[currentPage - VIRTUAL_PAGES + 2]}
                                 onTextSelection={handleTextSelection}
                               />
                             )}

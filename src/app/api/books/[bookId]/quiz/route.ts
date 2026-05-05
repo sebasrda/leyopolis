@@ -101,14 +101,21 @@ export async function GET(
       }
     });
 
-    return NextResponse.json({ 
+    // Quiz / activity content only changes when admin regenerates IA. Short
+    // private cache de-dupes the burst of useEffect calls when the reader and
+    // GamesModal open at once.
+    return NextResponse.json({
       quiz: {
         id: mainQuizId,
         content: consolidatedContent,
         title: book.title
-      }, 
+      },
       allowMultipleAttempts: book.allowMultipleAttempts,
-      passScore: book.passScore 
+      passScore: book.passScore
+    }, {
+      headers: {
+        "Cache-Control": "private, max-age=60, stale-while-revalidate=300",
+      },
     });
   } catch (error) {
     console.error("Error fetching book quiz:", error);

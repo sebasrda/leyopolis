@@ -109,7 +109,14 @@ export async function GET(request: Request) {
        });
     }
 
-    return NextResponse.json(booksWithQuiz);
+    // Short HTTP cache: dedup repeat fetches inside ~30s windows (e.g. when the
+    // same dashboard tab makes multiple useEffect calls), with SWR for snappier
+    // perceived loads. `private` keeps it per-user (results depend on session).
+    return NextResponse.json(booksWithQuiz, {
+      headers: {
+        "Cache-Control": "private, max-age=30, stale-while-revalidate=120",
+      },
+    });
   } catch (error) {
     console.error("Error fetching books:", error);
     return NextResponse.json({ error: 'Error al obtener libros' }, { status: 500 });

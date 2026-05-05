@@ -1244,8 +1244,13 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
                     if (!resp.ok) { attempts++; continue; }
                     const d = await resp.json();
                     if (d.engine) setTranslationEngine(d.engine);
-                    const result = d.translation || "";
-                    if (result.trim().length > 5) return result;
+                    let result = d.translation || "";
+                    // Strip old combined-spread separators that may leak from DB cache
+                    if (result.includes("\n\n---\n\n")) {
+                        result = result.split("\n\n---\n\n")[0];
+                    }
+                    result = result.trim();
+                    if (result.length > 5) return result;
                     attempts++;
                 } catch {
                     attempts++;

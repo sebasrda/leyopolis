@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
 
-const CACHE_VERSION = "v7";
+const CACHE_VERSION = "v8";
 
 function normalizeTarget(input: string) {
   const t = input.trim();
@@ -87,6 +87,15 @@ async function translateWithClaude(text: string, targetLangPrompt: string, apiKe
     console.error("[TRANSLATE] Claude error:", error);
   }
   return null;
+}
+
+// Helper: ensure a translation result is a single page (strip old combined spreads)
+function sanitizeSinglePage(text: string): string {
+  if (text.includes("\n\n---\n\n")) {
+    // Old combined spread leaked into cache — take only the first part
+    return text.split("\n\n---\n\n")[0].trim();
+  }
+  return text;
 }
 
 // ─── Strategy 2: OpenAI (GPT-4o mini) (Fallback) ──────────────────
@@ -206,7 +215,9 @@ export async function POST(req: Request) {
     // 1. CHECK PERSISTENT DB CACHE (FULL TEXT)
     const dbCached = await prisma.translation.findUnique({ where: { hash: key } });
     if (dbCached) {
-      return NextResponse.json({ translation: dbCached.translatedText, engine: "db-cache" });
+      // Sanitize: old cache entries may contain combined spreads with "---"
+      const cleanText = sanitizeSinglePage(dbCached.translatedText);
+      return NextResponse.json({ translation: cleanText, engine: "db-cache" });
     }
 
     // 2. CHECK IF IT'S A SPREAD (---) AND ASSEMBLE FROM INDIVIDUAL PAGES

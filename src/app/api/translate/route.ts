@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
 
-const CACHE_VERSION = "v8";
+const CACHE_VERSION = "v9";
 
 function normalizeTarget(input: string) {
   const t = input.trim();
@@ -44,13 +44,71 @@ MANDATORY RULES — violating any rule is unacceptable:
 4. Produce fluent, natural ${targetLang}. NEVER translate word-by-word.
 5. Proper nouns (character names, place names) stay in their original form unless a well-known ${targetLang} equivalent exists.
 6. If the text contains a "---" separator, keep it in the output — it marks a page break.
-7. Return ONLY the translated text. Absolutely no comments, notes, headers, explanations, or meta-text.
-8. If the original uses dialogue (em-dash, quotation marks), preserve the same punctuation style.
-9. The translation must be the SAME LENGTH (in content, not characters) as the original — do not add or remove information.
+7. Output MUST contain ONLY ${targetLang}. No source-language text, no preamble, no commentary, no headers, no labels like "Translation:" or "翻译：" or "Aquí está la traducción:". Start directly with the translated text.
+8. If the input is already partially in ${targetLang}, still translate every other sentence into ${targetLang}. Do NOT leave any sentence in another language.
+9. If the original uses dialogue (em-dash, quotation marks), preserve the same punctuation style.
+10. The translation must be the SAME LENGTH (in content, not characters) as the original — do not add or remove information.
 
 TEXT TO TRANSLATE:
 
 ${text}`;
+}
+
+// Strip common AI preambles, labels, and quote wrappers that sneak into responses
+function stripPreamble(text: string): string {
+  if (!text) return text;
+  let out = text.trim();
+
+  // Remove leading code-fence markers like ```text or ```
+  out = out.replace(/^```[\w-]*\s*\n/i, "").replace(/\n```\s*$/i, "");
+
+  // Remove leading labels in many languages, anchored to the very start
+  const labels = [
+    /^translation\s*:\s*/i,
+    /^translated\s+text\s*:\s*/i,
+    /^here(?:'s|\s+is)\s+the\s+translation[^\n]*\n+/i,
+    /^traducci[oó]n\s*:\s*/i,
+    /^aqu[ií]\s+est[aá]\s+la\s+traducci[oó]n[^\n]*\n+/i,
+    /^traduction\s*:\s*/i,
+    /^[uü]bersetzung\s*:\s*/i,
+    /^traduzione\s*:\s*/i,
+    /^tradu[cç][aã]o\s*:\s*/i,
+    /^翻译[：:]\s*/,
+    /^译文[：:]\s*/,
+  ];
+  for (const re of labels) {
+    out = out.replace(re, "");
+  }
+
+  // Strip surrounding quotes when the entire body is wrapped in them
+  if (out.length > 4) {
+    const first = out[0];
+    const last = out[out.length - 1];
+    if ((first === '"' && last === '"') || (first === "'" && last === "'") || (first === "“" && last === "”")) {
+      out = out.slice(1, -1).trim();
+    }
+  }
+
+  return out.trim();
+}
+
+// Best-effort post-processor that drops leading source-language paragraphs when
+// translating to a CJK target. The AI sometimes emits a paraphrase before the
+// actual CJK output — this trims it without harming valid CJK answers.
+function ensureTargetLanguage(text: string, targetIso: string): string {
+  if (!text) return text;
+  const isCJK = targetIso === "zh-CN" || targetIso === "zh" || targetIso === "ja" || targetIso === "ko";
+  if (!isCJK) return text;
+
+  const cjkRe = /[぀-ヿ㐀-䶿一-鿿豈-﫿ｦ-ﾟ]/;
+  const paragraphs = text.split(/\n{2,}/);
+  // Drop leading paragraphs that contain no CJK characters at all
+  let i = 0;
+  while (i < paragraphs.length && !cjkRe.test(paragraphs[i])) i++;
+  if (i > 0 && i < paragraphs.length) {
+    return paragraphs.slice(i).join("\n\n").trim();
+  }
+  return text;
 }
 
 // ─── Strategy 1: Anthropic (Claude 3.5 Sonnet) (PRIMARY) ──────────
@@ -82,7 +140,7 @@ async function translateWithClaude(text: string, targetLangPrompt: string, apiKe
     if (!response.ok) return null;
     const data = await response.json();
     const translation = data.content?.[0]?.text;
-    if (translation && translation.trim().length > 10) return translation.trim();
+    if (translation && translation.trim().length > 10) return stripPreamble(translation);
   } catch (error) {
     console.error("[TRANSLATE] Claude error:", error);
   }
@@ -129,7 +187,7 @@ async function translateWithOpenAI(text: string, targetLangPrompt: string, apiKe
     if (!response.ok) return null;
     const data = await response.json();
     const translation = data.choices?.[0]?.message?.content;
-    if (translation && translation.trim().length > 10) return translation.trim();
+    if (translation && translation.trim().length > 10) return stripPreamble(translation);
   } catch (error) {
     console.error("[TRANSLATE] OpenAI error:", error);
   }
@@ -141,26 +199,42 @@ async function translateWithOpenRouter(text: string, targetLangPrompt: string, a
   const key = apiKey || process.env.OPENROUTER_API_KEY;
   if (!key) return null;
 
-  try {
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${key}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "meta-llama/llama-3.1-70b-instruct",
-        messages: [{ role: "user", content: buildTranslationPrompt(text, targetLangPrompt) }],
-        temperature: 0.3,
-      }),
-    });
+  // Claude Haiku 4.5 follows translation instructions much more strictly than llama,
+  // so we avoid the "preamble in source language" leak that contaminated the cache.
+  const candidateModels = [
+    "anthropic/claude-haiku-4.5",
+    "google/gemini-2.5-flash",
+    "openai/gpt-4o-mini",
+  ];
 
-    if (!response.ok) return null;
-    const data = await response.json();
-    const translation = data.choices?.[0]?.message?.content;
-    if (translation && translation.trim().length > 10) return translation.trim();
-  } catch (error) {
-    console.error("[TRANSLATE] OpenRouter error:", error);
+  for (const model of candidateModels) {
+    try {
+      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${key}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": "https://leyopolis.vercel.app",
+          "X-Title": "Leyopolis Translate",
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: "system", content: `You translate text into ${targetLangPrompt}. Output ONLY the translation in ${targetLangPrompt}. No preamble, no source-language text, no explanations.` },
+            { role: "user", content: buildTranslationPrompt(text, targetLangPrompt) },
+          ],
+          temperature: 0.2,
+          max_tokens: 3500,
+        }),
+      });
+
+      if (!response.ok) continue;
+      const data = await response.json();
+      const translation = data.choices?.[0]?.message?.content;
+      if (translation && translation.trim().length > 10) return stripPreamble(translation);
+    } catch (error) {
+      console.error(`[TRANSLATE] OpenRouter (${model}) error:`, error);
+    }
   }
   return null;
 }
@@ -175,7 +249,7 @@ async function translateWithGemini(text: string, targetLangPrompt: string, apiKe
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
     const result = await model.generateContent(buildTranslationPrompt(text, targetLangPrompt));
     const translation = result.response.text();
-    if (translation && translation.trim().length > 10) return translation.trim();
+    if (translation && translation.trim().length > 10) return stripPreamble(translation);
   } catch (error) {
     console.error("[TRANSLATE] Gemini failed");
   }
@@ -215,8 +289,11 @@ export async function POST(req: Request) {
     // 1. CHECK PERSISTENT DB CACHE (FULL TEXT)
     const dbCached = await prisma.translation.findUnique({ where: { hash: key } });
     if (dbCached) {
-      // Sanitize: old cache entries may contain combined spreads with "---"
-      const cleanText = sanitizeSinglePage(dbCached.translatedText);
+      // Sanitize: old cache entries may contain combined spreads with "---" or
+      // AI preambles in another language. Clean before serving.
+      let cleanText = sanitizeSinglePage(dbCached.translatedText);
+      cleanText = stripPreamble(cleanText);
+      cleanText = ensureTargetLanguage(cleanText, target.iso);
       return NextResponse.json({ translation: cleanText, engine: "db-cache" });
     }
 
@@ -232,7 +309,9 @@ export async function POST(req: Request) {
         const partKey = cacheKey(partText, target.iso);
         const cachedPart = await prisma.translation.findUnique({ where: { hash: partKey } });
         if (cachedPart) {
-          translatedParts.push(cachedPart.translatedText);
+          let cleanPart = stripPreamble(cachedPart.translatedText);
+          cleanPart = ensureTargetLanguage(cleanPart, target.iso);
+          translatedParts.push(cleanPart);
         } else {
           allFound = false;
           break;
@@ -301,6 +380,10 @@ export async function POST(req: Request) {
     }
 
     if (resultText) {
+      // Final post-processing: strip preambles + drop leading source-language for CJK targets
+      resultText = stripPreamble(resultText);
+      resultText = ensureTargetLanguage(resultText, target.iso);
+
       // SAVE TO PERSISTENT CACHE (FOR FUTURE SAVINGS)
       try {
         await prisma.translation.upsert({

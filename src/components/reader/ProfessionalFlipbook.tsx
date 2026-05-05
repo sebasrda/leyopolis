@@ -1183,6 +1183,7 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
 
   // Servicio de Traducción — traduce cada página por separado para alineación exacta
   const activeTransLangRef = useRef<string | null>(null);
+  const activeTransSpreadRef = useRef<string>("");
 
   const handleTranslate = async (lang: string, force: boolean = false) => {
     if (translatedLanguage === lang && !force) {
@@ -1196,6 +1197,7 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
         setIsTranslationExpanded(false);
         setIsComicMode(false);
         activeTransLangRef.current = null;
+        activeTransSpreadRef.current = "";
         return;
     }
 
@@ -1214,6 +1216,8 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
     // Capturar números de página reales al inicio de la llamada
     const leftPageNum  = currentPage - VIRTUAL_PAGES + 1;
     const rightPageNum = isSinglePage ? 0 : currentPage - VIRTUAL_PAGES + 2;
+    const spreadKey = `${lang}::${leftPageNum}::${rightPageNum}`;
+    activeTransSpreadRef.current = spreadKey;
 
     try {
         // Extraer texto de cada página por separado
@@ -1261,18 +1265,22 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
             return "";
         };
 
-        // Traducir en paralelo
-        const [leftTrans, rightTrans] = await Promise.all([
+        // Traducir cada página de forma INDEPENDIENTE — si una falla la otra
+        // sigue mostrándose. allSettled garantiza que ambas promesas se
+        // resuelvan sin abortar el spread por un fallo de una sola página.
+        const [leftRes, rightRes] = await Promise.allSettled([
             leftIsComic  ? Promise.resolve("") : translateOne(leftText),
             rightPageNum >= 1 && !rightIsComic ? translateOne(rightText) : Promise.resolve(""),
         ]);
+        const leftTrans  = leftRes.status === "fulfilled"  ? leftRes.value  : "";
+        const rightTrans = rightRes.status === "fulfilled" ? rightRes.value : "";
 
-        // CRITICAL: If user switched language while we were fetching, discard stale results
-        if (activeTransLangRef.current !== lang) {
+        // Discard stale results if user switched language OR flipped spread
+        if (activeTransLangRef.current !== lang || activeTransSpreadRef.current !== spreadKey) {
             return;
         }
 
-        // Write ONLY current-language pages — replace entirely, never merge with old data
+        // Write ONLY current-spread pages — replace entirely, never merge with stale data
         const newPages: Record<number, string> = {};
         if (leftPageNum >= 1 && leftTrans)  newPages[leftPageNum]  = leftTrans;
         if (rightPageNum >= 1 && rightTrans) newPages[rightPageNum] = rightTrans;
@@ -1286,7 +1294,9 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
         console.error("Translation error:", error);
         setTranslationEngine(null);
     } finally {
-        setIsTranslating(false);
+        if (activeTransSpreadRef.current === spreadKey) {
+            setIsTranslating(false);
+        }
     }
   };
 

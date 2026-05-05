@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import {
   X, BrainCircuit, Gamepad2, Grid3X3, PenTool, Loader2,
   History as HistoryIcon, RefreshCcw, Hand, Puzzle,
-  Scissors, Clock, User, Zap, HelpCircle,
+  Scissors, Clock, User, Zap, HelpCircle, Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -97,6 +97,72 @@ export default function GamesModal({ isOpen, onClose, bookTitle, bookId }: Games
     }
   };
 
+  // Download activities as a printable HTML file
+  const handleDownloadActivities = () => {
+    if (!quizData) return;
+
+    const formatSection = (title: string, items: any[]): string => {
+      if (!items || items.length === 0) return "";
+      let html = `<h2 style="color:#4f46e5;margin-top:24px;border-bottom:2px solid #e5e7eb;padding-bottom:6px">${title}</h2>`;
+      items.forEach((item: any, i: number) => {
+        if (item.statement || item.sentence) {
+          html += `<p style="margin:12px 0"><strong>${i + 1}.</strong> ${item.statement || item.sentence}</p>`;
+          if (typeof item.isTrue === "boolean") {
+            html += `<p style="color:#9ca3af;margin-left:24px;font-size:13px">[ ] Verdadero &nbsp;&nbsp; [ ] Falso</p>`;
+          } else if (item.correctIndex !== undefined && Array.isArray(item.options)) {
+            item.options.forEach((opt: string, j: number) => {
+              html += `<p style="margin-left:24px;font-size:13px">[ ] ${String.fromCharCode(65 + j)}. ${opt}</p>`;
+            });
+          } else if (Array.isArray(item.words)) {
+            html += `<p style="color:#9ca3af;margin-left:24px;font-size:13px">Reordena: ${item.words?.join(" — ")}</p>`;
+          }
+        } else if (item.event) {
+          html += `<p style="margin:8px 0"><strong>${i + 1}.</strong> ${item.event}</p>`;
+        } else {
+          html += `<p style="margin:8px 0"><strong>${i + 1}.</strong> ${JSON.stringify(item)}</p>`;
+        }
+      });
+      return html;
+    };
+
+    const body = [
+      quizData.questions ? formatSection("Preguntas de Opción Múltiple", quizData.questions) : "",
+      quizData.statements ? formatSection("Verdadero o Falso", quizData.statements) : "",
+      quizData.timelineEvents ? formatSection("Cronología — Ordena los eventos", quizData.timelineEvents) : "",
+      quizData.sentences ? formatSection("Ordena las Frases", quizData.sentences) : "",
+      quizData.keywords ? `<h2 style="color:#4f46e5;margin-top:24px">Sopa de Letras — Palabras Clave</h2><p style="letter-spacing:4px;color:#374151;font-size:15px">${(quizData.keywords as string[]).join(" · ")}</p>` : "",
+    ].join("");
+
+    const html = `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<title>Actividades — ${bookTitle}</title>
+<style>
+  body { font-family: Georgia, serif; max-width: 780px; margin: 40px auto; color: #1f2937; line-height: 1.7; }
+  h1 { text-align: center; color: #312e81; font-size: 26px; margin-bottom: 4px; }
+  .subtitle { text-align: center; color: #6b7280; font-size: 14px; margin-bottom: 32px; }
+  @media print { body { margin: 20px; } }
+</style>
+</head>
+<body>
+<h1>📖 Actividades del Libro</h1>
+<p class="subtitle">${bookTitle} · Generadas con IA por Leyópolis</p>
+${body}
+<hr style="margin-top:40px" />
+<p style="text-align:center;font-size:11px;color:#9ca3af">Generado por Leyópolis · plataforma de lectura inteligente</p>
+</body>
+</html>`;
+
+    const blob = new Blob([html], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `actividades_${bookTitle.toLowerCase().replace(/\s+/g, "_")}.html`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   useEffect(() => {
     if (!isOpen) { setActiveGame(null); }
     else if (bookId) { fetchQuiz(); }
@@ -124,6 +190,17 @@ export default function GamesModal({ isOpen, onClose, bookTitle, bookId }: Games
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {!activeGame && quizData && (
+              <Button
+                onClick={handleDownloadActivities}
+                variant="outline"
+                className="bg-white/10 hover:bg-white/20 border-white/20 text-white gap-2"
+                title="Descargar actividades para imprimir o usar offline"
+              >
+                <Download className="h-4 w-4" />
+                <span className="hidden sm:inline">Descargar</span>
+              </Button>
+            )}
             {isAdmin && !activeGame && (
               <Button
                 onClick={handleRegenerate}

@@ -25,7 +25,9 @@ function normalizeTarget(input: string) {
 }
 
 function cacheKey(text: string, targetLanguage: string) {
-  const hash = createHash("sha1").update(text).digest("hex");
+  // Normalize whitespace to prevent cache misses on tiny formatting changes
+  const normalized = text.replace(/\s+/g, " ").trim();
+  const hash = createHash("sha1").update(normalized).digest("hex");
   return `${CACHE_VERSION}::${targetLanguage}::${hash}`;
 }
 

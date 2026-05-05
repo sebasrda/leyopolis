@@ -97,68 +97,118 @@ export default function GamesModal({ isOpen, onClose, bookTitle, bookId }: Games
     }
   };
 
-  // Download activities as a printable HTML file
+  // Download a printable Word-compatible quiz: 10 multiple-choice + 1 open-ended
+  // critical-thinking question. Uses .doc extension with application/msword MIME
+  // so Word/Pages/Google Docs open it natively (no extra deps).
   const handleDownloadActivities = () => {
     if (!quizData) return;
 
-    const formatSection = (title: string, items: any[]): string => {
-      if (!items || items.length === 0) return "";
-      let html = `<h2 style="color:#4f46e5;margin-top:24px;border-bottom:2px solid #e5e7eb;padding-bottom:6px">${title}</h2>`;
-      items.forEach((item: any, i: number) => {
-        if (item.statement || item.sentence) {
-          html += `<p style="margin:12px 0"><strong>${i + 1}.</strong> ${item.statement || item.sentence}</p>`;
-          if (typeof item.isTrue === "boolean") {
-            html += `<p style="color:#9ca3af;margin-left:24px;font-size:13px">[ ] Verdadero &nbsp;&nbsp; [ ] Falso</p>`;
-          } else if (item.correctIndex !== undefined && Array.isArray(item.options)) {
-            item.options.forEach((opt: string, j: number) => {
-              html += `<p style="margin-left:24px;font-size:13px">[ ] ${String.fromCharCode(65 + j)}. ${opt}</p>`;
-            });
-          } else if (Array.isArray(item.words)) {
-            html += `<p style="color:#9ca3af;margin-left:24px;font-size:13px">Reordena: ${item.words?.join(" — ")}</p>`;
-          }
-        } else if (item.event) {
-          html += `<p style="margin:8px 0"><strong>${i + 1}.</strong> ${item.event}</p>`;
-        } else {
-          html += `<p style="margin:8px 0"><strong>${i + 1}.</strong> ${JSON.stringify(item)}</p>`;
-        }
+    const escape = (s: string) =>
+      String(s ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+
+    const allQuestions: Array<{ question: string; options: string[]; correctAnswer?: number }> =
+      Array.isArray(quizData.questions) ? quizData.questions : [];
+
+    // Take the first 10 well-formed questions
+    const tenQuestions = allQuestions
+      .filter((q) => q && typeof q.question === "string" && Array.isArray(q.options) && q.options.length >= 2)
+      .slice(0, 10);
+
+    let questionsHtml = "";
+    tenQuestions.forEach((q, i) => {
+      questionsHtml += `<p style="margin:14px 0 6px"><b>${i + 1}.</b> ${escape(q.question)}</p>`;
+      q.options.forEach((opt, j) => {
+        questionsHtml += `<p style="margin:2px 0 2px 28px">☐ ${String.fromCharCode(65 + j)}. ${escape(opt)}</p>`;
       });
-      return html;
-    };
+    });
 
-    const body = [
-      quizData.questions ? formatSection("Preguntas de Opción Múltiple", quizData.questions) : "",
-      quizData.statements ? formatSection("Verdadero o Falso", quizData.statements) : "",
-      quizData.timelineEvents ? formatSection("Cronología — Ordena los eventos", quizData.timelineEvents) : "",
-      quizData.sentences ? formatSection("Ordena las Frases", quizData.sentences) : "",
-      quizData.keywords ? `<h2 style="color:#4f46e5;margin-top:24px">Sopa de Letras — Palabras Clave</h2><p style="letter-spacing:4px;color:#374151;font-size:15px">${(quizData.keywords as string[]).join(" · ")}</p>` : "",
-    ].join("");
+    if (!questionsHtml) {
+      questionsHtml = `<p style="color:#9ca3af"><i>Aún no hay preguntas generadas para este libro. Pídele al docente que genere las actividades con IA.</i></p>`;
+    }
 
-    const html = `<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8" />
-<title>Actividades — ${bookTitle}</title>
+    // Open-ended critical-thinking prompt (Bloom: analizar / evaluar)
+    const openEnded = `
+      <h2 style="color:#4f46e5;margin-top:36px;padding-bottom:6px;border-bottom:2px solid #e5e7eb">
+        Pregunta de Desarrollo — Pensamiento Crítico
+      </h2>
+      <p style="margin:14px 0 6px">
+        <b>11.</b> Reflexiona sobre <i>${escape(bookTitle)}</i> y desarrolla tu respuesta en al menos
+        diez (10) líneas:
+      </p>
+      <p style="margin:6px 0 14px">
+        ¿Qué enseñanza o mensaje principal te deja esta lectura, y cómo se relaciona con una
+        situación real de tu vida o de tu comunidad? Justifica tu respuesta usando al menos
+        <b>dos ejemplos concretos del libro</b> y explica qué decisión diferente tomarías tú si
+        estuvieras en el lugar de un personaje.
+      </p>
+      <div style="border:1px solid #d1d5db;padding:6px;height:200px"></div>
+    `;
+
+    const head = `
+      <h1 style="text-align:center;color:#312e81;margin:0 0 4px">Quiz de Lectura</h1>
+      <p style="text-align:center;color:#6b7280;font-size:13px;margin:0 0 24px">
+        <b>${escape(bookTitle)}</b> &mdash; Leyópolis
+      </p>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:24px;font-size:13px">
+        <tr>
+          <td style="border:1px solid #d1d5db;padding:8px;width:60%"><b>Nombre:</b></td>
+          <td style="border:1px solid #d1d5db;padding:8px"><b>Curso:</b></td>
+        </tr>
+        <tr>
+          <td style="border:1px solid #d1d5db;padding:8px"><b>Fecha:</b></td>
+          <td style="border:1px solid #d1d5db;padding:8px"><b>Calificación:</b> ____ / 11</td>
+        </tr>
+      </table>
+      <p style="font-size:12px;color:#4b5563;margin:0 0 18px">
+        <b>Instrucciones:</b> marca con una X la respuesta correcta de cada pregunta de opción
+        múltiple. Para la última pregunta, redacta tu respuesta a mano o en un procesador de texto.
+      </p>
+    `;
+
+    const body = `
+      ${head}
+      <h2 style="color:#4f46e5;padding-bottom:6px;border-bottom:2px solid #e5e7eb">
+        Preguntas de Opción Múltiple (${tenQuestions.length}/10)
+      </h2>
+      ${questionsHtml}
+      ${openEnded}
+      <hr style="margin-top:40px" />
+      <p style="text-align:center;font-size:10px;color:#9ca3af">
+        Generado por Leyópolis &middot; plataforma de lectura inteligente
+      </p>
+    `;
+
+    // Word-compatible HTML wrapper. Office namespaces make Word recognize it as
+    // a native .doc when the extension and MIME match.
+    const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head>
+<meta charset="utf-8" />
+<title>Quiz - ${escape(bookTitle)}</title>
+<!--[if gte mso 9]>
+<xml>
+  <w:WordDocument>
+    <w:View>Print</w:View>
+    <w:Zoom>100</w:Zoom>
+    <w:DoNotOptimizeForBrowser/>
+  </w:WordDocument>
+</xml>
+<![endif]-->
 <style>
-  body { font-family: Georgia, serif; max-width: 780px; margin: 40px auto; color: #1f2937; line-height: 1.7; }
-  h1 { text-align: center; color: #312e81; font-size: 26px; margin-bottom: 4px; }
-  .subtitle { text-align: center; color: #6b7280; font-size: 14px; margin-bottom: 32px; }
-  @media print { body { margin: 20px; } }
+  @page { size: Letter; margin: 2cm; }
+  body { font-family: 'Calibri', 'Segoe UI', Arial, sans-serif; color:#1f2937; line-height:1.55; font-size:13px; }
+  h1, h2 { font-family: 'Calibri', Arial, sans-serif; }
+  p { margin: 6px 0; }
 </style>
 </head>
-<body>
-<h1>📖 Actividades del Libro</h1>
-<p class="subtitle">${bookTitle} · Generadas con IA por Leyópolis</p>
-${body}
-<hr style="margin-top:40px" />
-<p style="text-align:center;font-size:11px;color:#9ca3af">Generado por Leyópolis · plataforma de lectura inteligente</p>
-</body>
-</html>`;
+<body>${body}</body></html>`;
 
-    const blob = new Blob([html], { type: "text/html" });
+    const blob = new Blob(["﻿", html], { type: "application/msword" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `actividades_${bookTitle.toLowerCase().replace(/\s+/g, "_")}.html`;
+    a.download = `quiz_${bookTitle.toLowerCase().replace(/[^a-z0-9]+/gi, "_")}.doc`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -195,10 +245,10 @@ ${body}
                 onClick={handleDownloadActivities}
                 variant="outline"
                 className="bg-white/10 hover:bg-white/20 border-white/20 text-white gap-2"
-                title="Descargar actividades para imprimir o usar offline"
+                title="Descargar Quiz en Word (10 preguntas + 1 desarrollo)"
               >
                 <Download className="h-4 w-4" />
-                <span className="hidden sm:inline">Descargar</span>
+                <span className="hidden sm:inline">Descargar Quiz (Word)</span>
               </Button>
             )}
             {isAdmin && !activeGame && (

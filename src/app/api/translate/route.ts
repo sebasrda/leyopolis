@@ -275,24 +275,29 @@ export async function POST(req: Request) {
     let resultText: string | null = null;
     let engineUsed = "";
 
-    // Chain of engines
-    resultText = await translateWithClaude(safeText, target.prompt, keys.anthropic);
-    if (resultText) engineUsed = "claude";
-    else {
+    // Chain of engines — cost-optimized order
+    // 1. OpenRouter (cheapest, high quality with llama-3.1-70b)
+    resultText = await translateWithOpenRouter(safeText, target.prompt, keys.openrouter);
+    if (resultText) engineUsed = "openrouter";
+    // 2. Gemini (free tier available)
+    if (!resultText) {
+      resultText = await translateWithGemini(safeText, target.prompt, keys.gemini);
+      if (resultText) engineUsed = "gemini";
+    }
+    // 3. OpenAI (moderate cost)
+    if (!resultText) {
       resultText = await translateWithOpenAI(safeText, target.prompt, keys.openai);
       if (resultText) engineUsed = "openai";
-      else {
-        resultText = await translateWithOpenRouter(safeText, target.prompt, keys.openrouter);
-        if (resultText) engineUsed = "openrouter";
-        else {
-          resultText = await translateWithGemini(safeText, target.prompt, keys.gemini);
-          if (resultText) engineUsed = "gemini";
-          else {
-            resultText = await translateWithGoogleFree(safeText, target.iso);
-            if (resultText) engineUsed = "google-free";
-          }
-        }
-      }
+    }
+    // 4. Claude (most expensive — last AI resort)
+    if (!resultText) {
+      resultText = await translateWithClaude(safeText, target.prompt, keys.anthropic);
+      if (resultText) engineUsed = "claude";
+    }
+    // 5. Google Translate Free (absolute last resort, lower quality)
+    if (!resultText) {
+      resultText = await translateWithGoogleFree(safeText, target.iso);
+      if (resultText) engineUsed = "google-free";
     }
 
     if (resultText) {

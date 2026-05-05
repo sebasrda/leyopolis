@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
 
-const CACHE_VERSION = "v9";
+const CACHE_VERSION = "v10";
 
 function normalizeTarget(input: string) {
   const t = input.trim();
@@ -111,8 +111,25 @@ function ensureTargetLanguage(text: string, targetIso: string): string {
   return text;
 }
 
-// ─── Strategy 1: Anthropic (Claude 3.5 Sonnet) (PRIMARY) ──────────
-async function translateWithClaude(text: string, targetLangPrompt: string, apiKey?: string): Promise<string | null> {
+// Detect a truncated translation. Two signals:
+//  1) provider-reported finish_reason === "length" (token cap hit)
+//  2) length-ratio heuristic vs the source. CJK targets compress a lot, so we
+//     allow a much smaller ratio there.
+function isTruncated(translation: string, source: string, targetIso: string, finishReason?: string): boolean {
+  if (finishReason && finishReason.toLowerCase() === "length") return true;
+  if (!translation || !source) return false;
+  const trim = translation.trim();
+  if (trim.length < 20) return true;
+  const ratio = trim.length / source.length;
+  const isCJK = targetIso === "zh-CN" || targetIso === "zh" || targetIso === "ja" || targetIso === "ko";
+  const minRatio = isCJK ? 0.18 : 0.4;
+  if (ratio < minRatio) return true;
+  if (ratio < 0.6 && !/[\.\?\!…。？！」』”’\)\]]\s*$/.test(trim)) return true;
+  return false;
+}
+
+// ─── Strategy 1: Anthropic (Claude Sonnet 4.6) ─────────────────────
+async function translateWithClaude(text: string, targetLangPrompt: string, targetIso: string, apiKey?: string): Promise<string | null> {
   const key = apiKey || process.env.ANTHROPIC_API_KEY;
   if (!key) return null;
 
@@ -140,7 +157,12 @@ async function translateWithClaude(text: string, targetLangPrompt: string, apiKe
     if (!response.ok) return null;
     const data = await response.json();
     const translation = data.content?.[0]?.text;
-    if (translation && translation.trim().length > 10) return stripPreamble(translation);
+    const stop = data.stop_reason; // "end_turn" | "max_tokens" | ...
+    if (!translation || translation.trim().length <= 10) return null;
+    const cleaned = stripPreamble(translation);
+    const finish = stop === "max_tokens" ? "length" : stop;
+    if (isTruncated(cleaned, text, targetIso, finish)) return null;
+    return cleaned;
   } catch (error) {
     console.error("[TRANSLATE] Claude error:", error);
   }
@@ -156,8 +178,8 @@ function sanitizeSinglePage(text: string): string {
   return text;
 }
 
-// ─── Strategy 2: OpenAI (GPT-4o mini) (Fallback) ──────────────────
-async function translateWithOpenAI(text: string, targetLangPrompt: string, apiKey?: string): Promise<string | null> {
+// ─── Strategy 2: OpenAI (GPT-4o mini) ─────────────────────────────
+async function translateWithOpenAI(text: string, targetLangPrompt: string, targetIso: string, apiKey?: string): Promise<string | null> {
   const key = apiKey || process.env.OPENAI_API_KEY;
   if (!key || key.length < 10) return null;
 
@@ -173,7 +195,7 @@ async function translateWithOpenAI(text: string, targetLangPrompt: string, apiKe
         messages: [
           {
             role: "system",
-            content: `You are a professional literary translator. You translate text into ${targetLangPrompt} with perfect fluency.`,
+            content: `You are a professional literary translator. You translate text into ${targetLangPrompt} with perfect fluency. Output ONLY the full translation in ${targetLangPrompt}, never partial. Translate every paragraph completely.`,
           },
           {
             role: "user",
@@ -181,26 +203,31 @@ async function translateWithOpenAI(text: string, targetLangPrompt: string, apiKe
           },
         ],
         temperature: 0.3,
+        max_tokens: 8000,
       }),
     });
 
     if (!response.ok) return null;
     const data = await response.json();
     const translation = data.choices?.[0]?.message?.content;
-    if (translation && translation.trim().length > 10) return stripPreamble(translation);
+    const finish = data.choices?.[0]?.finish_reason;
+    if (!translation || translation.trim().length <= 10) return null;
+    const cleaned = stripPreamble(translation);
+    if (isTruncated(cleaned, text, targetIso, finish)) return null;
+    return cleaned;
   } catch (error) {
     console.error("[TRANSLATE] OpenAI error:", error);
   }
   return null;
 }
 
-// ─── Strategy 3: OpenRouter (Fallback) ─────────────────────────────
-async function translateWithOpenRouter(text: string, targetLangPrompt: string, apiKey?: string): Promise<string | null> {
+// ─── Strategy 3: OpenRouter ────────────────────────────────────────
+async function translateWithOpenRouter(text: string, targetLangPrompt: string, targetIso: string, apiKey?: string): Promise<string | null> {
   const key = apiKey || process.env.OPENROUTER_API_KEY;
   if (!key) return null;
 
-  // Claude Haiku 4.5 follows translation instructions much more strictly than llama,
-  // so we avoid the "preamble in source language" leak that contaminated the cache.
+  // Tries multiple models in order. If any returns a TRUNCATED response
+  // (finish_reason "length" or suspiciously short), we skip and try the next.
   const candidateModels = [
     "anthropic/claude-haiku-4.5",
     "google/gemini-2.5-flash",
@@ -220,18 +247,28 @@ async function translateWithOpenRouter(text: string, targetLangPrompt: string, a
         body: JSON.stringify({
           model,
           messages: [
-            { role: "system", content: `You translate text into ${targetLangPrompt}. Output ONLY the translation in ${targetLangPrompt}. No preamble, no source-language text, no explanations.` },
+            { role: "system", content: `You translate text into ${targetLangPrompt}. Output ONLY the COMPLETE translation in ${targetLangPrompt}. Never stop mid-paragraph. Never produce partial output. No preamble, no source-language text, no explanations.` },
             { role: "user", content: buildTranslationPrompt(text, targetLangPrompt) },
           ],
           temperature: 0.2,
-          max_tokens: 3500,
+          // Generous ceiling so a full PDF page never gets truncated. Most pages
+          // produce 1.5k-3k tokens of output; 8000 leaves room for verbose
+          // languages (French/German) and CJK-to-Latin expansions.
+          max_tokens: 8000,
         }),
       });
 
       if (!response.ok) continue;
       const data = await response.json();
       const translation = data.choices?.[0]?.message?.content;
-      if (translation && translation.trim().length > 10) return stripPreamble(translation);
+      const finish = data.choices?.[0]?.finish_reason;
+      if (!translation || translation.trim().length <= 10) continue;
+      const cleaned = stripPreamble(translation);
+      if (isTruncated(cleaned, text, targetIso, finish)) {
+        console.warn(`[TRANSLATE] OpenRouter ${model} returned truncated output, skipping`);
+        continue;
+      }
+      return cleaned;
     } catch (error) {
       console.error(`[TRANSLATE] OpenRouter (${model}) error:`, error);
     }
@@ -239,17 +276,25 @@ async function translateWithOpenRouter(text: string, targetLangPrompt: string, a
   return null;
 }
 
-// ─── Strategy 4: Gemini (Legacy Fallback) ──────────────────────────
-async function translateWithGemini(text: string, targetLangPrompt: string, apiKey?: string): Promise<string | null> {
+// ─── Strategy 4: Gemini ────────────────────────────────────────────
+async function translateWithGemini(text: string, targetLangPrompt: string, targetIso: string, apiKey?: string): Promise<string | null> {
   const key = apiKey || process.env.GOOGLE_API_KEY;
   if (!key) return null;
 
   try {
     const genAI = new GoogleGenerativeAI(key);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.5-flash",
+      generationConfig: { maxOutputTokens: 8192, temperature: 0.3 },
+    });
     const result = await model.generateContent(buildTranslationPrompt(text, targetLangPrompt));
     const translation = result.response.text();
-    if (translation && translation.trim().length > 10) return stripPreamble(translation);
+    const finish = (result.response as any).candidates?.[0]?.finishReason; // "STOP" | "MAX_TOKENS" | ...
+    if (!translation || translation.trim().length <= 10) return null;
+    const cleaned = stripPreamble(translation);
+    const finishNorm = finish === "MAX_TOKENS" ? "length" : finish;
+    if (isTruncated(cleaned, text, targetIso, finishNorm)) return null;
+    return cleaned;
   } catch (error) {
     console.error("[TRANSLATE] Gemini failed");
   }
@@ -354,26 +399,27 @@ export async function POST(req: Request) {
     let resultText: string | null = null;
     let engineUsed = "";
 
-    // Chain of engines — cost-optimized order
-    // 1. OpenRouter (cheapest, high quality with llama-3.1-70b)
-    resultText = await translateWithOpenRouter(safeText, target.prompt, keys.openrouter);
+    // Chain of engines. Each strategy now rejects truncated output (returns
+    // null) so the next engine gets a chance to produce a complete translation.
+    // 1. OpenRouter (cheap + multi-model fallback inside)
+    resultText = await translateWithOpenRouter(safeText, target.prompt, target.iso, keys.openrouter);
     if (resultText) engineUsed = "openrouter";
-    // 2. Gemini (free tier available)
+    // 2. Gemini direct
     if (!resultText) {
-      resultText = await translateWithGemini(safeText, target.prompt, keys.gemini);
+      resultText = await translateWithGemini(safeText, target.prompt, target.iso, keys.gemini);
       if (resultText) engineUsed = "gemini";
     }
-    // 3. OpenAI (moderate cost)
+    // 3. OpenAI direct
     if (!resultText) {
-      resultText = await translateWithOpenAI(safeText, target.prompt, keys.openai);
+      resultText = await translateWithOpenAI(safeText, target.prompt, target.iso, keys.openai);
       if (resultText) engineUsed = "openai";
     }
-    // 4. Claude (most expensive — last AI resort)
+    // 4. Claude direct (highest quality, last resort cost-wise)
     if (!resultText) {
-      resultText = await translateWithClaude(safeText, target.prompt, keys.anthropic);
+      resultText = await translateWithClaude(safeText, target.prompt, target.iso, keys.anthropic);
       if (resultText) engineUsed = "claude";
     }
-    // 5. Google Translate Free (absolute last resort, lower quality)
+    // 5. Google Translate Free (last resort, lower quality but always full)
     if (!resultText) {
       resultText = await translateWithGoogleFree(safeText, target.iso);
       if (resultText) engineUsed = "google-free";

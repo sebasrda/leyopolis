@@ -1847,17 +1847,26 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
                               targetLang={translatedLanguage}
                               bookId={bookId}
                             />
-                            {!isSinglePage && (currentPage - VIRTUAL_PAGES + 2) >= 1 && (currentPage - VIRTUAL_PAGES + 2) <= (pdfDocument?.numPages ?? 0) && (
-                              <ComicTranslatedPage
-                                pageNum={currentPage - VIRTUAL_PAGES + 2}
-                                pdfDocument={pdfDocument}
-                                width={pageWidth * scale}
-                                height={pageHeight * scale}
-                                isDarkMode={isDarkMode}
-                                targetLang={translatedLanguage}
-                                bookId={bookId}
-                                side="right"
-                              />
+                            {!isSinglePage && (
+                              (currentPage - VIRTUAL_PAGES + 2) >= 1 && (currentPage - VIRTUAL_PAGES + 2) <= (pdfDocument?.numPages ?? 0)
+                                ? (
+                                  <ComicTranslatedPage
+                                    pageNum={currentPage - VIRTUAL_PAGES + 2}
+                                    pdfDocument={pdfDocument}
+                                    width={pageWidth * scale}
+                                    height={pageHeight * scale}
+                                    isDarkMode={isDarkMode}
+                                    targetLang={translatedLanguage}
+                                    bookId={bookId}
+                                    side="right"
+                                  />
+                                ) : (
+                                  <div style={{
+                                    width: pageWidth * scale,
+                                    height: pageHeight * scale,
+                                    background: isDarkMode ? "#111827" : "#ffffff",
+                                  }} />
+                                )
                             )}
                           </>
                         ) : (
@@ -1872,17 +1881,32 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
                               isLoading={isTranslating || !translationPages[currentPage - VIRTUAL_PAGES + 1]}
                               onTextSelection={handleTextSelection}
                             />
-                            {!isSinglePage && (currentPage - VIRTUAL_PAGES + 2) >= 1 && (currentPage - VIRTUAL_PAGES + 2) <= (pdfDocument?.numPages ?? 0) && (
-                              <TranslatedPage
-                                pageNum={currentPage - VIRTUAL_PAGES + 2}
-                                text={translationPages[currentPage - VIRTUAL_PAGES + 2] ?? ""}
-                                width={pageWidth * scale}
-                                height={pageHeight * scale}
-                                isDarkMode={isDarkMode}
-                                side="right"
-                                isLoading={isTranslating || !translationPages[currentPage - VIRTUAL_PAGES + 2]}
-                                onTextSelection={handleTextSelection}
-                              />
+                            {/* Always render right-side cover when in double-page mode to prevent PDF bleed-through */}
+                            {!isSinglePage && (
+                              (currentPage - VIRTUAL_PAGES + 2) >= 1 && (currentPage - VIRTUAL_PAGES + 2) <= (pdfDocument?.numPages ?? 0)
+                                ? (
+                                  <TranslatedPage
+                                    pageNum={currentPage - VIRTUAL_PAGES + 2}
+                                    text={translationPages[currentPage - VIRTUAL_PAGES + 2] ?? ""}
+                                    width={pageWidth * scale}
+                                    height={pageHeight * scale}
+                                    isDarkMode={isDarkMode}
+                                    side="right"
+                                    isLoading={isTranslating || !translationPages[currentPage - VIRTUAL_PAGES + 2]}
+                                    onTextSelection={handleTextSelection}
+                                  />
+                                ) : (
+                                  /* Solid background fallback — covers the right half even for last page */
+                                  <div style={{
+                                    width: pageWidth * scale,
+                                    height: pageHeight * scale,
+                                    background: isDarkMode ? "#111827" : "#ffffff",
+                                    borderLeft: `1px solid ${isDarkMode ? "#374151" : "#e5e7eb"}`,
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                  }} />
+                                )
                             )}
                           </>
                         )}

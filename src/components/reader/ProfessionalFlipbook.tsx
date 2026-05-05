@@ -1155,7 +1155,8 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
     if (!pdfDocument) return "";
     
     const leftPageNum = currentPage - VIRTUAL_PAGES + 1;
-    const rightPageNum = isSinglePage ? 0 : currentPage - VIRTUAL_PAGES + 2;
+    // With showCover=true the right page of a spread is always leftPage+2
+    const rightPageNum = isSinglePage ? 0 : currentPage - VIRTUAL_PAGES + 3;
     
     const leftText = leftPageNum >= 1 && leftPageNum <= pdfDocument.numPages ? await extractPageText(leftPageNum) : "";
     const rightText = rightPageNum >= 1 && rightPageNum <= pdfDocument.numPages ? await extractPageText(rightPageNum) : "";
@@ -1200,7 +1201,8 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
 
     // Capturar números de página reales al inicio de la llamada (evita closures obsoletos)
     const leftPageNum  = currentPage - VIRTUAL_PAGES + 1;
-    const rightPageNum = isSinglePage ? 0 : currentPage - VIRTUAL_PAGES + 2;
+    // With showCover=true in HTMLFlipBook, the right page is always leftPage+2 (not +1)
+    const rightPageNum = isSinglePage ? 0 : currentPage - VIRTUAL_PAGES + 3;
 
     try {
         // Extraer texto de cada página por separado
@@ -1845,9 +1847,9 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
                               targetLang={translatedLanguage}
                               bookId={bookId}
                             />
-                            {!isSinglePage && (currentPage - VIRTUAL_PAGES + 2) >= 1 && (currentPage - VIRTUAL_PAGES + 2) <= (pdfDocument?.numPages ?? 0) && (
+                            {!isSinglePage && (currentPage - VIRTUAL_PAGES + 3) >= 1 && (currentPage - VIRTUAL_PAGES + 3) <= (pdfDocument?.numPages ?? 0) && (
                               <ComicTranslatedPage
-                                pageNum={currentPage - VIRTUAL_PAGES + 2}
+                                pageNum={currentPage - VIRTUAL_PAGES + 3}
                                 pdfDocument={pdfDocument}
                                 width={pageWidth * scale}
                                 height={pageHeight * scale}
@@ -1870,15 +1872,15 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
                               isLoading={isTranslating || !translationPages[currentPage - VIRTUAL_PAGES + 1]}
                               onTextSelection={handleTextSelection}
                             />
-                            {!isSinglePage && (currentPage - VIRTUAL_PAGES + 2) >= 1 && (currentPage - VIRTUAL_PAGES + 2) <= (pdfDocument?.numPages ?? 0) && (
+                            {!isSinglePage && (currentPage - VIRTUAL_PAGES + 3) >= 1 && (currentPage - VIRTUAL_PAGES + 3) <= (pdfDocument?.numPages ?? 0) && (
                               <TranslatedPage
-                                pageNum={currentPage - VIRTUAL_PAGES + 2}
-                                text={translationPages[currentPage - VIRTUAL_PAGES + 2] ?? ""}
+                                pageNum={currentPage - VIRTUAL_PAGES + 3}
+                                text={translationPages[currentPage - VIRTUAL_PAGES + 3] ?? ""}
                                 width={pageWidth * scale}
                                 height={pageHeight * scale}
                                 isDarkMode={isDarkMode}
                                 side="right"
-                                isLoading={isTranslating || !translationPages[currentPage - VIRTUAL_PAGES + 2]}
+                                isLoading={isTranslating || !translationPages[currentPage - VIRTUAL_PAGES + 3]}
                                 onTextSelection={handleTextSelection}
                               />
                             )}

@@ -1182,6 +1182,8 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
   }, [currentPage, pdfDocument, isSinglePage]);
 
   // Servicio de Traducción — traduce cada página por separado para alineación exacta
+  const activeTransLangRef = useRef<string | null>(null);
+
   const handleTranslate = async (lang: string, force: boolean = false) => {
     if (translatedLanguage === lang && !force) {
         setTranslatedLanguage(null);
@@ -1193,15 +1195,24 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
         setTranslationEngine(null);
         setIsTranslationExpanded(false);
         setIsComicMode(false);
+        activeTransLangRef.current = null;
         return;
+    }
+
+    // CRITICAL: When switching to a DIFFERENT language, clear ALL old translations
+    // immediately so old-language text never flashes on screen
+    if (translatedLanguage !== lang) {
+        setTranslationPages({});
+        setTranslationOverlay(null);
+        setTranslationSource(null);
     }
 
     setIsTranslating(true);
     setTranslatedLanguage(lang);
+    activeTransLangRef.current = lang;
 
-    // Capturar números de página reales al inicio de la llamada (evita closures obsoletos)
+    // Capturar números de página reales al inicio de la llamada
     const leftPageNum  = currentPage - VIRTUAL_PAGES + 1;
-    // With showCover=true in HTMLFlipBook, the right page is always leftPage+2 (not +1)
     const rightPageNum = isSinglePage ? 0 : currentPage - VIRTUAL_PAGES + 2;
 
     try {
@@ -1212,7 +1223,6 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
         ]);
 
         // Auto-detect image-based comic pages (very little extractable text)
-        // Only apply to individual pages, not the combined spread
         const combinedLen = (leftText + rightText).trim().length;
         const leftIsComic  = leftText.trim().length < 30;
         const rightIsComic = rightPageNum < 1 || rightText.trim().length < 30;
@@ -1223,16 +1233,8 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
             return;
         }
 
-        // Cache key includes language to avoid cross-language contamination
-        const cacheKey = (pageNum: number) => `${lang}::${pageNum}`;
-
-        const translateOne = async (text: string, pageNum: number): Promise<string> => {
+        const translateOne = async (text: string): Promise<string> => {
             if (!text || text.trim().length < 5) return "";
-            const key = cacheKey(pageNum);
-            // Only return cached value if it's a non-empty string (don't cache failures)
-            if (pageNum >= 1 && translationPages[pageNum] && (translationPages as any)[key] === lang) {
-                return translationPages[pageNum];
-            }
             let attempts = 0;
             while (attempts < 2) {
                 try {
@@ -1259,21 +1261,24 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
             return "";
         };
 
-        // Traducir en paralelo — si superadmin pre-tradujo, son cache hits instantáneos
+        // Traducir en paralelo
         const [leftTrans, rightTrans] = await Promise.all([
-            leftIsComic  ? Promise.resolve("") : translateOne(leftText, leftPageNum),
-            rightPageNum >= 1 && !rightIsComic ? translateOne(rightText, rightPageNum) : Promise.resolve(""),
+            leftIsComic  ? Promise.resolve("") : translateOne(leftText),
+            rightPageNum >= 1 && !rightIsComic ? translateOne(rightText) : Promise.resolve(""),
         ]);
 
-        // Guardar traducciones indexadas por número de página real
-        // Also tag the language to avoid stale cache hits on language change
-        setTranslationPages(prev => ({
-            ...prev,
-            ...(leftPageNum  >= 1 && leftTrans  ? { [leftPageNum]:  leftTrans,  [`lang_${leftPageNum}`]:  lang } : {}),
-            ...(rightPageNum >= 1 && rightTrans ? { [rightPageNum]: rightTrans, [`lang_${rightPageNum}`]: lang } : {}),
-        }));
+        // CRITICAL: If user switched language while we were fetching, discard stale results
+        if (activeTransLangRef.current !== lang) {
+            return;
+        }
 
-        // Bilingual window: combinado
+        // Write ONLY current-language pages — replace entirely, never merge with old data
+        const newPages: Record<number, string> = {};
+        if (leftPageNum >= 1 && leftTrans)  newPages[leftPageNum]  = leftTrans;
+        if (rightPageNum >= 1 && rightTrans) newPages[rightPageNum] = rightTrans;
+        setTranslationPages(newPages);
+
+        // Bilingual window
         setTranslationOverlay([leftTrans, rightTrans].filter(Boolean).join("\n\n"));
         setTranslationSource([leftText, rightText].filter(Boolean).join("\n\n---\n\n"));
 

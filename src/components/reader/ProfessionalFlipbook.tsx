@@ -294,7 +294,67 @@ const TranslatedPage = memo(function TranslatedPage({
   );
 });
 
-// Renders a comic page image with AI-detected speech bubble translations overlaid
+// Auto-fits a translated bubble's text inside its bounding box. Starts at the
+// requested max font-size and shrinks until the content stops overflowing.
+function ComicBubble({ b, maxFontPx }: {
+  b: { x: number; y: number; width: number; height: number; text: string; translatedText: string };
+  maxFontPx: number;
+}) {
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const textRef = useRef<HTMLSpanElement>(null);
+  const [fs, setFs] = useState<number>(maxFontPx);
+
+  useLayoutEffect(() => {
+    const wrap = wrapRef.current;
+    const txt = textRef.current;
+    if (!wrap || !txt) return;
+    let f = maxFontPx;
+    txt.style.fontSize = `${f}px`;
+    // Shrink until it fits both width and height. Floor at 9px so it stays legible.
+    while (f > 9 && (txt.scrollHeight > wrap.clientHeight || txt.scrollWidth > wrap.clientWidth)) {
+      f -= 0.5;
+      txt.style.fontSize = `${f}px`;
+    }
+    setFs(f);
+  }, [b.translatedText, b.width, b.height, maxFontPx]);
+
+  return (
+    <div
+      ref={wrapRef}
+      title={b.text}
+      style={{
+        position: "absolute",
+        left: `${b.x}%`, top: `${b.y}%`,
+        width: `${b.width}%`, height: `${b.height}%`,
+        background: "rgba(255,255,255,0.97)",
+        borderRadius: 8,
+        boxShadow: "0 2px 8px rgba(0,0,0,0.18), inset 0 0 0 1px rgba(0,0,0,0.06)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        padding: "6px 8px", boxSizing: "border-box", overflow: "hidden",
+        backdropFilter: "blur(2px)",
+      }}
+    >
+      <span
+        ref={textRef}
+        style={{
+          fontSize: `${fs}px`, lineHeight: 1.3,
+          textAlign: "center", color: "#0f172a",
+          fontFamily: "'Comic Sans MS', 'Bangers', 'Arial Rounded MT Bold', system-ui, sans-serif",
+          fontWeight: 700,
+          letterSpacing: "0.01em",
+          whiteSpace: "normal",
+          wordBreak: "break-word",
+          overflowWrap: "anywhere",
+        }}
+      >
+        {b.translatedText}
+      </span>
+    </div>
+  );
+}
+
+// Renders a comic page image with AI-detected speech bubble translations overlaid.
+// Includes pinch/scroll zoom and explicit zoom controls for accessibility.
 const ComicTranslatedPage = memo(function ComicTranslatedPage({
   pageNum, pdfDocument, width, height, isDarkMode, targetLang, bookId, side,
 }: {
@@ -341,6 +401,9 @@ const ComicTranslatedPage = memo(function ComicTranslatedPage({
 
   const bdr = isDarkMode ? "#374151" : "#e5e7eb";
 
+  // Bubble font ceiling adapts to the rendered page width (responsive).
+  const baseFont = Math.max(13, Math.min(22, Math.round(width / 38)));
+
   return (
     <div style={{
       width, height, position: "relative", overflow: "hidden", flexShrink: 0,
@@ -348,43 +411,101 @@ const ComicTranslatedPage = memo(function ComicTranslatedPage({
       borderLeft: side === "right" ? `1px solid ${bdr}` : undefined,
     }}>
       {imageUrl ? (
-        <img src={imageUrl} style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }} alt={`Page ${pageNum}`} />
+        <TransformWrapper
+          minScale={1}
+          maxScale={5}
+          initialScale={1}
+          centerOnInit
+          wheel={{ step: 0.15 }}
+          doubleClick={{ disabled: false, mode: "zoomIn", step: 0.6 }}
+          pinch={{ disabled: false }}
+          panning={{ disabled: false, velocityDisabled: true }}
+        >
+          {({ zoomIn, zoomOut, resetTransform }) => (
+            <>
+              <TransformComponent
+                wrapperStyle={{ width: "100%", height: "100%" }}
+                contentStyle={{ width: "100%", height: "100%" }}
+              >
+                <div style={{ position: "relative", width: "100%", height: "100%" }}>
+                  <img
+                    src={imageUrl}
+                    style={{ width: "100%", height: "100%", objectFit: "contain", display: "block", userSelect: "none" }}
+                    alt={`Page ${pageNum}`}
+                    draggable={false}
+                  />
+                  {bubbles.map((b, i) => (
+                    <ComicBubble key={i} b={b} maxFontPx={baseFont} />
+                  ))}
+                </div>
+              </TransformComponent>
+
+              {/* Zoom controls — non-intrusive, top-right */}
+              <div
+                style={{
+                  position: "absolute", top: 8, right: 8, zIndex: 10,
+                  display: "flex", flexDirection: "column", gap: 4,
+                  background: "rgba(0,0,0,0.55)", borderRadius: 10, padding: 4,
+                  backdropFilter: "blur(6px)",
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => zoomIn()}
+                  title="Acercar (rueda del mouse o doble click también funcionan)"
+                  style={{
+                    width: 32, height: 32, borderRadius: 6, border: "none",
+                    background: "rgba(255,255,255,0.18)", color: "white",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    cursor: "pointer",
+                  }}
+                >
+                  <ZoomIn size={16} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => zoomOut()}
+                  title="Alejar"
+                  style={{
+                    width: 32, height: 32, borderRadius: 6, border: "none",
+                    background: "rgba(255,255,255,0.18)", color: "white",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    cursor: "pointer",
+                  }}
+                >
+                  <ZoomOut size={16} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => resetTransform()}
+                  title="Restablecer zoom"
+                  style={{
+                    width: 32, height: 32, borderRadius: 6, border: "none",
+                    background: "rgba(255,255,255,0.18)", color: "white",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    cursor: "pointer", fontSize: 11, fontWeight: 700,
+                  }}
+                >
+                  1:1
+                </button>
+              </div>
+            </>
+          )}
+        </TransformWrapper>
       ) : (
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
           <Loader2 className="animate-spin text-indigo-400" size={28} />
         </div>
       )}
 
-      {bubbles.map((b, i) => (
-        <div key={i} title={b.text} style={{
-          position: "absolute",
-          left: `${b.x}%`, top: `${b.y}%`,
-          width: `${b.width}%`, height: `${b.height}%`,
-          background: "rgba(255,255,255,0.93)",
-          borderRadius: 4,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          padding: "2px 4px", boxSizing: "border-box", overflow: "hidden",
-        }}>
-          <span style={{
-            fontSize: "clamp(7px, 1.1vw, 11px)", lineHeight: 1.25,
-            textAlign: "center", color: "#111",
-            fontFamily: "Arial, sans-serif", fontWeight: 700,
-            display: "-webkit-box",
-            WebkitLineClamp: 6, WebkitBoxOrient: "vertical",
-            overflow: "hidden",
-          }}>
-            {b.translatedText}
-          </span>
-        </div>
-      ))}
-
       {analyzing && imageUrl && (
         <div style={{
           position: "absolute", bottom: 8, right: 8,
-          background: "rgba(0,0,0,0.7)", borderRadius: 20, padding: "3px 10px",
-          color: "white", fontSize: 10, display: "flex", alignItems: "center", gap: 4,
+          background: "rgba(0,0,0,0.75)", borderRadius: 20, padding: "4px 12px",
+          color: "white", fontSize: 11, display: "flex", alignItems: "center", gap: 5,
+          backdropFilter: "blur(4px)",
         }}>
-          <Loader2 size={10} className="animate-spin" /> Analizando...
+          <Loader2 size={12} className="animate-spin" /> Analizando burbujas…
         </div>
       )}
     </div>

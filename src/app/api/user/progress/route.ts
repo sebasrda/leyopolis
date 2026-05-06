@@ -99,7 +99,39 @@ export async function GET() {
       await prisma.user.update({ where: { id: userId }, data: { streak: currentStreak, lastActive: now } });
     }
 
-    return NextResponse.json({ xp: user.xp, level: correctLevel, streak: currentStreak });
+    // ── Weekly goal: distinct active days in the current ISO week ────
+    // Resets every Monday at 00:00 local time. We use ISO weeks (Mon-Sun) so
+    // the goal restarts predictably even if the streak counter keeps growing.
+    let daysActiveThisWeek = 0;
+    try {
+      const weekStart = new Date(now);
+      const dayIdx = weekStart.getDay(); // 0 = Sun, 1 = Mon, ..., 6 = Sat
+      const offsetToMonday = dayIdx === 0 ? -6 : 1 - dayIdx;
+      weekStart.setDate(weekStart.getDate() + offsetToMonday);
+      weekStart.setHours(0, 0, 0, 0);
+
+      const sessions = await prisma.readingSession.findMany({
+        where: { userId, startTime: { gte: weekStart } },
+        select: { startTime: true },
+      });
+      const uniqueDays = new Set<string>();
+      for (const s of sessions) {
+        if (s.startTime) uniqueDays.add(new Date(s.startTime).toISOString().slice(0, 10));
+      }
+      // Count today as active if the user touched the app any way after the
+      // week started (covers users who read but don't trigger reading sessions).
+      if (lastActive >= weekStart) {
+        uniqueDays.add(now.toISOString().slice(0, 10));
+      }
+      daysActiveThisWeek = Math.min(7, uniqueDays.size);
+    } catch { /* leave at 0 if reading sessions table has issues */ }
+
+    return NextResponse.json({
+      xp: user.xp,
+      level: correctLevel,
+      streak: currentStreak,
+      daysActiveThisWeek,
+    });
   } catch (error: any) {
     return NextResponse.json({ error: 'Failed to fetch progress', details: error?.message }, { status: 500 });
   }

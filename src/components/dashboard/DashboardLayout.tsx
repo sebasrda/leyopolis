@@ -115,19 +115,20 @@ const superAdminItems = [
   { icon: Settings, label: "Plataforma", href: "/dashboard/admin/settings" },
 ];
 
-// Level name helper
+// Level name helper — 50-level rank curve grouped in tiers of ~5 with a
+// distinctive title at every milestone (10, 20, 30, 40, 50).
 function getLevelName(level: number): string {
   const names: Record<number, string> = {
-    1: "Principiante",
-    2: "Aprendiz",
-    3: "Lector",
-    4: "Explorador",
-    5: "Aventurero",
-    6: "Sabio",
-    7: "Explorador",
-    8: "Maestro",
-    9: "Legendario",
-    10: "Leyenda",
+    1: "Principiante",   2: "Aprendiz",        3: "Lector",          4: "Explorador",     5: "Aventurero",
+    6: "Sabio",          7: "Curioso",         8: "Maestro",         9: "Legendario",     10: "Leyenda",
+    11: "Cronista",      12: "Erudito",        13: "Bibliófilo",     14: "Narrador",      15: "Historiador",
+    16: "Visionario",    17: "Filósofo",       18: "Arcano",         19: "Centinela",     20: "Gran Maestro",
+    21: "Centinela Mayor", 22: "Estratega",    23: "Cartógrafo",     24: "Alquimista",    25: "Iluminado",
+    26: "Vidente",       27: "Hechicero",      28: "Druida",         29: "Custodio",      30: "Sabio Mayor",
+    31: "Templario",     32: "Embajador",      33: "Profeta",        34: "Conquistador",  35: "Mariscal",
+    36: "Arcángel",      37: "Titán",          38: "Sumo Sabio",     39: "Mítico",        40: "Semidios",
+    41: "Forjador",      42: "Astral",         43: "Crónico",        44: "Eterno",        45: "Trascendente",
+    46: "Soberano",      47: "Olímpico",       48: "Monarca Eterno", 49: "Cósmico",       50: "Inmortal",
   };
   return names[level] || `Nivel ${level}`;
 }

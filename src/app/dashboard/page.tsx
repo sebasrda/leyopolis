@@ -106,7 +106,7 @@ export default function DashboardPage() {
   const { userBooks } = useLearning();
 
   // Direct XP — read from server-injected window global (guaranteed data)
-  const [directProgress, setDirectProgress] = useState<{xp: number, level: number, streak: number} | null>(null);
+  const [directProgress, setDirectProgress] = useState<{xp: number, level: number, streak: number, daysActiveThisWeek?: number} | null>(null);
 
   useEffect(() => {
     // Read server-injected data first (instant, no fetch needed)
@@ -114,7 +114,7 @@ export default function DashboardPage() {
     if (serverData && typeof serverData.xp === 'number' && serverData.xp > 0) {
       setDirectProgress(serverData);
     }
-    
+
     // Also try live fetch as backup
     if (status !== "authenticated") return;
     const fetchDirect = async () => {
@@ -126,7 +126,12 @@ export default function DashboardPage() {
         if (res.ok) {
           const data = await res.json();
           if (typeof data.xp === 'number') {
-            setDirectProgress({ xp: data.xp, level: data.level, streak: data.streak });
+            setDirectProgress({
+              xp: data.xp,
+              level: data.level,
+              streak: data.streak,
+              daysActiveThisWeek: data.daysActiveThisWeek,
+            });
           }
         }
       } catch (e) { console.error('[Dashboard] XP fetch fail:', e); }
@@ -137,6 +142,12 @@ export default function DashboardPage() {
   const displayXp = directProgress?.xp ?? progress.xp;
   const displayLevel = directProgress?.level ?? progress.level;
   const displayStreak = directProgress?.streak ?? progress.streakDays;
+  // Days active this ISO week — resets every Monday at 00:00. Falls back to
+  // the streak (capped at 7) if the API hasn't filled the field yet.
+  const daysThisWeek = Math.min(
+    7,
+    directProgress?.daysActiveThisWeek ?? Math.min(displayStreak, 7),
+  );
 
   const [recommendations, setRecommendations] = useState<Book[]>([]);
   const [loadingRec, setLoadingRec] = useState(true);
@@ -229,9 +240,10 @@ export default function DashboardPage() {
   const heroBookData = heroBook?.book || null;
   const heroProgress = heroBook?.progress || 0;
 
-  // Weekly goal progress (streak / 7 days)
-  const weeklyGoalPct = Math.min(100, Math.round((displayStreak / WEEKLY_GOAL_DAYS) * 100));
-  const weekDaysLeft = Math.max(0, WEEKLY_GOAL_DAYS - displayStreak);
+  // Weekly goal progress — distinct active days in the CURRENT ISO week
+  // (resets every Monday). NOT the global streak.
+  const weeklyGoalPct = Math.min(100, Math.round((daysThisWeek / WEEKLY_GOAL_DAYS) * 100));
+  const weekDaysLeft = Math.max(0, WEEKLY_GOAL_DAYS - daysThisWeek);
 
   // Weekly challenges
   const startIndex = (currentWeek * 3) % WEEKLY_CHALLENGES.length;

@@ -157,15 +157,17 @@ export async function POST(request: Request) {
           streak: newStreak,
           lastActive: now,
           xp: { increment: xpToAdd },
-          // Level up logic matching GamificationContext LEVEL_THRESHOLDS = [0, 100, 300, 600, 1000, 1500, 2100, 2800, 3600, 4500]
+          // Level up logic — mirrors src/lib/gamification.ts (50-level cap,
+          // THRESHOLD[n] = 50 * n * (n + 1)).
           level: (() => {
-            const thresholds = [0, 100, 300, 600, 1000, 1500, 2100, 2800, 3600, 4500];
+            const MAX = 50;
+            const thresholds: number[] = Array.from({ length: MAX }, (_, i) => 50 * i * (i + 1));
             const newXp = user.xp + xpToAdd;
             let lvl = 1;
             while (lvl < thresholds.length && newXp >= thresholds[lvl]) {
               lvl++;
             }
-            return lvl;
+            return Math.min(lvl, MAX);
           })()
         }
       });

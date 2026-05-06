@@ -27,14 +27,18 @@ const DEFAULT_PROGRESS: UserProgress = {
   booksRead: 0, gamesWon: 0, achievements: [],
 };
 
-export const LEVEL_THRESHOLDS = [0, 100, 300, 600, 1000, 1500, 2100, 2800, 3600, 4500];
+// Mirror of src/lib/gamification.ts. THRESHOLD[n] = 50 * n * (n + 1).
+// Same shape as the legacy 10-level table, extended to a hard cap of 50.
+export const MAX_LEVEL = 50;
+export const LEVEL_THRESHOLDS: number[] = Array.from({ length: MAX_LEVEL }, (_, i) => 50 * i * (i + 1));
 
 function calcLevel(xp: number): number {
+  if (xp <= 0) return 1;
   let level = 1;
   for (let i = 1; i < LEVEL_THRESHOLDS.length; i++) {
     if (xp >= LEVEL_THRESHOLDS[i]) level = i + 1; else break;
   }
-  return Math.min(level, LEVEL_THRESHOLDS.length);
+  return Math.min(level, MAX_LEVEL);
 }
 
 const GamificationContext = createContext<GamificationContextType | undefined>(undefined);

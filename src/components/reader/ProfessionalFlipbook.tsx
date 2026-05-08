@@ -152,19 +152,30 @@ const PageComponent = forwardRef<HTMLDivElement, {
                 doubleClick={{ disabled: false, mode: 'zoomIn' }}
              >
                 <TransformComponent wrapperClass="!w-full !h-full flex items-center justify-center" contentClass="!w-full !h-full flex items-center justify-center">
-                    <div 
+                    <div
                         className="transition-transform duration-300 ease-out origin-center w-full h-full flex items-center justify-center"
-                        style={{ transform: `translate(${contentOffsetX}%, ${contentOffsetY}%)` }} 
+                        style={{
+                          transform: `translate(${contentOffsetX}%, ${contentOffsetY}%)`,
+                          // Font hints applied to the text-layer overlay react-pdf
+                          // injects on top of the canvas. They make selectable
+                          // glyphs render with sub-pixel anti-aliasing.
+                          WebkitFontSmoothing: "antialiased" as any,
+                          MozOsxFontSmoothing: "grayscale" as any,
+                          textRendering: "optimizeLegibility" as any,
+                        }}
                     >
-                        <div style={{ filter: isDarkMode ? 'invert(1) hue-rotate(180deg) contrast(0.8)' : 'none', transition: 'filter 0.3s' }}>
+                        <div style={{ filter: isDarkMode ? 'invert(1) hue-rotate(180deg) contrast(0.8)' : 'contrast(1.04)', transition: 'filter 0.3s' }}>
                             <Page
                             pageNumber={pageNumber}
                             height={height * scale * contentScale}
-                            // Cap at 2x — was forcing >=2x which made each page
-                            // rasterize at retina-3x on some displays, way too
-                            // slow for flipping. 2x stays crisp and is ~2-3x
-                            // faster to render.
-                            devicePixelRatio={typeof window !== 'undefined' ? Math.min(window.devicePixelRatio || 1, 2) : 1}
+                            // Sweet spot for sharpness vs speed:
+                            //   • Floor at 1.75x → glyphs supersample on 1x
+                            //     monitors (was 1x = visibly less crisp).
+                            //   • Cap at 2x → on retina 3x screens we save
+                            //     ~50% of the rasterization cost without any
+                            //     visible difference (browser downscales 2→3
+                            //     just fine via bilinear filtering).
+                            devicePixelRatio={typeof window !== 'undefined' ? Math.min(Math.max(window.devicePixelRatio || 1, 1.75), 2) : 1.75}
                             renderTextLayer={true} // ACTIVAR CAPA DE TEXTO
                             renderAnnotationLayer={true} // ACTIVAR CAPA DE ANOTACIONES (Links)
                             pdf={pdfDocument}

@@ -52,6 +52,45 @@ export async function GET(
       }
     }
 
+    // Normalize statements to { text, isTrue }. The AI sometimes uses
+    // "statement", "affirmation", "sentence" or returns plain strings,
+    // which left the V/F games with empty text on screen.
+    const normalizeStatements = (raw: any): Array<{ text: string; isTrue: boolean }> => {
+      if (!Array.isArray(raw)) return [];
+      const out: Array<{ text: string; isTrue: boolean }> = [];
+      for (const it of raw) {
+        if (!it) continue;
+        if (typeof it === "string") {
+          const t = it.trim();
+          if (t) out.push({ text: t, isTrue: true });
+          continue;
+        }
+        if (typeof it !== "object") continue;
+        const text = String(
+          it.text ?? it.statement ?? it.affirmation ?? it.sentence ?? it.question ?? ""
+        ).trim();
+        if (!text) continue;
+        const truthy = it.isTrue ?? it.is_true ?? it.correct ?? it.answer ?? true;
+        const isTrue = typeof truthy === "string"
+          ? /^(true|verdadero|si|sí|t|v|1)$/i.test(truthy.trim())
+          : Boolean(truthy);
+        out.push({ text, isTrue });
+      }
+      return out;
+    };
+
+    // Normalize timeline events to plain strings (UI expects string[]).
+    const normalizeTimeline = (raw: any): string[] => {
+      if (!Array.isArray(raw)) return [];
+      return raw
+        .map((it: any) => {
+          if (typeof it === "string") return it.trim();
+          if (it && typeof it === "object") return String(it.event ?? it.text ?? it.title ?? "").trim();
+          return "";
+        })
+        .filter(Boolean);
+    };
+
     let consolidatedContent: any = {
       questions: [],
       memoryPairs: [],
@@ -100,6 +139,12 @@ export async function GET(
         console.error("Error parsing activity content:", err);
       }
     });
+
+    // Final normalization so client games never receive variant key names
+    // (statement vs text, event objects vs strings, etc.) that left the V/F
+    // gestural game showing an empty question.
+    consolidatedContent.statements = normalizeStatements(consolidatedContent.statements);
+    consolidatedContent.timelineEvents = normalizeTimeline(consolidatedContent.timelineEvents);
 
     // Quiz / activity content only changes when admin regenerates IA. Short
     // private cache de-dupes the burst of useEffect calls when the reader and

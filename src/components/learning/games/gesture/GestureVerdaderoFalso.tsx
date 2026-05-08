@@ -25,7 +25,17 @@ const COOLDOWN_MS = 2000;
 const TIMER_S = 15;
 
 export function GestureVerdaderoFalso({ statements, onComplete, onExit }: Props) {
-  const pool = statements.slice(0, 10);
+  // Defensive normalization: API may occasionally hand us legacy shapes.
+  const pool = (statements || [])
+    .map((it: any) => {
+      if (!it) return null;
+      if (typeof it === "string") return { text: it.trim(), isTrue: true };
+      const text = String(it.text ?? it.statement ?? it.affirmation ?? it.sentence ?? "").trim();
+      if (!text) return null;
+      return { text, isTrue: Boolean(it.isTrue ?? it.is_true ?? it.correct ?? true) };
+    })
+    .filter(Boolean)
+    .slice(0, 10) as Statement[];
   const [idx, setIdx] = useState(0);
   const [score, setScore] = useState(0);
   const [feedback, setFeedback] = useState<"correct" | "wrong" | null>(null);

@@ -20,7 +20,8 @@ import {
   Crown,
   Flame,
   Target,
-  HelpCircle
+  HelpCircle,
+  BookMarked
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -99,6 +100,7 @@ const adminItems = [
   { icon: Building2, label: "Mi Colegio", href: "/dashboard/admin" },
   { icon: Users, label: "Usuarios", href: "/dashboard/admin/users" },
   { icon: GraduationCap, label: "Clases y Docentes", href: "/dashboard/admin/classes" },
+  { icon: BookMarked, label: "Licencias", href: "/dashboard/admin/licenses" },
 ];
 
 // Super Admin sidebar
@@ -111,6 +113,7 @@ const superAdminItems = [
   { icon: Crown, label: "Súper Admin", href: "/dashboard/superadmin" },
   { icon: Library, label: "Gestión Libros BBDD", href: "/dashboard/admin/books" },
   { icon: Users, label: "Todos los Usuarios", href: "/dashboard/admin/users" },
+  { icon: BookMarked, label: "Licencias", href: "/dashboard/superadmin/licenses" },
   { icon: BarChart3, label: "Métricas Reales", href: "/dashboard/admin/stats" },
   { icon: Settings, label: "Plataforma", href: "/dashboard/admin/settings" },
 ];

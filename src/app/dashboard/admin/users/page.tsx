@@ -205,6 +205,7 @@ export default function AdminUsersPage() {
               <TableHead>Rol</TableHead>
               <TableHead>Estado</TableHead>
               <TableHead>Licencia</TableHead>
+              <TableHead>Activación</TableHead>
               <TableHead>Progreso</TableHead>
               <TableHead>Última Actividad</TableHead>
               <TableHead className="text-right">Acciones</TableHead>
@@ -249,6 +250,20 @@ export default function AdminUsersPage() {
                         </span>
                     )}
                   </div>
+                </TableCell>
+                <TableCell>
+                  {user.createdAt ? (
+                    <div className="flex flex-col tabular-nums">
+                      <span className="text-xs text-foreground/80">
+                        {format(new Date(user.createdAt), "dd MMM yyyy", { locale: es })}
+                      </span>
+                      <span className="text-[10px] text-gray-400">
+                        {format(new Date(user.createdAt), "HH:mm:ss")}
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="text-[10px] text-gray-400">—</span>
+                  )}
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-col">

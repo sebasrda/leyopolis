@@ -389,14 +389,15 @@ export default function UsersTab({
                 <th className="p-3 font-medium text-muted-foreground">Nombre</th>
                 <th className="p-3 font-medium text-muted-foreground">Email</th>
                 <th className="p-3 font-medium text-muted-foreground">Licencia</th>
+                <th className="p-3 font-medium text-muted-foreground">Activada</th>
                 <th className="p-3 font-medium text-muted-foreground text-center">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y">
               {loading ? (
-                <tr><td colSpan={4} className="p-8 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto text-indigo-400" /></td></tr>
+                <tr><td colSpan={5} className="p-8 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto text-indigo-400" /></td></tr>
               ) : users.length === 0 ? (
-                <tr><td colSpan={4} className="p-8 text-center text-muted-foreground">No hay {roleName.toLowerCase()} registrados.</td></tr>
+                <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">No hay {roleName.toLowerCase()} registrados.</td></tr>
               ) : (
                 users.map((u) => (
                   <tr key={u.id} className="hover:bg-muted">
@@ -409,6 +410,14 @@ export default function UsersTab({
                       {u.expiresAt && (
                         <span className="block text-xs text-gray-400 mt-1">Expira: {format(new Date(u.expiresAt), "dd/MM/yyyy")}</span>
                       )}
+                    </td>
+                    <td className="p-3 text-xs text-muted-foreground tabular-nums">
+                      {u.createdAt ? (
+                        <>
+                          <span className="block text-foreground/80">{format(new Date(u.createdAt), "dd/MM/yyyy")}</span>
+                          <span className="block text-[10px] text-gray-400">{format(new Date(u.createdAt), "HH:mm:ss")}</span>
+                        </>
+                      ) : "—"}
                     </td>
                     <td className="p-3 text-center">
                       <Button variant="ghost" size="icon" className="text-red-400 hover:text-red-700 hover:bg-red-50 h-8 w-8" onClick={() => handleDelete(u.id)}>

@@ -38,6 +38,7 @@ export async function GET() {
         grade: true,
         licenseType: true,
         expiresAt: true,
+        createdAt: true,
         xp: true,
         level: true,
         lastActive: true,

@@ -261,8 +261,8 @@ export default function DashboardLayout({ children, serverXp, serverLevel, serve
         <div className="p-5 flex items-center justify-between border-b border-white/5">
           {!collapsed && (
             <div className="flex items-center gap-2">
-              <div className="h-9 w-9 flex items-center justify-center overflow-hidden rounded-lg bg-card/10 p-1">
-                <img src="/leyopolis.next.jpeg" alt="Leyópolis Logo" className="h-full w-full object-contain" />
+              <div className="h-10 w-10 flex items-center justify-center overflow-hidden rounded-lg bg-white shadow-sm">
+                <img src="/leyopolis-next.jpg" alt="Leyópolis Logo" className="h-full w-full object-contain" />
               </div>
               <span className="text-lg font-bold tracking-tight text-white">LEYÓPOLIS</span>
             </div>

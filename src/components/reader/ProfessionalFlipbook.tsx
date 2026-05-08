@@ -1365,6 +1365,11 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
     setIsTranslating(true);
     setTranslatedLanguage(lang);
     activeTransLangRef.current = lang;
+    // CRITICAL: every fresh translation must clear comic mode. Without this,
+    // a single low-text page once flipped to (chapter cover, illustration)
+    // would latch isComicMode=true and every subsequent page would render as
+    // comic instead of translating normally.
+    setIsComicMode(false);
 
     // Capturar números de página reales al inicio de la llamada
     const leftPageNum  = currentPage - VIRTUAL_PAGES + 1;
@@ -1379,12 +1384,14 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
             rightPageNum >= 1 ? extractPageText(rightPageNum) : Promise.resolve(""),
         ]);
 
-        // Auto-detect image-based comic pages (very little extractable text)
+        // Auto-detect image-based comic pages (very little extractable text).
+        // Tightened threshold from 30 -> 15 chars total. A normal page has
+        // 500-2000 chars; only true image-only spreads come below 15.
         const combinedLen = (leftText + rightText).trim().length;
-        const leftIsComic  = leftText.trim().length < 30;
-        const rightIsComic = rightPageNum < 1 || rightText.trim().length < 30;
+        const leftIsComic  = leftText.trim().length < 15;
+        const rightIsComic = rightPageNum < 1 || rightText.trim().length < 15;
 
-        if (combinedLen < 30) {
+        if (combinedLen < 15) {
             setIsComicMode(true);
             setIsTranslating(false);
             return;

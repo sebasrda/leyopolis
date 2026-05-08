@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
 
-const CACHE_VERSION = "v10";
+const CACHE_VERSION = "v11";
 
 function normalizeTarget(input: string) {
   const t = input.trim();
@@ -112,19 +112,24 @@ function ensureTargetLanguage(text: string, targetIso: string): string {
 }
 
 // Detect a truncated translation. Two signals:
-//  1) provider-reported finish_reason === "length" (token cap hit)
-//  2) length-ratio heuristic vs the source. CJK targets compress a lot, so we
-//     allow a much smaller ratio there.
+//  1) provider-reported finish_reason === "length" (token cap hit) — strongest
+//  2) length-ratio heuristic vs the source. Loose by default so well-formed
+//     translations are NEVER rejected (a too-strict check causes the whole
+//     fallback chain to give up and return the original text untranslated).
 function isTruncated(translation: string, source: string, targetIso: string, finishReason?: string): boolean {
   if (finishReason && finishReason.toLowerCase() === "length") return true;
   if (!translation || !source) return false;
   const trim = translation.trim();
-  if (trim.length < 20) return true;
+  if (trim.length < 20 && source.length > 60) return true;
   const ratio = trim.length / source.length;
   const isCJK = targetIso === "zh-CN" || targetIso === "zh" || targetIso === "ja" || targetIso === "ko";
-  const minRatio = isCJK ? 0.18 : 0.4;
+  // Latin-script floor 0.25 (was 0.4). CJK floor 0.12 (was 0.18). These are
+  // pure "obviously cut off" detection — well-formed translations of long
+  // English sentences into Chinese can be ~0.18 of the source.
+  const minRatio = isCJK ? 0.12 : 0.25;
   if (ratio < minRatio) return true;
-  if (ratio < 0.6 && !/[\.\?\!…。？！」』”’\)\]]\s*$/.test(trim)) return true;
+  // The mid-sentence punctuation check was triggering on legitimate prose
+  // ending in dashes or non-Latin punctuation. Removed.
   return false;
 }
 

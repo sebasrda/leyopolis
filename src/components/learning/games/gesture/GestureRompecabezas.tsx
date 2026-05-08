@@ -20,8 +20,9 @@ const TX        = BX + BOARD_SZ + 20; // 360
 const SNAP_DIST = 80;   // px — distance to nearest slot centre for auto-snap on drop click
 const HOVER_R   = 65;   // px — hover highlight radius around cursor
 
-// ms the fist must be held for a confirmed "click"
-const CLICK_MS  = 500;
+// ms the fist must be held for a confirmed "click". 280 keeps it intentional
+// without feeling laggy (was 500 — too slow for an arcade-style puzzle).
+const CLICK_MS  = 280;
 
 const boardSlots = Array.from({ length: 9 }, (_, i) => ({
   x: BX + (i % GRID) * PIECE_SZ,
@@ -32,23 +33,47 @@ const traySlots = Array.from({ length: 9 }, (_, i) => ({
   y: BY + Math.floor(i / GRID) * PIECE_SZ,
 }));
 
-// ─── 15 puzzle images ─────────────────────────────────────────────────────────
+// ─── 35 puzzle images — paisajes, naturaleza y temas creativos ───────────────
+// Picsum.photos returns a stable random photo per seed. Seeds are chosen so
+// the resulting catalog feels diverse: nature, animals, sky, art, micro/macro.
 const PUZZLE_IMAGES = [
-  { src: "https://picsum.photos/seed/mntpzl/330/330",  label: "Montañas"  },
-  { src: "https://picsum.photos/seed/ocnpzl/330/330",  label: "Océano"    },
-  { src: "https://picsum.photos/seed/frstpzl/330/330", label: "Bosque"    },
-  { src: "https://picsum.photos/seed/flwrpzl/330/330", label: "Flores"    },
-  { src: "https://picsum.photos/seed/ctypzl/330/330",  label: "Ciudad"    },
-  { src: "https://picsum.photos/seed/anmlpzl/330/330", label: "Animales"  },
-  { src: "https://picsum.photos/seed/bchpzl/330/330",  label: "Playa"     },
-  { src: "https://picsum.photos/seed/spcpzl/330/330",  label: "Espacio"   },
-  { src: "https://picsum.photos/seed/foodpzl/330/330", label: "Comida"    },
-  { src: "https://picsum.photos/seed/wntpzl/330/330",  label: "Invierno"  },
-  { src: "https://picsum.photos/seed/snstpzl/330/330", label: "Atardecer" },
-  { src: "https://picsum.photos/seed/advpzl/330/330",  label: "Aventura"  },
-  { src: "https://picsum.photos/seed/hstpzl/330/330",  label: "Historia"  },
-  { src: "https://picsum.photos/seed/grdnpzl/330/330", label: "Jardín"    },
-  { src: "https://picsum.photos/seed/rnbwpzl/330/330", label: "Arcoíris"  },
+  // ─ Original 15 ─
+  { src: "https://picsum.photos/seed/mntpzl/330/330",   label: "Montañas"      },
+  { src: "https://picsum.photos/seed/ocnpzl/330/330",   label: "Océano"        },
+  { src: "https://picsum.photos/seed/frstpzl/330/330",  label: "Bosque"        },
+  { src: "https://picsum.photos/seed/flwrpzl/330/330",  label: "Flores"        },
+  { src: "https://picsum.photos/seed/ctypzl/330/330",   label: "Ciudad"        },
+  { src: "https://picsum.photos/seed/anmlpzl/330/330",  label: "Animales"      },
+  { src: "https://picsum.photos/seed/bchpzl/330/330",   label: "Playa"         },
+  { src: "https://picsum.photos/seed/spcpzl/330/330",   label: "Espacio"       },
+  { src: "https://picsum.photos/seed/foodpzl/330/330",  label: "Comida"        },
+  { src: "https://picsum.photos/seed/wntpzl/330/330",   label: "Invierno"      },
+  { src: "https://picsum.photos/seed/snstpzl/330/330",  label: "Atardecer"     },
+  { src: "https://picsum.photos/seed/advpzl/330/330",   label: "Aventura"      },
+  { src: "https://picsum.photos/seed/hstpzl/330/330",   label: "Historia"      },
+  { src: "https://picsum.photos/seed/grdnpzl/330/330",  label: "Jardín"        },
+  { src: "https://picsum.photos/seed/rnbwpzl/330/330",  label: "Arcoíris"      },
+  // ─ +20 nuevos: paisajes y temas creativos ─
+  { src: "https://picsum.photos/seed/aurorapz/330/330", label: "Aurora Boreal" },
+  { src: "https://picsum.photos/seed/cascadapz/330/330",label: "Cascada"       },
+  { src: "https://picsum.photos/seed/sakurapz/330/330", label: "Cerezos"       },
+  { src: "https://picsum.photos/seed/vlcnpz/330/330",   label: "Volcán"        },
+  { src: "https://picsum.photos/seed/dsrtpz/330/330",   label: "Desierto"      },
+  { src: "https://picsum.photos/seed/glciarpz/330/330", label: "Glaciar"       },
+  { src: "https://picsum.photos/seed/lagopz/330/330",   label: "Lago Alpino"   },
+  { src: "https://picsum.photos/seed/faropz/330/330",   label: "Faro"          },
+  { src: "https://picsum.photos/seed/pradpz/330/330",   label: "Pradera"       },
+  { src: "https://picsum.photos/seed/cuevapz/330/330",  label: "Cuevas"        },
+  { src: "https://picsum.photos/seed/lavandpz/330/330", label: "Lavanda"       },
+  { src: "https://picsum.photos/seed/castllpz/330/330", label: "Castillo"      },
+  { src: "https://picsum.photos/seed/globopz/330/330",  label: "Globos"        },
+  { src: "https://picsum.photos/seed/coralpz/330/330",  label: "Arrecife"      },
+  { src: "https://picsum.photos/seed/zorropz/330/330",  label: "Zorro"         },
+  { src: "https://picsum.photos/seed/tigrepz/330/330",  label: "Tigre"         },
+  { src: "https://picsum.photos/seed/mariposapz/330/330", label: "Mariposa"    },
+  { src: "https://picsum.photos/seed/colibripz/330/330",label: "Colibrí"       },
+  { src: "https://picsum.photos/seed/gxlxpz/330/330",   label: "Galaxia"       },
+  { src: "https://picsum.photos/seed/streetartpz/330/330", label: "Arte Urbano" },
 ];
 
 const PIECE_COLORS = [
@@ -419,17 +444,19 @@ export function GestureRompecabezas({ onComplete, onExit }: Props) {
             <ChevronLeft className="h-6 w-6" />
           </Button>
           <div className="flex-1 flex flex-col items-center gap-3">
-            <div className="grid grid-cols-5 gap-2">
+            <div className="grid grid-cols-5 gap-2 max-h-[260px] overflow-y-auto pr-1 py-1 custom-scroll">
               {PUZZLE_IMAGES.map((img, i) => (
                 <button key={i} onClick={() => setImgIdx(i)}
+                  title={img.label}
                   className={`w-16 h-16 rounded-xl overflow-hidden border-2 transition-all ${
                     i === imgIdx ? "border-purple-400 scale-110 shadow-lg shadow-purple-500/50"
                                  : "border-slate-700 opacity-55 hover:opacity-80"}`}>
-                  <img src={img.src} alt={img.label} className="w-full h-full object-cover" crossOrigin="anonymous" />
+                  <img src={img.src} alt={img.label} loading="lazy" className="w-full h-full object-cover" crossOrigin="anonymous" />
                 </button>
               ))}
             </div>
             <p className="text-white font-bold text-xl">{PUZZLE_IMAGES[imgIdx].label}</p>
+            <p className="text-[11px] text-slate-500">{PUZZLE_IMAGES.length} imágenes disponibles</p>
           </div>
           <Button variant="ghost" size="icon"
             onClick={() => setImgIdx(i => (i + 1) % PUZZLE_IMAGES.length)}

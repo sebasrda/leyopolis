@@ -81,25 +81,35 @@ export function detectGesture(lm: any[]): GestureType {
   });
 
   // Curled: tip does NOT significantly extend past PIP — lenient threshold
-  // catches the natural bent-finger "claw" grip, not only a fully closed fist
+  // catches the natural bent-finger "claw" grip, not only a fully closed fist.
+  // 1.4 (was 1.25) is more forgiving for kids/laptop-cam scenarios where a
+  // finger or two never fully reaches the palm.
   const curled = FINGERS.map(([tip, pip, mcp]) => {
     const tipD = d2(lm[tip], lm[mcp]);
     const pipD = d2(lm[pip], lm[mcp]);
-    return tipD <= pipD * 1.25;
+    return tipD <= pipD * 1.4;
   });
 
-  const allCurled = curled.every(e => e);    // all 4 fingers bent → fist / grip
-  const allOpen   = extended.every(e => e);  // all 4 fingers clearly spread → open
+  const curledCount = curled.filter(c => c).length;
+  // Fist when ≥3 of the 4 fingers are curled — tolerant to one stray finger
+  // that didn't quite close. Distinct from peace (only 2 curled).
+  const isFist    = curledCount >= 3;
+  const allOpen   = extended.every(e => e);
   const peaceSign = extended[0] && extended[1] && curled[2] && curled[3];
 
   const thumbTipD = d2(lm[4], lm[2]);
   const thumbIpD  = d2(lm[3], lm[2]);
-  const thumbUp   = thumbTipD > thumbIpD * 1.1 && allCurled;
+  // Thumbs up wins over fist only when the thumb is clearly extended AND the
+  // other 4 fingers are tightly curled (use the strict all-4 condition here so
+  // it isn't confused with a relaxed fist).
+  const thumbUp   = thumbTipD > thumbIpD * 1.1 && curledCount === 4;
 
-  if (thumbUp)   return "thumbsUp";
-  if (allCurled) return "fist";
-  if (allOpen)   return "open";
-  if (peaceSign) return "peace";
+  if (thumbUp)    return "thumbsUp";
+  // Peace is checked before fist: if both index and middle are clearly out,
+  // we want peace, not a "loose fist with two leftover fingers".
+  if (peaceSign)  return "peace";
+  if (isFist)     return "fist";
+  if (allOpen)    return "open";
   return null;
 }
 

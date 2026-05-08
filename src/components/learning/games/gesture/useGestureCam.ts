@@ -41,9 +41,10 @@ export function useGestureCam() {
   const prevFingerRef   = useRef(0);
   const prevDetectedRef = useRef(false);
 
-  // 6-frame rolling buffer for gesture smoothing.
-  // Requires a 3/6 majority before emitting a state change, which eliminates
-  // 1–2 frame flickers without introducing noticeable latency (~100 ms at 30 fps).
+  // 4-frame rolling buffer for gesture smoothing.
+  // Requires 2/4 majority before emitting a state change, which keeps 1-frame
+  // jitter out without introducing noticeable latency (~65 ms at 30 fps).
+  // Was 6 frames / 3 majority — felt sluggish for fist-confirm clicks.
   const gestBufferRef = useRef<GestureType[]>([]);
 
   const detectFrame = () => {
@@ -75,7 +76,7 @@ export function useGestureCam() {
 
         // ── Gesture smoothing ──────────────────────────────────────────────
         gestBufferRef.current.push(rawG);
-        if (gestBufferRef.current.length > 6) gestBufferRef.current.shift();
+        if (gestBufferRef.current.length > 4) gestBufferRef.current.shift();
 
         // Majority vote over the buffer
         const counts = new Map<string, number>();
@@ -84,7 +85,7 @@ export function useGestureCam() {
         for (const [k, c] of counts) { if (c > topCnt) { topCnt = c; topKey = k; } }
 
         // If no clear majority, keep the previously emitted gesture (avoids thrashing)
-        const smoothG: GestureType = topCnt >= 3
+        const smoothG: GestureType = topCnt >= 2
           ? (topKey === "__" ? null : topKey as GestureType)
           : prevGestureRef.current;
 

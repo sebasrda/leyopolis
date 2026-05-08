@@ -159,17 +159,21 @@ const PageComponent = forwardRef<HTMLDivElement, {
                         <div style={{ filter: isDarkMode ? 'invert(1) hue-rotate(180deg) contrast(0.8)' : 'none', transition: 'filter 0.3s' }}>
                             <Page
                             pageNumber={pageNumber}
-                            height={height * scale * contentScale} 
-                            devicePixelRatio={typeof window !== 'undefined' ? Math.max(window.devicePixelRatio || 1, 2) : 2}
+                            height={height * scale * contentScale}
+                            // Cap at 2x — was forcing >=2x which made each page
+                            // rasterize at retina-3x on some displays, way too
+                            // slow for flipping. 2x stays crisp and is ~2-3x
+                            // faster to render.
+                            devicePixelRatio={typeof window !== 'undefined' ? Math.min(window.devicePixelRatio || 1, 2) : 1}
                             renderTextLayer={true} // ACTIVAR CAPA DE TEXTO
                             renderAnnotationLayer={true} // ACTIVAR CAPA DE ANOTACIONES (Links)
-                            pdf={pdfDocument} 
+                            pdf={pdfDocument}
                             loading={
                                 <div className="flex items-center justify-center w-full h-full">
                                 <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
                                 </div>
                             }
-                            className="shadow-sm max-w-none text-layer-selectable" // Clase personalizada opcional 
+                            className="shadow-sm max-w-none text-layer-selectable" // Clase personalizada opcional
                             />
                         </div>
                     </div>
@@ -197,6 +201,23 @@ const PageComponent = forwardRef<HTMLDivElement, {
   );
 });
 PageComponent.displayName = "PageComponent";
+
+// Memoized wrapper — re-renders only when the props that actually affect the
+// rendered PDF page change. Without this, every flip triggered React to
+// re-render every <Page>, which combined with text-layer regeneration made
+// flipping feel sluggish.
+const PageComponentMemo = memo(PageComponent, (prev, next) =>
+  prev.pageNumber === next.pageNumber &&
+  prev.scale === next.scale &&
+  prev.width === next.width &&
+  prev.height === next.height &&
+  prev.contentScale === next.contentScale &&
+  prev.contentOffsetX === next.contentOffsetX &&
+  prev.contentOffsetY === next.contentOffsetY &&
+  prev.isDarkMode === next.isDarkMode &&
+  prev.pdfDocument === next.pdfDocument &&
+  prev.onTextSelection === next.onTextSelection
+);
 
 // Helper: format seconds to MM:SS
 function formatTime(seconds: number): string {
@@ -1467,9 +1488,11 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
   }, [uiI18n.language, currentPage, pdfDocument, translatedLanguage]);
 
   // Manejo de Selección de Texto
-  const handleTextSelection = (selection: TextSelection | null) => {
+  // Stable identity so memoized PageComponent doesn't re-render on every parent
+  // state change while flipping pages.
+  const handleTextSelection = useCallback((selection: TextSelection | null) => {
     setTextSelection(selection);
-  };
+  }, []);
 
   // Limpiar selección al cambiar de página o hacer clic fuera
   useEffect(() => {
@@ -1890,7 +1913,7 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
                                 updateReadingProgress(bookId, realPage, total);
                             }
                         }}
-                        flippingTime={1000}
+                        flippingTime={450}
                         usePortrait={isSinglePage}
                         startZIndex={0}
                         autoSize={true}
@@ -1958,7 +1981,7 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
                         {/* PÁGINAS DEL PDF (Originales) */}
                         {Array.from(new Array(numPages), (_, index) => (
                         <div key={index + VIRTUAL_PAGES} className="demoPage" style={{ width: pageWidth * scale, height: pageHeight * scale }}>
-                                <PageComponent 
+                                <PageComponentMemo
                                 pageNumber={index + 1}
                                 width={pageWidth}
                                 height={pageHeight}

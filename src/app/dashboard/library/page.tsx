@@ -221,9 +221,9 @@ export default function LibraryPage() {
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {assignedBooksList.map((book) => (
+            {assignedBooksList.map((book, idx) => (
               <Card key={book.id} className="group overflow-hidden border border-indigo-500/50/20 shadow-lg shadow-indigo-100/50 hover:shadow-xl hover:shadow-indigo-200 transition-all duration-300 flex flex-col h-full bg-indigo-500/10/20 ring-1 ring-indigo-50">
-                  <BookCover src={book.image} alt={book.title}>
+                  <BookCover src={book.image} alt={book.title} priority={idx < 4}>
                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-purple-500"></div>
                     <div className="absolute top-2 right-2 flex flex-col gap-1">
                       <Badge className="bg-indigo-600 text-white shadow-sm backdrop-blur-sm border-none">Unidad Oficial</Badge>
@@ -288,9 +288,9 @@ export default function LibraryPage() {
              <h2 className="text-xl font-bold text-foreground mb-6 border-t pt-8">Catálogo General</h2>
           )}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {otherBooksList.map((book) => (
+            {otherBooksList.map((book, idx) => (
               <Card key={book.id} className="group overflow-hidden border-none shadow-md hover:shadow-xl transition-all duration-300 flex flex-col h-full">
-                  <BookCover src={book.image} alt={book.title}>
+                  <BookCover src={book.image} alt={book.title} priority={assignedBooksList.length === 0 && idx < 4}>
                     <div className="absolute top-2 right-2 flex flex-col gap-1">
                       <Badge className="bg-card/90 text-indigo-200 hover:bg-card shadow-sm backdrop-blur-sm">{book.category}</Badge>
                       {book.hasQuiz && (

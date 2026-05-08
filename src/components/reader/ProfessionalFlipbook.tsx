@@ -1950,10 +1950,10 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
                             <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent" />
                             <div className="relative z-10 space-y-8 flex flex-col items-center w-full">
                                 <div className="mx-auto mb-6 flex justify-center">
-                                  <img 
-                                    src="/leyopolis-logo.png" 
-                                    alt="Leyópolis Logo" 
-                                    className="w-32 h-auto object-contain drop-shadow-2xl" 
+                                  <img
+                                    src="/leyopolis.next.jpeg"
+                                    alt="Leyópolis Logo"
+                                    className="w-32 h-32 object-cover rounded-2xl drop-shadow-2xl"
                                   />
                                 </div>
                                 <h1 className="text-4xl font-bold tracking-tight leading-tight px-4">{bookTitle}</h1>

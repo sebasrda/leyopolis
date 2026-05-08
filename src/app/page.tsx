@@ -1,7 +1,7 @@
 "use client";
 
 import Hero from "@/components/landing/Hero";
-import { BookOpen, Globe, Sparkles, Shield, Zap, BarChart3, Users, GraduationCap, CheckCircle2, Menu, X } from "lucide-react";
+import { BookOpen, Globe, Sparkles, Shield, Zap, BarChart3, Users, GraduationCap, CheckCircle2, Menu, X, Hand, MousePointer2, Camera, Lock, Sparkle } from "lucide-react";
 import { useState } from "react";
 
 const FEATURES = [
@@ -145,13 +145,16 @@ export default function Home() {
       <nav className="fixed top-0 z-50 w-full border-b border-white/5 bg-[#0a0a1a]/80 backdrop-blur-xl">
         <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-2.5">
-            <div className="h-9 w-9 rounded-lg bg-card flex items-center justify-center shadow-lg shadow-indigo-500/20 overflow-hidden p-1">
-              <img src="/leyopolis-logo.png" alt="Leyópolis Logo" className="h-full w-full object-contain" />
+            <div className="h-9 w-9 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/20 overflow-hidden">
+              <img src="/leyopolis.next.jpeg" alt="Leyópolis Logo" className="h-full w-full object-cover" />
             </div>
             <span className="text-xl font-black tracking-tight text-white">LEYÓPOLIS</span>
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-400">
             <a href="#features" className="hover:text-white transition-colors">Características</a>
+            <a href="#motion" className="hover:text-white transition-colors flex items-center gap-1">
+              <Hand className="h-3.5 w-3.5" /> Motion
+            </a>
             <a href="#demo" className="hover:text-white transition-colors">Demo</a>
             <a href="#biblioteca" className="hover:text-white transition-colors">Biblioteca</a>
           </div>
@@ -174,6 +177,7 @@ export default function Home() {
         {mobileNavOpen && (
           <div className="md:hidden bg-[#0f1623] border-t border-white/5 px-4 py-4 space-y-3 animate-in slide-in-from-top-2 duration-200">
             <a href="#features" className="block text-sm text-gray-300 hover:text-white py-2" onClick={() => setMobileNavOpen(false)}>Características</a>
+            <a href="#motion" className="block text-sm text-gray-300 hover:text-white py-2" onClick={() => setMobileNavOpen(false)}>Motion Tracking</a>
             <a href="#demo" className="block text-sm text-gray-300 hover:text-white py-2" onClick={() => setMobileNavOpen(false)}>Demo</a>
             <a href="#biblioteca" className="block text-sm text-gray-300 hover:text-white py-2" onClick={() => setMobileNavOpen(false)}>Biblioteca</a>
             <hr className="border-white/10" />
@@ -245,6 +249,120 @@ export default function Home() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* MOTION TRACKING — control sin manos del lector y los juegos */}
+      <section id="motion" className="relative py-32 border-t border-white/5 scroll-mt-20 overflow-hidden">
+        <div className="absolute inset-0">
+          <div className="absolute top-0 left-1/3 w-[500px] h-[500px] rounded-full bg-purple-600/10 blur-[100px]" />
+          <div className="absolute bottom-0 right-1/4 w-[420px] h-[420px] rounded-full bg-indigo-600/10 blur-[100px]" />
+        </div>
+
+        <div className="relative container mx-auto px-6">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 rounded-full bg-purple-500/10 border border-purple-500/30 px-4 py-1.5 text-sm font-semibold text-purple-300 mb-6">
+              <Hand className="h-3.5 w-3.5" />
+              Motion Tracking · Powered by IA visual
+            </div>
+            <h2 className="text-4xl sm:text-5xl font-black text-white">
+              Lee y juega{" "}
+              <span className="bg-gradient-to-r from-purple-400 via-fuchsia-400 to-pink-400 bg-clip-text text-transparent">
+                sin tocar nada
+              </span>
+            </h2>
+            <p className="mt-4 text-gray-400 max-w-2xl mx-auto">
+              MediaPipe corre directamente en el navegador y reconoce tu mano en tiempo real. Pasa páginas con la mano, selecciona texto con el dedo y juega los minijuegos cerrando el puño — sin instalar nada.
+            </p>
+          </div>
+
+          {/* Gesture cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-12">
+            {[
+              {
+                emoji: "🖐",
+                icon: Hand,
+                gradient: "from-indigo-500 to-purple-600",
+                ring: "ring-indigo-500/30",
+                title: "Mano abierta",
+                desc: "Mueve la mano de un lado al otro frente a la cámara para pasar la página del libro como si fueras un mago.",
+              },
+              {
+                emoji: "☝️",
+                icon: MousePointer2,
+                gradient: "from-fuchsia-500 to-pink-600",
+                ring: "ring-fuchsia-500/30",
+                title: "Modo dedo",
+                desc: "Estira tu índice y aparece un cursor que sigue la punta. Mantén firme y mueve para resaltar tus frases favoritas.",
+              },
+              {
+                emoji: "✊",
+                icon: Sparkle,
+                gradient: "from-amber-500 to-orange-600",
+                ring: "ring-amber-500/30",
+                title: "Cerrar el puño",
+                desc: "En los juegos (rompecabezas, V/F, quiz, simón, piedra-papel-tijera) cierras el puño para hacer click — más natural que un mouse.",
+              },
+              {
+                emoji: "✌️",
+                icon: Camera,
+                gradient: "from-emerald-500 to-teal-600",
+                ring: "ring-emerald-500/30",
+                title: "Gestos avanzados",
+                desc: "Peace, thumbs-up y zonas de pantalla por cuadrantes — la plataforma reconoce más de 6 gestos para distintos modos.",
+              },
+            ].map((g) => (
+              <div
+                key={g.title}
+                className={`group relative rounded-2xl bg-card/[0.03] border border-white/10 p-6 hover:bg-card/[0.06] transition-all duration-300 hover:-translate-y-1 hover:ring-2 ${g.ring}`}
+              >
+                <div className={`inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${g.gradient} mb-4 shadow-lg text-2xl`}>
+                  <span aria-hidden="true">{g.emoji}</span>
+                </div>
+                <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
+                  <g.icon className="h-4 w-4 text-purple-300" />
+                  {g.title}
+                </h3>
+                <p className="text-sm text-gray-400 leading-relaxed">{g.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Privacy + tech badges */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
+            <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/30 p-5 flex items-start gap-3">
+              <div className="h-10 w-10 rounded-lg bg-emerald-500/20 flex items-center justify-center shrink-0">
+                <Lock className="h-5 w-5 text-emerald-300" />
+              </div>
+              <div>
+                <p className="font-bold text-white text-sm">100% en tu navegador</p>
+                <p className="text-xs text-gray-400 mt-1">El video nunca sale de tu dispositivo. Cero subidas, cero servidores intermedios.</p>
+              </div>
+            </div>
+            <div className="rounded-xl bg-indigo-500/10 border border-indigo-500/30 p-5 flex items-start gap-3">
+              <div className="h-10 w-10 rounded-lg bg-indigo-500/20 flex items-center justify-center shrink-0">
+                <Zap className="h-5 w-5 text-indigo-300" />
+              </div>
+              <div>
+                <p className="font-bold text-white text-sm">Tiempo real, 30 fps</p>
+                <p className="text-xs text-gray-400 mt-1">Detección de mano y gestos a velocidad de cámara, sin lag perceptible.</p>
+              </div>
+            </div>
+            <div className="rounded-xl bg-purple-500/10 border border-purple-500/30 p-5 flex items-start gap-3">
+              <div className="h-10 w-10 rounded-lg bg-purple-500/20 flex items-center justify-center shrink-0">
+                <Sparkles className="h-5 w-5 text-purple-300" />
+              </div>
+              <div>
+                <p className="font-bold text-white text-sm">Inclusivo y accesible</p>
+                <p className="text-xs text-gray-400 mt-1">Diseñado pensando en estudiantes con limitaciones motoras o que aprenden mejor moviéndose.</p>
+              </div>
+            </div>
+          </div>
+
+          {/* CTA hint */}
+          <p className="text-center text-xs text-gray-500 mt-10">
+            * Requiere webcam y permiso de cámara. Toda la detección ocurre <span className="text-purple-300 font-semibold">localmente</span> con WebAssembly.
+          </p>
         </div>
       </section>
 
@@ -344,8 +462,8 @@ export default function Home() {
       <footer className="border-t border-white/5 py-12">
         <div className="container mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-card flex items-center justify-center overflow-hidden p-1">
-              <img src="/leyopolis-logo.png" alt="Leyópolis Logo" className="h-full w-full object-contain" />
+            <div className="h-8 w-8 rounded-lg flex items-center justify-center overflow-hidden">
+              <img src="/leyopolis.next.jpeg" alt="Leyópolis Logo" className="h-full w-full object-cover" />
             </div>
             <span className="font-black text-white">LEYÓPOLIS</span>
           </div>

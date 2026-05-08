@@ -2,16 +2,17 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { 
-  Building2, 
-  Users, 
-  Settings, 
+import {
+  Building2,
+  Users,
+  Settings,
   Calendar,
   AlertTriangle,
   Loader2,
   CheckCircle2,
   CreditCard,
-  Plus
+  Plus,
+  RefreshCw,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -38,7 +39,7 @@ export default function SuperAdminDashboard() {
   const [institutions, setInstitutions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Form
+  // Create form
   const [createOpen, setCreateOpen] = useState(false);
   const [name, setName] = useState("");
   const [domain, setDomain] = useState("");
@@ -46,6 +47,55 @@ export default function SuperAdminDashboard() {
   const [maxStudents, setMaxStudents] = useState("30");
   const [duration, setDuration] = useState("30");
   const [creating, setCreating] = useState(false);
+
+  // Renew form
+  const [renewTarget, setRenewTarget] = useState<any>(null); // institution being renewed
+  const [renewPlan, setRenewPlan] = useState<string>("ANUAL");
+  const [renewDays, setRenewDays] = useState<string>("365");
+  const [renewMaxStudents, setRenewMaxStudents] = useState<string>("");
+  const [renewing, setRenewing] = useState(false);
+  const [renewError, setRenewError] = useState<string | null>(null);
+  const [renewSuccess, setRenewSuccess] = useState<string | null>(null);
+
+  const openRenew = (inst: any) => {
+    setRenewTarget(inst);
+    setRenewPlan(inst.plan === "TRIAL" ? "ANUAL" : inst.plan);
+    setRenewDays(inst.plan === "MENSUAL" ? "30" : "365");
+    setRenewMaxStudents(String(inst.maxStudents ?? 30));
+    setRenewError(null);
+    setRenewSuccess(null);
+  };
+
+  const handleRenew = async () => {
+    if (!renewTarget) return;
+    setRenewing(true);
+    setRenewError(null);
+    setRenewSuccess(null);
+    try {
+      const res = await fetch(`/api/superadmin/institutions/${renewTarget.id}/renew`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          plan: renewPlan,
+          additionalDays: parseInt(renewDays, 10),
+          maxStudents: parseInt(renewMaxStudents, 10),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Error al renovar");
+      const newDate = new Date(data.newEndDate).toLocaleDateString();
+      setRenewSuccess(`Licencia extendida hasta ${newDate}`);
+      fetchInstitutions();
+      setTimeout(() => {
+        setRenewTarget(null);
+        setRenewSuccess(null);
+      }, 1600);
+    } catch (e: any) {
+      setRenewError(e.message || "Error de conexión");
+    } finally {
+      setRenewing(false);
+    }
+  };
 
   useEffect(() => {
     fetchInstitutions();
@@ -316,12 +366,23 @@ export default function SuperAdminDashboard() {
                   </div>
                 </div>
                 
-                <div className="pt-2">
+                <div className="pt-2 flex flex-col gap-2">
                   <Link href={`/dashboard/superadmin/colegio/${inst.id}`}>
                     <Button variant="outline" className="w-full border-white/10 hover:bg-white/5 text-slate-300 hover:text-white rounded-xl group/btn">
                       Entrar a la Gestión &rarr;
                     </Button>
                   </Link>
+                  <Button
+                    onClick={() => openRenew(inst)}
+                    className={`w-full rounded-xl gap-2 ${
+                      inst.status === "vencida"
+                        ? "bg-amber-500 hover:bg-amber-600 text-white"
+                        : "bg-emerald-600 hover:bg-emerald-700 text-white"
+                    }`}
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                    {inst.status === "vencida" ? "Reactivar Licencia" : "Renovar Licencia"}
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -337,6 +398,137 @@ export default function SuperAdminDashboard() {
           )}
         </div>
       )}
+
+      {/* ── RENEW LICENSE DIALOG (super admin only) ─────────────── */}
+      <Dialog
+        open={renewTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setRenewTarget(null);
+            setRenewError(null);
+            setRenewSuccess(null);
+          }
+        }}
+      >
+        <DialogContent className="bg-[#0f1623] border-white/10 text-white">
+          <DialogHeader>
+            <DialogTitle className="text-white flex items-center gap-2">
+              <RefreshCw className="h-5 w-5 text-emerald-400" />
+              Renovar Licencia: {renewTarget?.name}
+            </DialogTitle>
+            <DialogDescription className="text-slate-400">
+              Extiende el contrato de {renewTarget?.domain ?? "esta institución"}. Los días se suman al vencimiento actual si la licencia sigue activa, o desde hoy si ya venció.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="bg-white/5 rounded-lg p-3 text-xs space-y-1 border border-white/10">
+              <div className="flex justify-between">
+                <span className="text-slate-400">Plan actual</span>
+                <span className="font-semibold">{renewTarget?.plan ?? "—"}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Estado</span>
+                <span className={`font-semibold ${renewTarget?.status === "vencida" ? "text-red-400" : renewTarget?.status === "activa" ? "text-emerald-400" : "text-amber-400"}`}>
+                  {renewTarget?.status ?? "—"}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Vencimiento actual</span>
+                <span className="font-semibold">
+                  {renewTarget?.endDate ? new Date(renewTarget.endDate).toLocaleDateString() : "Ilimitado"}
+                </span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-slate-400">Plan</Label>
+                <Select value={renewPlan} onValueChange={setRenewPlan}>
+                  <SelectTrigger className="bg-white/5 border-white/10"><SelectValue /></SelectTrigger>
+                  <SelectContent className="bg-[#1a2235] border-white/10 text-white">
+                    <SelectItem value="MENSUAL">Mensual</SelectItem>
+                    <SelectItem value="ANUAL">Anual</SelectItem>
+                    <SelectItem value="TRIAL">Trial</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-slate-400">Límite Estudiantes</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  value={renewMaxStudents}
+                  onChange={(e) => setRenewMaxStudents(e.target.value)}
+                  className="bg-white/5 border-white/10"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-slate-400">Días a agregar</Label>
+              <Input
+                type="number"
+                min={1}
+                max={3650}
+                value={renewDays}
+                onChange={(e) => setRenewDays(e.target.value)}
+                className="bg-white/5 border-white/10"
+              />
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  { l: "+30 días", v: "30" },
+                  { l: "+90 días", v: "90" },
+                  { l: "+180 días", v: "180" },
+                  { l: "+1 año", v: "365" },
+                  { l: "+2 años", v: "730" },
+                ].map((p) => (
+                  <Button
+                    key={p.v}
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setRenewDays(p.v)}
+                    className={`h-7 px-2 text-[11px] border-white/10 hover:bg-white/10 ${renewDays === p.v ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40" : "text-slate-300"}`}
+                  >
+                    {p.l}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {renewError && (
+              <div className="bg-red-500/10 border border-red-500/30 text-red-300 text-sm rounded-md p-2 flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4" /> {renewError}
+              </div>
+            )}
+            {renewSuccess && (
+              <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-sm rounded-md p-2 flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4" /> {renewSuccess}
+              </div>
+            )}
+
+            <div className="flex gap-2 pt-2">
+              <Button
+                variant="outline"
+                onClick={() => setRenewTarget(null)}
+                disabled={renewing}
+                className="flex-1 border-white/10 hover:bg-white/5 text-slate-300"
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleRenew}
+                disabled={renewing || !renewDays || parseInt(renewDays, 10) <= 0}
+                className="flex-1 bg-emerald-600 hover:bg-emerald-700 gap-2"
+              >
+                {renewing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                Confirmar renovación
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

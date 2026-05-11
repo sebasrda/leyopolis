@@ -2401,8 +2401,13 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
         </div>
       </footer>
 
-      {/* AI Gesture Tracking Page Turner */}
-      <GesturePageTurner onTurnNext={nextFlip} onTurnPrev={prevFlip} />
+      {/* AI Gesture Tracking Page Turner — paused while a modal sits on top
+          (games / exam) so the finger cursor doesn't leak into those views. */}
+      <GesturePageTurner
+        onTurnNext={nextFlip}
+        onTurnPrev={prevFlip}
+        disabled={showGames || showExam}
+      />
 
       {/* Modales */}
       <GamesModal isOpen={showGames} onClose={() => setShowGames(false)} bookTitle={bookTitle} bookId={bookId} />

@@ -11,6 +11,12 @@ interface GesturePageTurnerProps {
   onTurnNext: () => void;
   onTurnPrev: () => void;
   onFavoriteSelection?: (text: string) => void;
+  /**
+   * When true (e.g. a game / exam modal is open on top of the reader) the
+   * gesture detection stops emitting events — no page-turn, no finger
+   * cursor. Camera stays on so reactivation is instant.
+   */
+  disabled?: boolean;
 }
 
 type PointerPhase = "idle" | "hover" | "selecting";
@@ -42,7 +48,36 @@ function getRangeAtPoint(x: number, y: number): Range | null {
   return null;
 }
 
-export function GesturePageTurner({ onTurnNext, onTurnPrev, onFavoriteSelection }: GesturePageTurnerProps) {
+// Snap a range's boundaries to the nearest word boundaries — the start moves
+// backward to the beginning of its word, the end forward to the end of its
+// word. Gives "smart" word-by-word highlighting instead of cutting mid-letter.
+const WORD_CHAR = /[\p{L}\p{N}_]/u;
+function expandRangeToWords(range: Range): Range {
+  const out = range.cloneRange();
+
+  if (out.startContainer.nodeType === Node.TEXT_NODE) {
+    const text = out.startContainer.textContent || "";
+    let s = Math.min(out.startOffset, text.length);
+    while (s > 0 && WORD_CHAR.test(text[s - 1])) s--;
+    try { out.setStart(out.startContainer, s); } catch { /* node detached */ }
+  }
+
+  if (out.endContainer.nodeType === Node.TEXT_NODE) {
+    const text = out.endContainer.textContent || "";
+    let e = Math.min(out.endOffset, text.length);
+    while (e < text.length && WORD_CHAR.test(text[e])) e++;
+    try { out.setEnd(out.endContainer, e); } catch { /* node detached */ }
+  }
+
+  return out;
+}
+
+export function GesturePageTurner({ onTurnNext, onTurnPrev, onFavoriteSelection, disabled = false }: GesturePageTurnerProps) {
+  // Mirror prop to a ref so the RAF loop reads the latest value without being
+  // a hook dependency (the loop runs at ~30fps and re-binding on every prop
+  // change would tear down detectFrame).
+  const disabledRef = useRef(disabled);
+  useEffect(() => { disabledRef.current = disabled; }, [disabled]);
   const [isActive, setIsActive] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -52,9 +87,11 @@ export function GesturePageTurner({ onTurnNext, onTurnPrev, onFavoriteSelection 
   const streamRef = useRef<MediaStream | null>(null);
   const requestRef = useRef<number>(0);
 
-  // Swipe detection state
-  const lastXRef = useRef<number | null>(null);
-  const lastTimeRef = useRef<number>(0);
+  // Swipe detection state — velocity-based.
+  // We track the last ~700ms of wrist X positions; a swipe fires when the
+  // hand moves >25% of the frame horizontally in one consistent direction.
+  // Much more forgiving than the old "must reach 30% then 70% zone" gate.
+  const swipeBufferRef = useRef<Array<{ x: number; t: number }>>([]);
   const cooldownRef = useRef<number>(0);
 
   const isActiveRef = useRef(false);
@@ -164,8 +201,7 @@ export function GesturePageTurner({ onTurnNext, onTurnPrev, onFavoriteSelection 
   }, [stopCamera]);
 
   // --- GESTURE LOGIC ---
-  const gestureState = useRef<"NONE" | "RIGHT_ZONE" | "LEFT_ZONE">("NONE");
-  const stateTimestamp = useRef<number>(0);
+  // Legacy zone-based state replaced by swipeBufferRef (velocity-based).
 
   const detectFrame = () => {
     if (!videoRef.current || !landmarkerRef.current || !isActiveRef.current || !canvasRef.current) return;
@@ -192,21 +228,35 @@ export function GesturePageTurner({ onTurnNext, onTurnPrev, onFavoriteSelection 
         const landmarks = results.landmarks[0];
         const drawingUtils = new DrawingUtils(ctx);
 
+        // If disabled (e.g. a game / exam modal is open) we keep drawing the
+        // hand for visual feedback but skip all gesture-driven side effects.
+        const isDisabled = disabledRef.current;
+
         const pointing = isPointingGesture(landmarks);
 
         drawingUtils.drawConnectors(landmarks, HandLandmarker.HAND_CONNECTIONS, {
-          color: pointing ? "#fbbf24" : "#4ade80",
+          color: isDisabled ? "#64748b" : pointing ? "#fbbf24" : "#4ade80",
           lineWidth: 4,
         });
         drawingUtils.drawLandmarks(landmarks, { color: "#ffffff", lineWidth: 2, radius: 5 });
 
-        ctx.fillStyle = pointing ? "#fbbf24" : "#4ade80";
-        ctx.fillText(pointing ? "DEDO ✋👉" : "MANO OK ✅", 10, 30);
+        ctx.fillStyle = isDisabled ? "#94a3b8" : pointing ? "#fbbf24" : "#4ade80";
+        ctx.fillText(isDisabled ? "PAUSADO ⏸" : pointing ? "DEDO ✋👉" : "MANO OK ✅", 10, 30);
 
+        if (isDisabled) {
+          // Clear any leftover pointer / swipe state and bail out
+          if (pointerVisible) setPointerVisible(false);
+          if (pointerPhaseRef.current !== "idle") {
+            pointerPhaseRef.current = "idle";
+            setPointerPhase("idle");
+            anchorRangeRef.current = null;
+          }
+          swipeBufferRef.current = [];
+        }
         // ── FINGER / POINTER MODE ──────────────────────────────────────
-        if (pointing) {
-          // Reset swipe state so finger move doesn't trigger a page turn after exit
-          gestureState.current = "NONE";
+        else if (pointing) {
+          // Reset swipe buffer so finger move doesn't trigger a page turn on exit
+          swipeBufferRef.current = [];
 
           // Map index tip to screen coordinates (no mirror — natural movement)
           const tip = landmarks[8];
@@ -228,7 +278,6 @@ export function GesturePageTurner({ onTurnNext, onTurnPrev, onFavoriteSelection 
           ctx.stroke();
 
           if (phase === "idle") {
-            // Begin hovering at this point
             hoverStartRef.current = nowInMs;
             hoverPosRef.current = { x: screenX, y: screenY };
             pointerPhaseRef.current = "hover";
@@ -240,11 +289,9 @@ export function GesturePageTurner({ onTurnNext, onTurnPrev, onFavoriteSelection 
               const dy = screenY - start.y;
               const moved = Math.hypot(dx, dy);
               if (moved > 60) {
-                // Finger drifted — reset hover anchor
                 hoverStartRef.current = nowInMs;
                 hoverPosRef.current = { x: screenX, y: screenY };
               } else if (nowInMs - hoverStartRef.current > 500) {
-                // Held still long enough → enter selecting mode
                 const startRange = getRangeAtPoint(start.x, start.y);
                 if (startRange) {
                   anchorRangeRef.current = startRange;
@@ -267,10 +314,14 @@ export function GesturePageTurner({ onTurnNext, onTurnPrev, onFavoriteSelection 
                   range.setStart(endRange.startContainer, endRange.startOffset);
                   range.setEnd(start.endContainer, start.endOffset);
                 }
+                // SMART SELECTION: snap to whole-word boundaries so the
+                // highlight never cuts mid-letter. Much more readable when
+                // a student wants to favorite "el coraje del protagonista".
+                const wordRange = expandRangeToWords(range);
                 const sel = window.getSelection();
                 if (sel) {
                   sel.removeAllRanges();
-                  sel.addRange(range);
+                  sel.addRange(wordRange);
                   lastSelectionTextRef.current = sel.toString();
                 }
               } catch {
@@ -279,7 +330,7 @@ export function GesturePageTurner({ onTurnNext, onTurnPrev, onFavoriteSelection 
             }
           }
         } else {
-          // Not pointing: confirm any pending selection and run the existing swipe logic
+          // Open hand / unknown gesture → finish any pending selection, run swipe
           if (pointerPhaseRef.current === "selecting") {
             const text = lastSelectionTextRef.current?.trim() || "";
             if (text.length > 1 && onFavoriteSelection) {
@@ -293,57 +344,68 @@ export function GesturePageTurner({ onTurnNext, onTurnPrev, onFavoriteSelection 
           }
           if (pointerVisible) setPointerVisible(false);
 
-          const handX = landmarks[0].x; // Wrist
+          // ── VELOCITY-BASED SWIPE DETECTION ─────────────────────────
+          // 1) Keep a 700ms rolling buffer of wrist X (normalized 0-1)
+          // 2) Take the oldest sample inside that window and the newest
+          // 3) If horizontal travel > 22% of frame AND time gap >= 80ms,
+          //    fire a turn in that direction
+          const wristX = landmarks[0].x;
+          const buf = swipeBufferRef.current;
+          buf.push({ x: wristX, t: nowInMs });
+          // Drop entries older than 700ms
+          while (buf.length > 0 && nowInMs - buf[0].t > 700) buf.shift();
 
-          // Zones
-          ctx.strokeStyle = "rgba(255,255,255,0.5)";
-          ctx.setLineDash([10, 5]);
-          ctx.beginPath(); ctx.moveTo(canvas.width * 0.3, 40); ctx.lineTo(canvas.width * 0.3, canvas.height); ctx.stroke();
-          ctx.beginPath(); ctx.moveTo(canvas.width * 0.7, 40); ctx.lineTo(canvas.width * 0.7, canvas.height); ctx.stroke();
+          // Visual hint: thin dashed midline so user knows movement direction matters
+          ctx.strokeStyle = "rgba(255,255,255,0.25)";
+          ctx.setLineDash([4, 6]);
+          ctx.beginPath(); ctx.moveTo(canvas.width * 0.5, 40); ctx.lineTo(canvas.width * 0.5, canvas.height); ctx.stroke();
           ctx.setLineDash([]);
 
-          const cooldownTime = 1200;
-          if (nowInMs - cooldownRef.current > cooldownTime) {
-            if (handX < 0.3) {
-              if (gestureState.current !== "RIGHT_ZONE") {
-                gestureState.current = "RIGHT_ZONE";
-                stateTimestamp.current = nowInMs;
-              }
-            }
-            else if (handX > 0.7) {
-              if (gestureState.current === "RIGHT_ZONE" && (nowInMs - stateTimestamp.current < 1500)) {
-                onTurnNext();
-                cooldownRef.current = nowInMs;
-                gestureState.current = "NONE";
-                flashScreen("rgba(139, 92, 246, 0.9)");
-              } else {
-                gestureState.current = "LEFT_ZONE";
-                stateTimestamp.current = nowInMs;
-              }
-            }
+          const cooldownTime = 650;
+          if (buf.length >= 3 && nowInMs - cooldownRef.current > cooldownTime) {
+            const first = buf[0];
+            const last = buf[buf.length - 1];
+            const dx = last.x - first.x;
+            const dt = last.t - first.t;
+            const MIN_DX = 0.22;
+            const MIN_DT = 80;
 
-            if (handX < 0.3 && gestureState.current === "LEFT_ZONE" && (nowInMs - stateTimestamp.current < 1500)) {
-                onTurnPrev();
+            if (dt >= MIN_DT && Math.abs(dx) >= MIN_DX) {
+              // Verify direction is consistent (not back-and-forth)
+              let consistent = true;
+              const sign = Math.sign(dx);
+              for (let i = 1; i < buf.length; i++) {
+                if (Math.sign(buf[i].x - buf[i - 1].x) === -sign &&
+                    Math.abs(buf[i].x - buf[i - 1].x) > 0.04) {
+                  consistent = false; break;
+                }
+              }
+              if (consistent) {
+                // dx > 0  → wrist moved RIGHT (in MP coords, which mirror
+                // the screen, that means user actually moved hand LEFT)
+                // → previous page. dx < 0 → next page.
+                if (dx > 0) {
+                  onTurnPrev();
+                  flashScreen("rgba(59, 130, 246, 0.9)");
+                } else {
+                  onTurnNext();
+                  flashScreen("rgba(139, 92, 246, 0.9)");
+                }
                 cooldownRef.current = nowInMs;
-                gestureState.current = "NONE";
-                flashScreen("rgba(59, 130, 246, 0.9)");
-            }
-
-            if (gestureState.current === "RIGHT_ZONE") {
-               ctx.fillStyle = "rgba(139, 92, 246, 0.7)";
-               ctx.fillRect(0, 40, canvas.width * 0.3, canvas.height - 40);
-               ctx.fillStyle = "white"; ctx.font = "bold 20px Arial"; ctx.fillText("PASAR PÁGINA >>", 20, canvas.height - 30);
-            } else if (gestureState.current === "LEFT_ZONE") {
-               ctx.fillStyle = "rgba(59, 130, 246, 0.7)";
-               ctx.fillRect(canvas.width * 0.7, 40, canvas.width * 0.3, canvas.height - 40);
-               ctx.fillStyle = "white"; ctx.font = "bold 20px Arial"; ctx.fillText("<< VOLVER", canvas.width * 0.7 + 10, canvas.height - 30);
+                swipeBufferRef.current = [];
+              }
             }
           }
+
+          // Hint label
+          ctx.fillStyle = "rgba(255,255,255,0.7)";
+          ctx.font = "bold 13px Arial";
+          ctx.fillText("← desliza →", 10, canvas.height - 14);
         }
       } else {
         ctx.fillStyle = "#fbbf24";
         ctx.fillText("BUSCANDO MANO...", 10, 30);
-        if (nowInMs - stateTimestamp.current > 2000) gestureState.current = "NONE";
+        swipeBufferRef.current = [];
         if (pointerVisible) setPointerVisible(false);
         if (pointerPhaseRef.current !== "idle") {
           pointerPhaseRef.current = "idle";

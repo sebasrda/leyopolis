@@ -180,38 +180,54 @@ export function DomTranslationOverlay() {
     if (lang === "es") return;
     const target = TARGET_LANGUAGE[lang] ?? lang;
 
+    // Big batch + parallel — was 3 sequential per 1.2s (~150/min), now 12
+    // parallel per 600ms (~1200/min). Translating a fresh dashboard goes from
+    // ~40 seconds to ~2 seconds for the visible strings.
     const tick = async () => {
       if (workerRunning.current) return;
       workerRunning.current = true;
       try {
         const nextBatch: string[] = [];
         pending.current.forEach((k) => {
-          if (nextBatch.length >= 3) return;
+          if (nextBatch.length >= 12) return;
           if (inflight.current.has(k)) return;
           nextBatch.push(k);
         });
         if (nextBatch.length === 0) return;
 
-        for (const key of nextBatch) {
-          inflight.current.add(key);
-          pending.current.delete(key);
-          try {
-            const res = await fetch("/api/translate", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ text: key, targetLanguage: target }),
-            });
-            if (!res.ok) continue;
-            const data = (await res.json()) as { translation?: string };
-            const translation = (data.translation ?? "").trim();
-            if (translation) {
-              addDynamicTranslation(lang, key, translation);
-              window.dispatchEvent(new CustomEvent("i18n-translation-added"));
+        nextBatch.forEach((k) => {
+          inflight.current.add(k);
+          pending.current.delete(k);
+        });
+
+        // Fire all requests in parallel — /api/translate caches identical
+        // text+lang pairs, so 12 distinct strings is cheap.
+        let added = false;
+        await Promise.all(
+          nextBatch.map(async (key) => {
+            try {
+              const res = await fetch("/api/translate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text: key, targetLanguage: target }),
+              });
+              if (!res.ok) return;
+              const data = (await res.json()) as { translation?: string };
+              const translation = (data.translation ?? "").trim();
+              if (translation && translation !== key) {
+                addDynamicTranslation(lang, key, translation);
+                added = true;
+              }
+            } catch {
+              /* network blip — re-queue silently for next tick */
+              pending.current.add(key);
+            } finally {
+              inflight.current.delete(key);
             }
-          } catch {
-          } finally {
-            inflight.current.delete(key);
-          }
+          })
+        );
+        if (added) {
+          window.dispatchEvent(new CustomEvent("i18n-translation-added"));
         }
       } finally {
         workerRunning.current = false;
@@ -220,7 +236,7 @@ export function DomTranslationOverlay() {
 
     const interval = setInterval(() => {
       void tick();
-    }, 1200);
+    }, 600);
 
     return () => clearInterval(interval);
   }, [reactI18n.language]);

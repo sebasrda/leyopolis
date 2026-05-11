@@ -56,9 +56,19 @@ export function GamificationProvider({ children }: { children: React.ReactNode }
       if (!res.ok) return;
       const data = await res.json();
       const newXp: number = data.xp ?? 0;
-      const newLevel: number = data.level ?? calcLevel(newXp);
+      // Always recompute level from XP locally to avoid a stale/race level
+      // from the API. The server may have legacy `user.level` rows or return
+      // a level that doesn't match the XP for a fraction of a second.
+      const computed = calcLevel(newXp);
+      const apiLevel: number = data.level ?? computed;
+      // Trust the LOWER of the two when they disagree — prevents firing a
+      // bogus "level up" popup when the API briefly reports a higher level
+      // than the XP justifies.
+      const newLevel = Math.min(computed, apiLevel);
       const newStreak: number = data.streak ?? 0;
-      if (newLevel > prevLevelRef.current) setLevelUpNotice({ level: newLevel });
+      if (newLevel > prevLevelRef.current && newXp >= LEVEL_THRESHOLDS[Math.min(newLevel - 1, LEVEL_THRESHOLDS.length - 1)]) {
+        setLevelUpNotice({ level: newLevel });
+      }
       prevLevelRef.current = newLevel;
       setProgress(prev => ({ ...prev, xp: newXp, level: newLevel, streakDays: newStreak }));
       return data;
@@ -121,8 +131,14 @@ export function GamificationProvider({ children }: { children: React.ReactNode }
       if (res.ok) {
         const data = await res.json();
         const newXp: number = data.xp ?? 0;
-        const newLevel: number = data.level ?? calcLevel(newXp);
-        if (newLevel > prevLevelRef.current) setLevelUpNotice({ level: newLevel });
+        const computed = calcLevel(newXp);
+        const apiLevel: number = data.level ?? computed;
+        const newLevel = Math.min(computed, apiLevel);
+        // Only celebrate when the new XP actually crosses the new level's
+        // threshold AND the level genuinely went up.
+        if (newLevel > prevLevelRef.current && newXp >= LEVEL_THRESHOLDS[Math.min(newLevel - 1, LEVEL_THRESHOLDS.length - 1)]) {
+          setLevelUpNotice({ level: newLevel });
+        }
         prevLevelRef.current = newLevel;
         setProgress(prev => ({ ...prev, xp: newXp, level: newLevel }));
       }

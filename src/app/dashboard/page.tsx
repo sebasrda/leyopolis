@@ -142,12 +142,12 @@ export default function DashboardPage() {
   const displayXp = directProgress?.xp ?? progress.xp;
   const displayLevel = directProgress?.level ?? progress.level;
   const displayStreak = directProgress?.streak ?? progress.streakDays;
-  // Days active this ISO week — resets every Monday at 00:00. Falls back to
-  // the streak (capped at 7) if the API hasn't filled the field yet.
-  const daysThisWeek = Math.min(
-    7,
-    directProgress?.daysActiveThisWeek ?? Math.min(displayStreak, 7),
-  );
+  // Days active this ISO week — resets every Monday at 00:00.
+  // IMPORTANT: do NOT fall back to the global streak. The streak is consecutive
+  // days overall, so once it hits 7 it kept the bar pinned at 100% even after
+  // the week reset on Monday. Falling back to 0 lets the API answer take over
+  // a few hundred ms later with the real count.
+  const daysThisWeek = Math.min(7, directProgress?.daysActiveThisWeek ?? 0);
 
   const [recommendations, setRecommendations] = useState<Book[]>([]);
   const [loadingRec, setLoadingRec] = useState(true);

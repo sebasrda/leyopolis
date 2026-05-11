@@ -381,15 +381,18 @@ export function GesturePageTurner({ onTurnNext, onTurnPrev, onFavoriteSelection,
                 }
               }
               if (consistent) {
-                // dx > 0  → wrist moved RIGHT (in MP coords, which mirror
-                // the screen, that means user actually moved hand LEFT)
-                // → previous page. dx < 0 → next page.
+                // MediaPipe coordinates are NOT mirrored. The preview shown to
+                // the user IS mirrored (CSS scaleX(-1)). So:
+                //   • User moves hand RIGHT (their right) → camera sees it move
+                //     LEFT → MP x DECREASES → dx < 0 → user expects PREV
+                //   • User moves hand LEFT (their left) → MP x INCREASES → dx > 0
+                //     → user expects NEXT (like turning the page of a book)
                 if (dx > 0) {
-                  onTurnPrev();
-                  flashScreen("rgba(59, 130, 246, 0.9)");
-                } else {
                   onTurnNext();
                   flashScreen("rgba(139, 92, 246, 0.9)");
+                } else {
+                  onTurnPrev();
+                  flashScreen("rgba(59, 130, 246, 0.9)");
                 }
                 cooldownRef.current = nowInMs;
                 swipeBufferRef.current = [];

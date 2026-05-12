@@ -36,6 +36,13 @@ export function useGestureCam() {
   // Updated every frame — NOT pushed to React state (avoids 60-fps re-renders)
   const positionRef = useRef<HandPos | null>(null);
 
+  // Calibration offset. The user might hold the camera off-center, so their
+  // "neutral" hand position isn't (0.5, 0.5). Calibrate stores the current
+  // position as the new center; getPosition then shifts everything by the
+  // delta so quadrant / side helpers feel natural.
+  const calibrationRef = useRef<HandPos | null>(null);
+  const [calibrated, setCalibrated] = useState(false);
+
   // Previous emitted values — used to skip no-op setState calls
   const prevGestureRef  = useRef<GestureType>(null);
   const prevFingerRef   = useRef(0);
@@ -178,7 +185,34 @@ export function useGestureCam() {
 
   useEffect(() => () => { stopCamera(); }, [stopCamera]);
 
-  const getPosition = useCallback(() => positionRef.current, []);
+  // Apply calibration offset on the way out so games see (0.5, 0.5) when the
+  // user's neutral pose is captured. Without calibration, returns raw position.
+  const getPosition = useCallback(() => {
+    const raw = positionRef.current;
+    if (!raw) return null;
+    const off = calibrationRef.current;
+    if (!off) return raw;
+    const vx = Math.max(0, Math.min(1, raw.vx - off.vx + 0.5));
+    const vy = Math.max(0, Math.min(1, raw.vy - off.vy + 0.5));
+    return { vx, vy };
+  }, []);
 
-  return { isActive, isLoading, error, gestureState, getPosition, videoRef, canvasRef, startCamera, stopCamera };
+  const calibrate = useCallback(() => {
+    const here = positionRef.current;
+    if (!here) return false;
+    calibrationRef.current = { vx: here.vx, vy: here.vy };
+    setCalibrated(true);
+    return true;
+  }, []);
+
+  const resetCalibration = useCallback(() => {
+    calibrationRef.current = null;
+    setCalibrated(false);
+  }, []);
+
+  return {
+    isActive, isLoading, error, gestureState, getPosition,
+    videoRef, canvasRef, startCamera, stopCamera,
+    calibrate, resetCalibration, calibrated,
+  };
 }

@@ -51,7 +51,7 @@ export function GestureTimeline({ events, onComplete, onExit }: Props) {
   const [timeLeft, setTimeLeft] = useState(TIMER_S);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const { isActive, isLoading, error, getPosition, videoRef, canvasRef, startCamera, stopCamera } = useGestureCam();
+  const { isActive, isLoading, error, getPosition, videoRef, canvasRef, startCamera, stopCamera, calibrate, resetCalibration, calibrated } = useGestureCam();
 
   const dwellSideRef = useRef<"left" | "right" | null>(null);
   const dwellStartRef = useRef<number>(0);
@@ -263,6 +263,9 @@ export function GestureTimeline({ events, onComplete, onExit }: Props) {
           isActive={isActive} isLoading={isLoading} error={error}
           onStart={startCamera} onStop={stopCamera}
           statusLabel="Izquierda o derecha — ¿cuál fue primero?"
+          onCalibrate={calibrate}
+          onResetCalibration={resetCalibration}
+          calibrated={calibrated}
         />
       </div>
     </div>

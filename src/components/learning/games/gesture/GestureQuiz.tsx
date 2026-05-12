@@ -52,7 +52,7 @@ export function GestureQuiz({ questions, onComplete, onExit }: GestureQuizProps)
   const [timeLeft, setTimeLeft] = useState(TIMER_S);
   const [lastWrongChoice, setLastWrongChoice] = useState<number | null>(null);
 
-  const { isActive, isLoading, error, getPosition, videoRef, canvasRef, startCamera, stopCamera } = useGestureCam();
+  const { isActive, isLoading, error, getPosition, videoRef, canvasRef, startCamera, stopCamera, calibrate, resetCalibration, calibrated } = useGestureCam();
 
   const dwellZoneRef = useRef<string | null>(null);
   const dwellStartRef = useRef<number>(0);
@@ -279,6 +279,9 @@ export function GestureQuiz({ questions, onComplete, onExit }: GestureQuizProps)
           onStart={startCamera}
           onStop={stopCamera}
           statusLabel={dwellZone ? `Señalando: ${QUADRANT_LABELS[dwellZone]}` : "Mueve la mano a la respuesta"}
+          onCalibrate={calibrate}
+          onResetCalibration={resetCalibration}
+          calibrated={calibrated}
         />
       </div>
 

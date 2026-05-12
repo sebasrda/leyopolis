@@ -44,7 +44,7 @@ export function GestureVerdaderoFalso({ statements, onComplete, onExit }: Props)
   const [dwellSide, setDwellSide] = useState<"left" | "right" | null>(null);
   const [dwellProgress, setDwellProgress] = useState(0);
 
-  const { isActive, isLoading, error, getPosition, videoRef, canvasRef, startCamera, stopCamera } = useGestureCam();
+  const { isActive, isLoading, error, getPosition, videoRef, canvasRef, startCamera, stopCamera, calibrate, resetCalibration, calibrated } = useGestureCam();
 
   const dwellSideRef = useRef<"left" | "right" | null>(null);
   const dwellStartRef = useRef<number>(0);
@@ -254,6 +254,9 @@ export function GestureVerdaderoFalso({ statements, onComplete, onExit }: Props)
           isActive={isActive} isLoading={isLoading} error={error}
           onStart={startCamera} onStop={stopCamera}
           statusLabel={dwellSide ? `Eligiendo: ${dwellSide === "left" ? "FALSO" : "VERDADERO"}` : "Izquierda=Falso · Derecha=Verdadero"}
+          onCalibrate={calibrate}
+          onResetCalibration={resetCalibration}
+          calibrated={calibrated}
         />
       </div>
     </div>

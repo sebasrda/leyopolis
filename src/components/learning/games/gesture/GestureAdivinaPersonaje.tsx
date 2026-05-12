@@ -59,7 +59,7 @@ export function GestureAdivinaPersonaje({ characters, onComplete, onExit }: Prop
   const [dwellZone, setDwellZone] = useState<string | null>(null);
   const [dwellProgress, setDwellProgress] = useState(0);
 
-  const { isActive, isLoading, error, getPosition, videoRef, canvasRef, startCamera, stopCamera } = useGestureCam();
+  const { isActive, isLoading, error, getPosition, videoRef, canvasRef, startCamera, stopCamera, calibrate, resetCalibration, calibrated } = useGestureCam();
 
   const phaseRef = useRef<Phase>("intro");
   const dwellZoneRef = useRef<string | null>(null);
@@ -333,6 +333,9 @@ export function GestureAdivinaPersonaje({ characters, onComplete, onExit }: Prop
             isActive={isActive} isLoading={isLoading} error={error}
             onStart={startCamera} onStop={stopCamera}
             statusLabel="Señala el personaje correcto"
+            onCalibrate={calibrate}
+            onResetCalibration={resetCalibration}
+            calibrated={calibrated}
           />
         </div>
       )}

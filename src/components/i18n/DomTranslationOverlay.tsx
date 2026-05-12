@@ -39,9 +39,13 @@ function shouldTranslateKey(key: string) {
   if (!core) return false;
   if (core.length < 2) return false;
   if (core.length > 180) return false;
-  if (/[0-9]/.test(core)) return false;
   if (core.includes("http://") || core.includes("https://")) return false;
   if (core.startsWith("/") || core.includes("{") || core.includes("}")) return false;
+  // Reject "pure-numeric" strings (just digits + symbols) but ALLOW strings
+  // that mix digits with words like "Pregunta 1 de 10" / "Hace 2 días" —
+  // those used to be skipped which left visible Spanish in EN mode.
+  const letters = (core.match(/[\p{L}]/gu) || []).length;
+  if (letters < 3) return false;
   return true;
 }
 
@@ -177,6 +181,11 @@ export function DomTranslationOverlay() {
 
   useEffect(() => {
     const lang = reactI18n.language;
+    // When the user switches language we want the next tick to immediately
+    // start filling in missing translations without waiting 600ms. Bump the
+    // interval clock by resetting the inflight set.
+    inflight.current.clear();
+
     if (lang === "es") return;
     const target = TARGET_LANGUAGE[lang] ?? lang;
 
@@ -189,7 +198,7 @@ export function DomTranslationOverlay() {
       try {
         const nextBatch: string[] = [];
         pending.current.forEach((k) => {
-          if (nextBatch.length >= 12) return;
+          if (nextBatch.length >= 16) return;
           if (inflight.current.has(k)) return;
           nextBatch.push(k);
         });
@@ -234,9 +243,12 @@ export function DomTranslationOverlay() {
       }
     };
 
+    // Kick off the first translation pass immediately so the user sees text
+    // start to change within ~200ms of switching language.
+    void tick();
     const interval = setInterval(() => {
       void tick();
-    }, 600);
+    }, 400);
 
     return () => clearInterval(interval);
   }, [reactI18n.language]);

@@ -21,7 +21,8 @@ import {
   Flame,
   Target,
   HelpCircle,
-  BookMarked
+  BookMarked,
+  ShieldCheck
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,6 +42,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import dynamic from 'next/dynamic';
 import { LanguageSelector } from "@/components/i18n/LanguageSelector";
+import HelpModal from "@/components/dashboard/HelpModal";
 import { DemoBanner } from "@/components/dashboard/DemoBanner";
 import { useGamification } from "@/context/GamificationContext";
 
@@ -89,6 +91,7 @@ const coordinatorItems = [
   { icon: Bot, label: "IA Docente", href: "/dashboard/profesor/ai-tools" },
   { icon: Users, label: "Mis Clases", href: "/dashboard/classes" },
   { icon: BarChart3, label: "Reportes", href: "/dashboard/reports" },
+  { icon: ShieldCheck, label: "Respuestas Quiz", href: "/dashboard/admin/answers" },
 ];
 
 // School Admin sidebar
@@ -101,6 +104,7 @@ const adminItems = [
   { icon: Users, label: "Usuarios", href: "/dashboard/admin/users" },
   { icon: GraduationCap, label: "Clases y Docentes", href: "/dashboard/admin/classes" },
   { icon: BookMarked, label: "Licencias", href: "/dashboard/admin/licenses" },
+  { icon: ShieldCheck, label: "Respuestas Quiz", href: "/dashboard/admin/answers" },
 ];
 
 // Super Admin sidebar
@@ -112,6 +116,7 @@ const superAdminItems = [
   { type: "header", label: "Control Global" },
   { icon: Crown, label: "Súper Admin", href: "/dashboard/superadmin" },
   { icon: Library, label: "Gestión Libros BBDD", href: "/dashboard/admin/books" },
+  { icon: ShieldCheck, label: "Respuestas Quiz", href: "/dashboard/admin/answers" },
   { icon: Users, label: "Todos los Usuarios", href: "/dashboard/admin/users" },
   { icon: BookMarked, label: "Licencias", href: "/dashboard/superadmin/licenses" },
   { icon: BarChart3, label: "Métricas Reales", href: "/dashboard/admin/stats" },
@@ -485,8 +490,10 @@ export default function DashboardLayout({ children, serverXp, serverLevel, serve
               </Button>
             )}
 
+            <HelpModal />
+
             <LanguageSelector />
-            
+
             <div className="h-8 w-px bg-card/10 mx-1" />
 
             <DropdownMenu>

@@ -60,7 +60,7 @@ const studentItems = [
   { icon: LayoutDashboard, label: "Inicio", href: "/dashboard" },
   { icon: Library, label: "Biblioteca", href: "/dashboard/library" },
   { icon: BookOpen, label: "Mis Aventuras", href: "/dashboard/my-readings" },
-  { icon: Target, label: "Retos", href: "/dashboard/estudiante" },
+  { icon: Target, label: "Panel", href: "/dashboard/estudiante" },
   { icon: BarChart3, label: "Progreso", href: "/dashboard/progress" },
   { icon: MessageSquare, label: "Comunidad", href: "/dashboard/community" },
 ];
@@ -428,12 +428,15 @@ export default function DashboardLayout({ children, serverXp, serverLevel, serve
             {!collapsed && <span className="font-medium text-sm">Cerrar sesión</span>}
           </button>
 
-          {isStudent && !collapsed && (
+          {!collapsed && (
             <div className="pt-1">
-              <button className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-muted-foreground hover:text-slate-300 hover:bg-card/5 transition-all text-xs">
+              <a
+                href={`mailto:consulto.it@gruporodes.com.co?subject=${encodeURIComponent("Centro de Ayuda — Leyópolis")}&body=${encodeURIComponent("Hola, equipo de Leyópolis. Necesito ayuda con lo siguiente:\n\n")}`}
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-muted-foreground hover:text-slate-300 hover:bg-card/5 transition-all text-xs"
+              >
                 <HelpCircle style={{ height: '15px', width: '15px' }} />
                 <span>Centro de Ayuda</span>
-              </button>
+              </a>
             </div>
           )}
         </div>

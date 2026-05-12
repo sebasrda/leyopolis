@@ -687,28 +687,9 @@ export default function DashboardPage() {
             </div>
           </section>
 
-          {/* ── IA Mentor (deshabilitada para estudiantes) ─── */}
-          <section className="bg-[#1a2235] border border-white/10 rounded-2xl p-5">
-            <h3 className="text-sm font-bold text-white mb-4">Tu IA Mentor</h3>
-            <div className="flex items-start gap-4">
-              <div className="h-12 w-12 rounded-2xl bg-indigo-500/20 border border-indigo-500/50/30 flex items-center justify-center shrink-0">
-                <span className="text-2xl">🤖</span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  Estoy aquí para ayudarte a descubrir, entender y disfrutar cada historia.
-                </p>
-              </div>
-            </div>
-            <button
-              disabled
-              title="La IA Mentor estará disponible próximamente"
-              className="mt-4 w-full bg-indigo-600/30 text-indigo-400/50 text-sm font-semibold py-2.5 rounded-xl border border-indigo-500/50/20 cursor-not-allowed select-none"
-            >
-              Hablar con mi mentor
-            </button>
-            <p className="text-center text-[10px] text-muted-foreground mt-2">Próximamente disponible</p>
-          </section>
+          {/* IA Mentor card removed — the feature still exists inside the
+              reader as a floating widget for non-student roles. The dashboard
+              card was just a placeholder advertising "Próximamente". */}
 
         </div>
       </div>

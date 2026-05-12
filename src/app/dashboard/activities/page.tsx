@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { BookOpen, Sparkles, Trophy } from "lucide-react";
+import { ActivityContentEditor, type ActivityType } from "@/components/dashboard/teacher/ActivityContentEditor";
 
 type Me = { userId: string; role: "ADMIN" | "TEACHER" | "STUDENT" };
 
@@ -233,17 +234,11 @@ export default function ActivitiesPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="text-sm font-medium text-foreground">Contenido (JSON)</div>
-                      <Badge variant="outline" className="bg-muted">
-                        {typeLabel}
-                      </Badge>
-                    </div>
-                    <Textarea
+                    <div className="text-sm font-medium text-foreground">Contenido</div>
+                    <ActivityContentEditor
+                      type={type as ActivityType}
                       value={content}
-                      onChange={(e) => setContent(e.target.value)}
-                      placeholder='Ej: { "questions": [ ... ] }'
-                      className="min-h-[220px] font-mono text-xs"
+                      onChange={setContent}
                     />
                   </div>
 
@@ -251,8 +246,12 @@ export default function ActivitiesPage() {
                     <Button variant="outline" onClick={() => setCreateOpen(false)}>
                       Cancelar
                     </Button>
-                    <Button onClick={handleCreate} className="bg-indigo-600 hover:bg-indigo-700">
-                      Guardar
+                    <Button
+                      onClick={handleCreate}
+                      disabled={!title.trim() || !content.trim()}
+                      className="bg-indigo-600 hover:bg-indigo-700"
+                    >
+                      Guardar actividad
                     </Button>
                   </div>
                 </div>

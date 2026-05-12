@@ -79,14 +79,21 @@ export async function middleware(request: NextRequest) {
 
   // Teacher restrictions
   if (role === "TEACHER") {
-    if (TEACHER_BLOCKED_PATHS.some(p => pathname.startsWith(p))) {
+    // Whitelist: teachers can access these admin pages because they're
+    // pedagogical (quiz answers reference) not management.
+    const teacherAllowedAdmin = pathname.startsWith("/dashboard/admin/answers");
+    if (TEACHER_BLOCKED_PATHS.some(p => pathname.startsWith(p)) && !teacherAllowedAdmin) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
   }
 
   // Coordinator restrictions
   if (role === "COORDINATOR") {
-    if (pathname.startsWith("/dashboard/admin") && !pathname.startsWith("/dashboard/admin/stats")) {
+    if (
+      pathname.startsWith("/dashboard/admin") &&
+      !pathname.startsWith("/dashboard/admin/stats") &&
+      !pathname.startsWith("/dashboard/admin/answers")
+    ) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
     if (pathname.startsWith("/dashboard/superadmin")) {

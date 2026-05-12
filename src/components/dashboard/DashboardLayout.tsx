@@ -77,6 +77,7 @@ const teacherItems = [
   { icon: Sparkles, label: "Generador Quiz", href: "/dashboard/profesor/generador" },
   { icon: Users, label: "Mis Clases", href: "/dashboard/classes" },
   { icon: BarChart3, label: "Reportes", href: "/dashboard/reports" },
+  { icon: ShieldCheck, label: "Respuestas Quiz", href: "/dashboard/admin/answers" },
   { icon: MessageSquare, label: "Comunidad", href: "/dashboard/community" },
 ];
 

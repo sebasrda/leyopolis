@@ -42,12 +42,12 @@ type GameType =
   | null;
 
 const GAME_TITLES: Record<string, string> = {
-  truefalse: "Verdad o Falso",
+  truefalse: "Verdadero o Falso",
   timeline: "Cronología Literaria",
   wordsearch: "Sopa de Letras",
   scramble: "Ordenar Frases",
   "g-quiz": "Quiz con Gestos",
-  "g-vf": "V/F Gestual",
+  "g-vf": "Verdadero o Falso Gestual",
   "g-puzzle": "Rompecabezas",
   "g-ppt": "Piedra Papel Tijeras",
   "g-timeline": "Cronología Gestual",
@@ -346,7 +346,7 @@ export default function GamesModal({ isOpen, onClose, bookTitle, bookId }: Games
 
 function GameMenu({ onSelectGame }: { onSelectGame: (g: GameType) => void }) {
   const classicGames = [
-    { id: "truefalse", title: "Verdad o Falso", desc: "Reto de afirmaciones.", icon: BrainCircuit, gradient: "from-orange-600 to-amber-500", color: "bg-orange-600" },
+    { id: "truefalse", title: "Verdadero o Falso", desc: "Reto de afirmaciones.", icon: BrainCircuit, gradient: "from-orange-600 to-amber-500", color: "bg-orange-600" },
     { id: "wordsearch", title: "Sopa de Letras", desc: "Encuentra conceptos clave.", icon: Grid3X3, gradient: "from-emerald-600 to-teal-500", color: "bg-emerald-600" },
     { id: "timeline", title: "Cronología", desc: "Ordena los hechos.", icon: HistoryIcon, gradient: "from-purple-600 to-pink-500", color: "bg-purple-600" },
     { id: "scramble", title: "Ordenar Frases", desc: "Reconstruye la historia.", icon: PenTool, gradient: "from-amber-600 to-orange-500", color: "bg-amber-600" },

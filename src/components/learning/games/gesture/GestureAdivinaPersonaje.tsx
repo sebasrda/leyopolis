@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Trophy, Eye, CheckCircle2, XCircle } from "lucide-react";
+import { Trophy, Eye, CheckCircle2, XCircle, ChevronRight, Play, Hand, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { GestureCamUI } from "./GestureCamUI";
@@ -28,22 +28,31 @@ const DEFAULT_CHARACTERS: CharacterClue[] = [
 ];
 
 const QUADRANT_POSITIONS = ["TL", "TR", "BL", "BR"];
+const QUADRANT_LABELS: Record<string, string> = {
+  TL: "↖ arriba-izquierda",
+  TR: "↗ arriba-derecha",
+  BL: "↙ abajo-izquierda",
+  BR: "↘ abajo-derecha",
+};
 const QUADRANT_COLORS: Record<string, string> = {
   TL: "bg-blue-700/60 border-blue-500",
   TR: "bg-purple-700/60 border-purple-500",
   BL: "bg-green-700/60 border-green-500",
   BR: "bg-orange-700/60 border-orange-500",
 };
-const CLUE_DURATION_MS = 5000;
-const DWELL_MS = 1800;
-const COOLDOWN_MS = 2500;
+const DWELL_MS = 1500;
+const COOLDOWN_MS = 1800;
+
+type Phase = "intro" | "clues" | "guess";
 
 export function GestureAdivinaPersonaje({ characters, onComplete, onExit }: Props) {
+  // Always need at least 4 characters for the 4-option round
   const pool = (characters && characters.length >= 4 ? characters : DEFAULT_CHARACTERS).slice(0, 8);
+
   const [qIdx, setQIdx] = useState(0);
   const [score, setScore] = useState(0);
   const [clueIdx, setClueIdx] = useState(0);
-  const [phase, setPhase] = useState<"clues" | "guess">("clues");
+  const [phase, setPhase] = useState<Phase>("intro");
   const [options, setOptions] = useState<string[]>([]);
   const [feedback, setFeedback] = useState<"correct" | "wrong" | null>(null);
   const [done, setDone] = useState(false);
@@ -52,7 +61,7 @@ export function GestureAdivinaPersonaje({ characters, onComplete, onExit }: Prop
 
   const { isActive, isLoading, error, getPosition, videoRef, canvasRef, startCamera, stopCamera } = useGestureCam();
 
-  const phaseRef = useRef<"clues" | "guess">("clues");
+  const phaseRef = useRef<Phase>("intro");
   const dwellZoneRef = useRef<string | null>(null);
   const dwellStartRef = useRef<number>(0);
   const cooldownRef = useRef<number>(0);
@@ -65,7 +74,7 @@ export function GestureAdivinaPersonaje({ characters, onComplete, onExit }: Prop
   useEffect(() => { scoreRef.current = score; }, [score]);
   useEffect(() => { feedbackRef.current = feedback; }, [feedback]);
 
-  // Build options for current question (correct + 3 random distractors)
+  // Build options for the current question (correct + 3 random distractors)
   useEffect(() => {
     if (pool.length < 4) return;
     const correct = pool[qIdx];
@@ -74,25 +83,30 @@ export function GestureAdivinaPersonaje({ characters, onComplete, onExit }: Prop
     const opts = [correct, ...shuffled].sort(() => Math.random() - 0.5).map(c => c.name);
     setOptions(opts);
     setClueIdx(0);
-    setPhase("clues");
-    phaseRef.current = "clues";
   }, [qIdx, pool]);
 
-  // Auto-advance clues
+  // Stop camera when leaving guess phase, free CPU + WebGL
   useEffect(() => {
-    if (phase !== "clues") return;
-    const q = pool[qIdx];
+    if (phase !== "guess" && isActive) {
+      stopCamera();
+    }
+  }, [phase, isActive, stopCamera]);
+
+  const startGame = () => {
+    setPhase("clues");
+    phaseRef.current = "clues";
+  };
+
+  const nextClue = () => {
+    const q = pool[qIdxRef.current];
     if (!q) return;
-    const timer = setTimeout(() => {
-      if (clueIdx < q.clues.length - 1) {
-        setClueIdx(c => c + 1);
-      } else {
-        setPhase("guess");
-        phaseRef.current = "guess";
-      }
-    }, CLUE_DURATION_MS);
-    return () => clearTimeout(timer);
-  }, [phase, clueIdx, qIdx, pool]);
+    if (clueIdx < q.clues.length - 1) {
+      setClueIdx(c => c + 1);
+    } else {
+      setPhase("guess");
+      phaseRef.current = "guess";
+    }
+  };
 
   const handleGuess = useCallback((chosenName: string) => {
     if (feedbackRef.current) return;
@@ -110,13 +124,16 @@ export function GestureAdivinaPersonaje({ characters, onComplete, onExit }: Prop
         onComplete?.(scoreRef.current, pool.length);
       } else {
         setQIdx(next);
+        setClueIdx(0);
+        setPhase("clues");
+        phaseRef.current = "clues";
       }
     }, 1500);
   }, [pool, onComplete]);
 
-  // Dwell detection (only active during "guess" phase)
+  // Dwell detection — only runs in guess phase
   useEffect(() => {
-    if (!isActive) return;
+    if (!isActive || phase !== "guess") return;
     const interval = setInterval(() => {
       if (phaseRef.current !== "guess" || feedbackRef.current) return;
       const pos = getPosition();
@@ -150,8 +167,9 @@ export function GestureAdivinaPersonaje({ characters, onComplete, onExit }: Prop
       }
     }, 80);
     return () => clearInterval(interval);
-  }, [isActive, getPosition, handleGuess, options]);
+  }, [isActive, phase, getPosition, handleGuess, options]);
 
+  // ── DONE ────────────────────────────────────────────────────────────────
   if (done || pool.length < 4) {
     return (
       <div className="flex flex-col items-center justify-center gap-6 p-8 text-center">
@@ -163,46 +181,107 @@ export function GestureAdivinaPersonaje({ characters, onComplete, onExit }: Prop
     );
   }
 
+  // ── INTRO ───────────────────────────────────────────────────────────────
+  if (phase === "intro") {
+    return (
+      <div className="flex flex-col gap-5 w-full max-w-2xl mx-auto p-6 text-white">
+        <div className="text-center space-y-1">
+          <h3 className="text-2xl font-black">🎭 Adivina el Personaje</h3>
+          <p className="text-slate-400 text-sm">{pool.length} personajes · cómo se juega</p>
+        </div>
+
+        <div className="bg-slate-800/60 border border-purple-500/30 rounded-2xl p-5 space-y-4">
+          <Step n={1} icon={<BookOpen className="h-5 w-5" />} title="Lee las pistas">
+            Cada personaje tiene 3 pistas de la más vaga a la más clara. <span className="text-purple-300">Tú decides cuándo pasar</span> a la siguiente con el botón
+            <span className="inline-flex items-center gap-1 mx-1 text-purple-300"><ChevronRight className="h-3 w-3" /></span>. Antes pistas se podían leer todas seguidas para darte una ventaja.
+          </Step>
+          <Step n={2} icon={<Hand className="h-5 w-5" />} title="Activa la cámara cuando estés listo">
+            Cuando termines las pistas, aparece un tablero con 4 opciones en cuadrantes. La cámara se activa solo en este momento — antes no la necesitas.
+          </Step>
+          <Step n={3} icon={<CheckCircle2 className="h-5 w-5" />} title="Señala con la mano">
+            Mueve la mano al cuadrante del personaje correcto y manténla {Math.round(DWELL_MS / 100) / 10}s. También puedes dar click si prefieres jugar sin cámara.
+          </Step>
+        </div>
+
+        <div className="flex justify-center pt-2">
+          <Button onClick={startGame} className="bg-purple-600 hover:bg-purple-500 text-white rounded-full px-10 py-6 text-lg font-bold gap-2 shadow-lg shadow-purple-500/30">
+            <Play className="h-5 w-5" /> Empezar
+          </Button>
+        </div>
+
+        <Button onClick={onExit} variant="ghost" className="text-slate-400 hover:text-white">
+          Salir
+        </Button>
+      </div>
+    );
+  }
+
   const q = pool[qIdx];
 
+  // ── PLAYING (clues / guess) ─────────────────────────────────────────────
   return (
     <div className="flex flex-col gap-4 w-full max-w-2xl mx-auto p-4 relative">
+      {/* Progress + score */}
       <div className="flex items-center gap-3">
-        <span className="text-sm text-slate-400">{qIdx + 1}/{pool.length}</span>
+        <span className="text-sm text-slate-400 tabular-nums">{qIdx + 1}/{pool.length}</span>
         <Progress value={((qIdx + 1) / pool.length) * 100} className="flex-1 h-2" />
-        <span className="text-sm font-bold text-purple-300">{score} pts</span>
+        <span className="text-sm font-bold text-purple-300 tabular-nums">{score} pts</span>
       </div>
 
-      {phase === "clues" && (
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={`${qIdx}-${clueIdx}`}
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -15 }}
-            className="bg-slate-800 rounded-2xl p-6 border border-purple-500/30"
-          >
-            <div className="flex items-center gap-2 mb-3">
-              <Eye className="h-4 w-4 text-purple-400" />
-              <span className="text-purple-300 text-sm font-medium">Pista {clueIdx + 1} de {q.clues.length}</span>
-              <div className="flex-1 h-1 bg-slate-700 rounded-full overflow-hidden ml-2">
-                <motion.div
-                  className="h-full bg-purple-500 rounded-full"
-                  initial={{ width: "0%" }}
-                  animate={{ width: "100%" }}
-                  transition={{ duration: CLUE_DURATION_MS / 1000, ease: "linear" }}
-                />
+      {phase === "clues" && q && (
+        <>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={`${qIdx}-${clueIdx}`}
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              className="bg-slate-800 rounded-2xl p-6 border border-purple-500/30"
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <Eye className="h-4 w-4 text-purple-400" />
+                <span className="text-purple-300 text-sm font-medium">Pista {clueIdx + 1} de {q.clues.length}</span>
+                <div className="flex-1 flex items-center justify-end gap-1">
+                  {q.clues.map((_, i) => (
+                    <span
+                      key={i}
+                      className={`h-1.5 rounded-full transition-all ${i <= clueIdx ? "w-6 bg-purple-500" : "w-3 bg-slate-700"}`}
+                    />
+                  ))}
+                </div>
               </div>
-            </div>
-            <p className="text-xl font-semibold text-white text-center">{q.clues[clueIdx]}</p>
-            <p className="text-center text-xs text-slate-500 mt-3">Siguiente pista en {CLUE_DURATION_MS / 1000}s...</p>
-          </motion.div>
-        </AnimatePresence>
+              <p className="text-xl font-semibold text-white text-center leading-relaxed">{q.clues[clueIdx]}</p>
+            </motion.div>
+          </AnimatePresence>
+
+          {/* Manual advance */}
+          <div className="flex flex-col sm:flex-row gap-2 items-center justify-center">
+            <Button
+              onClick={nextClue}
+              className="bg-purple-600 hover:bg-purple-500 text-white rounded-full px-6 py-5 gap-2 font-bold"
+            >
+              {clueIdx < q.clues.length - 1 ? (
+                <>Siguiente pista <ChevronRight className="h-4 w-4" /></>
+              ) : (
+                <>Adivinar <ChevronRight className="h-4 w-4" /></>
+              )}
+            </Button>
+            {clueIdx < q.clues.length - 1 && (
+              <button
+                type="button"
+                onClick={() => { setPhase("guess"); phaseRef.current = "guess"; }}
+                className="text-xs text-slate-400 hover:text-slate-200 underline"
+              >
+                Saltar al tablero
+              </button>
+            )}
+          </div>
+        </>
       )}
 
       {phase === "guess" && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-3">
-          <p className="text-center text-purple-300 font-medium text-sm">🎯 ¿Quién es? Señala con la mano</p>
+          <p className="text-center text-purple-300 font-medium text-sm">🎯 ¿Quién es? Señala con la mano o haz click</p>
           <div className="grid grid-cols-2 gap-3">
             {QUADRANT_POSITIONS.map((qPos, i) => {
               const name = options[i];
@@ -210,10 +289,13 @@ export function GestureAdivinaPersonaje({ characters, onComplete, onExit }: Prop
               return (
                 <motion.div
                   key={qPos}
-                  className={`rounded-2xl p-4 border-2 cursor-pointer transition-all ${QUADRANT_COLORS[qPos]} ${isDwelling ? "" : "opacity-80"}`}
+                  className={`rounded-2xl p-4 border-2 cursor-pointer transition-all ${QUADRANT_COLORS[qPos]} ${isDwelling ? "scale-105 ring-2 ring-white/30" : "opacity-80"}`}
                   whileHover={{ scale: 1.03 }}
                   onClick={() => handleGuess(name)}
                 >
+                  <div className="text-[10px] uppercase tracking-wide text-white/60 mb-1">
+                    {QUADRANT_LABELS[qPos]}
+                  </div>
                   <p className="text-sm font-bold text-white text-center">{name}</p>
                   {isDwelling && (
                     <div className="mt-2 h-1 bg-white/20 rounded-full overflow-hidden">
@@ -228,7 +310,7 @@ export function GestureAdivinaPersonaje({ characters, onComplete, onExit }: Prop
       )}
 
       <AnimatePresence>
-        {feedback && (
+        {feedback && q && (
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -243,13 +325,35 @@ export function GestureAdivinaPersonaje({ characters, onComplete, onExit }: Prop
         )}
       </AnimatePresence>
 
-      <div className="flex justify-center">
-        <GestureCamUI
-          videoRef={videoRef} canvasRef={canvasRef}
-          isActive={isActive} isLoading={isLoading} error={error}
-          onStart={startCamera} onStop={stopCamera}
-          statusLabel={phase === "clues" ? "Lee las pistas con atención" : "Señala el personaje correcto"}
-        />
+      {/* Camera only visible in guess phase */}
+      {phase === "guess" && (
+        <div className="flex justify-center mt-2">
+          <GestureCamUI
+            videoRef={videoRef} canvasRef={canvasRef}
+            isActive={isActive} isLoading={isLoading} error={error}
+            onStart={startCamera} onStop={stopCamera}
+            statusLabel="Señala el personaje correcto"
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Step({ n, icon, title, children }: { n: number; icon: React.ReactNode; title: string; children: React.ReactNode }) {
+  return (
+    <div className="flex gap-3">
+      <div className="flex flex-col items-center">
+        <div className="h-8 w-8 rounded-full bg-purple-600 text-white text-xs font-black flex items-center justify-center">
+          {n}
+        </div>
+      </div>
+      <div className="flex-1">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-purple-300">{icon}</span>
+          <h4 className="font-bold text-white">{title}</h4>
+        </div>
+        <p className="text-sm text-slate-300 leading-relaxed">{children}</p>
       </div>
     </div>
   );

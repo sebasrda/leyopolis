@@ -79,7 +79,7 @@ export function TrueFalseGame({ statements, onComplete, onExit }: TrueFalseGameP
             <Trophy className="h-12 w-12 text-yellow-600" />
           </div>
           <h2 className="text-3xl font-black text-foreground mb-2">¡Misión Cumplida!</h2>
-          <p className="text-muted-foreground mb-8">Has completado el reto de Verdad o Falso.</p>
+          <p className="text-muted-foreground mb-8">Has completado el reto de Verdadero o Falso.</p>
           <div className="text-5xl font-black text-indigo-400 mb-8">{score} / {statements.length}</div>
           <Button onClick={onExit} className="w-full bg-indigo-600 hover:bg-indigo-700 h-16 rounded-2xl text-xl font-bold">Continuar</Button>
         </motion.div>

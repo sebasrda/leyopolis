@@ -47,7 +47,12 @@ export default function QuizPage() {
         const data = await res.json();
         setQuiz(data);
         const parsed = typeof data.content === "string" ? JSON.parse(data.content) : data.content;
-        setQuestions(parsed.questions || []);
+        // Force a unique id per question. The AI-generated content does not
+        // include ids, so EVERY question had `id: undefined` and the answers
+        // map collided — picking option A on Q1 wrote to answers[undefined]
+        // and lit it up across every question.
+        const withIds = (parsed.questions || []).map((q: any, i: number) => ({ ...q, id: i }));
+        setQuestions(withIds);
       } catch (err) {
         console.error("Error loading quiz:", err);
         setError("No se pudo cargar el quiz. Intenta de nuevo.");

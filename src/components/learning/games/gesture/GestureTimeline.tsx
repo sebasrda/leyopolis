@@ -196,10 +196,35 @@ export function GestureTimeline({ events, onComplete, onExit }: Props) {
             exit={{ opacity: 0 }}
             className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10 gap-3"
           >
-            {feedback === "correct"
-              ? <><CheckCircle2 className="h-20 w-20 text-green-400" /><span className="text-green-300 font-black text-xl">¡Correcto!</span></>
-              : <><XCircle className="h-20 w-20 text-red-400" /><span className="text-red-300 font-black text-xl">Incorrecto</span></>
-            }
+            {feedback === "correct" ? (
+              <>
+                <CheckCircle2 className="h-20 w-20 text-green-400" />
+                <span className="text-green-300 font-black text-xl">¡Correcto!</span>
+                <div className="bg-green-900/80 border border-green-500/40 rounded-xl px-4 py-2 text-center max-w-md">
+                  <p className="text-[10px] uppercase tracking-wide text-green-300/80">Orden cronológico</p>
+                  <p className="text-sm text-white font-medium mt-1">
+                    1º <span className="text-green-200">{pair[pair[2]]}</span>
+                  </p>
+                  <p className="text-sm text-white font-medium">
+                    2º <span className="text-green-200">{pair[pair[2] === 0 ? 1 : 0]}</span>
+                  </p>
+                </div>
+              </>
+            ) : (
+              <>
+                <XCircle className="h-20 w-20 text-red-400" />
+                <span className="text-red-300 font-black text-xl">Incorrecto</span>
+                <div className="bg-red-900/80 border border-red-500/40 rounded-xl px-4 py-2 text-center max-w-md">
+                  <p className="text-[10px] uppercase tracking-wide text-red-300/80">Respuesta correcta</p>
+                  <p className="text-sm text-white font-bold mt-1">
+                    1º ocurrió: <span className="text-yellow-200">{pair[pair[2]]}</span>
+                  </p>
+                  <p className="text-sm text-white mt-0.5">
+                    2º ocurrió: <span className="text-slate-300">{pair[pair[2] === 0 ? 1 : 0]}</span>
+                  </p>
+                </div>
+              </>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

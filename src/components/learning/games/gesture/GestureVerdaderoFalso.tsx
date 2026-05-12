@@ -87,9 +87,10 @@ export function GestureVerdaderoFalso({ statements, onComplete, onExit }: Props)
     advance(answeredTrue === st.isTrue);
   }, [pool, advance]);
 
-  // Countdown timer
+  // Countdown timer — runs whether the user plays by gesture OR by click, so
+  // the clock visibly ticks even without camera activated.
   useEffect(() => {
-    if (!isActive || feedbackRef.current || done) return;
+    if (feedbackRef.current || done) return;
     setTimeLeft(TIMER_S);
     timerRef.current = setInterval(() => {
       setTimeLeft(t => {
@@ -101,7 +102,7 @@ export function GestureVerdaderoFalso({ statements, onComplete, onExit }: Props)
       });
     }, 1000);
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [isActive, idx, done, advance]);
+  }, [idx, done, advance]);
 
   // Dwell detection
   useEffect(() => {

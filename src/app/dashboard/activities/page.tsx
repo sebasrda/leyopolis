@@ -190,11 +190,11 @@ export default function ActivitiesPage() {
                   <BookOpen className="h-4 w-4" /> Crear actividad
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[760px]">
-                <DialogHeader>
+              <DialogContent className="sm:max-w-[760px] max-h-[90vh] overflow-hidden flex flex-col p-0 gap-0">
+                <DialogHeader className="px-6 pt-6 pb-3 shrink-0 border-b border-border/40">
                   <DialogTitle>Nueva actividad</DialogTitle>
                 </DialogHeader>
-                <div className="grid gap-4">
+                <div className="grid gap-4 px-6 py-4 overflow-y-auto flex-1">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <div className="text-sm font-medium text-foreground">Título</div>
@@ -225,7 +225,13 @@ export default function ActivitiesPage() {
                           type="button"
                           variant={type === t.value ? "default" : "outline"}
                           className={type === t.value ? "bg-indigo-600 hover:bg-indigo-700" : ""}
-                          onClick={() => setType(t.value)}
+                          onClick={() => {
+                            // Switching type discards content that doesn't fit
+                            // the new shape (e.g., went from QUIZ to TRUE_FALSE).
+                            // The editor for the new type starts fresh.
+                            if (type !== t.value) setContent("");
+                            setType(t.value);
+                          }}
                         >
                           {t.label}
                         </Button>
@@ -241,19 +247,21 @@ export default function ActivitiesPage() {
                       onChange={setContent}
                     />
                   </div>
+                </div>
 
-                  <div className="flex justify-end gap-2">
-                    <Button variant="outline" onClick={() => setCreateOpen(false)}>
-                      Cancelar
-                    </Button>
-                    <Button
-                      onClick={handleCreate}
-                      disabled={!title.trim() || !content.trim()}
-                      className="bg-indigo-600 hover:bg-indigo-700"
-                    >
-                      Guardar actividad
-                    </Button>
-                  </div>
+                {/* Sticky footer with the action buttons — always visible
+                    even if the body of the dialog is taller than the screen */}
+                <div className="px-6 py-3 border-t border-border/40 bg-card/60 backdrop-blur flex justify-end gap-2 shrink-0">
+                  <Button variant="outline" onClick={() => setCreateOpen(false)}>
+                    Cancelar
+                  </Button>
+                  <Button
+                    onClick={handleCreate}
+                    disabled={!title.trim() || !content.trim()}
+                    className="bg-indigo-600 hover:bg-indigo-700"
+                  >
+                    Guardar actividad
+                  </Button>
                 </div>
               </DialogContent>
             </Dialog>

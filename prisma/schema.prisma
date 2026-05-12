@@ -47,6 +47,7 @@ model User {
   challenges        UserChallenge[]
   videos            Video[]
   vocabulary        Vocabulary[]
+  twoFactor         TwoFactor?
   enrolledClasses   Class[]            @relation("ClassStudents")
 
   @@index([institutionId])
@@ -529,4 +530,42 @@ model Translation {
   createdAt      DateTime @default(now())
 
   @@index([hash])
+}
+
+/// Append-only log of privileged actions (admin/superadmin/teacher destructive ops).
+/// Used for forensic investigation after an incident. NEVER updated, only inserted.
+model AuditLog {
+  id          String   @id @default(cuid())
+  actorId     String?  // who did it (null for anonymous/system)
+  actorEmail  String?  // snapshot of actor email at time of action
+  actorRole   String?  // snapshot of actor role
+  action      String   // e.g. "USER_DELETE", "BOOK_UPDATE", "LICENSE_RENEW"
+  resource    String?  // e.g. "User", "Book", "Class"
+  resourceId  String?  // the id of the affected entity
+  ip          String?
+  userAgent   String?
+  metadata    String?  // JSON: extra context (before/after, params)
+  createdAt   DateTime @default(now())
+
+  @@index([actorId, createdAt])
+  @@index([action, createdAt])
+  @@index([resource, resourceId])
+  @@index([createdAt])
+}
+
+/// TOTP-based 2FA secret per user. Mandatory for ADMIN/SUPERADMIN after enrollment.
+/// Recovery codes are bcrypt-hashed in `recoveryCodes` (newline-separated).
+model TwoFactor {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  secret         String   // base32 TOTP secret (do NOT log)
+  enabled        Boolean  @default(false)
+  recoveryCodes  String?  // bcrypt-hashed codes separated by '\n'
+  enabledAt      DateTime?
+  lastVerifiedAt DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }

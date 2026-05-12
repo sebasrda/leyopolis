@@ -410,7 +410,7 @@ export default function DashboardLayout({ children, serverXp, serverLevel, serve
             </div>
           )}
 
-          <Link 
+          <Link
             href="/dashboard/settings"
             className={cn(
               "flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-card/5 transition-all",
@@ -419,6 +419,17 @@ export default function DashboardLayout({ children, serverXp, serverLevel, serve
           >
             <Settings className="shrink-0" style={{ height: '18px', width: '18px' }} />
             {!collapsed && <span className="font-medium text-sm">Configuración</span>}
+          </Link>
+
+          <Link
+            href="/dashboard/settings/security"
+            className={cn(
+              "flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-card/5 transition-all",
+              pathname === "/dashboard/settings/security" && "bg-[#311A4D] text-[#D8B4FE] border border-[#D8B4FE]/20"
+            )}
+          >
+            <ShieldCheck className="shrink-0" style={{ height: '18px', width: '18px' }} />
+            {!collapsed && <span className="font-medium text-sm">Seguridad</span>}
           </Link>
 
           <button 

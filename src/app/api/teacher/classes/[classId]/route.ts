@@ -1,14 +1,19 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-
-// Hardcoded demo teacher for prototype
-const DEMO_TEACHER_ID = "clt_demo_teacher_001";
+import { getUserIdAndRole } from '@/lib/access';
+import { apiError, unauthorized, forbidden, notFound } from '@/lib/apiError';
 
 export async function GET(request: Request, { params }: { params: Promise<{ classId: string }> }) {
   const { classId } = await params;
-  
+
+  // ── Auth + IDOR check ──────────────────────────────────────────
+  const user = await getUserIdAndRole();
+  if (!user) return unauthorized();
+  if (!["TEACHER", "COORDINATOR", "ADMIN", "SUPERADMIN"].includes(user.role)) {
+    return forbidden("role not allowed");
+  }
+
   try {
-    // 1. Verify class ownership
     const classData = await prisma.class.findUnique({
         where: { id: classId },
         include: {
@@ -40,12 +45,26 @@ export async function GET(request: Request, { params }: { params: Promise<{ clas
     });
 
     if (!classData) {
-        return NextResponse.json({ error: "Class not found" }, { status: 404 });
+        return notFound("class not found");
     }
 
-    // if (classData.teacherId !== DEMO_TEACHER_ID) {
-    //     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-    // }
+    // OWNERSHIP CHECK:
+    // - TEACHER: must own the class (be its teacher)
+    // - COORDINATOR/ADMIN: must share institution
+    // - SUPERADMIN: bypass
+    if (user.role === "TEACHER") {
+      if (classData.teacherId !== user.userId) {
+        return forbidden("not your class");
+      }
+    } else if (user.role === "COORDINATOR" || user.role === "ADMIN") {
+      const me = await prisma.user.findUnique({
+        where: { id: user.userId },
+        select: { institutionId: true },
+      });
+      if (me?.institutionId && classData.institutionId !== me.institutionId) {
+        return forbidden("class outside your institution");
+      }
+    }
 
     // 2. Fetch reading progress for students in this class
     const studentIds = classData.students.map(s => s.id);
@@ -84,7 +103,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ clas
     });
 
   } catch (error) {
-    console.error("Error fetching class details:", error);
-    return NextResponse.json({ error: 'Failed to fetch class details' }, { status: 500 });
+    return apiError(error, 500, "fetch class details failed");
   }
 }

@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import bcrypt from "bcryptjs";
+import { audit, AUDIT_ACTIONS } from "@/lib/audit";
+import { apiError } from "@/lib/apiError";
 
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions);
@@ -62,10 +64,58 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       data: updateData
     });
 
+    // Audit: separate action types so log queries are cleaner
+    if (role) {
+      await audit({
+        actorId: callerId,
+        actorEmail: session.user.email,
+        actorRole: currentRole,
+        action: AUDIT_ACTIONS.USER_ROLE_CHANGE,
+        resource: "User",
+        resourceId: id,
+        request: req,
+        metadata: { newRole: role },
+      });
+    }
+    if (licenseType) {
+      await audit({
+        actorId: callerId,
+        actorEmail: session.user.email,
+        actorRole: currentRole,
+        action: AUDIT_ACTIONS.USER_LICENSE_RENEW,
+        resource: "User",
+        resourceId: id,
+        request: req,
+        metadata: { licenseType, expiresAt: updateData.expiresAt },
+      });
+    }
+    if (typeof isActive === "boolean") {
+      await audit({
+        actorId: callerId,
+        actorEmail: session.user.email,
+        actorRole: currentRole,
+        action: AUDIT_ACTIONS.USER_SUSPEND,
+        resource: "User",
+        resourceId: id,
+        request: req,
+        metadata: { isActive },
+      });
+    }
+    if (password) {
+      await audit({
+        actorId: callerId,
+        actorEmail: session.user.email,
+        actorRole: currentRole,
+        action: AUDIT_ACTIONS.PASSWORD_CHANGED,
+        resource: "User",
+        resourceId: id,
+        request: req,
+      });
+    }
+
     return NextResponse.json({ message: "User updated" });
   } catch (error) {
-    console.error("Error updating user:", error);
-    return NextResponse.json({ message: "Error updating user" }, { status: 500 });
+    return apiError(error, 500, `update user ${id} failed`);
   }
 }
 
@@ -94,14 +144,24 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
       prisma.clubMember.deleteMany({ where: { userId: id } }),
       prisma.post.deleteMany({ where: { userId: id } }),
       prisma.comment.deleteMany({ where: { userId: id } }),
-      prisma.vocabulary.deleteMany({ where: { userId: id } }), // Added for safety
-      prisma.note.deleteMany({ where: { userId: id } }),       // Added for safety
+      prisma.vocabulary.deleteMany({ where: { userId: id } }),
+      prisma.note.deleteMany({ where: { userId: id } }),
       prisma.user.delete({ where: { id } })
     ]);
 
+    await audit({
+      actorId: (session.user as any)?.id,
+      actorEmail: session.user.email,
+      actorRole: currentRole,
+      action: AUDIT_ACTIONS.USER_DELETE,
+      resource: "User",
+      resourceId: id,
+      request: req,
+      metadata: { deletedEmail: userToDelete.email, deletedRole: userToDelete.role },
+    });
+
     return NextResponse.json({ message: "User deleted" });
   } catch (error) {
-    console.error("Error deleting user:", error);
-    return NextResponse.json({ message: "Error deleting user: " + (error instanceof Error ? error.message : "Unknown error") }, { status: 500 });
+    return apiError(error, 500, `delete user ${id} failed`);
   }
 }

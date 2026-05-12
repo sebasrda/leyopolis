@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getUserIdAndRole } from "@/lib/access";
 import { getStudentsForUser } from "@/lib/teacherStudents";
+import { apiError } from "@/lib/apiError";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -29,7 +30,6 @@ export async function GET() {
     const students = await getStudentsForUser(user.userId, user.role as any);
     return noStore({ students, generatedAt: new Date().toISOString() });
   } catch (error: any) {
-    console.error("/api/teacher/students error:", error);
-    return noStore({ message: error?.message || "Internal error", error: String(error) }, { status: 500 });
+    return apiError(error, 500, `/api/teacher/students error: ${error?.message}`);
   }
 }

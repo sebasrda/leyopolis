@@ -43,6 +43,50 @@ const nextConfig: NextConfig = {
   },
 
   async headers() {
+    // ── Global security headers ─────────────────────────────────────
+    // Applied to every response. Camera is allowed because the reader uses
+    // MediaPipe HandLandmarker for gesture page-turning.
+    const securityHeaders = [
+      // Block MIME-sniffing — browser must trust our Content-Type
+      { key: "X-Content-Type-Options", value: "nosniff" },
+      // Don't let other sites iframe us — prevents clickjacking
+      { key: "X-Frame-Options", value: "SAMEORIGIN" },
+      // Force HTTPS for 2 years across subdomains; submit to preload list
+      { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
+      // Don't leak full URL to other origins
+      { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+      // Lock down powerful APIs — only camera (gestures); deny mic, geo, USB, etc.
+      {
+        key: "Permissions-Policy",
+        value: "camera=(self), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=()",
+      },
+      // Defense-in-depth: prevent the page from being loaded as a different MIME
+      { key: "X-DNS-Prefetch-Control", value: "on" },
+      // CSP: permissive enough to not break Next/Tailwind/React inline,
+      // strict enough to neutralize most XSS payloads. unsafe-inline is
+      // required by Next's CSS-in-JS and some inline scripts in the layout;
+      // unsafe-eval needed by React dev tooling in non-prod. We keep it
+      // simple and rely on input sanitization + escaping for the rest.
+      {
+        key: "Content-Security-Policy",
+        value: [
+          "default-src 'self'",
+          "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.vercel-insights.com https://*.vercel-scripts.com https://*.googletagmanager.com",
+          "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+          "img-src 'self' data: blob: https: http:",
+          "font-src 'self' data: https://fonts.gstatic.com",
+          "connect-src 'self' https: wss:",
+          "media-src 'self' blob: https:",
+          "worker-src 'self' blob:",
+          "frame-src 'self' https://*.youtube.com https://*.vimeo.com",
+          "frame-ancestors 'self'",
+          "object-src 'none'",
+          "base-uri 'self'",
+          "form-action 'self'",
+        ].join("; "),
+      },
+    ];
+
     return [
       {
         // PDFs and cover images live here. Names are timestamped so they're
@@ -62,6 +106,11 @@ const nextConfig: NextConfig = {
         headers: [
           { key: "Cache-Control", value: "public, max-age=2592000, stale-while-revalidate=86400" },
         ],
+      },
+      {
+        // Apply security headers to everything else (pages, API, etc.)
+        source: "/:path*",
+        headers: securityHeaders,
       },
     ];
   },

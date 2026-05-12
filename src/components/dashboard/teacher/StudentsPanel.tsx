@@ -17,6 +17,7 @@ import {
   Sparkles,
   X,
   BookOpen,
+  RefreshCw,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -71,7 +72,7 @@ interface StudentRow {
   attemptsCount: number;
   avgScore: number | null;
   recentAttempts: AttemptRow[];
-  assignedBooks: AssignedBookRow[];
+  assignedBooks?: AssignedBookRow[];
   atRisk: boolean;
   atRiskReason: string;
 }
@@ -102,17 +103,27 @@ export default function StudentsPanel() {
   const [filter, setFilter] = useState<"all" | "risk" | "recent">("all");
   const [selected, setSelected] = useState<StudentRow | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   const load = async () => {
     setRefreshing(true);
     try {
-      const res = await fetch("/api/teacher/students?_=" + Date.now(), { cache: "no-store" });
-      if (res.ok) {
-        const data = await res.json();
-        setStudents(Array.isArray(data.students) ? data.students : []);
+      const res = await fetch("/api/teacher/students?_=" + Date.now(), {
+        cache: "no-store",
+        headers: { "Cache-Control": "no-cache" },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setFetchError(`HTTP ${res.status}: ${data?.message || "Error desconocido"}`);
+        return;
       }
-    } catch (e) {
+      setFetchError(null);
+      setStudents(Array.isArray(data.students) ? data.students : []);
+      setLastUpdated(new Date());
+    } catch (e: any) {
       console.error(e);
+      setFetchError(e?.message || "No se pudo cargar la lista");
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -121,7 +132,7 @@ export default function StudentsPanel() {
 
   useEffect(() => {
     load();
-    const id = setInterval(load, 15000); // refresh every 15s for real-time feel
+    const id = setInterval(load, 5000); // 5s polling for true real-time
     return () => clearInterval(id);
   }, []);
 
@@ -154,6 +165,33 @@ export default function StudentsPanel() {
 
   return (
     <div className="space-y-6">
+      {/* Status bar: error / last update / manual refresh */}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <span className={`inline-block h-2 w-2 rounded-full ${fetchError ? "bg-red-500" : "bg-emerald-400 animate-pulse"}`} />
+          {fetchError ? (
+            <span className="text-red-400">
+              Error al cargar: {fetchError}
+            </span>
+          ) : (
+            <span>
+              {loading ? "Cargando estudiantes…" : `En vivo · actualizado ${lastUpdated ? fmtTime(lastUpdated.toISOString()) : "hace instantes"} · ${students.length} estudiante${students.length === 1 ? "" : "s"}`}
+            </span>
+          )}
+        </div>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={load}
+          disabled={refreshing}
+          className="h-7 px-2 text-[11px] gap-1"
+        >
+          <RefreshCw className={`h-3 w-3 ${refreshing ? "animate-spin" : ""}`} />
+          Refrescar
+        </Button>
+      </div>
+
       {/* Top KPIs + At-risk alert */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <KpiCard

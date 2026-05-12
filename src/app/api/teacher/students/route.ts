@@ -3,6 +3,20 @@ import { prisma } from "@/lib/prisma";
 import { getUserIdAndRole } from "@/lib/access";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
+
+function noStore(payload: any, init?: ResponseInit) {
+  return NextResponse.json(payload, {
+    ...init,
+    headers: {
+      "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+      "Pragma": "no-cache",
+      "Expires": "0",
+      ...(init?.headers || {}),
+    },
+  });
+}
 
 /**
  * Aggregated roster for the logged-in TEACHER / COORDINATOR / ADMIN.
@@ -20,9 +34,9 @@ export const dynamic = "force-dynamic";
  */
 export async function GET() {
   const user = await getUserIdAndRole();
-  if (!user) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  if (!user) return noStore({ message: "Unauthorized" }, { status: 401 });
   if (!["TEACHER", "COORDINATOR", "ADMIN", "SUPERADMIN"].includes(user.role)) {
-    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+    return noStore({ message: "Forbidden" }, { status: 403 });
   }
 
   try {
@@ -36,49 +50,72 @@ export async function GET() {
     let studentIds: string[] = [];
 
     if (user.role === "TEACHER") {
+      // CRITICAL: fetch students first. If this fails, log loudly.
       const classes = await (prisma as any).class.findMany({
         where: { teacherId: user.userId },
         select: {
           id: true,
           name: true,
           students: { select: { id: true } },
-          assignedBooks: { select: { id: true, title: true, author: true, coverImage: true } },
-          assignments: {
-            select: {
-              id: true,
-              title: true,
-              dueDate: true,
-              book: { select: { id: true, title: true, author: true, coverImage: true } },
-            },
-          },
         },
       });
+
       const idSet = new Set<string>();
       const classMap = new Map<string, string[]>();
-      // studentId -> list of {bookId, title, author, coverImage, className, dueDate}
-      const assignedBooksMap = new Map<string, any[]>();
+      const classIds: string[] = [];
       for (const c of classes) {
-        const directBooks = (c.assignedBooks || []).map((b: any) => ({ ...b, className: c.name, dueDate: null }));
-        const assignmentBooks = (c.assignments || []).filter((a: any) => a.book).map((a: any) => ({
-          id: a.book.id,
-          title: a.book.title,
-          author: a.book.author,
-          coverImage: a.book.coverImage,
-          className: c.name,
-          dueDate: a.dueDate ? a.dueDate.toISOString() : null,
-          assignmentTitle: a.title,
-        }));
-        const allBooks = [...directBooks, ...assignmentBooks];
+        classIds.push(c.id);
         for (const s of c.students) {
           idSet.add(s.id);
           const cur = classMap.get(s.id) || [];
           cur.push(c.name);
           classMap.set(s.id, cur);
-          const bks = assignedBooksMap.get(s.id) || [];
-          assignedBooksMap.set(s.id, [...bks, ...allBooks]);
         }
       }
       studentIds = Array.from(idSet);
+
+      // Best-effort: enrich with assigned books per class (do NOT block on failure)
+      const assignedBooksMap = new Map<string, any[]>();
+      try {
+        if (classIds.length > 0) {
+          const classesWithBooks = await (prisma as any).class.findMany({
+            where: { id: { in: classIds } },
+            select: {
+              id: true,
+              name: true,
+              students: { select: { id: true } },
+              assignedBooks: { select: { id: true, title: true, author: true, coverImage: true } },
+              assignments: {
+                select: {
+                  id: true,
+                  title: true,
+                  dueDate: true,
+                  book: { select: { id: true, title: true, author: true, coverImage: true } },
+                },
+              },
+            },
+          });
+          for (const c of classesWithBooks) {
+            const directBooks = (c.assignedBooks || []).map((b: any) => ({ ...b, className: c.name, dueDate: null }));
+            const assignmentBooks = (c.assignments || []).filter((a: any) => a.book).map((a: any) => ({
+              id: a.book.id,
+              title: a.book.title,
+              author: a.book.author,
+              coverImage: a.book.coverImage,
+              className: c.name,
+              dueDate: a.dueDate ? a.dueDate.toISOString() : null,
+              assignmentTitle: a.title,
+            }));
+            const allBooks = [...directBooks, ...assignmentBooks];
+            for (const s of c.students) {
+              const bks = assignedBooksMap.get(s.id) || [];
+              assignedBooksMap.set(s.id, [...bks, ...allBooks]);
+            }
+          }
+        }
+      } catch (bookErr) {
+        console.error("[teacher/students] enrich books failed (non-fatal):", bookErr);
+      }
 
       return await aggregateAndRespond(studentIds, classMap, assignedBooksMap);
     }
@@ -95,56 +132,60 @@ export async function GET() {
     });
     studentIds = studs.map((s) => s.id);
 
-    // Build class + assignment maps for institution roster
-    const classes = await (prisma as any).class.findMany({
-      where: me?.institutionId ? { institutionId: me.institutionId } : {},
-      select: {
-        name: true,
-        students: { select: { id: true } },
-        assignedBooks: { select: { id: true, title: true, author: true, coverImage: true } },
-        assignments: {
-          select: {
-            id: true,
-            title: true,
-            dueDate: true,
-            book: { select: { id: true, title: true, author: true, coverImage: true } },
-          },
-        },
-      },
-    });
+    // Build class map first (critical) — student → [class names]
     const classMap = new Map<string, string[]>();
     const assignedBooksMap = new Map<string, any[]>();
-    for (const c of classes) {
-      const directBooks = (c.assignedBooks || []).map((b: any) => ({ ...b, className: c.name, dueDate: null }));
-      const assignmentBooks = (c.assignments || []).filter((a: any) => a.book).map((a: any) => ({
-        id: a.book.id,
-        title: a.book.title,
-        author: a.book.author,
-        coverImage: a.book.coverImage,
-        className: c.name,
-        dueDate: a.dueDate ? a.dueDate.toISOString() : null,
-        assignmentTitle: a.title,
-      }));
-      const allBooks = [...directBooks, ...assignmentBooks];
-      for (const s of c.students) {
-        const cur = classMap.get(s.id) || [];
-        cur.push(c.name);
-        classMap.set(s.id, cur);
-        const bks = assignedBooksMap.get(s.id) || [];
-        assignedBooksMap.set(s.id, [...bks, ...allBooks]);
+    try {
+      const classes = await (prisma as any).class.findMany({
+        where: me?.institutionId ? { institutionId: me.institutionId } : {},
+        select: {
+          name: true,
+          students: { select: { id: true } },
+          assignedBooks: { select: { id: true, title: true, author: true, coverImage: true } },
+          assignments: {
+            select: {
+              id: true,
+              title: true,
+              dueDate: true,
+              book: { select: { id: true, title: true, author: true, coverImage: true } },
+            },
+          },
+        },
+      });
+      for (const c of classes) {
+        const directBooks = (c.assignedBooks || []).map((b: any) => ({ ...b, className: c.name, dueDate: null }));
+        const assignmentBooks = (c.assignments || []).filter((a: any) => a.book).map((a: any) => ({
+          id: a.book.id,
+          title: a.book.title,
+          author: a.book.author,
+          coverImage: a.book.coverImage,
+          className: c.name,
+          dueDate: a.dueDate ? a.dueDate.toISOString() : null,
+          assignmentTitle: a.title,
+        }));
+        const allBooks = [...directBooks, ...assignmentBooks];
+        for (const s of c.students) {
+          const cur = classMap.get(s.id) || [];
+          cur.push(c.name);
+          classMap.set(s.id, cur);
+          const bks = assignedBooksMap.get(s.id) || [];
+          assignedBooksMap.set(s.id, [...bks, ...allBooks]);
+        }
       }
+    } catch (clsErr) {
+      console.error("[teacher/students] coordinator class enrich failed (non-fatal):", clsErr);
     }
 
     return await aggregateAndRespond(studentIds, classMap, assignedBooksMap);
   } catch (error: any) {
     console.error("/api/teacher/students error:", error);
-    return NextResponse.json({ message: error?.message || "Internal error" }, { status: 500 });
+    return noStore({ message: error?.message || "Internal error", error: String(error) }, { status: 500 });
   }
 }
 
 async function aggregateAndRespond(studentIds: string[], classMap: Map<string, string[]>, assignedBooksMap: Map<string, any[]>) {
   if (studentIds.length === 0) {
-    return NextResponse.json({ students: [], generatedAt: new Date().toISOString() });
+    return noStore({ students: [], generatedAt: new Date().toISOString(), note: "no_students_in_scope" });
   }
 
   const now = new Date();
@@ -372,7 +413,7 @@ async function aggregateAndRespond(studentIds: string[], classMap: Map<string, s
     return bT - aT;
   });
 
-  return NextResponse.json({
+  return noStore({
     students: rows,
     generatedAt: new Date().toISOString(),
   });

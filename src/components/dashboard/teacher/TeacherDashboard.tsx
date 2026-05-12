@@ -22,6 +22,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { CreateAssignmentDialog } from './CreateAssignmentDialog';
 import { SuggestedReadingsDialog } from './SuggestedReadingsDialog';
+import StudentsPanel from './StudentsPanel';
 
 import Link from 'next/link';
 
@@ -194,6 +195,9 @@ export default function TeacherDashboard() {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Premium: Students panel (real-time roster + at-risk + recent exams + drill-down) */}
+            <StudentsPanel />
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <Card className="border-none shadow-md">

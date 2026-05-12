@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { BarChart3, BookOpen, Users, Sparkles, Play, ChevronRight } from "lucide-react";
 import { SuggestedReadingsDialog } from "@/components/dashboard/teacher/SuggestedReadingsDialog";
+import StudentsPanel from "@/components/dashboard/teacher/StudentsPanel";
 import { useLearning } from "@/context/LearningContext";
 
 type Overview = {
@@ -260,6 +261,8 @@ export default function CoordinadorDashboardPage() {
         </div>
       </div>
 
+      {/* Premium: Real-time student roster + at-risk + recent exams + drill-down */}
+      <StudentsPanel />
 
       {loading ? (
         <Card className="border-dashed">

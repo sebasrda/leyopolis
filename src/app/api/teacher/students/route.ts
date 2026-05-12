@@ -50,36 +50,39 @@ export async function GET() {
     let studentIds: string[] = [];
 
     if (user.role === "TEACHER") {
-      // CRITICAL: fetch students first. If this fails, log loudly.
-      const classes = await (prisma as any).class.findMany({
-        where: { teacherId: user.userId },
+      // STRATEGY: query students DIRECTLY from User table filtered by enrolledClasses,
+      // not from Class.students. This is a different SQL path and is more reliable
+      // when the implicit many-to-many join is fetched via Class.students.
+      const enrolled = await prisma.user.findMany({
+        where: {
+          enrolledClasses: {
+            some: { teacherId: user.userId },
+          },
+        },
         select: {
           id: true,
-          name: true,
-          students: { select: { id: true } },
+          enrolledClasses: {
+            where: { teacherId: user.userId },
+            select: { id: true, name: true },
+          },
         },
       });
 
-      const idSet = new Set<string>();
       const classMap = new Map<string, string[]>();
-      const classIds: string[] = [];
-      for (const c of classes) {
-        classIds.push(c.id);
-        for (const s of c.students) {
-          idSet.add(s.id);
-          const cur = classMap.get(s.id) || [];
-          cur.push(c.name);
-          classMap.set(s.id, cur);
-        }
+      const classIds = new Set<string>();
+      for (const u of enrolled) {
+        const names = (u.enrolledClasses || []).map((c) => c.name);
+        classMap.set(u.id, names);
+        for (const c of (u.enrolledClasses || [])) classIds.add(c.id);
       }
-      studentIds = Array.from(idSet);
+      studentIds = enrolled.map((u) => u.id);
 
       // Best-effort: enrich with assigned books per class (do NOT block on failure)
       const assignedBooksMap = new Map<string, any[]>();
       try {
-        if (classIds.length > 0) {
+        if (classIds.size > 0) {
           const classesWithBooks = await (prisma as any).class.findMany({
-            where: { id: { in: classIds } },
+            where: { id: { in: Array.from(classIds) } },
             select: {
               id: true,
               name: true,
@@ -107,7 +110,7 @@ export async function GET() {
               assignmentTitle: a.title,
             }));
             const allBooks = [...directBooks, ...assignmentBooks];
-            for (const s of c.students) {
+            for (const s of (c.students || [])) {
               const bks = assignedBooksMap.get(s.id) || [];
               assignedBooksMap.set(s.id, [...bks, ...allBooks]);
             }
@@ -117,7 +120,8 @@ export async function GET() {
         console.error("[teacher/students] enrich books failed (non-fatal):", bookErr);
       }
 
-      return await aggregateAndRespond(studentIds, classMap, assignedBooksMap);
+      const result = await aggregateAndRespond(studentIds, classMap, assignedBooksMap);
+      return result;
     }
 
     // COORDINATOR / ADMIN / SUPERADMIN — institution-scoped

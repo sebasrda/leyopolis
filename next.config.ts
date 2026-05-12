@@ -62,22 +62,26 @@ const nextConfig: NextConfig = {
       },
       // Defense-in-depth: prevent the page from being loaded as a different MIME
       { key: "X-DNS-Prefetch-Control", value: "on" },
-      // CSP: permissive enough to not break Next/Tailwind/React inline,
-      // strict enough to neutralize most XSS payloads. unsafe-inline is
-      // required by Next's CSS-in-JS and some inline scripts in the layout;
-      // unsafe-eval needed by React dev tooling in non-prod. We keep it
-      // simple and rely on input sanitization + escaping for the rest.
+      // CSP: permissive enough to not break Next/Tailwind/React inline +
+      // 3rd-party tooling (pdfjs worker from unpkg, MediaPipe from jsdelivr),
+      // strict enough to neutralize most XSS payloads.
       {
         key: "Content-Security-Policy",
         value: [
           "default-src 'self'",
-          "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.vercel-insights.com https://*.vercel-scripts.com https://*.googletagmanager.com",
+          // pdfjs-dist worker is loaded from unpkg.com; MediaPipe Hand
+          // Landmarker assets come from cdn.jsdelivr.net. Both are required
+          // for the reader and gesture control to work.
+          "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://unpkg.com https://cdn.jsdelivr.net https://storage.googleapis.com https://*.vercel-insights.com https://*.vercel-scripts.com https://*.googletagmanager.com",
+          "script-src-elem 'self' 'unsafe-inline' blob: https://unpkg.com https://cdn.jsdelivr.net https://storage.googleapis.com https://*.vercel-insights.com https://*.vercel-scripts.com https://*.googletagmanager.com",
           "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
           "img-src 'self' data: blob: https: http:",
           "font-src 'self' data: https://fonts.gstatic.com",
-          "connect-src 'self' https: wss:",
+          // PDFs come from Vercel Blob + AI APIs from any HTTPS host
+          "connect-src 'self' https: wss: blob:",
           "media-src 'self' blob: https:",
-          "worker-src 'self' blob:",
+          // pdfjs worker + MediaPipe wasm workers need blob: and the CDNs
+          "worker-src 'self' blob: https://unpkg.com https://cdn.jsdelivr.net",
           "frame-src 'self' https://*.youtube.com https://*.vimeo.com",
           "frame-ancestors 'self'",
           "object-src 'none'",

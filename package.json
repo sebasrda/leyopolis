@@ -41,7 +41,7 @@
     "react-i18next": "^16.5.8",
     "react-pageflip": "^2.0.3",
     "react-pdf": "^10.4.1",
-    "react-zoom-pan-pinch": "^3.7.0",
+    "react-zoom-pan-pinch": "^4.0.3",
     "recharts": "^3.7.0",
     "resend": "^6.11.0",
     "tailwind-merge": "^3.5.0"

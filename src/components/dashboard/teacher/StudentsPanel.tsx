@@ -28,7 +28,26 @@ interface AttemptRow {
   score: number;
   title: string;
   type: string;
+  bookId?: string | null;
   date: string;
+  answers?: any;
+  content?: any;
+}
+interface AssignedBookRow {
+  id: string;
+  title: string;
+  author: string | null;
+  coverImage: string | null;
+  className: string;
+  dueDate: string | null;
+  progress: number;
+  status: string;
+  lastRead: string | null;
+  minutesRead: number;
+  pagesRead: number;
+  attemptsCount: number;
+  avgScore: number | null;
+  attempts: { id: string; title: string; type: string; score: number; date: string }[];
 }
 interface StudentRow {
   id: string;
@@ -52,6 +71,7 @@ interface StudentRow {
   attemptsCount: number;
   avgScore: number | null;
   recentAttempts: AttemptRow[];
+  assignedBooks: AssignedBookRow[];
   atRisk: boolean;
   atRiskReason: string;
 }
@@ -470,26 +490,30 @@ function StudentDetailModal({ s, onClose }: { s: StudentRow; onClose: () => void
             </div>
           )}
 
+          {/* ── Libros asignados con notas por libro ─────────────── */}
+          {detail.assignedBooks && detail.assignedBooks.length > 0 && (
+            <div>
+              <p className="text-xs uppercase tracking-wide text-muted-foreground font-semibold mb-2">
+                Libros asignados ({detail.assignedBooks.length})
+              </p>
+              <div className="space-y-2">
+                {detail.assignedBooks.map((b) => (
+                  <BookAssignmentRow key={`${b.id}-${b.className}`} book={b} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── Últimos quizzes con respuestas detalladas ─────── */}
           <div>
             <p className="text-xs uppercase tracking-wide text-muted-foreground font-semibold mb-2">Últimos quizzes ({detail.recentAttempts.length})</p>
             {detail.recentAttempts.length === 0 ? (
               <p className="text-sm text-muted-foreground italic">Sin intentos registrados todavía.</p>
             ) : (
-              <ul className="space-y-1">
-                {detail.recentAttempts.map((a) => {
-                  const color = a.score >= 80 ? "text-emerald-400" : a.score >= 60 ? "text-amber-400" : "text-red-400";
-                  return (
-                    <li key={a.id} className="flex items-center justify-between gap-3 p-2 rounded-lg border border-white/5 bg-white/[0.02]">
-                      <div className="min-w-0">
-                        <p className="text-sm line-clamp-1">{a.title}</p>
-                        <p className="text-[10px] text-muted-foreground">{fmtTime(a.date)}</p>
-                      </div>
-                      <Badge variant="outline" className={`tabular-nums shrink-0 ${color} border-current/30`}>
-                        {a.score}%
-                      </Badge>
-                    </li>
-                  );
-                })}
+              <ul className="space-y-2">
+                {detail.recentAttempts.map((a) => (
+                  <AttemptRowItem key={a.id} a={a} />
+                ))}
               </ul>
             )}
           </div>
@@ -529,5 +553,177 @@ function Stat({ icon, label, value, color }: { icon: React.ReactNode; label: str
         {typeof value === "number" ? value.toLocaleString("es-CO") : value}
       </p>
     </div>
+  );
+}
+
+function BookAssignmentRow({ book }: { book: AssignedBookRow }) {
+  const [open, setOpen] = useState(false);
+  const scoreColor =
+    book.avgScore === null ? "text-muted-foreground" :
+    book.avgScore >= 80 ? "text-emerald-400" :
+    book.avgScore >= 60 ? "text-amber-400" :
+    "text-red-400";
+  const statusColor =
+    book.status === "COMPLETED" ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/30" :
+    book.status === "IN_PROGRESS" ? "bg-amber-500/15 text-amber-300 border-amber-500/30" :
+    "bg-slate-500/15 text-slate-300 border-slate-500/30";
+  const statusLabel =
+    book.status === "COMPLETED" ? "Completado" :
+    book.status === "IN_PROGRESS" ? "En curso" :
+    "Sin iniciar";
+
+  return (
+    <div className="rounded-lg border border-white/5 bg-white/[0.02] overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center gap-3 p-3 hover:bg-white/5 transition text-left"
+      >
+        {book.coverImage ? (
+          <img src={book.coverImage} alt={book.title} className="h-12 w-9 object-cover rounded shrink-0" />
+        ) : (
+          <div className="h-12 w-9 rounded bg-gradient-to-br from-indigo-600 to-violet-700 flex items-center justify-center shrink-0">
+            <BookOpen className="h-4 w-4 text-white" />
+          </div>
+        )}
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold line-clamp-1">{book.title}</p>
+          <p className="text-[10px] text-muted-foreground line-clamp-1">
+            {book.author || "—"} · {book.className}
+            {book.dueDate && ` · Entrega: ${new Date(book.dueDate).toLocaleDateString("es-CO")}`}
+          </p>
+          <div className="flex items-center gap-2 mt-1">
+            <Badge variant="outline" className={`text-[9px] px-1.5 py-0 ${statusColor}`}>
+              {statusLabel}
+            </Badge>
+            <span className="text-[10px] text-muted-foreground tabular-nums">{book.progress}% leído</span>
+            {book.attemptsCount > 0 && (
+              <span className={`text-[10px] tabular-nums font-bold ${scoreColor}`}>
+                {book.attemptsCount} quiz{book.attemptsCount === 1 ? "" : "zes"} · {book.avgScore ?? 0}%
+              </span>
+            )}
+          </div>
+        </div>
+        <ChevronRight className={`h-4 w-4 text-muted-foreground shrink-0 transition-transform ${open ? "rotate-90" : ""}`} />
+      </button>
+      {open && (
+        <div className="px-3 pb-3 pt-1 border-t border-white/5 space-y-2 text-xs">
+          <div className="grid grid-cols-3 gap-2 text-center pt-2">
+            <div>
+              <p className="text-muted-foreground text-[10px]">Tiempo</p>
+              <p className="font-bold text-emerald-300 tabular-nums">{fmtMinutes(book.minutesRead)}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground text-[10px]">Páginas</p>
+              <p className="font-bold text-cyan-300 tabular-nums">{book.pagesRead}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground text-[10px]">Última lectura</p>
+              <p className="font-bold text-indigo-300 tabular-nums">{fmtTime(book.lastRead)}</p>
+            </div>
+          </div>
+          {book.attempts.length > 0 ? (
+            <div>
+              <p className="text-muted-foreground text-[10px] uppercase tracking-wide mb-1">Intentos sobre el libro</p>
+              <ul className="space-y-1">
+                {book.attempts.map((a) => {
+                  const color = a.score >= 80 ? "text-emerald-400" : a.score >= 60 ? "text-amber-400" : "text-red-400";
+                  return (
+                    <li key={a.id} className="flex items-center justify-between gap-2 p-1.5 rounded bg-white/[0.03]">
+                      <span className="line-clamp-1">{a.title}</span>
+                      <span className={`tabular-nums font-bold ${color}`}>{a.score}%</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ) : (
+            <p className="text-muted-foreground italic text-[11px]">Aún no ha realizado quizzes sobre este libro.</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AttemptRowItem({ a }: { a: AttemptRow }) {
+  const [open, setOpen] = useState(false);
+  const color = a.score >= 80 ? "text-emerald-400" : a.score >= 60 ? "text-amber-400" : "text-red-400";
+  const questions: any[] = Array.isArray(a.content?.questions) ? a.content.questions : [];
+  const answers = a.answers;
+  const hasDetail = questions.length > 0 || (answers && typeof answers === "object");
+
+  return (
+    <li className="rounded-lg border border-white/5 bg-white/[0.02] overflow-hidden">
+      <button
+        type="button"
+        onClick={() => hasDetail && setOpen((v) => !v)}
+        className={`w-full flex items-center justify-between gap-3 p-2 text-left ${hasDetail ? "hover:bg-white/5 transition cursor-pointer" : "cursor-default"}`}
+      >
+        <div className="min-w-0">
+          <p className="text-sm line-clamp-1">{a.title}</p>
+          <p className="text-[10px] text-muted-foreground">{fmtTime(a.date)} · {a.type}</p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <Badge variant="outline" className={`tabular-nums ${color} border-current/30`}>
+            {a.score}%
+          </Badge>
+          {hasDetail && <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform ${open ? "rotate-90" : ""}`} />}
+        </div>
+      </button>
+      {open && hasDetail && (
+        <div className="px-3 pb-3 pt-1 border-t border-white/5 space-y-2 text-xs">
+          {questions.length > 0 ? (
+            <ol className="space-y-2">
+              {questions.map((q: any, i: number) => {
+                const studentAns = answers?.[q.id] ?? answers?.[i];
+                const correct = q.correctAnswer;
+                const isCorrect = studentAns !== undefined && studentAns === correct;
+                const opts: string[] = Array.isArray(q.options) ? q.options : [];
+                return (
+                  <li key={q.id ?? i} className="rounded p-2 bg-white/[0.03] border border-white/5">
+                    <p className="font-medium text-foreground mb-1">{i + 1}. {q.question || q.text || "Pregunta"}</p>
+                    {opts.length > 0 ? (
+                      <ul className="space-y-0.5">
+                        {opts.map((opt, oi) => {
+                          const isStudent = studentAns === oi;
+                          const isRight = correct === oi;
+                          return (
+                            <li
+                              key={oi}
+                              className={`flex items-center gap-1.5 px-1.5 py-0.5 rounded ${
+                                isRight ? "bg-emerald-500/15 text-emerald-200" :
+                                isStudent ? "bg-red-500/15 text-red-200" :
+                                ""
+                              }`}
+                            >
+                              {isRight && <CheckCircle2 className="h-3 w-3 text-emerald-400 shrink-0" />}
+                              {isStudent && !isRight && <XCircle className="h-3 w-3 text-red-400 shrink-0" />}
+                              {!isStudent && !isRight && <span className="w-3" />}
+                              <span className="line-clamp-2">{opt}</span>
+                              {isStudent && (
+                                <span className="text-[9px] uppercase ml-auto opacity-80">
+                                  {isCorrect ? "su respuesta ✓" : "su respuesta ✗"}
+                                </span>
+                              )}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    ) : (
+                      <p className="text-muted-foreground italic">{studentAns ?? "Sin respuesta"}</p>
+                    )}
+                  </li>
+                );
+              })}
+            </ol>
+          ) : (
+            <pre className="text-[10px] text-muted-foreground overflow-x-auto whitespace-pre-wrap break-all">
+              {JSON.stringify(answers, null, 2)}
+            </pre>
+          )}
+        </div>
+      )}
+    </li>
   );
 }

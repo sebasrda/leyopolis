@@ -2,12 +2,11 @@
 "use client";
 
 import React, { useState } from 'react';
-import { 
-    Users, 
-    BookOpen, 
-    Plus, 
-    MoreVertical, 
-    Calendar, 
+import {
+    BookOpen,
+    Plus,
+    MoreVertical,
+    Calendar,
     BarChart3,
     Search,
     Sparkles,
@@ -17,7 +16,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { CreateAssignmentDialog } from './CreateAssignmentDialog';
@@ -38,7 +36,7 @@ interface ClassGroup {
 export default function TeacherDashboard() {
     const [searchQuery, setSearchQuery] = useState('');
     const [classes, setClasses] = useState<ClassGroup[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [, setLoading] = useState(true);
     const [isCreating, setIsCreating] = useState(false);
     const [newClassName, setNewClassName] = useState('');
     const [isAssignmentDialogOpen, setIsAssignmentDialogOpen] = useState(false);
@@ -159,43 +157,6 @@ export default function TeacherDashboard() {
                 classes={classes}
             />
 
-            {/* Quick Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Card>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">Estudiantes Activos</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{eduOverview?.dashboardStats?.totalStudents ?? 0}</div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                            estudiantes enrolados
-                        </p>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">Lecturas Activas</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{eduOverview?.dashboardStats?.activeReadings ?? 0}</div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                            asignaciones vigentes
-                        </p>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">Comprensión Promedio</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{eduOverview?.dashboardStats?.averageComprehension ?? 0}%</div>
-                        <p className="text-xs text-indigo-400 flex items-center mt-1">
-                            basado en evaluaciones
-                        </p>
-                    </CardContent>
-                </Card>
-            </div>
-
             {/* Premium: Students panel (real-time roster + at-risk + recent exams + drill-down) */}
             <StudentsPanel />
 
@@ -287,45 +248,45 @@ export default function TeacherDashboard() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredClasses.map((cls) => (
-                        <Card key={cls.id} className="hover:shadow-md transition-shadow cursor-pointer border-t-4 border-t-indigo-500">
-                            <CardHeader className="pb-3">
-                                <div className="flex justify-between items-start">
-                                    <Badge variant="secondary" className="mb-2 bg-indigo-500/10 text-indigo-300">
-                                        {cls.students} Estudiantes
-                                    </Badge>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400">
-                                        <MoreVertical size={16} />
-                                    </Button>
-                                </div>
-                                <CardTitle className="text-lg">{cls.name}</CardTitle>
-                                <CardDescription className="line-clamp-1">
-                                    Tarea actual: {cls.activeAssignment}
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="space-y-4">
-                                    <div>
-                                        <div className="flex justify-between text-xs mb-1">
-                                            <span className="text-muted-foreground">Progreso del grupo</span>
-                                            <span className="font-semibold text-indigo-400">{cls.progress}%</span>
-                                        </div>
-                                        <Progress value={cls.progress} className="h-2" />
+                        <Link key={cls.id} href={`/dashboard/teacher/class/${cls.id}`} className="block group">
+                            <Card className="hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer border-t-4 border-t-indigo-500 group-hover:border-t-indigo-400 h-full">
+                                <CardHeader className="pb-3">
+                                    <div className="flex justify-between items-start">
+                                        <Badge variant="secondary" className="mb-2 bg-indigo-500/10 text-indigo-300">
+                                            {cls.students} Estudiantes
+                                        </Badge>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400" onClick={(e) => e.preventDefault()}>
+                                            <MoreVertical size={16} />
+                                        </Button>
                                     </div>
-                                    
-                                    <div className="flex items-center justify-between text-sm pt-2 border-t">
-                                        <div className="flex items-center text-muted-foreground">
-                                            <Calendar size={14} className="mr-1" />
-                                            {cls.nextDeadline ? new Date(cls.nextDeadline).toLocaleDateString() : 'Sin fecha'}
+                                    <CardTitle className="text-lg">{cls.name}</CardTitle>
+                                    <CardDescription className="line-clamp-1">
+                                        Tarea actual: {cls.activeAssignment}
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="space-y-4">
+                                        <div>
+                                            <div className="flex justify-between text-xs mb-1">
+                                                <span className="text-muted-foreground">Progreso del grupo</span>
+                                                <span className="font-semibold text-indigo-400">{cls.progress}%</span>
+                                            </div>
+                                            <Progress value={cls.progress} className="h-2" />
                                         </div>
-                                        <Link href={`/dashboard/teacher/class/${cls.id}`}>
-                                            <Button variant="ghost" size="sm" className="text-indigo-400 hover:text-indigo-300 p-0 h-auto">
+
+                                        <div className="flex items-center justify-between text-sm pt-2 border-t">
+                                            <div className="flex items-center text-muted-foreground">
+                                                <Calendar size={14} className="mr-1" />
+                                                {cls.nextDeadline ? new Date(cls.nextDeadline).toLocaleDateString() : 'Sin fecha'}
+                                            </div>
+                                            <span className="text-indigo-400 group-hover:text-indigo-300 text-sm font-medium">
                                                 Gestionar &rarr;
-                                            </Button>
-                                        </Link>
+                                            </span>
+                                        </div>
                                     </div>
-                                </div>
-                            </CardContent>
-                        </Card>
+                                </CardContent>
+                            </Card>
+                        </Link>
                     ))}
                     
                     {/* Add Class Card */}

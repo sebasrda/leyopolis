@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   HelpCircle,
@@ -115,28 +116,34 @@ const SECTIONS: Section[] = [
 
 export default function HelpModal() {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  return (
-    <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        title="Cómo funciona el sistema de puntos"
-        className="flex items-center gap-1.5 text-slate-300 hover:text-white transition-colors px-2 py-1 rounded-md hover:bg-white/5"
-      >
-        <HelpCircle className="h-5 w-5" />
-        <span className="hidden md:inline text-sm font-medium">Ayuda</span>
-      </button>
+  // Portal target is only available client-side
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[300] bg-[#0a0a1a]/95 backdrop-blur-md flex items-center justify-center p-4"
-            onClick={() => setOpen(false)}
-          >
+  // Lock scroll while modal is open
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
+
+  const modal = (
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          style={{ position: "fixed", inset: 0, zIndex: 9999 }}
+          className="bg-[#0a0a1a]/95 backdrop-blur-md flex items-center justify-center p-4"
+          onClick={() => setOpen(false)}
+        >
             <motion.div
               initial={{ scale: 0.92, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -205,6 +212,22 @@ export default function HelpModal() {
           </motion.div>
         )}
       </AnimatePresence>
+  );
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        title="Cómo funciona el sistema de puntos"
+        className="flex items-center gap-1.5 text-slate-300 hover:text-white transition-colors px-2 py-1 rounded-md hover:bg-white/5"
+      >
+        <HelpCircle className="h-5 w-5" />
+        <span className="hidden md:inline text-sm font-medium">Ayuda</span>
+      </button>
+      {/* Portal at body level so the modal escapes any ancestor with CSS
+          transforms (which would otherwise reparent `position: fixed`). */}
+      {mounted ? createPortal(modal, document.body) : null}
     </>
   );
 }

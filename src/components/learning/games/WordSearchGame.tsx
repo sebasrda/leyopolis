@@ -20,10 +20,26 @@ interface Cell {
   found: boolean;
 }
 
+// Normalize a word for placement and matching in the grid:
+//   "Tom Sawyer"  -> "TOMSAWYER"
+//   "TÍA POLLY"   -> "TIAPOLLY"
+//   "Misisipí"    -> "MISISIPI"
+// Strips accents, removes spaces and any non-letter character so the grid
+// is always 100% A-Z and lookups don't need to deal with diacritics.
+function normalizeWord(w: string): string {
+  return w
+    .toUpperCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "") // strip combining diacritics
+    .replace(/Ñ/g, "N")
+    .replace(/[^A-Z]/g, "");
+}
+
 export function WordSearchGame({ words = ["LEYOPOLIS", "LIBRO", "JUEGO"], gridSize = 12, onComplete, onExit }: WordSearchProps) {
   const [grid, setGrid] = useState<Cell[][]>([]);
-  const [actualWords, setActualWords] = useState<string[]>([]); // words that actually fit
-  const [foundWords, setFoundWords] = useState<string[]>([]);
+  // displayedWords: original form for the side list. placedWords: grid form.
+  const [displayedWords, setDisplayedWords] = useState<Array<{ display: string; placed: string }>>([]);
+  const [foundWords, setFoundWords] = useState<string[]>([]); // matches placed form
   const [isSelecting, setIsSelecting] = useState(false);
   const [selectionStart, setSelectionStart] = useState<{x: number, y: number} | null>(null);
   const [currentSelection, setCurrentSelection] = useState<{x: number, y: number}[]>([]);
@@ -39,10 +55,16 @@ export function WordSearchGame({ words = ["LEYOPOLIS", "LIBRO", "JUEGO"], gridSi
   const initializeGrid = () => {
     if (!words || words.length === 0) return;
 
-    // Adapt grid: grow if the longest word doesn't fit. Was hard-capped at the
-    // gridSize prop, which silently dropped long keywords like
-    // "TRANSFORMACION" (14 letters) from a 12x12 grid.
-    const longestWord = Math.max(...words.map(w => w.length));
+    // Pair each source word with its grid-ready (normalized) form. Skip
+    // entries that normalize to empty (e.g., "—" or pure punctuation).
+    const pairs = words
+      .map((w) => ({ display: w.toString().trim(), placed: normalizeWord(String(w)) }))
+      .filter((p) => p.display && p.placed.length >= 2);
+
+    if (pairs.length === 0) return;
+
+    // Adapt grid: grow if the longest word doesn't fit.
+    const longestWord = Math.max(...pairs.map((p) => p.placed.length));
     const dynamicSize = Math.max(gridSize, longestWord + 2);
 
     // 1. Create empty grid (dynamicSize x dynamicSize)
@@ -57,29 +79,30 @@ export function WordSearchGame({ words = ["LEYOPOLIS", "LIBRO", "JUEGO"], gridSi
     );
 
     // 2. Place words (longest first). Try 8 directions, up to 250 attempts.
-    const placedWords: string[] = [];
-    const wordsToPlace = [...words].map(w => w.toUpperCase()).sort((a, b) => b.length - a.length);
+    const placedOk: Array<{ display: string; placed: string }> = [];
+    const sorted = [...pairs].sort((a, b) => b.placed.length - a.placed.length);
 
-    for (const word of wordsToPlace) {
-      if (word.length > dynamicSize) continue; // skip words too long
+    for (const entry of sorted) {
+      const word = entry.placed;
+      if (word.length > dynamicSize) continue;
       let placed = false;
       let attempts = 0;
       while (!placed && attempts < 250) {
-        const direction = Math.floor(Math.random() * 8); // 8 directions inc. reverses
+        const direction = Math.floor(Math.random() * 8);
         const startX = Math.floor(Math.random() * dynamicSize);
         const startY = Math.floor(Math.random() * dynamicSize);
 
         if (canPlaceWord(newGrid, word, startX, startY, direction, dynamicSize)) {
           placeWord(newGrid, word, startX, startY, direction);
           placed = true;
-          placedWords.push(word);
+          placedOk.push(entry);
         }
         attempts++;
       }
     }
 
-    // 3. Fill empty spots with random letters
-    const alphabet = "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ";
+    // 3. Fill empty spots with random letters (A-Z only — matches placed form)
+    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     for (let y = 0; y < dynamicSize; y++) {
       for (let x = 0; x < dynamicSize; x++) {
         if (newGrid[y][x].letter === '') {
@@ -89,8 +112,7 @@ export function WordSearchGame({ words = ["LEYOPOLIS", "LIBRO", "JUEGO"], gridSi
     }
 
     setGrid(newGrid);
-    // Display only words that were actually placed so the list never lies.
-    setActualWords(placedWords);
+    setDisplayedWords(placedOk);
     setFoundWords([]);
     setGameFinished(false);
   };
@@ -170,13 +192,13 @@ export function WordSearchGame({ words = ["LEYOPOLIS", "LIBRO", "JUEGO"], gridSi
     const selectedWord = currentSelection.map(pos => grid[pos.y][pos.x].letter).join('');
     const reversedWord = selectedWord.split('').reverse().join(''); // Support backwards selection
 
-    const matchedWord = actualWords.find(w => w === selectedWord || w === reversedWord);
+    const matched = displayedWords.find(w => w.placed === selectedWord || w.placed === reversedWord);
 
-    if (matchedWord && !foundWords.includes(matchedWord)) {
+    if (matched && !foundWords.includes(matched.placed)) {
       // Found a new word!
       setFoundWords(prev => {
-        const newFound = [...prev, matchedWord];
-        if (newFound.length === actualWords.length) {
+        const newFound = [...prev, matched.placed];
+        if (newFound.length === displayedWords.length) {
             setTimeout(() => setGameFinished(true), 500);
         }
         return newFound;
@@ -209,10 +231,10 @@ export function WordSearchGame({ words = ["LEYOPOLIS", "LIBRO", "JUEGO"], gridSi
           <p className="text-xl text-emerald-600 font-medium mb-6">Encontraste todas las palabras</p>
           <div className="bg-muted dark:bg-gray-900/50 p-6 rounded-2xl mb-8">
             <p className="text-sm text-muted-foreground dark:text-gray-400 uppercase tracking-widest font-bold mb-1">Puntuación</p>
-            <p className="text-5xl font-black text-indigo-400">{actualWords.length * 10}</p>
+            <p className="text-5xl font-black text-indigo-400">{displayedWords.length * 10}</p>
           </div>
           <Button
-            onClick={() => onComplete(actualWords.length * 10, actualWords.length * 10)}
+            onClick={() => onComplete(displayedWords.length * 10, displayedWords.length * 10)}
             className="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-xl py-8 rounded-2xl shadow-lg shadow-indigo-200 dark:shadow-none transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
             Reclamar Recompensa
@@ -236,24 +258,25 @@ export function WordSearchGame({ words = ["LEYOPOLIS", "LIBRO", "JUEGO"], gridSi
   return (
     <div className="flex flex-col md:flex-row gap-8 items-start justify-center p-4 max-w-5xl mx-auto h-full" onMouseUp={handleMouseUp}>
       
-      {/* Word List — shows only words that actually exist in the grid */}
+      {/* Word List — shows ORIGINAL forms (with spaces/accents) of words
+          that were actually placed in the grid */}
       <div className="w-full md:w-64 bg-card p-6 rounded-2xl shadow-md border border-indigo-500/50/20">
         <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
-            Palabras ({foundWords.length}/{actualWords.length})
+            Palabras ({foundWords.length}/{displayedWords.length})
         </h3>
         <div className="flex flex-wrap gap-2">
-            {actualWords.map(word => {
-                const isFound = foundWords.includes(word);
+            {displayedWords.map(({ display, placed }) => {
+                const isFound = foundWords.includes(placed);
                 return (
                     <div
-                        key={word}
+                        key={placed}
                         className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-300 ${
                             isFound
                                 ? 'bg-green-100 text-green-700 line-through opacity-60'
                                 : 'bg-muted text-foreground'
                         }`}
                     >
-                        {word}
+                        {display}
                     </div>
                 );
             })}

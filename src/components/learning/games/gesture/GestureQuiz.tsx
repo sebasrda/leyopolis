@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Trophy, CheckCircle2, XCircle, Timer } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -40,9 +40,9 @@ const MAX_Q = 10;
 const TIMER_S = 25;
 
 export function GestureQuiz({ questions, onComplete, onExit }: GestureQuizProps) {
-  // Stabilize pool so it doesn't change every render. useState init lets us
-  // cap at 10 once; the underlying handler closures stay stable.
-  const [pool] = useState(() => questions.slice(0, MAX_Q));
+  // Recompute pool when the questions array length changes — that's how we
+  // pick up data that arrives AFTER the user has already opened this game.
+  const pool = useMemo(() => (questions || []).slice(0, MAX_Q), [questions?.length]);
   const [idx, setIdx] = useState(0);
   const [score, setScore] = useState(0);
   const [feedback, setFeedback] = useState<"correct" | "wrong" | null>(null);
@@ -148,7 +148,22 @@ export function GestureQuiz({ questions, onComplete, onExit }: GestureQuizProps)
     return () => clearInterval(interval);
   }, [isActive, getPosition, handleAnswer]);
 
-  if (done || pool.length === 0) {
+  if (pool.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-4 p-8 text-center max-w-md mx-auto">
+        <div className="h-16 w-16 rounded-full bg-amber-500/20 flex items-center justify-center">
+          <Trophy className="h-8 w-8 text-amber-400" />
+        </div>
+        <h3 className="text-xl font-bold text-white">Aún no hay preguntas para este libro</h3>
+        <p className="text-sm text-slate-400">
+          Tu profesor o el super-admin necesita generar las actividades con IA para que este juego tenga preguntas. Mientras tanto puedes probar los otros juegos del menú.
+        </p>
+        <Button onClick={onExit} className="bg-purple-600 hover:bg-purple-500 text-white rounded-full px-8 mt-2">Volver al menú</Button>
+      </div>
+    );
+  }
+
+  if (done) {
     return (
       <div className="flex flex-col items-center justify-center gap-6 p-8 text-center">
         <Trophy className="h-16 w-16 text-yellow-400" />

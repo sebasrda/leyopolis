@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Trophy, CheckCircle2, XCircle, ArrowLeft, ArrowRight, Timer } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -29,9 +29,13 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 export function GestureTimeline({ events, onComplete, onExit }: Props) {
-  // Build pairs ONCE so the array identity is stable across renders. Before
-  // pairs was recomputed every render, which made handleSide's closure unstable.
-  const [pairs] = useState<Array<[string, string, 0 | 1]>>(() => {
+  // useMemo on the LENGTH (not the array identity) lets us:
+  //   • Compute pairs once when events first arrives (avoids re-shuffle every
+  //     render — that was the original bug)
+  //   • Re-compute if the caller passes a longer events array later (e.g.,
+  //     quizData arrives after the modal opened on an empty array)
+  const pairs = useMemo<Array<[string, string, 0 | 1]>>(() => {
+    if (!events || events.length < 2) return [];
     const ordered = events.slice(0, 6);
     const out: Array<[string, string, 0 | 1]> = [];
     for (let i = 0; i < ordered.length - 1; i++) {
@@ -40,7 +44,8 @@ export function GestureTimeline({ events, onComplete, onExit }: Props) {
       else out.push([ordered[i], ordered[i + 1], 0]);
     }
     return out;
-  });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [events.length]);
 
   const [pairIdx, setPairIdx] = useState(0);
   const [score, setScore] = useState(0);
@@ -139,7 +144,22 @@ export function GestureTimeline({ events, onComplete, onExit }: Props) {
     return () => clearInterval(interval);
   }, [isActive, getPosition, handleSide]);
 
-  if (done || pairs.length === 0) {
+  if (pairs.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-4 p-8 text-center max-w-md mx-auto">
+        <div className="h-16 w-16 rounded-full bg-amber-500/20 flex items-center justify-center">
+          <Trophy className="h-8 w-8 text-amber-400" />
+        </div>
+        <h3 className="text-xl font-bold text-white">Aún no hay cronología para este libro</h3>
+        <p className="text-sm text-slate-400">
+          Tu profesor o el super-admin necesita generar las actividades con IA para que este juego tenga datos. Mientras tanto puedes probar los otros juegos del menú.
+        </p>
+        <Button onClick={onExit} className="bg-purple-600 hover:bg-purple-500 text-white rounded-full px-8 mt-2">Volver al menú</Button>
+      </div>
+    );
+  }
+
+  if (done) {
     return (
       <div className="flex flex-col items-center justify-center gap-6 p-8 text-center">
         <Trophy className="h-16 w-16 text-yellow-400" />

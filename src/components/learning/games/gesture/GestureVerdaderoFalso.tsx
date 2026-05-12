@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Trophy, CheckCircle2, XCircle, Timer } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -25,17 +25,23 @@ const COOLDOWN_MS = 2000;
 const TIMER_S = 15;
 
 export function GestureVerdaderoFalso({ statements, onComplete, onExit }: Props) {
-  // Defensive normalization: API may occasionally hand us legacy shapes.
-  const pool = (statements || [])
-    .map((it: any) => {
-      if (!it) return null;
-      if (typeof it === "string") return { text: it.trim(), isTrue: true };
-      const text = String(it.text ?? it.statement ?? it.affirmation ?? it.sentence ?? "").trim();
-      if (!text) return null;
-      return { text, isTrue: Boolean(it.isTrue ?? it.is_true ?? it.correct ?? true) };
-    })
-    .filter(Boolean)
-    .slice(0, 10) as Statement[];
+  // Defensive normalization wrapped in useMemo. Recomputed when the parent's
+  // statements array length changes (e.g. when the API response finally
+  // arrives after the user already opened this game). Without this, the pool
+  // was captured at mount with `[]` and the game showed "completed 0/0".
+  const pool = useMemo<Statement[]>(() => {
+    return (statements || [])
+      .map((it: any) => {
+        if (!it) return null;
+        if (typeof it === "string") return { text: it.trim(), isTrue: true };
+        const text = String(it.text ?? it.statement ?? it.affirmation ?? it.sentence ?? "").trim();
+        if (!text) return null;
+        return { text, isTrue: Boolean(it.isTrue ?? it.is_true ?? it.correct ?? true) };
+      })
+      .filter(Boolean)
+      .slice(0, 10) as Statement[];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [statements?.length]);
   const [idx, setIdx] = useState(0);
   const [score, setScore] = useState(0);
   const [feedback, setFeedback] = useState<"correct" | "wrong" | null>(null);
@@ -138,7 +144,22 @@ export function GestureVerdaderoFalso({ statements, onComplete, onExit }: Props)
     return () => clearInterval(interval);
   }, [isActive, getPosition, handleSide]);
 
-  if (done || pool.length === 0) {
+  if (pool.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-4 p-8 text-center max-w-md mx-auto">
+        <div className="h-16 w-16 rounded-full bg-amber-500/20 flex items-center justify-center">
+          <Trophy className="h-8 w-8 text-amber-400" />
+        </div>
+        <h3 className="text-xl font-bold text-white">Aún no hay afirmaciones para este libro</h3>
+        <p className="text-sm text-slate-400">
+          Tu profesor o el super-admin necesita generar las actividades con IA para que este juego tenga preguntas. Mientras tanto puedes probar los otros juegos del menú.
+        </p>
+        <Button onClick={onExit} className="bg-purple-600 hover:bg-purple-500 text-white rounded-full px-8 mt-2">Volver al menú</Button>
+      </div>
+    );
+  }
+
+  if (done) {
     return (
       <div className="flex flex-col items-center justify-center gap-6 p-8 text-center">
         <Trophy className="h-16 w-16 text-yellow-400" />

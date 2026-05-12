@@ -4,6 +4,7 @@ import { LearningProvider } from "@/context/LearningContext";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getStudentsForUser, type StudentRow } from "@/lib/teacherStudents";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,7 @@ export default async function Layout({ children }: { children: React.ReactNode }
   let serverBooks: any[] = [];
   let serverDaysThisWeek = 0;
   let serverLastActive: Date | null = null;
+  let serverTeacherStudents: StudentRow[] = [];
 
   try {
     const session = await getServerSession(authOptions);
@@ -25,13 +27,24 @@ export default async function Layout({ children }: { children: React.ReactNode }
 
       const user = await prisma.user.findUnique({
         where: { id: userId },
-        select: { xp: true, level: true, streak: true, lastActive: true },
+        select: { xp: true, level: true, streak: true, lastActive: true, role: true },
       });
       if (user) {
         serverXp = user.xp;
         serverLevel = user.level;
         serverStreak = user.streak;
         serverLastActive = user.lastActive;
+      }
+
+      // Pre-fetch teacher/coordinator/admin roster server-side so the panel
+      // has data on first render (no waiting on client-side API call)
+      const role = (user?.role || (session.user as any)?.role) as string;
+      if (role && ["TEACHER", "COORDINATOR", "ADMIN", "SUPERADMIN"].includes(role)) {
+        try {
+          serverTeacherStudents = await getStudentsForUser(userId, role as any);
+        } catch (e) {
+          console.error("[Layout] Failed to fetch teacher students:", e);
+        }
       }
 
       const sessions = await prisma.readingSession.findMany({
@@ -94,7 +107,7 @@ export default async function Layout({ children }: { children: React.ReactNode }
               totalMinutes: serverTotalMinutes,
               totalChallenges: serverTotalChallenges,
               books: serverBooks
-            })};`
+            })};window.__SERVER_TEACHER_STUDENTS__=${JSON.stringify(serverTeacherStudents)};`
           }}
         />
         <DashboardLayout

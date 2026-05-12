@@ -97,6 +97,8 @@ function fmtMinutes(min: number) {
 }
 
 export default function StudentsPanel() {
+  // Read server-injected data on first mount (set during SSR via window global)
+  // so the panel renders with real data immediately, without any API roundtrip
   const [students, setStudents] = useState<StudentRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -131,8 +133,17 @@ export default function StudentsPanel() {
   };
 
   useEffect(() => {
+    // 1) Hydrate from server-injected window global (instant)
+    const injected = typeof window !== "undefined" ? (window as any).__SERVER_TEACHER_STUDENTS__ : null;
+    if (Array.isArray(injected)) {
+      setStudents(injected);
+      setLoading(false);
+      setLastUpdated(new Date());
+    }
+    // 2) Kick off a fresh fetch (for users who just assigned new students)
     load();
-    const id = setInterval(load, 5000); // 5s polling for true real-time
+    // 3) Poll every 5s for true real-time
+    const id = setInterval(load, 5000);
     return () => clearInterval(id);
   }, []);
 

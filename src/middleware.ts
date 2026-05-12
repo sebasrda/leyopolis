@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
+import { rateLimit, clientIp, tooManyRequestsResponse } from "@/lib/ratelimit";
 
 const STUDENT_BLOCKED_PATHS = [
   "/dashboard/profesor",
@@ -49,6 +50,23 @@ export async function middleware(request: NextRequest) {
   }
 
   const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
+
+  // ── Global IP rate limit on API routes (anti-bot / DoS) ──
+  // Skip /api/auth/* (NextAuth has its own flow and is brute-force-protected
+  // separately via login lockout). Authenticated users get a much higher
+  // budget so multiple tabs / a busy school network don't trip the limit.
+  if (pathname.startsWith("/api/") && !pathname.startsWith("/api/auth/")) {
+    const ip = clientIp(request.headers);
+    const authed = !!token;
+    const key = authed
+      ? `api:user:${(token as any)?.id || ip}`
+      : `api:ip:${ip}`;
+    const limit = authed ? 600 : 60; // per minute
+    const rl = await rateLimit(key, { limit, windowMs: 60_000 });
+    if (!rl.ok) {
+      return tooManyRequestsResponse(rl);
+    }
+  }
 
   // If not authenticated and accessing protected route, redirect to login
   if (!token && pathname.startsWith("/dashboard")) {

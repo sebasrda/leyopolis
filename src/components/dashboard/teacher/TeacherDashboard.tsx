@@ -52,10 +52,11 @@ export default function TeacherDashboard() {
         fetchClasses();
         fetchEduOverview();
 
+        // Poll every 30s (was 5s — too aggressive given multiple endpoints per cycle)
         const interval = setInterval(() => {
             fetchClasses();
             fetchEduOverview();
-        }, 5000);
+        }, 30_000);
 
         return () => clearInterval(interval);
     }, []);

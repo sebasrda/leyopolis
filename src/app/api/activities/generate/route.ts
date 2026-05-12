@@ -4,6 +4,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { getUserIdAndRole } from "@/lib/access";
 import { generateWithOpenRouter } from "@/lib/ai/openrouter";
 import { generateWithOpenAI } from "@/lib/ai/openai";
+import { rateLimit, clientIp, tooManyRequestsResponse } from "@/lib/ratelimit";
 
 export const dynamic = "force-dynamic";
 
@@ -103,6 +104,15 @@ export async function POST(req: Request) {
   if (!user) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   if (user.role !== "ADMIN" && user.role !== "TEACHER" && user.role !== "COORDINATOR") {
     return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+  }
+
+  // ── Rate limit: 10 activity-generations per minute per user ──
+  // Generating an activity calls 1-3 paid AI providers (Gemini, OpenRouter, OpenAI).
+  // 10/min is enough for a teacher creating a series of activities but stops abuse.
+  const ip = clientIp(req.headers);
+  const rl = await rateLimit(`gen:user:${user.userId}:${ip}`, { limit: 10, windowMs: 60_000 });
+  if (!rl.ok) {
+    return tooManyRequestsResponse(rl, "Demasiadas generaciones de actividades. Espera un momento.");
   }
 
   const body = (await req.json()) as Record<string, unknown>;

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { rateLimit, clientIp, tooManyRequestsResponse } from "@/lib/ratelimit";
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -13,10 +14,18 @@ export async function POST(req: Request) {
 
   // Block students from AI
   if (role === "STUDENT") {
-    return NextResponse.json({ 
+    return NextResponse.json({
       message: "Acceso IA no disponible para estudiantes",
-      blocked: true 
+      blocked: true
     }, { status: 403 });
+  }
+
+  // ── Rate limit: 20 AI-tutor chats per minute per user ──
+  const userId = (session.user as any).id || "anon";
+  const ip = clientIp(req.headers);
+  const rl = await rateLimit(`tutor:${userId}:${ip}`, { limit: 20, windowMs: 60_000 });
+  if (!rl.ok) {
+    return tooManyRequestsResponse(rl, "Demasiadas consultas al tutor. Espera unos segundos.");
   }
 
   try {

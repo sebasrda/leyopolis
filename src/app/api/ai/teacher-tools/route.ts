@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { rateLimit, clientIp, tooManyRequestsResponse } from "@/lib/ratelimit";
 
 const EDUCATIONAL_DISCLAIMER = "\n\n⚠️ Uso exclusivo educativo dentro del aula. No permitido para fines comerciales.";
 
@@ -18,6 +19,14 @@ export async function POST(req: Request) {
 
   if (role !== "TEACHER" && role !== "COORDINATOR" && role !== "ADMIN") {
     return NextResponse.json({ message: "Acceso denegado" }, { status: 403 });
+  }
+
+  // ── Rate limit: 20 teacher-tools calls per minute per user ──
+  const userId = (session.user as any).id || "anon";
+  const ip = clientIp(req.headers);
+  const rl = await rateLimit(`tt:${userId}:${ip}`, { limit: 20, windowMs: 60_000 });
+  if (!rl.ok) {
+    return tooManyRequestsResponse(rl, "Demasiadas consultas a herramientas IA. Espera unos segundos.");
   }
 
   try {

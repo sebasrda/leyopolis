@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { createHash } from "crypto";
 import { prisma } from "@/lib/prisma";
+import { rateLimit, clientIp, tooManyRequestsResponse } from "@/lib/ratelimit";
+import { getUserIdAndRole } from "@/lib/access";
 
 export const runtime = "nodejs";
 
@@ -325,12 +327,26 @@ async function translateWithGoogleFree(text: string, targetIso: string): Promise
 
 export async function POST(req: Request) {
   try {
+    // ── Rate limit: 30 req/min per user (or per IP if anonymous) ──
+    const user = await getUserIdAndRole().catch(() => null);
+    const ip = clientIp(req.headers);
+    const limiterKey = user?.userId ? `translate:user:${user.userId}` : `translate:ip:${ip}`;
+    const rl = await rateLimit(limiterKey, { limit: 30, windowMs: 60_000 });
+    if (!rl.ok) {
+      return tooManyRequestsResponse(rl, "Demasiadas traducciones. Espera unos segundos.");
+    }
+
     const body = await req.json();
     const { text, targetLanguage } = body;
     const target = normalizeTarget(targetLanguage);
 
     if (!text || !target.prompt) {
       return NextResponse.json({ error: "Missing text or targetLanguage" }, { status: 400 });
+    }
+
+    // Reject payloads larger than 200KB to prevent abuse
+    if (typeof text === "string" && text.length > 200_000) {
+      return NextResponse.json({ error: "Payload too large" }, { status: 413 });
     }
 
     const safeText = text.length > 60000 ? text.slice(0, 60000) : text;

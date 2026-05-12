@@ -6,6 +6,7 @@ import AppleProvider from "next-auth/providers/apple";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { isLoginLocked, recordLoginFailure, resetLoginFailures, clientIp } from "@/lib/ratelimit";
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as unknown as Adapter,
@@ -38,22 +39,38 @@ export const authOptions: NextAuthOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials, _req) {
+      async authorize(credentials, req) {
         if (!credentials?.email || !credentials?.password) {
           throw new Error("Credenciales inválidas");
         }
 
+        const emailLower = credentials.email.trim().toLowerCase();
+
+        // Extract client IP from NextAuth's request (it exposes headers object)
+        const headers: Headers = (req?.headers && typeof (req.headers as any).get === "function"
+          ? (req.headers as unknown as Headers)
+          : new Headers(req?.headers as Record<string, string> | undefined));
+        const ip = clientIp(headers);
+
+        // ── BRUTE-FORCE GUARD: block if too many recent failed attempts ──
+        const lockState = await isLoginLocked(emailLower, ip);
+        if (lockState.locked) {
+          const mins = Math.max(1, Math.ceil(lockState.retryAfter / 60));
+          throw new Error(`Demasiados intentos fallidos. Intenta de nuevo en ${mins} minuto${mins === 1 ? "" : "s"}.`);
+        }
+
         const user = await prisma.user.findUnique({
-          where: {
-            email: credentials.email,
-          },
+          where: { email: emailLower },
         });
 
         if (!user || !user.password) {
+          await recordLoginFailure(emailLower, ip);
           throw new Error("Usuario no encontrado");
         }
 
         if (user.isActive === false) {
+          // Don't increment failure counter — this is a server-side decision,
+          // not a wrong password.
           throw new Error("Su cuenta ha sido suspendida. Contacte con un administrador.");
         }
 
@@ -63,12 +80,20 @@ export const authOptions: NextAuthOptions = {
         );
 
         if (!isPasswordCorrect) {
-          throw new Error("Contraseña incorrecta");
+          const after = await recordLoginFailure(emailLower, ip);
+          if (after.locked) {
+            throw new Error("Demasiados intentos fallidos. Cuenta bloqueada temporalmente por 15 minutos.");
+          }
+          const remaining = Math.max(0, 5 - after.count);
+          throw new Error(`Contraseña incorrecta. Te quedan ${remaining} intento${remaining === 1 ? "" : "s"}.`);
         }
 
         if (user.expiresAt && new Date() > user.expiresAt) {
           throw new Error("Su licencia o periodo de prueba ha expirado");
         }
+
+        // Successful login — clear failure counter
+        await resetLoginFailures(emailLower, ip);
 
         const role =
           user.role === "SUPERADMIN" || user.role === "STUDENT" || user.role === "TEACHER" || user.role === "COORDINATOR" || user.role === "ADMIN"

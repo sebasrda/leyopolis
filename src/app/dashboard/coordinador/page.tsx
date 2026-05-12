@@ -69,7 +69,8 @@ export default function CoordinadorDashboardPage() {
     };
 
     fetchData();
-    const interval = setInterval(fetchData, 5000);
+    // Poll every 30s (was 5s — three endpoints per cycle was excessive)
+    const interval = setInterval(fetchData, 30_000);
 
     return () => clearInterval(interval);
   }, [session]);

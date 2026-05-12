@@ -8,7 +8,8 @@
       "Bash(taskkill /F /IM node.exe)",
       "Bash(npx vercel *)",
       "Read(//c/Users/user/.claude/projects/d--trae-projects-Leyopolis/memory/**)",
-      "Bash(grep -E \"module.exports|export default|module\\\\\\\\.exports = \" node_modules/pdf-parse/dist/pdf-parse/cjs/index.cjs)"
+      "Bash(grep -E \"module.exports|export default|module\\\\\\\\.exports = \" node_modules/pdf-parse/dist/pdf-parse/cjs/index.cjs)",
+      "Bash(npm install *)"
     ]
   }
 }

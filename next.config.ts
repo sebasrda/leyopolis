@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
@@ -66,4 +67,18 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+// Sentry: only activates when SENTRY_DSN is set. Otherwise the wrap is a no-op
+// for runtime behaviour (it still passes through but reports nothing). Safe
+// to leave on permanently.
+const SENTRY_DSN = process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN;
+
+export default SENTRY_DSN
+  ? withSentryConfig(nextConfig, {
+      // Org/project come from env vars (SENTRY_ORG, SENTRY_PROJECT) so we
+      // don't hardcode them — set them in Vercel project settings when ready.
+      silent: true,
+      widenClientFileUpload: true,
+      disableLogger: true,
+      sourcemaps: { disable: false },
+    })
+  : nextConfig;

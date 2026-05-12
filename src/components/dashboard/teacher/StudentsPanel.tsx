@@ -142,8 +142,10 @@ export default function StudentsPanel() {
     }
     // 2) Kick off a fresh fetch (for users who just assigned new students)
     load();
-    // 3) Poll every 5s for true real-time
-    const id = setInterval(load, 5000);
+    // 3) Poll every 20s (balance: feels live, doesn't hammer the DB)
+    //    Server-side injection already gives us instant data on first load,
+    //    so polling is just for incremental updates.
+    const id = setInterval(load, 20_000);
     return () => clearInterval(id);
   }, []);
 

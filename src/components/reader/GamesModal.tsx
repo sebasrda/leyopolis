@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { useSession } from "next-auth/react";
+import { useGamification } from "@/context/GamificationContext";
 
 // Classic games
 import { TimelineGame } from "@/components/learning/games/TimelineGame";
@@ -58,9 +59,23 @@ const GAME_TITLES: Record<string, string> = {
 export default function GamesModal({ isOpen, onClose, bookTitle, bookId }: GamesModalProps) {
   const { data: session } = useSession();
   const isAdmin = (session?.user as any)?.role === "ADMIN" || (session?.user as any)?.role === "SUPERADMIN";
+  const { addXp } = useGamification();
   const [activeGame, setActiveGame] = useState<GameType>(null);
   const [quizData, setQuizData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [lastReward, setLastReward] = useState<{ xp: number; gameLabel: string } | null>(null);
+
+  // Award XP based on the game's score%. Visible toast confirms it.
+  const handleGameComplete = (gameLabel: string) => async (score: number, maxScore: number) => {
+    const pct = maxScore > 0 ? score / maxScore : 0;
+    let xp = 10;
+    if (pct >= 1) xp = 150;
+    else if (pct >= 0.7) xp = 100;
+    else if (pct >= 0.5) xp = 50;
+    if (xp > 0) await addXp(xp);
+    setLastReward({ xp, gameLabel });
+    setTimeout(() => setLastReward(null), 4000);
+  };
 
   const fetchQuiz = async (forceRegenerate = false) => {
     if (!bookId) return;
@@ -292,27 +307,27 @@ export default function GamesModal({ isOpen, onClose, bookTitle, bookId }: Games
                   <>
                     {/* Classic games */}
                     {activeGame === "truefalse" && (
-                      <TrueFalseGame statements={quizData?.statements || []} onComplete={() => {}} onExit={() => setActiveGame(null)} />
+                      <TrueFalseGame statements={quizData?.statements || []} onComplete={handleGameComplete("Verdadero o Falso")} onExit={() => setActiveGame(null)} />
                     )}
                     {activeGame === "timeline" && (
-                      <TimelineGame events={quizData?.timelineEvents || []} onComplete={() => {}} />
+                      <TimelineGame events={quizData?.timelineEvents || []} onComplete={handleGameComplete("Cronología")} />
                     )}
                     {activeGame === "wordsearch" && (
-                      <WordSearchGame words={quizData?.keywords || ["LEYOPOLIS", "LECTURA"]} onComplete={() => {}} />
+                      <WordSearchGame words={quizData?.keywords || ["LEYOPOLIS", "LECTURA"]} onComplete={handleGameComplete("Sopa de Letras")} />
                     )}
                     {activeGame === "scramble" && (
-                      <WordScrambleGame sentences={quizData?.sentences || []} onComplete={() => {}} onExit={() => setActiveGame(null)} />
+                      <WordScrambleGame sentences={quizData?.sentences || []} onComplete={handleGameComplete("Ordenar Frases")} onExit={() => setActiveGame(null)} />
                     )}
 
                     {/* Gesture games */}
                     {activeGame === "g-quiz" && (
-                      <GestureQuiz questions={quizData?.questions || []} onComplete={() => {}} onExit={() => setActiveGame(null)} />
+                      <GestureQuiz questions={quizData?.questions || []} onComplete={handleGameComplete("Quiz Gestual")} onExit={() => setActiveGame(null)} />
                     )}
                     {activeGame === "g-vf" && (
-                      <GestureVerdaderoFalso statements={quizData?.statements || []} onComplete={() => {}} onExit={() => setActiveGame(null)} />
+                      <GestureVerdaderoFalso statements={quizData?.statements || []} onComplete={handleGameComplete("V/F Gestual")} onExit={() => setActiveGame(null)} />
                     )}
                     {activeGame === "g-puzzle" && (
-                      <GestureRompecabezas onComplete={() => {}} onExit={() => setActiveGame(null)} />
+                      <GestureRompecabezas onComplete={handleGameComplete("Rompecabezas")} onExit={() => setActiveGame(null)} />
                     )}
                     {activeGame === "g-ppt" && (
                       <GesturePPT
@@ -320,18 +335,18 @@ export default function GamesModal({ isOpen, onClose, bookTitle, bookId }: Games
                         keywords={quizData?.keywords || []}
                         statements={quizData?.statements || []}
                         bookTitle={bookTitle}
-                        onComplete={() => {}}
+                        onComplete={handleGameComplete("Piedra Papel Tijeras")}
                         onExit={() => setActiveGame(null)}
                       />
                     )}
                     {activeGame === "g-timeline" && (
-                      <GestureTimeline events={quizData?.timelineEvents || []} onComplete={() => {}} onExit={() => setActiveGame(null)} />
+                      <GestureTimeline events={quizData?.timelineEvents || []} onComplete={handleGameComplete("Cronología Gestual")} onExit={() => setActiveGame(null)} />
                     )}
                     {activeGame === "g-adivina" && (
-                      <GestureAdivinaPersonaje characters={quizData?.characterClues || []} onComplete={() => {}} onExit={() => setActiveGame(null)} />
+                      <GestureAdivinaPersonaje characters={quizData?.characterClues || []} onComplete={handleGameComplete("Adivina el Personaje")} onExit={() => setActiveGame(null)} />
                     )}
                     {activeGame === "g-simon" && (
-                      <GestureSimonDice keywords={quizData?.keywords || []} onComplete={() => {}} onExit={() => setActiveGame(null)} />
+                      <GestureSimonDice keywords={quizData?.keywords || []} onComplete={handleGameComplete("Simón Dice")} onExit={() => setActiveGame(null)} />
                     )}
                   </>
                 )}
@@ -339,6 +354,21 @@ export default function GamesModal({ isOpen, onClose, bookTitle, bookId }: Games
             </div>
           )}
         </div>
+
+        {/* Floating XP reward toast — fires when a game's onComplete grants XP */}
+        {lastReward && (
+          <div className="absolute top-24 left-1/2 -translate-x-1/2 z-[110] animate-in fade-in slide-in-from-top-4 duration-500 pointer-events-none">
+            <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-5 py-3 rounded-2xl shadow-2xl shadow-amber-500/40 flex items-center gap-3">
+              <span className="text-3xl">🏆</span>
+              <div>
+                <p className="text-xs uppercase tracking-wider font-semibold text-white/85">
+                  {lastReward.gameLabel}
+                </p>
+                <p className="text-lg font-black tabular-nums">+{lastReward.xp} XP</p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -82,13 +82,21 @@ export function WordSearchGame({ words = ["LEYOPOLIS", "LIBRO", "JUEGO"], gridSi
     const placedOk: Array<{ display: string; placed: string }> = [];
     const sorted = [...pairs].sort((a, b) => b.placed.length - a.placed.length);
 
+    // Weighted direction bag: pre-2024 we picked uniformly from 0-7 which
+    // looked vertical-heavy on screen because horizontal lines stack in the
+    // same row pool. Bag distribution: 5 horizontal entries, 3 vertical,
+    // 2 diagonal -> roughly 50% horizontal / 30% vertical / 20% diagonal,
+    // which matches how a hand-made word search would look.
+    //   0=H→, 1=V↓, 2=D↘, 3=D↗, 4=H←, 5=V↑, 6=D↖, 7=D↙
+    const DIRECTION_BAG = [0, 0, 0, 4, 4, 1, 1, 5, 2, 3, 7];
+
     for (const entry of sorted) {
       const word = entry.placed;
       if (word.length > dynamicSize) continue;
       let placed = false;
       let attempts = 0;
       while (!placed && attempts < 250) {
-        const direction = Math.floor(Math.random() * 8);
+        const direction = DIRECTION_BAG[Math.floor(Math.random() * DIRECTION_BAG.length)];
         const startX = Math.floor(Math.random() * dynamicSize);
         const startY = Math.floor(Math.random() * dynamicSize);
 

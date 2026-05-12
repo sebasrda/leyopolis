@@ -51,6 +51,53 @@ function fallbackActivity(prompt: string) {
   };
 }
 
+// Activity-type-aware output shape & instruction. Tells the AI exactly what
+// JSON to produce based on what the teacher picked in the wizard.
+function shapeForType(type: string, count: number): string {
+  switch (type) {
+    case "TRUE_FALSE":
+      return `"type": "TRUE_FALSE",
+  "content": { "statements": [ { "text": string, "isTrue": boolean } ] }
+  // Genera ${count} afirmaciones, mezclando verdaderas y falsas (50/50 idealmente).`;
+    case "WORDSEARCH":
+      return `"type": "WORDSEARCH",
+  "content": { "words": string[], "gridSize": 12 }
+  // ${count} palabras clave del libro, de 4-12 letras, en MAYÚSCULAS sin espacios ni tildes.`;
+    case "REORDER":
+      return `"type": "REORDER",
+  "content": { "sentences": [ { "id": number, "sentence": string } ] }
+  // ${count} frases del libro EN EL ORDEN CRONOLÓGICO CORRECTO. El juego se las muestra mezcladas al estudiante.`;
+    case "MATCH":
+      return `"type": "MATCH",
+  "content": { "pairs": [ { "word": string, "def": string } ] }
+  // ${count} pares concepto/personaje + definición correspondiente.`;
+    case "FILL_BLANK":
+      return `"type": "FILL_BLANK",
+  "content": { "sentences": [ { "sentence": string, "answer": string } ] }
+  // ${count} oraciones del libro con un blanco marcado con ___ y la palabra esperada.`;
+    case "SHORT_ANSWER":
+      return `"type": "SHORT_ANSWER",
+  "content": { "questions": [ { "question": string, "answer": string } ] }
+  // ${count} preguntas con respuesta corta (1-3 palabras).`;
+    case "CROSSWORD":
+      return `"type": "CROSSWORD",
+  "content": { "clues": [ { "word": string, "hint": string } ] }
+  // ${count} palabras clave del libro con una pista corta para cada una. Palabras en MAYÚSCULAS sin tildes.`;
+    case "READING_COMPREHENSION":
+      return `"type": "READING_COMPREHENSION",
+  "content": {
+    "passage": string,  // un párrafo del libro (~150-250 palabras)
+    "questions": [ { "id": number, "question": string, "options": string[4], "correctAnswer": number } ]
+  }
+  // ${count} preguntas de opción múltiple sobre el pasaje.`;
+    case "QUIZ":
+    default:
+      return `"type": "QUIZ",
+  "content": { "questions": [ { "id": number, "question": string, "options": string[4], "correctAnswer": number } ] }
+  // ${count} preguntas de opción múltiple inteligentes y desafiantes.`;
+  }
+}
+
 export async function POST(req: Request) {
   const user = await getUserIdAndRole();
   if (!user) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
@@ -60,7 +107,26 @@ export async function POST(req: Request) {
 
   const body = (await req.json()) as Record<string, unknown>;
   const promptText = typeof body.prompt === "string" ? body.prompt : "";
+  const bookId = typeof body.bookId === "string" ? body.bookId : null;
+  const activityType = typeof body.type === "string" ? body.type : "QUIZ";
+  const count = typeof body.count === "number" && body.count > 0 ? Math.min(50, Math.floor(body.count)) : 8;
+
   if (!promptText.trim()) return NextResponse.json({ message: "Prompt required" }, { status: 400 });
+
+  // Fetch book context (title, author, sinopsis) when bookId is provided.
+  let bookContext = "";
+  if (bookId) {
+    try {
+      const book = await (prisma as any).book.findUnique({
+        where: { id: bookId },
+        select: { title: true, author: true, description: true },
+      });
+      if (book) {
+        bookContext = `Libro: "${book.title}" de ${book.author || "Autor desconocido"}.
+Sinopsis: ${book.description?.slice(0, 600) || "Sin sinopsis disponible."}`;
+      }
+    } catch { /* keep going without book context */ }
+  }
 
   // 1. Fetch keys from DB
   const settings = await prisma.systemSetting.findMany();
@@ -74,18 +140,24 @@ export async function POST(req: Request) {
   const openaiKey = sanitize(settingsMap.OPENAI_API_KEY || process.env.OPENAI_API_KEY);
   const openrouterKey = sanitize(settingsMap.OPENROUTER_API_KEY || process.env.OPENROUTER_API_KEY);
 
-  const fullPrompt = `Crea una actividad educativa tipo Moodle para una plataforma de lectura.
-Devuelve SOLO JSON válido, sin markdown.
-Formato:
+  const fullPrompt = `Eres un experto pedagogo. Genera una actividad educativa para una plataforma de lectura escolar.
+${bookContext}
+
+REGLAS:
+- Responde SOLO con JSON válido, sin markdown, sin explicaciones.
+- Las preguntas/ítems deben basarse en el libro indicado.
+- Usa un tono respetuoso, claro y adaptado a estudiantes.
+- NO uses placeholders como "Opción A" o "Respuesta correcta", genera contenido real.
+
+FORMATO DE SALIDA (cumple ESTRICTAMENTE la estructura indicada):
 {
   "title": string,
   "description": string,
-  "type": "QUIZ",
-  "points": number,
-  "content": { "questions": [ { "id": number, "question": string, "options": string[4], "correctAnswer": number } ] }
+  ${shapeForType(activityType, count)},
+  "points": ${Math.max(50, count * 10)}
 }
-La actividad debe tener 8 preguntas inteligentes y desafiantes.
-Prompt del profesor: ${promptText}`;
+
+Contexto adicional del profesor: ${promptText}`;
 
   let jsonText = "";
 

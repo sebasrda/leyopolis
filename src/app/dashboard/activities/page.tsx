@@ -61,6 +61,33 @@ export default function ActivitiesPage() {
   const [prompt, setPrompt] = useState("");
   const [generating, setGenerating] = useState(false);
 
+  // ── AI generator wizard state ─────────────────────────────────────────────
+  const [aiBookId, setAiBookId] = useState<string>("");
+  const [aiType, setAiType] = useState<string>("QUIZ");
+  const [aiCount, setAiCount] = useState<number>(8);
+  const [aiBookQuery, setAiBookQuery] = useState("");
+  const [aiBooks, setAiBooks] = useState<Array<{ id: string; title: string; author: string; coverImage?: string }>>([]);
+  const [aiBooksLoading, setAiBooksLoading] = useState(false);
+
+  // Fetch books only when the AI dialog opens so we don't waste a call
+  useEffect(() => {
+    if (!aiOpen || aiBooks.length > 0) return;
+    setAiBooksLoading(true);
+    fetch("/api/books?_=" + Date.now(), { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => Array.isArray(data) ? setAiBooks(data) : setAiBooks([]))
+      .catch(() => setAiBooks([]))
+      .finally(() => setAiBooksLoading(false));
+  }, [aiOpen, aiBooks.length]);
+
+  const aiFilteredBooks = useMemo(() => {
+    if (!aiBookQuery.trim()) return aiBooks.slice(0, 40);
+    const q = aiBookQuery.toLowerCase();
+    return aiBooks
+      .filter((b) => b.title?.toLowerCase().includes(q) || b.author?.toLowerCase().includes(q))
+      .slice(0, 40);
+  }, [aiBooks, aiBookQuery]);
+
   const canCreate = me?.role === "ADMIN" || me?.role === "TEACHER";
 
   const typeLabel = useMemo(() => {
@@ -123,19 +150,38 @@ export default function ActivitiesPage() {
   };
 
   const handleGenerate = async () => {
-    if (!prompt.trim()) return;
+    if (!aiBookId) return;
+    const book = aiBooks.find((b) => b.id === aiBookId);
+    if (!book) return;
+
     setGenerating(true);
     try {
+      // Build a structured prompt so the API doesn't need to guess what the
+      // teacher meant. The server adds type-specific output-shape instructions.
+      const promptParts = [
+        `Libro: "${book.title}" de ${book.author}`,
+        `Tipo de actividad solicitada: ${aiType}`,
+        `Cantidad de preguntas/ítems: ${aiCount}`,
+        "Genera contenido pedagógico de alta calidad orientado a estudiantes, evaluando comprensión y análisis del libro mencionado.",
+      ];
+
       const res = await fetch("/api/activities/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt }),
+        body: JSON.stringify({
+          prompt: promptParts.join("\n"),
+          bookId: aiBookId,
+          type: aiType,
+          count: aiCount,
+        }),
       });
       if (!res.ok) return;
       const data = (await res.json()) as { title?: string; description?: string; type?: string; points?: number; content?: unknown };
       if (data.title) setTitle(data.title);
+      else setTitle(`${labelForType(aiType)}: ${book.title}`);
       if (data.description) setDescription(data.description);
-      if (data.type) setType(data.type);
+      else setDescription(`Actividad generada con IA para el libro "${book.title}".`);
+      setType(data.type || aiType);
       if (typeof data.points === "number") setPoints(data.points);
       if (data.content) setContent(JSON.stringify(data.content, null, 2));
       setAiOpen(false);
@@ -144,6 +190,10 @@ export default function ActivitiesPage() {
       setGenerating(false);
     }
   };
+
+  function labelForType(t: string): string {
+    return activityTypes.find((x) => x.value === t)?.label || t;
+  }
 
   return (
     <div className="space-y-8">
@@ -161,25 +211,126 @@ export default function ActivitiesPage() {
                   <Sparkles className="h-4 w-4" /> Generar actividad con IA
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[640px]">
-                <DialogHeader>
-                  <DialogTitle>Generar actividad con IA</DialogTitle>
+              <DialogContent className="sm:max-w-[720px] max-h-[90vh] overflow-hidden flex flex-col p-0 gap-0">
+                <DialogHeader className="px-6 pt-6 pb-3 shrink-0 border-b border-border/40">
+                  <DialogTitle className="flex items-center gap-2">
+                    <Sparkles className="h-5 w-5 text-purple-400" />
+                    Generar actividad con IA
+                  </DialogTitle>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Elige sobre qué libro y qué tipo de actividad quieres generar. La IA crea las preguntas usando el contenido del libro.
+                  </p>
                 </DialogHeader>
-                <div className="space-y-4">
-                  <Textarea
-                    value={prompt}
-                    onChange={(e) => setPrompt(e.target.value)}
-                    placeholder='Ej: "crear actividad sobre capítulo 3 del libro"'
-                    className="min-h-[140px]"
-                  />
-                  <div className="flex justify-end gap-2">
-                    <Button variant="outline" onClick={() => setAiOpen(false)}>
-                      Cancelar
-                    </Button>
-                    <Button onClick={handleGenerate} className="bg-indigo-600 hover:bg-indigo-700" disabled={generating}>
-                      Generar
-                    </Button>
+
+                <div className="flex-1 overflow-y-auto px-6 py-4 space-y-5">
+                  {/* 1. Book selector */}
+                  <div className="space-y-2">
+                    <div className="text-sm font-medium text-foreground flex items-center gap-2">
+                      <span className="bg-indigo-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-black">1</span>
+                      Elige el libro
+                    </div>
+                    <Input
+                      value={aiBookQuery}
+                      onChange={(e) => setAiBookQuery(e.target.value)}
+                      placeholder="Buscar por título o autor…"
+                    />
+                    <div className="max-h-[200px] overflow-y-auto rounded-lg border border-border/40 divide-y">
+                      {aiBooksLoading ? (
+                        <p className="text-sm text-muted-foreground text-center py-6">Cargando biblioteca…</p>
+                      ) : aiFilteredBooks.length === 0 ? (
+                        <p className="text-sm text-muted-foreground text-center py-6">Sin resultados.</p>
+                      ) : aiFilteredBooks.map((b) => (
+                        <button
+                          key={b.id}
+                          type="button"
+                          onClick={() => setAiBookId(b.id)}
+                          className={`w-full text-left px-3 py-2 flex items-center gap-3 transition-colors ${
+                            aiBookId === b.id ? "bg-indigo-500/15 border-l-2 border-indigo-500" : "hover:bg-muted/40"
+                          }`}
+                        >
+                          {b.coverImage ? (
+                            /* eslint-disable-next-line @next/next/no-img-element */
+                            <img src={b.coverImage} alt={b.title} className="w-8 h-10 object-cover rounded shrink-0" loading="lazy" />
+                          ) : (
+                            <div className="w-8 h-10 bg-muted rounded flex items-center justify-center shrink-0">
+                              <BookOpen className="h-3 w-3 text-muted-foreground" />
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium line-clamp-1">{b.title}</p>
+                            <p className="text-[11px] text-muted-foreground line-clamp-1">{b.author}</p>
+                          </div>
+                          {aiBookId === b.id && <Sparkles className="h-4 w-4 text-indigo-400" />}
+                        </button>
+                      ))}
+                    </div>
                   </div>
+
+                  {/* 2. Activity type */}
+                  <div className="space-y-2">
+                    <div className="text-sm font-medium text-foreground flex items-center gap-2">
+                      <span className="bg-indigo-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-black">2</span>
+                      Elige el tipo de actividad
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                      {activityTypes.map((t) => (
+                        <Button
+                          key={t.value}
+                          type="button"
+                          variant={aiType === t.value ? "default" : "outline"}
+                          size="sm"
+                          className={`h-auto py-2 text-xs ${aiType === t.value ? "bg-indigo-600 hover:bg-indigo-700" : ""}`}
+                          onClick={() => setAiType(t.value)}
+                        >
+                          {t.label}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 3. Count */}
+                  <div className="space-y-2">
+                    <div className="text-sm font-medium text-foreground flex items-center gap-2">
+                      <span className="bg-indigo-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-black">3</span>
+                      Cantidad de preguntas / ítems
+                    </div>
+                    <div className="flex gap-2 items-center">
+                      {[5, 8, 10, 15, 20].map((n) => (
+                        <Button
+                          key={n}
+                          type="button"
+                          size="sm"
+                          variant={aiCount === n ? "default" : "outline"}
+                          className={aiCount === n ? "bg-indigo-600 hover:bg-indigo-700" : ""}
+                          onClick={() => setAiCount(n)}
+                        >
+                          {n}
+                        </Button>
+                      ))}
+                      <Input
+                        type="number"
+                        min={1}
+                        max={50}
+                        value={String(aiCount)}
+                        onChange={(e) => setAiCount(Math.max(1, Math.min(50, Number(e.target.value) || 8)))}
+                        className="w-20 h-9"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="px-6 py-3 border-t border-border/40 bg-card/60 backdrop-blur flex justify-end gap-2 shrink-0">
+                  <Button variant="outline" onClick={() => setAiOpen(false)}>
+                    Cancelar
+                  </Button>
+                  <Button
+                    onClick={handleGenerate}
+                    className="bg-indigo-600 hover:bg-indigo-700 gap-2"
+                    disabled={generating || !aiBookId}
+                  >
+                    <Sparkles className="h-4 w-4" />
+                    {generating ? "Generando..." : "Generar actividad"}
+                  </Button>
                 </div>
               </DialogContent>
             </Dialog>

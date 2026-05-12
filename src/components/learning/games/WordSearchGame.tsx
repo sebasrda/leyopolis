@@ -22,6 +22,7 @@ interface Cell {
 
 export function WordSearchGame({ words = ["LEYOPOLIS", "LIBRO", "JUEGO"], gridSize = 12, onComplete, onExit }: WordSearchProps) {
   const [grid, setGrid] = useState<Cell[][]>([]);
+  const [actualWords, setActualWords] = useState<string[]>([]); // words that actually fit
   const [foundWords, setFoundWords] = useState<string[]>([]);
   const [isSelecting, setIsSelecting] = useState(false);
   const [selectionStart, setSelectionStart] = useState<{x: number, y: number} | null>(null);
@@ -37,9 +38,16 @@ export function WordSearchGame({ words = ["LEYOPOLIS", "LIBRO", "JUEGO"], gridSi
 
   const initializeGrid = () => {
     if (!words || words.length === 0) return;
-    // 1. Create empty grid
-    const newGrid: Cell[][] = Array(gridSize).fill(null).map((_, y) => 
-      Array(gridSize).fill(null).map((_, x) => ({
+
+    // Adapt grid: grow if the longest word doesn't fit. Was hard-capped at the
+    // gridSize prop, which silently dropped long keywords like
+    // "TRANSFORMACION" (14 letters) from a 12x12 grid.
+    const longestWord = Math.max(...words.map(w => w.length));
+    const dynamicSize = Math.max(gridSize, longestWord + 2);
+
+    // 1. Create empty grid (dynamicSize x dynamicSize)
+    const newGrid: Cell[][] = Array(dynamicSize).fill(null).map((_, y) =>
+      Array(dynamicSize).fill(null).map((_, x) => ({
         letter: '',
         x,
         y,
@@ -48,21 +56,20 @@ export function WordSearchGame({ words = ["LEYOPOLIS", "LIBRO", "JUEGO"], gridSi
       }))
     );
 
-    // 2. Place words
+    // 2. Place words (longest first). Try 8 directions, up to 250 attempts.
     const placedWords: string[] = [];
-    
-    // Sort words by length desc to place hardest first
     const wordsToPlace = [...words].map(w => w.toUpperCase()).sort((a, b) => b.length - a.length);
 
     for (const word of wordsToPlace) {
+      if (word.length > dynamicSize) continue; // skip words too long
       let placed = false;
       let attempts = 0;
-      while (!placed && attempts < 100) {
-        const direction = Math.floor(Math.random() * 3); // 0: horizontal, 1: vertical, 2: diagonal
-        const startX = Math.floor(Math.random() * gridSize);
-        const startY = Math.floor(Math.random() * gridSize);
-        
-        if (canPlaceWord(newGrid, word, startX, startY, direction)) {
+      while (!placed && attempts < 250) {
+        const direction = Math.floor(Math.random() * 8); // 8 directions inc. reverses
+        const startX = Math.floor(Math.random() * dynamicSize);
+        const startY = Math.floor(Math.random() * dynamicSize);
+
+        if (canPlaceWord(newGrid, word, startX, startY, direction, dynamicSize)) {
           placeWord(newGrid, word, startX, startY, direction);
           placed = true;
           placedWords.push(word);
@@ -73,8 +80,8 @@ export function WordSearchGame({ words = ["LEYOPOLIS", "LIBRO", "JUEGO"], gridSi
 
     // 3. Fill empty spots with random letters
     const alphabet = "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ";
-    for (let y = 0; y < gridSize; y++) {
-      for (let x = 0; x < gridSize; x++) {
+    for (let y = 0; y < dynamicSize; y++) {
+      for (let x = 0; x < dynamicSize; x++) {
         if (newGrid[y][x].letter === '') {
           newGrid[y][x].letter = alphabet[Math.floor(Math.random() * alphabet.length)];
         }
@@ -82,35 +89,36 @@ export function WordSearchGame({ words = ["LEYOPOLIS", "LIBRO", "JUEGO"], gridSi
     }
 
     setGrid(newGrid);
+    // Display only words that were actually placed so the list never lies.
+    setActualWords(placedWords);
     setFoundWords([]);
     setGameFinished(false);
   };
 
-  const canPlaceWord = (grid: Cell[][], word: string, x: number, y: number, direction: number) => {
-    if (direction === 0) { // Horizontal
-      if (x + word.length > gridSize) return false;
-      for (let i = 0; i < word.length; i++) {
-        if (grid[y][x + i].letter !== '' && grid[y][x + i].letter !== word[i]) return false;
-      }
-    } else if (direction === 1) { // Vertical
-      if (y + word.length > gridSize) return false;
-      for (let i = 0; i < word.length; i++) {
-        if (grid[y + i][x].letter !== '' && grid[y + i][x].letter !== word[i]) return false;
-      }
-    } else { // Diagonal
-      if (x + word.length > gridSize || y + word.length > gridSize) return false;
-      for (let i = 0; i < word.length; i++) {
-        if (grid[y + i][x + i].letter !== '' && grid[y + i][x + i].letter !== word[i]) return false;
-      }
+  // 8 directions: 0=H→, 1=V↓, 2=D↘, 3=D↗, 4=H←, 5=V↑, 6=D↖, 7=D↙
+  const DIR_DX = [1, 0, 1, 1, -1, 0, -1, -1];
+  const DIR_DY = [0, 1, 1, -1, 0, -1, -1, 1];
+
+  const canPlaceWord = (grid: Cell[][], word: string, x: number, y: number, direction: number, size: number) => {
+    const dx = DIR_DX[direction];
+    const dy = DIR_DY[direction];
+    const endX = x + dx * (word.length - 1);
+    const endY = y + dy * (word.length - 1);
+    if (endX < 0 || endX >= size || endY < 0 || endY >= size) return false;
+    for (let i = 0; i < word.length; i++) {
+      const cx = x + dx * i;
+      const cy = y + dy * i;
+      const cell = grid[cy][cx].letter;
+      if (cell !== '' && cell !== word[i]) return false;
     }
     return true;
   };
 
   const placeWord = (grid: Cell[][], word: string, x: number, y: number, direction: number) => {
+    const dx = DIR_DX[direction];
+    const dy = DIR_DY[direction];
     for (let i = 0; i < word.length; i++) {
-      if (direction === 0) grid[y][x + i].letter = word[i];
-      else if (direction === 1) grid[y + i][x].letter = word[i];
-      else grid[y + i][x + i].letter = word[i];
+      grid[y + dy * i][x + dx * i].letter = word[i];
     }
   };
 
@@ -162,14 +170,13 @@ export function WordSearchGame({ words = ["LEYOPOLIS", "LIBRO", "JUEGO"], gridSi
     const selectedWord = currentSelection.map(pos => grid[pos.y][pos.x].letter).join('');
     const reversedWord = selectedWord.split('').reverse().join(''); // Support backwards selection
 
-    const matchedWord = words.find(w => w.toUpperCase() === selectedWord || w.toUpperCase() === reversedWord);
+    const matchedWord = actualWords.find(w => w === selectedWord || w === reversedWord);
 
-    if (matchedWord && !foundWords.includes(matchedWord.toUpperCase())) {
+    if (matchedWord && !foundWords.includes(matchedWord)) {
       // Found a new word!
-      const wordUpper = matchedWord.toUpperCase();
       setFoundWords(prev => {
-        const newFound = [...prev, wordUpper];
-        if (newFound.length === words.length) {
+        const newFound = [...prev, matchedWord];
+        if (newFound.length === actualWords.length) {
             setTimeout(() => setGameFinished(true), 500);
         }
         return newFound;
@@ -202,10 +209,10 @@ export function WordSearchGame({ words = ["LEYOPOLIS", "LIBRO", "JUEGO"], gridSi
           <p className="text-xl text-emerald-600 font-medium mb-6">Encontraste todas las palabras</p>
           <div className="bg-muted dark:bg-gray-900/50 p-6 rounded-2xl mb-8">
             <p className="text-sm text-muted-foreground dark:text-gray-400 uppercase tracking-widest font-bold mb-1">Puntuación</p>
-            <p className="text-5xl font-black text-indigo-400">{words.length * 10}</p>
+            <p className="text-5xl font-black text-indigo-400">{actualWords.length * 10}</p>
           </div>
-          <Button 
-            onClick={() => onComplete(words.length * 10, words.length * 10)}
+          <Button
+            onClick={() => onComplete(actualWords.length * 10, actualWords.length * 10)}
             className="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-xl py-8 rounded-2xl shadow-lg shadow-indigo-200 dark:shadow-none transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
             Reclamar Recompensa
@@ -229,20 +236,20 @@ export function WordSearchGame({ words = ["LEYOPOLIS", "LIBRO", "JUEGO"], gridSi
   return (
     <div className="flex flex-col md:flex-row gap-8 items-start justify-center p-4 max-w-5xl mx-auto h-full" onMouseUp={handleMouseUp}>
       
-      {/* Word List */}
+      {/* Word List — shows only words that actually exist in the grid */}
       <div className="w-full md:w-64 bg-card p-6 rounded-2xl shadow-md border border-indigo-500/50/20">
         <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
-            Palabras ({foundWords.length}/{words.length})
+            Palabras ({foundWords.length}/{actualWords.length})
         </h3>
         <div className="flex flex-wrap gap-2">
-            {words.map(word => {
-                const isFound = foundWords.includes(word.toUpperCase());
+            {actualWords.map(word => {
+                const isFound = foundWords.includes(word);
                 return (
-                    <div 
-                        key={word} 
+                    <div
+                        key={word}
                         className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-300 ${
-                            isFound 
-                                ? 'bg-green-100 text-green-700 line-through opacity-60' 
+                            isFound
+                                ? 'bg-green-100 text-green-700 line-through opacity-60'
                                 : 'bg-muted text-foreground'
                         }`}
                     >
@@ -258,11 +265,11 @@ export function WordSearchGame({ words = ["LEYOPOLIS", "LIBRO", "JUEGO"], gridSi
         className="bg-card p-4 rounded-2xl shadow-lg border-4 border-indigo-500/50/30 touch-none select-none"
         onMouseLeave={() => setIsSelecting(false)}
       >
-        <div 
+        <div
             className="grid gap-1"
-            style={{ 
-                gridTemplateColumns: `repeat(${gridSize}, minmax(30px, 40px))`,
-                gridTemplateRows: `repeat(${gridSize}, minmax(30px, 40px))`
+            style={{
+                gridTemplateColumns: `repeat(${grid.length}, minmax(26px, 38px))`,
+                gridTemplateRows: `repeat(${grid.length}, minmax(26px, 38px))`
             }}
         >
             {grid.map((row, y) => (

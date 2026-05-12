@@ -29,8 +29,9 @@ import { BookCover } from "@/components/ui/book-cover";
 import { DISPLAY_GRADES, GRADE_TO_STANDARD, normalizeGrade } from "@/lib/grades";
 
 const categories = ["Todos", "Infantil", "Académico", "Literatura", "Ciencia", "Historia", "General"];
-const difficulties = ["Todos", "Principiante", "Intermedio", "Avanzado"];
-const subjects = ["Todos", "Español", "Ciencias", "Matemáticas", "Historia", "Inglés", "Arte"];
+// Difficulty filter retired — it duplicated the grade filter and confused
+// users. Grade is the canonical difficulty signal.
+const subjects = ["Todos", "Español", "Ciencias", "Matemáticas", "Historia", "Inglés", "Artes"];
 
 export default function LibraryPage() {
   const { data: session } = useSession();
@@ -38,7 +39,6 @@ export default function LibraryPage() {
   const isAdminOrTeacher = role === "ADMIN" || role === "TEACHER";
   
   const [selectedCategory, setSelectedCategory] = useState("Todos");
-  const [selectedDifficulty, setSelectedDifficulty] = useState("Todos");
   const [selectedGrade, setSelectedGrade] = useState("Todos");
   const [selectedSubject, setSelectedSubject] = useState("Todos");
   const [searchQuery, setSearchQuery] = useState("");
@@ -105,14 +105,13 @@ export default function LibraryPage() {
 
   const filteredBooks = books.filter(book => {
     const matchesCategory = selectedCategory === "Todos" || book.category === selectedCategory;
-    const matchesDifficulty = selectedDifficulty === "Todos" || book.difficulty === selectedDifficulty;
-    const matchesSearch = !searchQuery || 
-      book.title?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    const matchesSearch = !searchQuery ||
+      book.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       book.author?.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesDifficulty && matchesSearch;
+    return matchesCategory && matchesSearch;
   });
 
-  const hasActiveFilters = selectedCategory !== "Todos" || selectedDifficulty !== "Todos" || selectedGrade !== "Todos" || selectedSubject !== "Todos";
+  const hasActiveFilters = selectedCategory !== "Todos" || selectedGrade !== "Todos" || selectedSubject !== "Todos";
 
   const assignedBooksList = filteredBooks.filter(b => b.isAssigned);
   const otherBooksList = filteredBooks.filter(b => !b.isAssigned);
@@ -151,11 +150,6 @@ export default function LibraryPage() {
           <SelectContent>{categories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
         </Select>
 
-        <Select value={selectedDifficulty} onValueChange={setSelectedDifficulty}>
-          <SelectTrigger className="w-[130px] h-9"><SelectValue placeholder="Dificultad" /></SelectTrigger>
-          <SelectContent>{difficulties.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}</SelectContent>
-        </Select>
-
         <Select value={selectedGrade} onValueChange={setSelectedGrade}>
           <SelectTrigger className="w-[110px] h-9"><SelectValue placeholder="Grado" /></SelectTrigger>
           <SelectContent>{DISPLAY_GRADES.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}</SelectContent>
@@ -171,7 +165,6 @@ export default function LibraryPage() {
             variant="ghost" size="sm" className="text-red-500 hover:text-red-700 h-9"
             onClick={() => {
               setSelectedCategory("Todos");
-              setSelectedDifficulty("Todos");
               setSelectedGrade("Todos");
               setSelectedSubject("Todos");
             }}
@@ -204,7 +197,7 @@ export default function LibraryPage() {
           <BookOpen className="h-16 w-16 mx-auto mb-4 text-gray-300" />
           <h3 className="text-xl font-bold text-foreground mb-2">No se encontraron libros</h3>
           <p className="text-muted-foreground max-w-md mx-auto">Intenta ajustar tus filtros de búsqueda.</p>
-          <Button variant="link" onClick={() => { setSelectedCategory("Todos"); setSelectedDifficulty("Todos"); setSearchQuery(""); }} className="mt-4 text-indigo-400">
+          <Button variant="link" onClick={() => { setSelectedCategory("Todos"); setSelectedGrade("Todos"); setSelectedSubject("Todos"); setSearchQuery(""); }} className="mt-4 text-indigo-400">
             Ver todos los libros
           </Button>
         </div>

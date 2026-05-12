@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Trophy, CheckCircle2, XCircle } from "lucide-react";
+import { Trophy, CheckCircle2, XCircle, Timer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { GestureCamUI } from "./GestureCamUI";
@@ -37,15 +37,20 @@ const QUADRANT_BORDER: Record<string, string> = {
 const DWELL_MS = 1800;
 const COOLDOWN_MS = 2200;
 const MAX_Q = 10;
+const TIMER_S = 25;
 
 export function GestureQuiz({ questions, onComplete, onExit }: GestureQuizProps) {
-  const pool = questions.slice(0, MAX_Q);
+  // Stabilize pool so it doesn't change every render. useState init lets us
+  // cap at 10 once; the underlying handler closures stay stable.
+  const [pool] = useState(() => questions.slice(0, MAX_Q));
   const [idx, setIdx] = useState(0);
   const [score, setScore] = useState(0);
   const [feedback, setFeedback] = useState<"correct" | "wrong" | null>(null);
   const [done, setDone] = useState(false);
   const [dwellZone, setDwellZone] = useState<string | null>(null);
   const [dwellProgress, setDwellProgress] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(TIMER_S);
+  const [lastWrongChoice, setLastWrongChoice] = useState<number | null>(null);
 
   const { isActive, isLoading, error, getPosition, videoRef, canvasRef, startCamera, stopCamera } = useGestureCam();
 
@@ -55,33 +60,59 @@ export function GestureQuiz({ questions, onComplete, onExit }: GestureQuizProps)
   const feedbackRef = useRef<"correct" | "wrong" | null>(null);
   const idxRef = useRef(idx);
   const scoreRef = useRef(score);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => { idxRef.current = idx; }, [idx]);
   useEffect(() => { scoreRef.current = score; }, [score]);
   useEffect(() => { feedbackRef.current = feedback; }, [feedback]);
 
-  const handleAnswer = useCallback((quadrant: string) => {
+  const handleAnswer = useCallback((quadrant: string, fromTimeout = false) => {
     if (feedbackRef.current || !pool[idxRef.current]) return;
     const q = pool[idxRef.current];
     const optIdx = ["TL", "TR", "BL", "BR"].indexOf(quadrant);
-    const correct = optIdx === q.correctAnswer;
+    const correct = !fromTimeout && optIdx === q.correctAnswer;
     if (correct) scoreRef.current = scoreRef.current + 1;
     setScore(s => correct ? s + 1 : s);
     setFeedback(correct ? "correct" : "wrong");
     feedbackRef.current = correct ? "correct" : "wrong";
+    setLastWrongChoice(correct ? null : optIdx);
+
+    // Show the correct answer for 2.6s when the user got it wrong (or ran out
+    // of time) so they actually learn. Faster path for correct answers.
+    const delay = correct ? 1200 : 2600;
 
     setTimeout(() => {
       setFeedback(null);
       feedbackRef.current = null;
+      setLastWrongChoice(null);
       const next = idxRef.current + 1;
       if (next >= pool.length) {
         setDone(true);
         onComplete?.(scoreRef.current, pool.length);
       } else {
         setIdx(next);
+        setTimeLeft(TIMER_S);
       }
-    }, 1400);
+    }, delay);
   }, [pool, onComplete]);
+
+  // Countdown timer — runs whether playing by gesture or click
+  useEffect(() => {
+    if (feedbackRef.current || done || pool.length === 0) return;
+    setTimeLeft(TIMER_S);
+    timerRef.current = setInterval(() => {
+      setTimeLeft(t => {
+        if (t <= 1) {
+          // Time's up: fake a wrong answer (BR is the dummy quadrant, but we
+          // pass fromTimeout=true so the answer is always marked wrong)
+          handleAnswer("BR", true);
+          return TIMER_S;
+        }
+        return t - 1;
+      });
+    }, 1000);
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [idx, done, pool.length, handleAnswer]);
 
   // Dwell detection loop (runs at 10fps to avoid re-render overload)
   useEffect(() => {
@@ -138,11 +169,14 @@ export function GestureQuiz({ questions, onComplete, onExit }: GestureQuizProps)
 
   return (
     <div className="flex flex-col gap-4 w-full max-w-3xl mx-auto p-4">
-      {/* Progress */}
+      {/* Progress + timer */}
       <div className="flex items-center gap-3">
-        <span className="text-sm text-slate-400">{idx + 1}/{pool.length}</span>
+        <span className="text-sm text-slate-400 tabular-nums">{idx + 1}/{pool.length}</span>
         <Progress value={((idx + 1) / pool.length) * 100} className="flex-1 h-2" />
-        <span className="text-sm font-bold text-purple-300">{score} pts</span>
+        <div className={`flex items-center gap-1 text-sm font-bold tabular-nums ${timeLeft <= 5 ? "text-red-400 animate-pulse" : "text-orange-300"}`}>
+          <Timer className="h-4 w-4" />{timeLeft}s
+        </div>
+        <span className="text-sm font-bold text-purple-300 tabular-nums">{score} pts</span>
       </div>
 
       {/* Question */}
@@ -161,22 +195,29 @@ export function GestureQuiz({ questions, onComplete, onExit }: GestureQuizProps)
 
       {/* 4 answer zones */}
       <div className="grid grid-cols-2 gap-3">
-        {quadrants.map(({ key, label }) => {
+        {quadrants.map(({ key, label }, qIdx) => {
           const isDwelling = dwellZone === key;
+          const isCorrectAnswer = qIdx === q.correctAnswer;
+          const isWrongChosen = lastWrongChoice === qIdx;
+          const showResult = feedback !== null;
+          let extraCls = "border-white/10";
+          if (showResult && isCorrectAnswer) extraCls = "border-green-400 ring-2 ring-green-400/60";
+          else if (showResult && isWrongChosen) extraCls = "border-red-400 ring-2 ring-red-400/60 opacity-70";
+          else if (isDwelling) extraCls = QUADRANT_BORDER[key];
           return (
             <motion.div
               key={key}
-              className={`relative rounded-2xl p-4 border-2 cursor-pointer transition-all ${QUADRANT_COLORS[key]} ${
-                isDwelling ? QUADRANT_BORDER[key] : "border-white/10"
-              }`}
-              whileHover={{ scale: 1.02 }}
-              onClick={() => handleAnswer(key)}
+              className={`relative rounded-2xl p-4 border-2 cursor-pointer transition-all ${QUADRANT_COLORS[key]} ${extraCls}`}
+              whileHover={!showResult ? { scale: 1.02 } : {}}
+              onClick={() => !showResult && handleAnswer(key)}
             >
               <div className="flex items-center gap-3">
-                <span className={`font-black text-2xl text-white/60`}>{QUADRANT_LABELS[key]}</span>
-                <span className="text-sm font-medium text-white">{label}</span>
+                <span className="font-black text-2xl text-white/60">{QUADRANT_LABELS[key]}</span>
+                <span className="text-sm font-medium text-white flex-1">{label}</span>
+                {showResult && isCorrectAnswer && <CheckCircle2 className="h-5 w-5 text-green-300" />}
+                {showResult && isWrongChosen && <XCircle className="h-5 w-5 text-red-300" />}
               </div>
-              {isDwelling && (
+              {isDwelling && !showResult && (
                 <div className="absolute bottom-1.5 left-2 right-2 h-1 bg-white/20 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-white rounded-full transition-all"
@@ -188,6 +229,24 @@ export function GestureQuiz({ questions, onComplete, onExit }: GestureQuizProps)
           );
         })}
       </div>
+
+      {feedback && q.options[q.correctAnswer] && (
+        <motion.div
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`rounded-xl px-4 py-2 text-center text-sm border ${
+            feedback === "correct"
+              ? "bg-green-900/40 text-green-200 border-green-500/40"
+              : "bg-red-900/40 text-red-100 border-red-500/40"
+          }`}
+        >
+          {feedback === "correct" ? (
+            <>✅ Respuesta correcta: <strong>{q.options[q.correctAnswer]}</strong></>
+          ) : (
+            <>❌ La respuesta correcta era: <strong>{q.options[q.correctAnswer]}</strong></>
+          )}
+        </motion.div>
+      )}
 
       {/* Feedback overlay */}
       <AnimatePresence>

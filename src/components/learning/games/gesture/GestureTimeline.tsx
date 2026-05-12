@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Trophy, CheckCircle2, XCircle, ArrowLeft, ArrowRight } from "lucide-react";
+import { Trophy, CheckCircle2, XCircle, ArrowLeft, ArrowRight, Timer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { GestureCamUI } from "./GestureCamUI";
@@ -17,6 +17,7 @@ interface Props {
 
 const DWELL_MS = 1600;
 const COOLDOWN_MS = 2000;
+const TIMER_S = 20;
 
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
@@ -28,14 +29,18 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 export function GestureTimeline({ events, onComplete, onExit }: Props) {
-  // Build pairs: show 2 events, ask which came first
-  const ordered = events.slice(0, 6);
-  const pairs: Array<[string, string, 0 | 1]> = [];
-  for (let i = 0; i < ordered.length - 1; i++) {
-    const swapped = Math.random() > 0.5;
-    if (swapped) pairs.push([ordered[i + 1], ordered[i], 1]); // right is first (original[i])
-    else pairs.push([ordered[i], ordered[i + 1], 0]); // left is first (original[i])
-  }
+  // Build pairs ONCE so the array identity is stable across renders. Before
+  // pairs was recomputed every render, which made handleSide's closure unstable.
+  const [pairs] = useState<Array<[string, string, 0 | 1]>>(() => {
+    const ordered = events.slice(0, 6);
+    const out: Array<[string, string, 0 | 1]> = [];
+    for (let i = 0; i < ordered.length - 1; i++) {
+      const swapped = Math.random() > 0.5;
+      if (swapped) out.push([ordered[i + 1], ordered[i], 1]);
+      else out.push([ordered[i], ordered[i + 1], 0]);
+    }
+    return out;
+  });
 
   const [pairIdx, setPairIdx] = useState(0);
   const [score, setScore] = useState(0);
@@ -43,6 +48,8 @@ export function GestureTimeline({ events, onComplete, onExit }: Props) {
   const [done, setDone] = useState(false);
   const [dwellSide, setDwellSide] = useState<"left" | "right" | null>(null);
   const [dwellProgress, setDwellProgress] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(TIMER_S);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const { isActive, isLoading, error, getPosition, videoRef, canvasRef, startCamera, stopCamera } = useGestureCam();
 
@@ -57,13 +64,14 @@ export function GestureTimeline({ events, onComplete, onExit }: Props) {
   useEffect(() => { scoreRef.current = score; }, [score]);
   useEffect(() => { feedbackRef.current = feedback; }, [feedback]);
 
-  const handleSide = useCallback((side: "left" | "right") => {
+  const handleSide = useCallback((side: "left" | "right" | "timeout") => {
     if (feedbackRef.current || pairs.length === 0) return;
     const pair = pairs[pairIdxRef.current];
     if (!pair) return;
     const [, , firstIsIdx] = pair;
-    // firstIsIdx: 0 = left came first, 1 = right came first
-    const correct = (side === "left" && firstIsIdx === 0) || (side === "right" && firstIsIdx === 1);
+    const correct = side !== "timeout" && (
+      (side === "left" && firstIsIdx === 0) || (side === "right" && firstIsIdx === 1)
+    );
     if (correct) scoreRef.current += 1;
     setScore(s => correct ? s + 1 : s);
     setFeedback(correct ? "correct" : "wrong");
@@ -77,9 +85,26 @@ export function GestureTimeline({ events, onComplete, onExit }: Props) {
         onComplete?.(scoreRef.current, pairs.length);
       } else {
         setPairIdx(next);
+        setTimeLeft(TIMER_S);
       }
-    }, 1400);
+    }, 1800);
   }, [pairs, onComplete]);
+
+  // Countdown timer — independent of camera state so the clock always ticks
+  useEffect(() => {
+    if (feedbackRef.current || done || pairs.length === 0) return;
+    setTimeLeft(TIMER_S);
+    timerRef.current = setInterval(() => {
+      setTimeLeft(t => {
+        if (t <= 1) {
+          handleSide("timeout");
+          return TIMER_S;
+        }
+        return t - 1;
+      });
+    }, 1000);
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [pairIdx, done, pairs.length, handleSide]);
 
   useEffect(() => {
     if (!isActive) return;
@@ -130,9 +155,12 @@ export function GestureTimeline({ events, onComplete, onExit }: Props) {
   return (
     <div className="flex flex-col gap-4 w-full max-w-2xl mx-auto p-4 relative">
       <div className="flex items-center gap-3">
-        <span className="text-sm text-slate-400">{pairIdx + 1}/{pairs.length}</span>
+        <span className="text-sm text-slate-400 tabular-nums">{pairIdx + 1}/{pairs.length}</span>
         <Progress value={((pairIdx + 1) / pairs.length) * 100} className="flex-1 h-2" />
-        <span className="text-sm font-bold text-purple-300">{score} pts</span>
+        <div className={`flex items-center gap-1 text-sm font-bold tabular-nums ${timeLeft <= 5 ? "text-red-400 animate-pulse" : "text-orange-300"}`}>
+          <Timer className="h-4 w-4" />{timeLeft}s
+        </div>
+        <span className="text-sm font-bold text-purple-300 tabular-nums">{score} pts</span>
       </div>
 
       <div className="bg-slate-800 rounded-2xl p-4 text-center border border-purple-500/30">

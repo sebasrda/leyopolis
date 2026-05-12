@@ -72,7 +72,7 @@ export const DISPLAY_GRADES = [
   "Octavo",
   "Noveno",
   "Décimo",
-  "Once"
+  "Undécimo"
 ];
 
 export const GRADE_TO_STANDARD: Record<string, string> = {
@@ -86,5 +86,6 @@ export const GRADE_TO_STANDARD: Record<string, string> = {
   "Octavo": "8vo",
   "Noveno": "9no",
   "Décimo": "10mo",
-  "Once": "11vo"
+  "Once": "11vo",
+  "Undécimo": "11vo"
 };

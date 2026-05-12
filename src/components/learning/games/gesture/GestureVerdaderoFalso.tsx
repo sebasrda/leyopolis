@@ -219,22 +219,31 @@ export function GestureVerdaderoFalso({ statements, onComplete, onExit }: Props)
         </motion.div>
       </div>
 
-      {/* Feedback */}
+      {/* Feedback — always reveals the correct answer to support learning */}
       <AnimatePresence>
         {feedback && (
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10 gap-3 rounded-2xl"
+            className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10 gap-3 rounded-2xl bg-black/40 backdrop-blur-sm p-4"
           >
             {feedback === "correct"
-              ? <CheckCircle2 className="h-24 w-24 text-green-400 drop-shadow-2xl" />
-              : <XCircle className="h-24 w-24 text-red-400 drop-shadow-2xl" />
+              ? <CheckCircle2 className="h-20 w-20 text-green-400 drop-shadow-2xl" />
+              : <XCircle className="h-20 w-20 text-red-400 drop-shadow-2xl" />
             }
             <span className="text-white font-black text-2xl drop-shadow-lg">
-              {feedback === "correct" ? "¡Correcto!" : `Era ${st.isTrue ? "VERDADERO" : "FALSO"}`}
+              {feedback === "correct" ? "¡Correcto!" : "Respuesta incorrecta"}
             </span>
+            <div className={`pointer-events-auto max-w-md rounded-xl px-5 py-3 text-center border ${
+              st.isTrue ? "bg-green-900/70 border-green-500/40" : "bg-red-900/70 border-red-500/40"
+            }`}>
+              <p className="text-[10px] uppercase tracking-wider text-white/70 mb-1">La respuesta correcta es</p>
+              <p className="text-2xl font-black text-white">
+                {st.isTrue ? "VERDADERO" : "FALSO"}
+              </p>
+              <p className="text-sm text-white/90 mt-2 italic">«{st.text}»</p>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

@@ -1,7 +1,7 @@
 "use client";
 
 import Hero from "@/components/landing/Hero";
-import { BookOpen, Globe, Sparkles, Shield, Zap, BarChart3, Users, GraduationCap, CheckCircle2, Menu, X, Hand, MousePointer2, Camera, Lock, Sparkle } from "lucide-react";
+import { BookOpen, Globe, Sparkles, Shield, Zap, BarChart3, Users, GraduationCap, CheckCircle2, Menu, X, Hand, MousePointer2, Camera, Lock, Sparkle, Trophy, Phone, Mail } from "lucide-react";
 import { useState } from "react";
 
 const FEATURES = [
@@ -10,24 +10,40 @@ const FEATURES = [
     color: "from-indigo-500 to-purple-600",
     bg: "bg-indigo-500/10",
     border: "border-indigo-500/50/20",
-    title: "IA Pedagógica",
-    desc: "Genera quizzes, juegos y actividades de comprensión automáticamente al subir un libro.",
+    title: "IA Pedagógica – Semillero de Escritores",
+    desc: "Al subir un escrito, la IA genera quizzes, juegos y actividades adaptadas al nivel de comprensión exigido por cada institución.",
   },
   {
     icon: Globe,
     color: "from-cyan-500 to-blue-600",
     bg: "bg-cyan-500/10",
     border: "border-cyan-500/20",
-    title: "Traducción en Tiempo Real",
-    desc: "Traduce páginas completas y frases seleccionadas directamente en el lector, en +40 idiomas.",
+    title: "7 Idiomas Disponibles",
+    desc: "Traducción en tiempo real: Español · Inglés · Francés · Alemán · Portugués · Italiano · Mandarin. Directo en el lector.",
   },
   {
     icon: BarChart3,
     color: "from-emerald-500 to-teal-600",
     bg: "bg-emerald-500/10",
     border: "border-emerald-500/20",
-    title: "Analytics en Tiempo Real",
-    desc: "Supervisa el progreso de cada estudiante, comprensión promedio y lecturas activas desde tu panel.",
+    title: "Seguimiento a Comprensión Lectora",
+    desc: "Monitorea en tiempo real el nivel lector de cada estudiante. Reportes de comprensión, racha de lectura y avance por institución.",
+  },
+  {
+    icon: Trophy,
+    color: "from-rose-500 to-pink-600",
+    bg: "bg-rose-500/10",
+    border: "border-rose-500/20",
+    title: "Gamificación & Sistema de Racha",
+    desc: "XP, niveles, logros y racha diaria de lectura. Minijuegos de comprensión: rompecabezas, quiz, V/F, piedra-papel-tijera.",
+  },
+  {
+    icon: BookOpen,
+    color: "from-violet-500 to-fuchsia-600",
+    bg: "bg-violet-500/10",
+    border: "border-violet-500/20",
+    title: "Quizzes Interactivos & Descargables",
+    desc: "Quizzes generados por IA según el nivel de comprensión exigido por la institución. Descargables e imprimibles para el aula.",
   },
   {
     icon: Shield,
@@ -35,23 +51,7 @@ const FEATURES = [
     bg: "bg-amber-500/10",
     border: "border-amber-500/20",
     title: "Control Institucional",
-    desc: "Gestiona colegios, clases, docentes y estudiantes con roles diferenciados y permisos seguros.",
-  },
-  {
-    icon: Zap,
-    color: "from-rose-500 to-pink-600",
-    bg: "bg-rose-500/10",
-    border: "border-rose-500/20",
-    title: "Gamificación",
-    desc: "Sistema de XP, niveles y logros que motiva a los estudiantes a leer más y mejor.",
-  },
-  {
-    icon: BookOpen,
-    color: "from-violet-500 to-fuchsia-600",
-    bg: "bg-violet-500/10",
-    border: "border-violet-500/20",
-    title: "Biblioteca Digital",
-    desc: "Carga de PDFs ilimitados con portada, sinopsis IA, filtros por grado y asignación directa.",
+    desc: "Gestiona colegios, clases y docentes. Define el nivel de comprensión lectora exigido por institución y controla el acceso por roles.",
   },
 ];
 
@@ -369,7 +369,7 @@ export default function Home() {
       {/* FOR WHO */}
       <section className="py-32 border-t border-white/5">
         <div className="container mx-auto px-6">
-          <div className="text-center mb-16">
+          <div className="text-center mb-6">
             <h2 className="text-4xl sm:text-5xl font-black text-white">
               Diseñado para{" "}
               <span className="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
@@ -377,45 +377,83 @@ export default function Home() {
               </span>{" "}
               educativo
             </h2>
+            <p className="mt-4 text-sm sm:text-base text-emerald-300 font-medium">
+              Semillero de Escritores · Comprensión Lectora · Sistema de Racha · Siete idiomas
+            </p>
           </div>
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-3 gap-6 mt-12">
             {[
               {
                 icon: GraduationCap,
                 role: "Estudiantes",
                 color: "from-indigo-500 to-purple-600",
-                perks: ["Lee con tutor IA integrado", "Gana XP y sube de nivel", "Completa quizzes automáticos", "Traduce en tiempo real"],
+                accent: "bg-indigo-400",
+                perks: [
+                  "Asistencia virtual IA 24/7",
+                  "Gana XP, niveles y racha diaria",
+                  "Quizzes adaptados a tu nivel",
+                  "Traduce en 7 idiomas al instante",
+                  "Sube escritos y practica comprensión",
+                ],
               },
               {
                 icon: Users,
                 role: "Docentes",
                 color: "from-emerald-500 to-teal-600",
-                perks: ["Asigna lecturas por curso", "Monitorea comprensión en vivo", "Lecturas sugeridas por IA", "Genera reportes en un clic"],
+                accent: "bg-emerald-400",
+                perks: [
+                  "Asigna escritos por curso",
+                  "Seguimiento de comprensión lectora",
+                  "Quizzes descargables generados por IA",
+                  "Reportes de racha y nivel lector",
+                  "Alertas de estudiantes rezagados",
+                ],
               },
               {
                 icon: Shield,
                 role: "Administradores",
                 color: "from-amber-500 to-orange-600",
-                perks: ["Gestiona toda la institución", "Control de acceso por roles", "Métricas institucionales", "Biblioteca restringida o abierta"],
+                accent: "bg-amber-400",
+                perks: [
+                  "Gestiona toda la institución",
+                  "Control de acceso por roles",
+                  "Métricas institucionales globales",
+                  "Biblioteca restringida o abierta",
+                  "Uptime garantizado 99.9%",
+                ],
               },
             ].map((r) => (
               <div
                 key={r.role}
-                className="rounded-2xl bg-card/[0.03] border border-white/[0.07] p-8 hover:bg-card/[0.06] transition-all duration-300 hover:-translate-y-1"
+                className="rounded-2xl bg-card/[0.03] border border-white/[0.07] p-8 hover:bg-card/[0.06] transition-all duration-300 hover:-translate-y-1 relative overflow-hidden"
               >
+                <div className={`absolute top-0 left-0 right-0 h-1 ${r.accent}`} />
                 <div className={`inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${r.color} mb-6 shadow-xl`}>
                   <r.icon className="h-7 w-7 text-white" />
                 </div>
-                <h3 className="text-2xl font-black text-white mb-4">{r.role}</h3>
+                <h3 className="text-2xl font-black text-white mb-4 uppercase tracking-wide">{r.role}</h3>
                 <ul className="space-y-3">
                   {r.perks.map((p) => (
-                    <li key={p} className="flex items-start gap-2 text-sm text-gray-400">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-400 mt-0.5 shrink-0" />
-                      {p}
+                    <li key={p} className="flex items-start gap-2 text-sm text-gray-300">
+                      <span className={`h-2 w-2 rounded-full ${r.accent} mt-1.5 shrink-0`} />
+                      <span>{p}</span>
                     </li>
                   ))}
                 </ul>
               </div>
+            ))}
+          </div>
+
+          {/* Languages banner */}
+          <div className="mt-10 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 px-6 py-4 flex flex-wrap items-center justify-center gap-x-3 gap-y-2 text-sm">
+            <span className="inline-flex items-center gap-2 font-bold text-emerald-300">
+              <Globe className="h-4 w-4" />
+              7 IDIOMAS:
+            </span>
+            {["Español", "Inglés", "Francés", "Alemán", "Portugués", "Italiano", "Mandarin"].map((lang, i, arr) => (
+              <span key={lang} className="text-emerald-200/90 font-medium">
+                {lang}{i < arr.length - 1 ? <span className="mx-1 text-emerald-500/60">·</span> : null}
+              </span>
             ))}
           </div>
         </div>
@@ -455,6 +493,36 @@ export default function Home() {
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* CONTACT STRIP */}
+      <section className="border-t border-white/5 bg-gradient-to-r from-emerald-500/10 via-cyan-500/10 to-indigo-500/10">
+        <div className="container mx-auto px-6 py-8 grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+          <a href="tel:+573017146739" className="flex items-center gap-3 group">
+            <div className="h-10 w-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center shrink-0">
+              <Phone className="h-5 w-5 text-emerald-300" />
+            </div>
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-emerald-300/80 font-bold">Teléfono</p>
+              <p className="text-white font-bold group-hover:text-emerald-300 transition">+57 301 714 6739</p>
+            </div>
+          </a>
+          <a href="https://www.gruporodes.com.co" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 group justify-self-start md:justify-self-center">
+            <div className="h-10 w-10 rounded-xl bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center shrink-0">
+              <Globe className="h-5 w-5 text-cyan-300" />
+            </div>
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-cyan-300/80 font-bold">Sitio web</p>
+              <p className="text-white font-bold group-hover:text-cyan-300 transition">www.gruporodes.com.co</p>
+            </div>
+          </a>
+          <a
+            href="#demo"
+            className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 px-6 py-3 text-base font-bold text-white shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 hover:scale-105 transition-all duration-300 justify-self-start md:justify-self-end"
+          >
+            ¡Solicita tu demo gratuita!
+          </a>
         </div>
       </section>
 

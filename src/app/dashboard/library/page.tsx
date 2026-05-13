@@ -2,9 +2,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, BookOpen, Clock, SlidersHorizontal, Sparkles, Loader2, AlertCircle, CheckCircle } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { BookOpen, Clock, SlidersHorizontal, Sparkles, Loader2, AlertCircle, CheckCircle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
@@ -38,10 +38,20 @@ export default function LibraryPage() {
   const role = session?.user?.role;
   const isAdminOrTeacher = role === "ADMIN" || role === "TEACHER";
   
+  const urlParams = useSearchParams();
   const [selectedCategory, setSelectedCategory] = useState("Todos");
   const [selectedGrade, setSelectedGrade] = useState("Todos");
   const [selectedSubject, setSelectedSubject] = useState("Todos");
-  const [searchQuery, setSearchQuery] = useState("");
+  // Search comes from the global header search bar via ?search= URL param.
+  // We mirror it into local state so users can clear it without losing
+  // their other filter selections.
+  const [searchQuery, setSearchQuery] = useState(urlParams.get("search") || "");
+
+  // Stay in sync when the header search redirects again with a new query
+  useEffect(() => {
+    const q = urlParams.get("search") || "";
+    setSearchQuery(q);
+  }, [urlParams]);
   const [books, setBooks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -124,16 +134,22 @@ export default function LibraryPage() {
           <h1 className="text-3xl font-bold text-foreground">Biblioteca Digital</h1>
           <p className="text-muted-foreground">Explora los libros disponibles para tu aprendizaje.</p>
         </div>
-        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-          <div className="relative flex-1 sm:w-64">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-            <Input 
-              placeholder="Buscar por título o autor..." 
-              className="pl-10"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
+        <div className="flex items-center gap-3">
+          {searchQuery && (
+            <div className="flex items-center gap-2 bg-indigo-500/15 border border-indigo-500/30 rounded-full pl-3 pr-1 py-1 text-xs">
+              <span className="text-indigo-300">
+                Buscando: <span className="font-bold text-foreground">{searchQuery}</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="h-5 w-5 rounded-full bg-indigo-500/20 hover:bg-indigo-500/40 flex items-center justify-center transition"
+                title="Limpiar búsqueda"
+              >
+                <X className="h-3 w-3 text-indigo-200" />
+              </button>
+            </div>
+          )}
           {isAdminOrTeacher && <UploadBookDialog onSuccess={fetchBooks} />}
         </div>
       </div>

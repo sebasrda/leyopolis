@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { 
   Building2,
   BookOpen,
@@ -200,9 +200,55 @@ export default function DashboardLayout({ children, serverXp, serverLevel, serve
     }
   }, [session?.user?.role, stableRole]);
 
+  // ── Global search: live dropdown ────────────────────────────────
+  const [searchResults, setSearchResults] = useState<Array<{ id: string; title: string; author: string; coverImage: string | null }>>([]);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searching, setSearching] = useState(false);
+  const searchBoxRef = useRef<HTMLDivElement | null>(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      if (searchBoxRef.current && !searchBoxRef.current.contains(e.target as Node)) {
+        setSearchOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, []);
+
+  // Debounced fetch as the user types
+  useEffect(() => {
+    const q = searchQuery.trim();
+    if (q.length < 2) {
+      setSearchResults([]);
+      return;
+    }
+    const handle = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(q)}&limit=8`, { cache: "no-store" });
+        if (res.ok) {
+          const data = await res.json();
+          setSearchResults(Array.isArray(data.books) ? data.books : []);
+          setSearchOpen(true);
+        }
+      } catch {
+        /* network errors are fine for live search */
+      } finally {
+        setSearching(false);
+      }
+    }, 250);
+    return () => clearTimeout(handle);
+  }, [searchQuery]);
+
   const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && searchQuery.trim()) {
+    if (e.key === "Enter" && searchQuery.trim()) {
       router.push(`/dashboard/library?search=${encodeURIComponent(searchQuery)}`);
+      setSearchOpen(false);
+    }
+    if (e.key === "Escape") {
+      setSearchOpen(false);
     }
   };
 
@@ -463,16 +509,61 @@ export default function DashboardLayout({ children, serverXp, serverLevel, serve
           <Button variant="ghost" size="icon" className="md:hidden text-slate-400 hover:text-white mr-2 shrink-0" onClick={() => setMobileOpen(true)}>
             <Menu className="h-5 w-5" />
           </Button>
-          <div className="flex-1 max-w-xl">
+          <div className="flex-1 max-w-xl" ref={searchBoxRef}>
             <div className="relative">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input 
-                placeholder="Buscar libros, autores, temas..." 
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <Input
+                placeholder="Buscar libros, autores, temas..."
                 className="pl-10 bg-card/5 border-white/10 text-slate-300 placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-indigo-500/50 focus-visible:border-indigo-500/50/50 rounded-xl"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={handleSearch}
+                onFocus={() => { if (searchResults.length > 0) setSearchOpen(true); }}
               />
+              {searchOpen && searchQuery.trim().length >= 2 && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-[#0f1623] border border-white/10 rounded-xl shadow-2xl overflow-hidden z-50 max-h-[460px] overflow-y-auto">
+                  {searching && searchResults.length === 0 && (
+                    <div className="p-4 text-sm text-muted-foreground text-center">Buscando…</div>
+                  )}
+                  {!searching && searchResults.length === 0 && (
+                    <div className="p-4 text-sm text-muted-foreground text-center">
+                      Sin resultados para "<span className="text-foreground">{searchQuery}</span>"
+                    </div>
+                  )}
+                  {searchResults.map((book) => (
+                    <Link
+                      key={book.id}
+                      href={`/dashboard/reader/${book.id}?title=${encodeURIComponent(book.title)}`}
+                      onClick={() => { setSearchOpen(false); setSearchQuery(""); }}
+                      className="flex items-center gap-3 p-3 hover:bg-white/5 transition border-b border-white/5 last:border-0"
+                    >
+                      {book.coverImage ? (
+                        <img src={book.coverImage} alt={book.title} className="h-12 w-9 object-cover rounded shrink-0" />
+                      ) : (
+                        <div className="h-12 w-9 rounded bg-gradient-to-br from-indigo-600 to-violet-700 flex items-center justify-center shrink-0">
+                          <BookOpen className="h-4 w-4 text-white" />
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-foreground line-clamp-1">{book.title}</p>
+                        <p className="text-xs text-muted-foreground line-clamp-1">{book.author}</p>
+                      </div>
+                    </Link>
+                  ))}
+                  {searchResults.length >= 8 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        router.push(`/dashboard/library?search=${encodeURIComponent(searchQuery)}`);
+                        setSearchOpen(false);
+                      }}
+                      className="w-full p-3 text-center text-sm text-indigo-400 hover:text-indigo-300 hover:bg-white/5 transition border-t border-white/10"
+                    >
+                      Ver todos los resultados para "{searchQuery}" →
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 

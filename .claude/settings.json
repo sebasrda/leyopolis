@@ -12,7 +12,8 @@
       "Bash(npm install *)",
       "Bash(npx prisma *)",
       "Bash(git commit -m 'fix\\(landing\\): actualizar cifra de unidades pedagogicas de 50+ a 220 *)",
-      "Bash(git commit -m 'fix\\(landing\\): 220 unidades y '\\\\''Asistente Virtual'\\\\'' en lugar de '\\\\''Tutor IA'\\\\'' en el Hero y social proof *)"
+      "Bash(git commit -m 'fix\\(landing\\): 220 unidades y '\\\\''Asistente Virtual'\\\\'' en lugar de '\\\\''Tutor IA'\\\\'' en el Hero y social proof *)",
+      "Bash(git commit -m 'fix\\(landing\\): cifras finales actualizadas \\(220 unidades, 7 idiomas\\) *)"
     ]
   }
 }

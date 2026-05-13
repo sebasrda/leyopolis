@@ -192,7 +192,7 @@ export default function Hero() {
                     <div key={i} className="w-5 h-5 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 border-2 border-[#0a0a1a]" />
                   ))}
                 </div>
-                <span className="text-xs text-muted-foreground">+50 unidades pedagógicas disponibles</span>
+                <span className="text-xs text-muted-foreground">+220 unidades pedagógicas disponibles</span>
               </div>
             </div>
 
@@ -213,7 +213,7 @@ export default function Hero() {
               </div>
               <div>
                 <p className="text-[10px] font-bold text-purple-300">Traducción en tiempo real</p>
-                <p className="text-[9px] text-muted-foreground">+40 idiomas</p>
+                <p className="text-[9px] text-muted-foreground">7 idiomas</p>
               </div>
             </div>
           </div>

@@ -198,7 +198,7 @@ export default function Home() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             {[
               { n: "🔥 Diaria", label: "Sistema de racha · premia leer cada día" },
-              { n: "50+", label: "Unidades pedagógicas" },
+              { n: "220", label: "Unidades pedagógicas" },
               { n: "IA 24/7", label: "Tutor disponible" },
               { n: "99.9%", label: "Uptime garantizado" },
             ].map((s) => (

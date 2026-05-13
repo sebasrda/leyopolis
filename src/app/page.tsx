@@ -199,7 +199,7 @@ export default function Home() {
             {[
               { n: "🔥 Diaria", label: "Sistema de racha · premia leer cada día" },
               { n: "220", label: "Unidades pedagógicas" },
-              { n: "IA 24/7", label: "Tutor disponible" },
+              { n: "IA 24/7", label: "Asistente Virtual disponible" },
               { n: "99.9%", label: "Uptime garantizado" },
             ].map((s) => (
               <div key={s.label}>

@@ -36,8 +36,8 @@ const FEATURED_BOOKS = [
 ];
 
 const STATS = [
-  { value: "50+", label: "Unidades", icon: BookOpen },
-  { value: "IA", label: "Quizzes Auto", icon: Brain },
+  { value: "220", label: "Unidades", icon: BookOpen },
+  { value: "IA", label: "Asistente Virtual", icon: Brain },
   { value: "100%", label: "Pedagógico", icon: Trophy },
 ];
 

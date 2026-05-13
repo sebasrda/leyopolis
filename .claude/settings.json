@@ -11,7 +11,8 @@
       "Bash(grep -E \"module.exports|export default|module\\\\\\\\.exports = \" node_modules/pdf-parse/dist/pdf-parse/cjs/index.cjs)",
       "Bash(npm install *)",
       "Bash(npx prisma *)",
-      "Bash(git commit -m 'fix\\(landing\\): actualizar cifra de unidades pedagogicas de 50+ a 220 *)"
+      "Bash(git commit -m 'fix\\(landing\\): actualizar cifra de unidades pedagogicas de 50+ a 220 *)",
+      "Bash(git commit -m 'fix\\(landing\\): 220 unidades y '\\\\''Asistente Virtual'\\\\'' en lugar de '\\\\''Tutor IA'\\\\'' en el Hero y social proof *)"
     ]
   }
 }

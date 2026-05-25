@@ -13,7 +13,16 @@
       "Bash(npx prisma *)",
       "Bash(git commit -m 'fix\\(landing\\): actualizar cifra de unidades pedagogicas de 50+ a 220 *)",
       "Bash(git commit -m 'fix\\(landing\\): 220 unidades y '\\\\''Asistente Virtual'\\\\'' en lugar de '\\\\''Tutor IA'\\\\'' en el Hero y social proof *)",
-      "Bash(git commit -m 'fix\\(landing\\): cifras finales actualizadas \\(220 unidades, 7 idiomas\\) *)"
+      "Bash(git commit -m 'fix\\(landing\\): cifras finales actualizadas \\(220 unidades, 7 idiomas\\) *)",
+      "Bash(node -e ' *)",
+      "Bash(gh run *)",
+      "PowerShell(gh run list --branch main --limit 3)",
+      "Bash(npm ci *)",
+      "Read(//tmp/claude/d--trae-projects-Leyopolis/915d3999-90cd-49de-a2e8-1daacd2a1560/tasks/**)",
+      "Bash(ScheduleWakeup_unavailable)",
+      "Bash(echo \"tsc exit: $?\")",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:api.github.com)"
     ]
   }
 }

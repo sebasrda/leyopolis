@@ -22,6 +22,7 @@ import {
   Calendar,
 } from "lucide-react";
 import { ProgressDonut } from "@/components/dashboard/student/ProgressDonut";
+import { BookCover } from "@/components/ui/book-cover";
 import { cn } from "@/lib/utils";
 
 interface Book {
@@ -347,20 +348,17 @@ export default function DashboardPage() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-r from-[#0f1623] via-[#0f1623]/40 to-transparent" />
 
-                {/* Book Cover */}
+                {/* Book Cover — priority + Next/Image for instant LCP */}
                 <div className="relative z-10 shrink-0">
                   <div className="w-24 sm:w-32 h-36 sm:h-44 rounded-lg overflow-hidden shadow-2xl ring-1 ring-white/20 transition-transform duration-300 group-hover:-translate-y-1" style={{ perspective: "1000px" }}>
-                    {heroBookData.coverImage ? (
-                      <img
-                        src={heroBookData.coverImage}
-                        alt={heroBookData.title}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-indigo-600 to-violet-700 flex items-center justify-center p-2">
-                        <span className="text-white text-xs text-center font-bold">{heroBookData.title}</span>
-                      </div>
-                    )}
+                    <BookCover
+                      src={heroBookData.coverImage || ""}
+                      alt={heroBookData.title}
+                      aspectRatio=""
+                      className="w-full h-full"
+                      priority
+                      sizes="(max-width: 640px) 96px, 128px"
+                    />
                   </div>
                 </div>
 
@@ -461,29 +459,24 @@ export default function DashboardPage() {
                 )}
 
                 <div className="flex gap-4 overflow-hidden pb-2 min-h-[230px]">
-                  {recommendations.slice(recPage * 6, (recPage + 1) * 6).map((book) => (
+                  {recommendations.slice(recPage * 6, (recPage + 1) * 6).map((book: Book, idx: number) => (
                     <Link
                       key={book.id}
                       href={`/dashboard/reader/${book.id}?title=${encodeURIComponent(book.title)}`}
                       className="shrink-0 w-[120px] group animate-in fade-in slide-in-from-right-4 duration-500"
                     >
-                      {/* Cover */}
+                      {/* Cover — Next/Image optimized; first 6 are above the fold so eager */}
                       <div className="w-[120px] h-[170px] rounded-xl overflow-hidden mb-2.5 shadow-lg ring-1 ring-white/10 group-hover:ring-indigo-500/40 transition-all duration-200 relative">
-                        {book.coverImage ? (
-                          <img
-                            src={book.coverImage}
-                            alt={book.title}
-                            loading="lazy"
-                            decoding="async"
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-indigo-700 via-purple-700 to-pink-700 flex items-center justify-center p-3">
-                            <span className="text-white text-xs text-center font-bold leading-tight">{book.title}</span>
-                          </div>
-                        )}
+                        <BookCover
+                          src={book.coverImage || ""}
+                          alt={book.title}
+                          aspectRatio=""
+                          className="w-full h-full"
+                          priority={recPage === 0 && idx < 6}
+                          sizes="120px"
+                        />
                         {/* Hover overlay */}
-                        <div className="absolute inset-0 bg-indigo-600/0 group-hover:bg-indigo-600/20 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                        <div className="absolute inset-0 z-40 bg-indigo-600/0 group-hover:bg-indigo-600/20 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100 pointer-events-none">
                           <div className="bg-card/20 backdrop-blur-sm rounded-full p-2">
                             <Play className="h-4 w-4 text-white fill-white" />
                           </div>

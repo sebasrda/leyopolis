@@ -6,6 +6,7 @@ import { BookOpen, Sparkles, Search, ChevronRight, Loader2, ShieldCheck } from "
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { BookCover } from "@/components/ui/book-cover";
 
 interface Book {
   id: string;
@@ -74,13 +75,19 @@ export default function AdminAnswersIndex() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map((b) => (
+          {filtered.map((b, idx) => (
             <Link key={b.id} href={`/dashboard/admin/answers/${b.id}`} className="group">
               <Card className="overflow-hidden border-none shadow-md hover:shadow-xl hover:ring-2 hover:ring-indigo-400/40 transition-all flex flex-row h-full">
-                <div className="w-20 shrink-0 bg-muted">
+                <div className="w-20 shrink-0 bg-muted relative">
                   {b.coverImage ? (
-                    /* eslint-disable-next-line @next/next/no-img-element */
-                    <img src={b.coverImage} alt={b.title} className="w-full h-full object-cover" loading="lazy" />
+                    <BookCover
+                      src={b.coverImage}
+                      alt={b.title}
+                      aspectRatio=""
+                      className="w-full h-full"
+                      priority={idx < 9}
+                      sizes="80px"
+                    />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
                       <BookOpen className="h-6 w-6 text-muted-foreground" />

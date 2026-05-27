@@ -44,6 +44,7 @@ import dynamic from 'next/dynamic';
 import { LanguageSelector } from "@/components/i18n/LanguageSelector";
 import HelpModal from "@/components/dashboard/HelpModal";
 import { DemoBanner } from "@/components/dashboard/DemoBanner";
+import BottomNav from "@/components/dashboard/BottomNav";
 import { useGamification } from "@/context/GamificationContext";
 
 const FloatingAiTutor = dynamic(() => import("@/components/dashboard/FloatingAiTutor").then((m) => m.FloatingAiTutor), {
@@ -646,11 +647,14 @@ export default function DashboardLayout({ children, serverXp, serverLevel, serve
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto p-3 sm:p-5 md:p-8 bg-[#0d1117]">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-5 md:p-8 bg-[#0d1117] pb-20 md:pb-8">
           <div className="max-w-7xl mx-auto">
             {children}
           </div>
         </main>
+
+        {/* Mobile bottom navigation (hidden on md+) */}
+        <BottomNav />
 
         {/* Level-up toast */}
         {levelUpNotice && (

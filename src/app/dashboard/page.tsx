@@ -20,6 +20,7 @@ import {
   CheckCircle2,
   Trophy,
   Calendar,
+  Sparkles,
 } from "lucide-react";
 import { ProgressDonut } from "@/components/dashboard/student/ProgressDonut";
 import { BookCover } from "@/components/ui/book-cover";
@@ -296,124 +297,122 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="text-white space-y-0">
-      {/* ── TOP HEADER ─────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6 sm:mb-8">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white">
-            ¡Hola, {userName}! 👋
-          </h1>
-          <p className="text-slate-400 mt-1 text-sm">
-            Cada historia te hace más grande. ¿Qué vamos a descubrir hoy?
-          </p>
+    <div className="text-white space-y-0 pb-20 md:pb-0">
+      {/* ── CASTLE HERO ─────────────────────────────────────────── */}
+      <section className="relative -mx-4 sm:-mx-6 lg:-mx-8 -mt-4 sm:-mt-6 lg:-mt-8 mb-6 rounded-none lg:rounded-3xl overflow-hidden">
+        {/* Castle background image */}
+        <div className="absolute inset-0">
+          <Image
+            src="/castillo.jpeg"
+            alt="Castillo Leyópolis"
+            fill
+            priority
+            className="object-cover"
+            sizes="100vw"
+          />
+          {/* Vignette / dark gradient for text legibility */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#05060f] via-[#05060f]/70 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#05060f]/80" />
         </div>
 
-        {/* Weekly Goal Card */}
-        <div className="hidden lg:flex items-center gap-4 bg-[#1a2235] border border-white/10 rounded-2xl px-6 py-4 min-w-[240px]">
-          <div className="flex-1">
-            <p className="text-xs text-slate-400 mb-0.5">Tu meta semanal</p>
-            <p className="text-3xl font-black text-white">{weeklyGoalPct}%</p>
-            <div className="w-full bg-card/10 rounded-full h-1.5 mt-2 mb-1 overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full transition-all duration-700"
-                style={{ width: `${weeklyGoalPct}%` }}
-              />
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {weekDaysLeft === 0 ? "¡Meta completada! 🎉" : `${weekDaysLeft} días restantes`}
+        <div className="relative z-10 px-6 sm:px-10 lg:px-14 py-10 sm:py-14 lg:py-20 min-h-[420px] sm:min-h-[480px] lg:min-h-[560px] flex flex-col justify-between">
+          {/* Greeting */}
+          <div className="max-w-2xl">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white drop-shadow-2xl">
+              ¡Hola, {userName}! <span className="inline-block animate-wave">👋</span>
+            </h1>
+            <p className="mt-4 text-base sm:text-lg text-slate-200/90 max-w-md drop-shadow-lg">
+              Cada historia te hace más grande.<br />
+              ¿Qué vamos a descubrir hoy?
             </p>
+            <div className="mt-6 inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 px-5 py-2.5 text-sm text-indigo-100 font-medium shadow-xl">
+              <Sparkles className="h-4 w-4 text-indigo-300" />
+              Tu viaje literario continúa
+            </div>
           </div>
-          <div className="h-10 w-10 bg-indigo-500/20 rounded-xl flex items-center justify-center">
-            <Star className="h-5 w-5 text-indigo-400" />
-          </div>
-        </div>
-      </div>
 
-      {/* ── MAIN 2-COLUMN GRID ─────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
-        
-        {/* ════ LEFT COLUMN ════ */}
-        <div className="space-y-6">
-
-          {/* ── Continúa tu aventura ─── */}
-          <section>
-            <h2 className="text-base font-bold text-white mb-3">Continúa tu aventura</h2>
-
-            {heroBookData ? (
-              <div className="relative rounded-2xl overflow-hidden bg-[#0f1623] border border-white/10 h-[220px] sm:h-[260px] flex items-center gap-4 sm:gap-8 px-4 sm:px-8 group">
-                {/* Adventure Landscape Background */}
-                <div
-                  className="absolute inset-0 opacity-60 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
-                  style={{ backgroundImage: `url(${currentLandscape})` }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-r from-[#0f1623] via-[#0f1623]/40 to-transparent" />
-
-                {/* Book Cover — priority + Next/Image for instant LCP */}
-                <div className="relative z-10 shrink-0">
-                  <div className="w-24 sm:w-32 h-36 sm:h-44 rounded-lg overflow-hidden shadow-2xl ring-1 ring-white/20 transition-transform duration-300 group-hover:-translate-y-1" style={{ perspective: "1000px" }}>
-                    <BookCover
-                      src={heroBookData.coverImage || ""}
-                      alt={heroBookData.title}
-                      aspectRatio=""
-                      className="w-full h-full"
-                      priority
-                      sizes="(max-width: 640px) 96px, 128px"
-                    />
-                  </div>
+          {/* "Leyendo ahora" floating card embedded in the hero */}
+          {heroBookData ? (
+            <div className="mt-8 sm:mt-10 max-w-2xl">
+              <p className="text-xs uppercase tracking-widest text-indigo-200/70 font-bold mb-3">Leyendo ahora</p>
+              <div className="rounded-2xl bg-[#0f1623]/70 backdrop-blur-xl border border-white/10 shadow-2xl p-5 sm:p-6 flex items-center gap-4 sm:gap-6 group hover:bg-[#0f1623]/85 transition-all">
+                {/* Cover */}
+                <div className="w-20 sm:w-24 h-28 sm:h-36 rounded-lg overflow-hidden shadow-2xl ring-1 ring-amber-300/30 shrink-0 group-hover:-translate-y-1 transition-transform">
+                  <BookCover
+                    src={heroBookData.coverImage || ""}
+                    alt={heroBookData.title}
+                    aspectRatio=""
+                    className="w-full h-full"
+                    priority
+                    sizes="(max-width: 640px) 80px, 96px"
+                  />
                 </div>
 
-                {/* Book Info */}
-                <div className="relative z-10 flex-1 min-w-0">
-                  <p className="text-xs text-indigo-300 font-medium mb-1 uppercase tracking-widest">Continuar leyendo</p>
-                  <h3 className="text-xl font-bold text-white mb-0.5 line-clamp-1">{heroBookData.title}</h3>
-                  <p className="text-slate-400 text-sm mb-4">{heroBookData.author}</p>
-                  
-                  <p className="text-xs text-slate-400 mb-1.5">{heroProgress}% completado</p>
-                  <div className="w-full bg-card/10 rounded-full h-1.5 mb-4 overflow-hidden">
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-lg sm:text-2xl font-black text-white line-clamp-1">{heroBookData.title}</h3>
+                  <p className="text-sm text-slate-300 mb-3">{heroBookData.author}</p>
+
+                  <div className="text-[11px] text-slate-300 mb-1 font-semibold">{heroProgress}% completado</div>
+                  <div className="w-full bg-white/10 rounded-full h-1.5 overflow-hidden mb-4">
                     <div
-                      className="h-full bg-gradient-to-r from-purple-600 to-violet-500 rounded-full transition-all"
+                      className="h-full bg-gradient-to-r from-amber-400 via-orange-400 to-pink-500 rounded-full transition-all duration-700"
                       style={{ width: `${heroProgress}%` }}
                     />
                   </div>
 
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 flex-wrap">
                     <Link
                       href={`/dashboard/reader/${heroBookData.id}?title=${encodeURIComponent(heroBookData.title)}`}
-                      className="inline-flex items-center gap-2 bg-[#6B21A8] hover:bg-[#581C87] text-white text-sm font-bold px-5 py-2.5 rounded-xl transition-all shadow-lg shadow-purple-900/40"
+                      className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-sm font-bold px-5 py-2.5 rounded-xl transition-all shadow-lg shadow-purple-900/40"
                     >
                       <Play className="h-4 w-4 fill-white" />
                       Continuar leyendo
                     </Link>
                     <Link
                       href="/dashboard/my-readings"
-                      className="h-9 w-9 flex items-center justify-center rounded-xl bg-card/10 hover:bg-card/20 transition-all text-white"
+                      className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 transition-all text-white border border-white/10"
+                      title="Mis lecturas"
                     >
-                      <ChevronRight className="h-4 w-4" />
+                      <BookOpen className="h-4 w-4" />
                     </Link>
                   </div>
                 </div>
               </div>
-            ) : (
-              <div className="rounded-2xl border border-dashed border-white/10 bg-[#1a2235]/40 h-[180px] flex flex-col items-center justify-center text-center gap-3">
-                <BookOpen className="h-10 w-10 text-muted-foreground" />
+            </div>
+          ) : (
+            <div className="mt-8 max-w-md">
+              <div className="rounded-2xl bg-[#0f1623]/70 backdrop-blur-xl border border-dashed border-white/15 p-6 flex flex-col items-center text-center gap-3">
+                <BookOpen className="h-10 w-10 text-indigo-300/70" />
                 <div>
-                  <p className="text-slate-300 font-semibold">No tienes lecturas en curso</p>
-                  <p className="text-muted-foreground text-sm">Explora la biblioteca para empezar</p>
+                  <p className="text-white font-semibold">No tienes lecturas en curso</p>
+                  <p className="text-slate-300/80 text-sm">Explora la biblioteca para empezar</p>
                 </div>
                 <Link
                   href="/dashboard/library"
-                  className="inline-flex items-center gap-2 bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/50/30 text-indigo-300 text-sm font-medium px-4 py-2 rounded-xl transition-all"
+                  className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-medium px-5 py-2 rounded-xl"
                 >
                   Explorar Biblioteca
                 </Link>
               </div>
-            )}
-          </section>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* ── MAIN 2-COLUMN GRID ─────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
+
+        {/* ════ LEFT COLUMN ════ */}
+        <div className="space-y-6">
 
           {/* ── Recomendados para ti ─── */}
           <section>
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-base font-bold text-white">Recomendados para ti</h2>
+              <h2 className="text-base font-bold text-white flex items-center gap-2">
+                Para ti, {userName}
+                <Sparkles className="h-4 w-4 text-indigo-400" />
+              </h2>
               <Link
                 href="/dashboard/library"
                 className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1 transition-colors"

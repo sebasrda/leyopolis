@@ -1098,6 +1098,9 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [pdfDocument, setPdfDocument] = useState<any>(null);
   const [documentKey, setDocumentKey] = useState(0); // Forzar recarga de documento si falla
+  // PDF download progress (bytes loaded / total) so the loading screen
+  // shows a percentage instead of an opaque spinner.
+  const [pdfProgress, setPdfProgress] = useState<{ loaded: number; total: number }>({ loaded: 0, total: 0 });
   const [isSinglePage, setIsSinglePage] = useState(false); // Nuevo estado para modo una página
   
   const containerRef = useRef<HTMLDivElement>(null);
@@ -1871,10 +1874,28 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
                 key={documentKey}
                 file={pdfUrl}
                 onLoadSuccess={onDocumentLoadSuccess}
+                onLoadProgress={({ loaded, total }) => setPdfProgress({ loaded, total })}
                 loading={
                     <div className="absolute inset-0 flex flex-col items-center justify-center z-50 bg-[#1c1c1c]">
-                    <Loader2 className="h-10 w-10 animate-spin text-indigo-500 mb-4" />
-                    <p className="text-sm text-gray-400">Cargando libro...</p>
+                      <Loader2 className="h-10 w-10 animate-spin text-indigo-500 mb-4" />
+                      <p className="text-sm text-gray-300 mb-3">Cargando libro…</p>
+                      {pdfProgress.total > 0 ? (
+                        <>
+                          <div className="w-56 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-200"
+                              style={{ width: `${Math.min(100, Math.round((pdfProgress.loaded / pdfProgress.total) * 100))}%` }}
+                            />
+                          </div>
+                          <p className="text-[10px] text-gray-500 mt-2 tabular-nums">
+                            {(pdfProgress.loaded / 1024 / 1024).toFixed(1)} MB / {(pdfProgress.total / 1024 / 1024).toFixed(1)} MB
+                            {" · "}
+                            {Math.min(100, Math.round((pdfProgress.loaded / pdfProgress.total) * 100))}%
+                          </p>
+                        </>
+                      ) : (
+                        <p className="text-[10px] text-gray-500">Conectando con el servidor…</p>
+                      )}
                     </div>
                 }
                 error={

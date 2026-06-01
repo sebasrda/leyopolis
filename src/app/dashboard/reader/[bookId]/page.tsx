@@ -1,55 +1,76 @@
 "use client";
 
 import { useState, useEffect, use } from "react";
-import dynamic from 'next/dynamic';
-import Link from 'next/link';
-import { Sparkles } from 'lucide-react';
-import { Button } from "@/components/ui/button";
+import dynamic from "next/dynamic";
+import { Loader2 } from "lucide-react";
 
-const ProfessionalFlipbook = dynamic(() => import('@/components/reader/ProfessionalFlipbook'), {
+const ProfessionalFlipbook = dynamic(() => import("@/components/reader/ProfessionalFlipbook"), {
   ssr: false,
-  loading: () => (
-    <div className="h-screen flex items-center justify-center bg-[#1c1c1c] text-white">
-      <div className="animate-spin h-8 w-8 border-4 border-indigo-600 border-t-transparent rounded-full"></div>
-    </div>
-  )
+  loading: () => <ReaderLoading label="Preparando lector…" />,
 });
+
+function ReaderLoading({ label }: { label: string }) {
+  return (
+    <div className="h-screen flex flex-col items-center justify-center bg-[#0d1117] text-white gap-3">
+      <Loader2 className="h-10 w-10 animate-spin text-indigo-400" />
+      <p className="text-sm text-slate-300">{label}</p>
+    </div>
+  );
+}
 
 export default function ReaderPage({ params }: { params: Promise<{ bookId: string }> }) {
   const { bookId } = use(params);
   const [titleParam, setTitleParam] = useState<string | null>(null);
   const [bookDetails, setBookDetails] = useState<any>(null);
-  
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
-    // Only access search params on client side
     const searchParams = new URLSearchParams(window.location.search);
     setTitleParam(searchParams.get("title"));
-    
-    // Fetch book details if ID is provided
+
     const fetchBook = async () => {
-       if (bookId === "7" || bookId === "the-great-gatsby") return;
-       
-       try {
-         const res = await fetch(`/api/books/${bookId}`);
-         if (res.ok) {
-           const data = await res.json();
-           setBookDetails(data);
-         }
-       } catch (e) {
-         console.error(e);
-       }
+      // Demo / hardcoded shortcuts — skip the API roundtrip
+      if (bookId === "7" || bookId === "the-great-gatsby") {
+        setBookDetails({
+          id: bookId,
+          title: searchParams.get("title") || "Libro",
+          contentUrl: bookId === "the-great-gatsby" ? "/books/gatsby.pdf" : "/books/sample.pdf",
+        });
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/books/${bookId}`, { cache: "force-cache" });
+        if (res.ok) {
+          const data = await res.json();
+          setBookDetails(data);
+        } else {
+          setError("No se pudo obtener el libro");
+        }
+      } catch (e) {
+        console.error(e);
+        setError("Error de conexión");
+      }
     };
-    
+
     fetchBook();
   }, [bookId]);
 
-  // Fallback URL logic
-  const pdfUrl = bookDetails?.contentUrl || (bookId === "the-great-gatsby" ? "/books/gatsby.pdf" : "/books/sample.pdf");
+  // ── Block render until we have a real PDF URL ──────────────────
+  // Before: rendered with a fallback /books/sample.pdf while waiting,
+  //         causing pdfjs to start loading the wrong file and then
+  //         restart when the real URL arrived (double network round-trip).
+  if (error) {
+    return <ReaderLoading label={error} />;
+  }
+  if (!bookDetails?.contentUrl) {
+    return <ReaderLoading label="Cargando libro…" />;
+  }
 
   return (
     <div className="relative h-screen w-full">
-      <ProfessionalFlipbook 
-        pdfUrl={pdfUrl}
+      <ProfessionalFlipbook
+        pdfUrl={bookDetails.contentUrl}
         bookTitle={bookDetails?.title || titleParam || "Libro"}
         author={bookDetails?.author}
         bookId={bookId}

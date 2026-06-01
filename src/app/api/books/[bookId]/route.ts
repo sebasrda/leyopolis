@@ -4,32 +4,51 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
-export async function GET(req: Request, { params }: { params: Promise<{ bookId: string }> }) {
+export async function GET(_req: Request, { params }: { params: Promise<{ bookId: string }> }) {
   const { bookId } = await params;
   try {
+    // SELECT only fields the reader actually needs. Skipping evaluations[]
+    // (often dozens of rows of stored quiz results) keeps the metadata
+    // response under ~2 KB vs the previous ~100 KB on books with quizzes.
     const book = await (prisma as any).book.findUnique({
-      where: {
-        id: bookId
+      where: { id: bookId },
+      select: {
+        id: true,
+        title: true,
+        author: true,
+        description: true,
+        coverImage: true,
+        category: true,
+        language: true,
+        difficulty: true,
+        format: true,
+        contentUrl: true,
+        grade: true,
+        subject: true,
+        quizId: true,
+        selWorkshopId: true,
+        audioUrl: true,
+        audioSyncMap: true,
+        displaySettings: true,
+        allowMultipleAttempts: true,
+        passScore: true,
       },
-      include: {
-        evaluations: true
-      }
     });
 
     if (!book) {
-      return NextResponse.json(
-        { message: "Libro no encontrado" },
-        { status: 404 }
-      );
+      return NextResponse.json({ message: "Libro no encontrado" }, { status: 404 });
     }
 
-    return NextResponse.json(book);
+    // Browser + CDN can cache for an hour; the reader hits this only once
+    // per page-load, but if the user navigates back, instant.
+    return NextResponse.json(book, {
+      headers: {
+        "Cache-Control": "private, max-age=3600, stale-while-revalidate=86400",
+      },
+    });
   } catch (error) {
     console.error("Error fetching book:", error);
-    return NextResponse.json(
-      { message: "Error interno del servidor" },
-      { status: 500 }
-    );
+    return NextResponse.json({ message: "Error interno del servidor" }, { status: 500 });
   }
 }
 

@@ -41,7 +41,13 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     if (typeof isActive === "boolean") updateData.isActive = isActive;
     
     if (password) {
-      updateData.password = await bcrypt.hash(password, 10);
+      // Validate length explicitly so the client gets a clear error instead
+      // of "I changed it but login fails"
+      const cleanPassword = String(password);
+      if (cleanPassword.length < 6) {
+        return NextResponse.json({ message: "La contraseña debe tener al menos 6 caracteres" }, { status: 400 });
+      }
+      updateData.password = await bcrypt.hash(cleanPassword, 10);
     }
     
     if (licenseType) {

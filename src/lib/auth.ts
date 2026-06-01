@@ -44,7 +44,9 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Credenciales inválidas");
         }
 
-        const emailLower = credentials.email.trim().toLowerCase();
+        const emailRaw = credentials.email.trim();
+        const emailLower = emailRaw.toLowerCase();
+        const plainPassword = String(credentials.password); // never trim — preserves intentional whitespace
 
         // Extract client IP from NextAuth's request (it exposes headers object)
         const headers: Headers = (req?.headers && typeof (req.headers as any).get === "function"
@@ -59,8 +61,12 @@ export const authOptions: NextAuthOptions = {
           throw new Error(`Demasiados intentos fallidos. Intenta de nuevo en ${mins} minuto${mins === 1 ? "" : "s"}.`);
         }
 
-        const user = await prisma.user.findUnique({
-          where: { email: emailLower },
+        // Case-insensitive email lookup — accounts may have been created
+        // with mixed-case emails (e.g. "Pedro@example.com") but Prisma's
+        // `findUnique({ email: ... })` is case-sensitive. findFirst with
+        // `mode: 'insensitive'` matches regardless.
+        const user = await prisma.user.findFirst({
+          where: { email: { equals: emailRaw, mode: "insensitive" } },
         });
 
         if (!user || !user.password) {
@@ -75,7 +81,7 @@ export const authOptions: NextAuthOptions = {
         }
 
         const isPasswordCorrect = await bcrypt.compare(
-          credentials.password,
+          plainPassword,
           user.password
         );
 

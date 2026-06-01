@@ -27,6 +27,7 @@ import { GesturePPT } from "@/components/learning/games/gesture/GesturePPT";
 import { GestureTimeline } from "@/components/learning/games/gesture/GestureTimeline";
 import { GestureAdivinaPersonaje } from "@/components/learning/games/gesture/GestureAdivinaPersonaje";
 import { GestureSimonDice } from "@/components/learning/games/gesture/GestureSimonDice";
+import { useInstitutionFlags } from "@/lib/useInstitutionFlags";
 
 interface GamesModalProps {
   isOpen: boolean;
@@ -375,6 +376,7 @@ export default function GamesModal({ isOpen, onClose, bookTitle, bookId }: Games
 }
 
 function GameMenu({ onSelectGame }: { onSelectGame: (g: GameType) => void }) {
+  const flags = useInstitutionFlags();
   const classicGames = [
     { id: "truefalse", title: "Verdadero o Falso", desc: "Reto de afirmaciones.", icon: BrainCircuit, gradient: "from-orange-600 to-amber-500", color: "bg-orange-600" },
     { id: "wordsearch", title: "Sopa de Letras", desc: "Encuentra conceptos clave.", icon: Grid3X3, gradient: "from-emerald-600 to-teal-500", color: "bg-emerald-600" },
@@ -406,19 +408,21 @@ function GameMenu({ onSelectGame }: { onSelectGame: (g: GameType) => void }) {
         </div>
       </div>
 
-      {/* Gesture section */}
-      <div>
-        <h3 className="text-lg font-bold text-slate-300 mb-2 flex items-center gap-2">
-          <Hand className="h-5 w-5 text-purple-400" /> Juegos con Gestos IA ✋
-          <span className="text-xs bg-purple-600/30 text-purple-300 px-2 py-0.5 rounded-full font-normal">NUEVO</span>
-        </h3>
-        <p className="text-xs text-slate-500 mb-5">Activa la cámara dentro del juego y controla todo con tu mano</p>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-          {gestureGames.map((g) => (
-            <GameCard key={g.id} game={g} onClick={() => onSelectGame(g.id as GameType)} gesture />
-          ))}
+      {/* Gesture section — gated by per-institution plan flag */}
+      {flags.motionGamesEnabled && (
+        <div>
+          <h3 className="text-lg font-bold text-slate-300 mb-2 flex items-center gap-2">
+            <Hand className="h-5 w-5 text-purple-400" /> Juegos con Gestos IA ✋
+            <span className="text-xs bg-purple-600/30 text-purple-300 px-2 py-0.5 rounded-full font-normal">NUEVO</span>
+          </h3>
+          <p className="text-xs text-slate-500 mb-5">Activa la cámara dentro del juego y controla todo con tu mano</p>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+            {gestureGames.map((g) => (
+              <GameCard key={g.id} game={g} onClick={() => onSelectGame(g.id as GameType)} gesture />
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

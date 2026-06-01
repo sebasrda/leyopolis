@@ -30,16 +30,20 @@ export async function GET(request: Request) {
 
     let restricted = false;
     let assignedBookIds: string[] = [];
+    let institutionMaxBooks = 0; // 0 = unlimited
 
     if (userId && !isSuperAdmin) {
       const dbUser = await (prisma as any).user.findUnique({
         where: { id: userId },
-        include: { 
-          institution: { select: { isLibraryRestricted: true } },
+        include: {
+          institution: { select: { isLibraryRestricted: true, maxBooks: true } },
           enrolledClasses: { include: { assignedBooks: { select: { id: true } } } }
         }
       });
       if (dbUser?.institution?.isLibraryRestricted) restricted = true;
+      if (typeof dbUser?.institution?.maxBooks === "number") {
+        institutionMaxBooks = dbUser.institution.maxBooks;
+      }
       if (dbUser?.enrolledClasses) {
         dbUser.enrolledClasses.forEach((cls: any) => {
            if (cls.assignedBooks) {
@@ -61,6 +65,13 @@ export async function GET(request: Request) {
       // Opcional: si la institución tiene `gradeCollections` permitidas globales, podrían unirse aquí en el `in`, 
       // pero requerimiento dice: "dejar limitado el colegio a los que se elijan". Usaremos las unidades asignadas por ahora.
     }
+
+    // institutionMaxBooks > 0 caps how many books the user's institution
+    // can see (per the plan they paid for). Assigned books always bypass
+    // the cap so teacher-assigned reading is never hidden by the limit.
+    const takeLimit = institutionMaxBooks > 0 && !isSuperAdmin && !restricted
+      ? institutionMaxBooks
+      : undefined;
 
     const books = await (prisma as any).book.findMany({
       where,
@@ -93,6 +104,7 @@ export async function GET(request: Request) {
         }
       },
       orderBy: { createdAt: 'desc' },
+      ...(takeLimit ? { take: takeLimit } : {}),
     });
 
     const booksWithQuiz = books.map((b: any) => ({

@@ -327,11 +327,16 @@ async function translateWithGoogleFree(text: string, targetIso: string): Promise
 
 export async function POST(req: Request) {
   try {
-    // ── Rate limit: 30 req/min per user (or per IP if anonymous) ──
+    // ── Rate limit ───────────────────────────────────────────────
+    // DomTranslationOverlay fires up to ~16 strings/600ms when the user
+    // switches the whole page to another language (≈1600/min in the worst
+    // case). Most responses are served from the DB cache, so the actual
+    // AI cost is tiny. We raise the limit to 400/min to let page-wide
+    // translation finish, while still blocking obvious abuse.
     const user = await getUserIdAndRole().catch(() => null);
     const ip = clientIp(req.headers);
     const limiterKey = user?.userId ? `translate:user:${user.userId}` : `translate:ip:${ip}`;
-    const rl = await rateLimit(limiterKey, { limit: 30, windowMs: 60_000 });
+    const rl = await rateLimit(limiterKey, { limit: 400, windowMs: 60_000 });
     if (!rl.ok) {
       return tooManyRequestsResponse(rl, "Demasiadas traducciones. Espera unos segundos.");
     }

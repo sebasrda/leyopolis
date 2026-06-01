@@ -82,6 +82,14 @@ model Institution {
   startDate        DateTime                @default(now())
   status              String                  @default("trial")
   isLibraryRestricted Boolean                 @default(false)
+  // ── Plan feature flags (toggled by superadmin at institution creation/edit) ──
+  // motionTrackingEnabled: gestos en el lector (pasar pagina con la mano, señalar palabras)
+  // motionGamesEnabled:    minijuegos gestuales (V/F, quiz, cronologia)
+  // maxBooks:              maximo de unidades pedagogicas que la institucion puede ver/asignar.
+  //                        0 = ilimitado (segun plan). Default 220 (paquete completo).
+  motionTrackingEnabled Boolean                @default(true)
+  motionGamesEnabled    Boolean                @default(true)
+  maxBooks              Int                    @default(220)
   gradeCollections    BookCollectionByGrade[]
   classes          Class[]
   users            User[]

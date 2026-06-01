@@ -19,16 +19,37 @@ export default async function Layout({ children }: { children: React.ReactNode }
   let serverDaysThisWeek = 0;
   let serverLastActive: Date | null = null;
   let serverTeacherStudents: StudentRow[] = [];
+  let institutionFlags = {
+    motionTrackingEnabled: true,
+    motionGamesEnabled: true,
+    maxBooks: 0,
+  };
 
   try {
     const session = await getServerSession(authOptions);
     if (session?.user?.id) {
       const userId = session.user.id;
 
-      const user = await prisma.user.findUnique({
+      const user = await (prisma as any).user.findUnique({
         where: { id: userId },
-        select: { xp: true, level: true, streak: true, lastActive: true, role: true },
+        select: {
+          xp: true, level: true, streak: true, lastActive: true, role: true,
+          institution: {
+            select: {
+              motionTrackingEnabled: true,
+              motionGamesEnabled: true,
+              maxBooks: true,
+            },
+          },
+        },
       });
+      if (user?.institution) {
+        institutionFlags = {
+          motionTrackingEnabled: user.institution.motionTrackingEnabled ?? true,
+          motionGamesEnabled: user.institution.motionGamesEnabled ?? true,
+          maxBooks: user.institution.maxBooks ?? 0,
+        };
+      }
       if (user) {
         serverXp = user.xp;
         serverLevel = user.level;
@@ -107,7 +128,7 @@ export default async function Layout({ children }: { children: React.ReactNode }
               totalMinutes: serverTotalMinutes,
               totalChallenges: serverTotalChallenges,
               books: serverBooks
-            })};window.__SERVER_TEACHER_STUDENTS__=${JSON.stringify(serverTeacherStudents)};`
+            })};window.__SERVER_TEACHER_STUDENTS__=${JSON.stringify(serverTeacherStudents)};window.__INSTITUTION_FLAGS__=${JSON.stringify(institutionFlags)};`
           }}
         />
         <DashboardLayout

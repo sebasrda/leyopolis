@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -47,6 +48,10 @@ export default function SuperAdminDashboard() {
   const [maxStudents, setMaxStudents] = useState("30");
   const [duration, setDuration] = useState("30");
   const [creating, setCreating] = useState(false);
+  // ── Plan feature flags ─────────────────────────────────────────
+  const [motionTrackingEnabled, setMotionTrackingEnabled] = useState(true);
+  const [motionGamesEnabled, setMotionGamesEnabled] = useState(true);
+  const [maxBooks, setMaxBooks] = useState("220");
 
   // Renew form
   const [renewTarget, setRenewTarget] = useState<any>(null); // institution being renewed
@@ -126,12 +131,15 @@ export default function SuperAdminDashboard() {
       const res = await fetch("/api/superadmin/institutions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          name, 
-          domain, 
-          plan, 
-          maxStudents: parseInt(maxStudents), 
-          durationDays: parseInt(duration) 
+        body: JSON.stringify({
+          name,
+          domain,
+          plan,
+          maxStudents: parseInt(maxStudents),
+          durationDays: parseInt(duration),
+          motionTrackingEnabled,
+          motionGamesEnabled,
+          maxBooks: parseInt(maxBooks) || 0,
         }),
       });
       if (res.ok) {
@@ -237,6 +245,44 @@ export default function SuperAdminDashboard() {
                   <Label className="text-slate-400">Duración del acceso (Días)</Label>
                   <Input type="number" value={duration} onChange={e => setDuration(e.target.value)} className="bg-white/5 border-white/10" />
                 </div>
+
+                {/* ── Plan feature toggles ───────────────────────────── */}
+                <div className="space-y-3 rounded-xl bg-white/5 border border-white/10 p-4 mt-2">
+                  <p className="text-[10px] uppercase tracking-widest text-indigo-300 font-bold">Funciones incluidas en el plan</p>
+
+                  <div className="flex items-center justify-between">
+                    <div className="min-w-0 pr-3">
+                      <Label className="text-white text-sm font-semibold block">Motion Tracking (lector)</Label>
+                      <p className="text-[10px] text-slate-400">Pasar páginas y señalar palabras con la mano</p>
+                    </div>
+                    <Switch checked={motionTrackingEnabled} onCheckedChange={setMotionTrackingEnabled} />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="min-w-0 pr-3">
+                      <Label className="text-white text-sm font-semibold block">Juegos Motion Tracking</Label>
+                      <p className="text-[10px] text-slate-400">Minijuegos gestuales: V/F, quiz, cronología</p>
+                    </div>
+                    <Switch checked={motionGamesEnabled} onCheckedChange={setMotionGamesEnabled} />
+                  </div>
+
+                  <div className="space-y-1.5 pt-1">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-white text-sm font-semibold">Límite de unidades pedagógicas</Label>
+                      <span className="text-xs text-slate-400">{maxBooks === "0" ? "Ilimitado" : `${maxBooks} libros`}</span>
+                    </div>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={maxBooks}
+                      onChange={e => setMaxBooks(e.target.value)}
+                      placeholder="220"
+                      className="bg-white/5 border-white/10"
+                    />
+                    <p className="text-[10px] text-slate-400">0 = sin límite. Por defecto: 220 (paquete completo).</p>
+                  </div>
+                </div>
+
                 <Button onClick={handleCreate} disabled={creating || !name || !domain} className="w-full bg-[#6B21A8] hover:bg-[#581C87] mt-2">
                   {creating && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
                   Habilitar Institución

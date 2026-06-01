@@ -47,13 +47,16 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const { name, domain, plan, maxStudents, durationDays } = body;
+    const {
+      name, domain, plan, maxStudents, durationDays,
+      motionTrackingEnabled, motionGamesEnabled, maxBooks,
+    } = body;
 
     const startDate = new Date();
     const endDate = new Date();
     endDate.setDate(startDate.getDate() + (durationDays || 30));
 
-    const newInstitution = await prisma.institution.create({
+    const newInstitution = await (prisma as any).institution.create({
       data: {
         name,
         domain: domain.toLowerCase(),
@@ -61,7 +64,12 @@ export async function POST(req: Request) {
         status: "activa",
         maxStudents: maxStudents || 30,
         startDate,
-        endDate
+        endDate,
+        // Plan feature flags — default to all-enabled if the caller doesn't
+        // provide them, so behaviour for old code paths stays identical.
+        motionTrackingEnabled: typeof motionTrackingEnabled === "boolean" ? motionTrackingEnabled : true,
+        motionGamesEnabled: typeof motionGamesEnabled === "boolean" ? motionGamesEnabled : true,
+        maxBooks: maxBooks !== undefined ? Math.max(0, Number(maxBooks) || 0) : 220,
       }
     });
 

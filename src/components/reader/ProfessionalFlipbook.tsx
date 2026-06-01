@@ -16,6 +16,7 @@ import { useLearning } from '@/context/LearningContext';
 import { useTranslation } from "react-i18next";
 import { useSession } from "next-auth/react";
 import { GesturePageTurner } from './GesturePageTurner';
+import { useInstitutionFlags } from '@/lib/useInstitutionFlags';
 
 // Importar estilos necesarios para la capa de texto de react-pdf
 import 'react-pdf/dist/Page/TextLayer.css';
@@ -545,6 +546,7 @@ const ComicTranslatedPage = memo(function ComicTranslatedPage({
 });
 
 export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", author, bookId, quizId, selWorkshopId, audioUrl, audioSyncMap }: ProfessionalFlipbookProps) {
+  const institutionFlags = useInstitutionFlags();
   const [numPages, setNumPages] = useState<number>(0);
   const [pageWidth, setPageWidth] = useState<number>(0);
   const [pageHeight, setPageHeight] = useState<number>(0);
@@ -2402,12 +2404,15 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
       </footer>
 
       {/* AI Gesture Tracking Page Turner — paused while a modal sits on top
-          (games / exam) so the finger cursor doesn't leak into those views. */}
-      <GesturePageTurner
-        onTurnNext={nextFlip}
-        onTurnPrev={prevFlip}
-        disabled={showGames || showExam}
-      />
+          (games / exam) so the finger cursor doesn't leak into those views.
+          Also gated by per-institution plan flag (motionTrackingEnabled). */}
+      {institutionFlags.motionTrackingEnabled && (
+        <GesturePageTurner
+          onTurnNext={nextFlip}
+          onTurnPrev={prevFlip}
+          disabled={showGames || showExam}
+        />
+      )}
 
       {/* Modales */}
       <GamesModal isOpen={showGames} onClose={() => setShowGames(false)} bookTitle={bookTitle} bookId={bookId} />

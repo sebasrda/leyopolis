@@ -69,7 +69,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     const body = await req.json();
     const {
       name, domain, plan, maxStudents, status, isLibraryRestricted,
-      motionTrackingEnabled, motionGamesEnabled, maxBooks,
+      motionTrackingEnabled, motionGamesEnabled, multiLanguageEnabled, maxBooks,
     } = body;
 
     const dataPayload: any = {};
@@ -82,6 +82,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     // ── Plan-feature toggles (set by superadmin on creation/edit) ──
     if (typeof motionTrackingEnabled === "boolean") dataPayload.motionTrackingEnabled = motionTrackingEnabled;
     if (typeof motionGamesEnabled === "boolean") dataPayload.motionGamesEnabled = motionGamesEnabled;
+    if (typeof multiLanguageEnabled === "boolean") dataPayload.multiLanguageEnabled = multiLanguageEnabled;
     if (maxBooks !== undefined) dataPayload.maxBooks = Math.max(0, Number(maxBooks) || 0);
 
     const updated = await (prisma as any).institution.update({

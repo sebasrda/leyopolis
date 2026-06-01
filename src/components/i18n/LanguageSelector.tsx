@@ -5,6 +5,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Button } from "@/components/ui/button";
 import i18n, { setStoredLanguage } from "@/i18n/i18n";
 import { useTranslation } from "react-i18next";
+import { useInstitutionFlags } from "@/lib/useInstitutionFlags";
 
 const LANGUAGES = [
   { code: "es", label: "🇪🇸 Español (es)" },
@@ -18,6 +19,11 @@ const LANGUAGES = [
 
 export function LanguageSelector() {
   useTranslation();
+  const { multiLanguageEnabled } = useInstitutionFlags();
+
+  // Gated by per-institution plan flag. When disabled the selector is hidden
+  // entirely so the rest of the header doesn't show a non-functional control.
+  if (!multiLanguageEnabled) return null;
 
   const changeLanguage = async (code: string) => {
     setStoredLanguage(code);

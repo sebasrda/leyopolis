@@ -22,6 +22,7 @@ export default async function Layout({ children }: { children: React.ReactNode }
   let institutionFlags = {
     motionTrackingEnabled: true,
     motionGamesEnabled: true,
+    multiLanguageEnabled: true,
     maxBooks: 0,
   };
 
@@ -38,6 +39,7 @@ export default async function Layout({ children }: { children: React.ReactNode }
             select: {
               motionTrackingEnabled: true,
               motionGamesEnabled: true,
+              multiLanguageEnabled: true,
               maxBooks: true,
             },
           },
@@ -47,6 +49,7 @@ export default async function Layout({ children }: { children: React.ReactNode }
         institutionFlags = {
           motionTrackingEnabled: user.institution.motionTrackingEnabled ?? true,
           motionGamesEnabled: user.institution.motionGamesEnabled ?? true,
+          multiLanguageEnabled: user.institution.multiLanguageEnabled ?? true,
           maxBooks: user.institution.maxBooks ?? 0,
         };
       }

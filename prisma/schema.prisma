@@ -89,6 +89,8 @@ model Institution {
   //                        0 = ilimitado (segun plan). Default 220 (paquete completo).
   motionTrackingEnabled Boolean                @default(true)
   motionGamesEnabled    Boolean                @default(true)
+  // multiLanguageEnabled: si false, la institucion solo ve español (el selector de idiomas se oculta)
+  multiLanguageEnabled  Boolean                @default(true)
   maxBooks              Int                    @default(220)
   gradeCollections    BookCollectionByGrade[]
   classes          Class[]

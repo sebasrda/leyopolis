@@ -49,7 +49,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const {
       name, domain, plan, maxStudents, durationDays,
-      motionTrackingEnabled, motionGamesEnabled, maxBooks,
+      motionTrackingEnabled, motionGamesEnabled, multiLanguageEnabled, maxBooks,
     } = body;
 
     const startDate = new Date();
@@ -69,6 +69,7 @@ export async function POST(req: Request) {
         // provide them, so behaviour for old code paths stays identical.
         motionTrackingEnabled: typeof motionTrackingEnabled === "boolean" ? motionTrackingEnabled : true,
         motionGamesEnabled: typeof motionGamesEnabled === "boolean" ? motionGamesEnabled : true,
+        multiLanguageEnabled: typeof multiLanguageEnabled === "boolean" ? multiLanguageEnabled : true,
         maxBooks: maxBooks !== undefined ? Math.max(0, Number(maxBooks) || 0) : 220,
       }
     });

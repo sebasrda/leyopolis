@@ -51,6 +51,7 @@ export default function SuperAdminDashboard() {
   // ── Plan feature flags ─────────────────────────────────────────
   const [motionTrackingEnabled, setMotionTrackingEnabled] = useState(true);
   const [motionGamesEnabled, setMotionGamesEnabled] = useState(true);
+  const [multiLanguageEnabled, setMultiLanguageEnabled] = useState(true);
   const [maxBooks, setMaxBooks] = useState("220");
 
   // Renew form
@@ -139,6 +140,7 @@ export default function SuperAdminDashboard() {
           durationDays: parseInt(duration),
           motionTrackingEnabled,
           motionGamesEnabled,
+          multiLanguageEnabled,
           maxBooks: parseInt(maxBooks) || 0,
         }),
       });
@@ -264,6 +266,14 @@ export default function SuperAdminDashboard() {
                       <p className="text-[10px] text-slate-400">Minijuegos gestuales: V/F, quiz, cronología</p>
                     </div>
                     <Switch checked={motionGamesEnabled} onCheckedChange={setMotionGamesEnabled} />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="min-w-0 pr-3">
+                      <Label className="text-white text-sm font-semibold block">Traducción a 7 idiomas</Label>
+                      <p className="text-[10px] text-slate-400">Español · Inglés · Francés · Alemán · Portugués · Italiano · Mandarín</p>
+                    </div>
+                    <Switch checked={multiLanguageEnabled} onCheckedChange={setMultiLanguageEnabled} />
                   </div>
 
                   <div className="space-y-1.5 pt-1">

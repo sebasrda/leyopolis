@@ -5,12 +5,14 @@ import { useEffect, useState } from "react";
 export interface InstitutionFlags {
   motionTrackingEnabled: boolean;
   motionGamesEnabled: boolean;
+  multiLanguageEnabled: boolean;
   maxBooks: number; // 0 = unlimited
 }
 
 const DEFAULT: InstitutionFlags = {
   motionTrackingEnabled: true,
   motionGamesEnabled: true,
+  multiLanguageEnabled: true,
   maxBooks: 0,
 };
 
@@ -29,6 +31,7 @@ export function useInstitutionFlags(): InstitutionFlags {
       setFlags({
         motionTrackingEnabled: injected.motionTrackingEnabled !== false,
         motionGamesEnabled: injected.motionGamesEnabled !== false,
+        multiLanguageEnabled: injected.multiLanguageEnabled !== false,
         maxBooks: typeof injected.maxBooks === "number" ? injected.maxBooks : 0,
       });
     }

@@ -120,10 +120,12 @@ export default function UsersTab({
         setUsers(users.filter((u) => u.id !== userId));
         onUpdate();
       } else {
-        alert("Error al eliminar");
+        const data = await res.json().catch(() => ({}));
+        alert(data.message || "Error al eliminar");
       }
     } catch (e) {
       console.error(e);
+      alert("Error de conexión al eliminar");
     }
   };
 

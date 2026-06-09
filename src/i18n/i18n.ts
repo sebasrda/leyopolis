@@ -28,7 +28,25 @@ function readDynamic(lang: string) {
     if (!raw) return {};
     const parsed = JSON.parse(raw) as unknown;
     if (!parsed || typeof parsed !== "object") return {};
-    return parsed as Record<string, string>;
+    // Strip out invalid entries that have leaked into localStorage from earlier
+    // bugs: empty values, identical key=value (no real translation), or values
+    // that obviously contain the Spanish original. Those overrode the base
+    // locale and made strings like 'Inicio' / 'Seguridad' stay in Spanish even
+    // after switching language. Returning a cleaned dict prevents that.
+    const sanitized: Record<string, string> = {};
+    for (const [key, value] of Object.entries(parsed as Record<string, unknown>)) {
+      if (typeof value !== "string") continue;
+      const v = value.trim();
+      if (!v) continue;
+      if (v === key.trim()) continue;
+      sanitized[key] = v;
+    }
+    // If we removed anything, persist the cleaned copy back so future loads
+    // are fast and we don't pay the filter cost forever.
+    if (Object.keys(sanitized).length !== Object.keys(parsed as object).length) {
+      try { window.localStorage.setItem(`${DYNAMIC_PREFIX}${lang}`, JSON.stringify(sanitized)); } catch {}
+    }
+    return sanitized;
   } catch {
     return {};
   }
@@ -70,15 +88,19 @@ if (!i18n.isInitialized) {
   const dynamicPt = readDynamic("pt");
   const dynamicIt = readDynamic("it");
 
+  // Merge order matters: dynamic FIRST, base file SECOND so the curated
+  // translations always win over anything saved in localStorage. This
+  // prevents an old bad dynamic value (e.g. AI returned the same Spanish
+  // string) from leaving the UI partially untranslated.
   i18n.use(initReactI18next).init({
     resources: {
-      es: { translation: { ...(es as Record<string, string>), ...dynamicEs } },
-      en: { translation: { ...(en as Record<string, string>), ...dynamicEn } },
-      fr: { translation: { ...(fr as Record<string, string>), ...dynamicFr } },
-      zh: { translation: { ...(zh as Record<string, string>), ...dynamicZh } },
-      de: { translation: { ...(de as Record<string, string>), ...dynamicDe } },
-      pt: { translation: { ...(pt as Record<string, string>), ...dynamicPt } },
-      it: { translation: { ...(it as Record<string, string>), ...dynamicIt } },
+      es: { translation: { ...dynamicEs, ...(es as Record<string, string>) } },
+      en: { translation: { ...dynamicEn, ...(en as Record<string, string>) } },
+      fr: { translation: { ...dynamicFr, ...(fr as Record<string, string>) } },
+      zh: { translation: { ...dynamicZh, ...(zh as Record<string, string>) } },
+      de: { translation: { ...dynamicDe, ...(de as Record<string, string>) } },
+      pt: { translation: { ...dynamicPt, ...(pt as Record<string, string>) } },
+      it: { translation: { ...dynamicIt, ...(it as Record<string, string>) } },
     },
     lng: getInitialLanguage(),
     fallbackLng: "es",

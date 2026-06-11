@@ -542,6 +542,29 @@ export default function Home() {
           </div>
         </div>
       </footer>
+
+      {/* ── Floating WhatsApp CTA ─────────────────────────────────── */}
+      {/* fixed bottom-right, always visible while scrolling the landing.
+          'tel'/click opens WhatsApp web or app with a pre-typed message. */}
+      <a
+        href="https://wa.me/573017146739?text=Hola%2C%20quisiera%20m%C3%A1s%20informaci%C3%B3n%20sobre%20Ley%C3%B3polis"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Contactar por WhatsApp"
+        className="fixed bottom-6 right-6 z-50 group flex items-center gap-3"
+      >
+        <span className="hidden sm:inline-block bg-[#0a0a1a]/90 backdrop-blur-md text-emerald-300 text-xs font-bold px-3 py-2 rounded-full border border-emerald-500/30 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
+          ¡Escríbenos!
+        </span>
+        <span className="relative flex">
+          <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-40 animate-ping" />
+          <span className="relative inline-flex h-14 w-14 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 shadow-2xl shadow-emerald-500/40 items-center justify-center ring-4 ring-[#0a0a1a] group-hover:scale-110 transition-transform">
+            <svg viewBox="0 0 32 32" className="h-7 w-7 fill-white" aria-hidden="true">
+              <path d="M19.11 17.205c-.372 0-1.088 1.39-1.518 1.39a.63.63 0 0 1-.315-.1c-.802-.402-1.504-.817-2.163-1.447-.545-.516-1.146-1.29-1.46-1.963a.426.426 0 0 1-.073-.215c0-.33.99-.945.99-1.49 0-.143-.73-2.09-.832-2.335-.143-.372-.214-.487-.6-.487-.187 0-.36-.043-.53-.043-.302 0-.53.115-.745.315-.688.645-1.032 1.318-1.06 2.264v.114c-.015.99.472 1.977 1.017 2.78 1.23 1.82 2.506 3.41 4.554 4.34.616.287 2.035.842 2.722.842.847 0 1.853-.317 2.262-.93.184-.27.26-.53.275-.83v-.114c-.015-.273-.075-.387-.275-.516-.215-.13-1.504-.802-1.717-.802-.388.066-.358.717-.566.717zM16.27 5.65c-5.74 0-10.4 4.66-10.4 10.4 0 1.876.512 3.71 1.477 5.314L5.85 25.3l4.04-1.476c1.554.857 3.31 1.305 5.09 1.305 5.74 0 10.4-4.66 10.4-10.4 0-2.78-1.084-5.392-3.05-7.36C20.36 6.73 17.96 5.65 16.27 5.65z" />
+            </svg>
+          </span>
+        </span>
+      </a>
     </main>
   );
 }

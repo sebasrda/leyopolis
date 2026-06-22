@@ -499,13 +499,13 @@ export default function Home() {
       {/* CONTACT STRIP */}
       <section className="border-t border-white/5 bg-gradient-to-r from-emerald-500/10 via-cyan-500/10 to-indigo-500/10">
         <div className="container mx-auto px-6 py-8 grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
-          <a href="tel:+573017146739" className="flex items-center gap-3 group">
+          <a href="tel:+573246337807" className="flex items-center gap-3 group">
             <div className="h-10 w-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center shrink-0">
               <Phone className="h-5 w-5 text-emerald-300" />
             </div>
             <div>
               <p className="text-[10px] uppercase tracking-wider text-emerald-300/80 font-bold">Teléfono</p>
-              <p className="text-white font-bold group-hover:text-emerald-300 transition">+57 301 714 6739</p>
+              <p className="text-white font-bold group-hover:text-emerald-300 transition">+57 324 633 7807</p>
             </div>
           </a>
           <a href="https://www.gruporodes.com.co" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 group justify-self-start md:justify-self-center">
@@ -547,7 +547,7 @@ export default function Home() {
       {/* fixed bottom-right, always visible while scrolling the landing.
           'tel'/click opens WhatsApp web or app with a pre-typed message. */}
       <a
-        href="https://wa.me/573017146739?text=Hola%2C%20quisiera%20m%C3%A1s%20informaci%C3%B3n%20sobre%20Ley%C3%B3polis"
+        href="https://wa.me/573246337807?text=Hola%2C%20quisiera%20m%C3%A1s%20informaci%C3%B3n%20sobre%20Ley%C3%B3polis"
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Contactar por WhatsApp"

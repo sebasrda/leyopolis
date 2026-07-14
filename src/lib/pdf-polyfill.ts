@@ -28,11 +28,26 @@ if (typeof (globalThis as any).DOMMatrix === "undefined") {
 }
 
 // Fix for pdfjs-dist / pdf-parse "Cannot find module as expression is too dynamic"
-// This tells PDF.js to use the fake worker instead of trying to load a worker file.
+// Modern pdfjs-dist (4.x+) reads GlobalWorkerOptions.workerSrc from the module
+// exports, not from a global PDFJS object. The legacy PDFJS shim below is
+// preserved for older code paths that still check it.
 if (typeof (globalThis as any).PDFJS === "undefined") {
   (globalThis as any).PDFJS = {};
 }
 (globalThis as any).PDFJS.disableWorker = true;
 (globalThis as any).PDFJS.workerSrc = "";
+
+// Try to set the modern option too. This must run before pdfjs is loaded;
+// once serverExternalPackages is set in next.config, pdfjs is imported
+// via plain Node require, so this side effect works.
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const pdfjs = require("pdfjs-dist/legacy/build/pdf.mjs");
+  if (pdfjs?.GlobalWorkerOptions) {
+    pdfjs.GlobalWorkerOptions.workerSrc = "";
+  }
+} catch {
+  // pdfjs-dist may not be resolvable via this path; safe to ignore.
+}
 
 export {};

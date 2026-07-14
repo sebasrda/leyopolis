@@ -121,6 +121,7 @@ const superAdminItems = [
   { icon: BookMarked, label: "Licencias", href: "/dashboard/superadmin/licenses" },
   { icon: BarChart3, label: "Métricas Reales", href: "/dashboard/admin/stats" },
   { icon: Settings, label: "Plataforma", href: "/dashboard/admin/settings" },
+  { icon: Sparkles, label: "Traducir Unidades", href: "/dashboard/superadmin/traducir" },
 ];
 
 // Level name helper — 50-level rank curve grouped in tiers of ~5 with a

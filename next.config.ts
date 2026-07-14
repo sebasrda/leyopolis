@@ -4,12 +4,11 @@ import { withSentryConfig } from "@sentry/nextjs";
 const nextConfig: NextConfig = {
   reactCompiler: true,
 
-  // Don't bundle pdf-parse / pdfjs-dist — they do dynamic requires internally
-  // for their worker file that Webpack can't statically analyze, causing
-  // "Cannot find module as expression is too dynamic" at runtime on server
-  // routes that extract PDF text. Marking them external makes Next use them
-  // straight from node_modules like plain Node modules.
-  serverExternalPackages: ["pdf-parse", "pdfjs-dist"],
+  // Don't bundle pdf-parse / pdfjs-dist / unpdf — they do dynamic requires
+  // internally for their worker file that Webpack can't statically analyze.
+  // Marking them external makes Next use them straight from node_modules like
+  // plain Node modules.
+  serverExternalPackages: ["pdf-parse", "pdfjs-dist", "unpdf"],
 
   // Tree-shake heavy icon / animation / UI packages so only the symbols we
   // actually use ship to the browser. Dramatic bundle-size win on first paint.

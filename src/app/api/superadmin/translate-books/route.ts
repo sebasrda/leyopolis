@@ -1,4 +1,3 @@
-import "@/lib/pdf-polyfill";
 import { prisma } from "@/lib/prisma";
 import { requireSuperAdmin } from "@/lib/access";
 import { createHash } from "crypto";
@@ -118,14 +117,16 @@ async function extractPdfPages(pdfUrl: string): Promise<string[]> {
   if (!res.ok) throw new Error(`Descarga PDF HTTP ${res.status}`);
   const buf = new Uint8Array(await res.arrayBuffer());
 
-  const { PDFParse } = require("pdf-parse");
-  const parser = new PDFParse({ data: buf });
-  const result = await parser.getText();
-  const pages: string[] = [];
-  for (const p of result.pages || []) {
-    pages.push((p.text || "").trim());
-  }
-  return pages;
+  // unpdf is designed for serverless environments (Vercel, Cloudflare Workers,
+  // etc.). Uses a bundled pdfjs build that doesn't need external worker files,
+  // avoiding the "Cannot find module .mjs" errors that pdf-parse hit on Vercel.
+  const { extractText, getDocumentProxy } = await import("unpdf");
+  const pdf = await getDocumentProxy(buf);
+  const result = await extractText(pdf, { mergePages: false });
+
+  // result.text is string[] when mergePages=false
+  const rawPages = Array.isArray(result.text) ? result.text : [String(result.text || "")];
+  return rawPages.map((p) => (p || "").replace(/\s+/g, " ").trim());
 }
 
 export async function POST(req: Request) {

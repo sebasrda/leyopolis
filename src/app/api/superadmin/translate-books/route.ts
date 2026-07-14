@@ -117,16 +117,35 @@ async function extractPdfPages(pdfUrl: string): Promise<string[]> {
   if (!res.ok) throw new Error(`Descarga PDF HTTP ${res.status}`);
   const buf = new Uint8Array(await res.arrayBuffer());
 
-  // unpdf is designed for serverless environments (Vercel, Cloudflare Workers,
-  // etc.). Uses a bundled pdfjs build that doesn't need external worker files,
-  // avoiding the "Cannot find module .mjs" errors that pdf-parse hit on Vercel.
-  const { extractText, getDocumentProxy } = await import("unpdf");
+  // ── CRITICAL: replicamos EXACTAMENTE el algoritmo de extracción del
+  // lector (ProfessionalFlipbook.extractPageText) para que el hash SHA1
+  // usado como cache key coincida byte a byte con el que produce el
+  // cliente cuando abre el libro y llama /api/translate. Cualquier
+  // diferencia mínima → cache miss → traducción se re-genera al vuelo.
+  const { getDocumentProxy } = await import("unpdf");
   const pdf = await getDocumentProxy(buf);
-  const result = await extractText(pdf, { mergePages: false });
+  const pages: string[] = [];
 
-  // result.text is string[] when mergePages=false
-  const rawPages = Array.isArray(result.text) ? result.text : [String(result.text || "")];
-  return rawPages.map((p) => (p || "").replace(/\s+/g, " ").trim());
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const textContent = await page.getTextContent();
+    const items = textContent.items as any[];
+
+    let result = "";
+    let lastY: number | null = null;
+    for (const item of items) {
+      if (lastY !== null && Math.abs(item.transform[5] - lastY) > 5) {
+        result += "\n";
+      } else if (result.length > 0 && !result.endsWith(" ") && !result.endsWith("\n")) {
+        result += " ";
+      }
+      result += item.str;
+      lastY = item.transform[5];
+    }
+    pages.push(result.trim());
+  }
+
+  return pages;
 }
 
 export async function POST(req: Request) {

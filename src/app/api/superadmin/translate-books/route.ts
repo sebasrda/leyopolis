@@ -243,8 +243,12 @@ export async function POST(req: Request) {
 
               const key = cacheKey(page.text, lang.iso);
 
-              // ¿Ya cacheado?
-              const existing = await prisma.translation.findUnique({ where: { hash: key } }).catch(() => null);
+              // ¿Ya cacheado? Usamos la tabla determinística por (book, page, lang)
+              // porque el hash del texto puede variar entre extracciones y no
+              // sirve como "ya está listo"; el (bookId, pageNumber, lang) sí.
+              const existing = await (prisma as any).bookPageTranslation.findUnique({
+                where: { bookId_pageNumber_language: { bookId: book.id, pageNumber: page.num, language: lang.iso } },
+              }).catch(() => null);
               if (existing) {
                 summary.cached++;
                 send({
@@ -262,17 +266,31 @@ export async function POST(req: Request) {
 
               if (result.ok) {
                 try {
+                  // 1. Guardar en la tabla determinística (bookId, page, lang)
+                  //    para que el lector haga cache-hit garantizado.
+                  await (prisma as any).bookPageTranslation.upsert({
+                    where: { bookId_pageNumber_language: { bookId: book.id, pageNumber: page.num, language: lang.iso } },
+                    update: { translatedText: result.translation, engine: "claude-batch" },
+                    create: {
+                      bookId: book.id,
+                      pageNumber: page.num,
+                      language: lang.iso,
+                      translatedText: result.translation,
+                      engine: "claude-batch",
+                    },
+                  });
+                  // 2. También en el cache antiguo por hash (retrocompat)
                   await prisma.translation.upsert({
                     where: { hash: key },
                     update: { translatedText: result.translation, engine: "claude-batch" },
                     create: {
                       hash: key,
-                      originalText: page.text.slice(0, 4000), // recortar por si es enorme
+                      originalText: page.text.slice(0, 4000),
                       translatedText: result.translation,
                       targetLanguage: lang.iso,
                       engine: "claude-batch",
                     },
-                  });
+                  }).catch(() => {});
                   summary.translated++;
                   send({
                     type: "page-ok",

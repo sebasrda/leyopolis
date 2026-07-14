@@ -1402,7 +1402,7 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
             return;
         }
 
-        const translateOne = async (text: string): Promise<string> => {
+        const translateOne = async (text: string, pageNum: number): Promise<string> => {
             if (!text || text.trim().length < 5) return "";
             let attempts = 0;
             while (attempts < 2) {
@@ -1410,7 +1410,9 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
                     const resp = await fetch("/api/translate", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ text, targetLanguage: lang }),
+                        // bookId + pageNumber = clave deterministica en cache.
+                        // Si el batch pretraduje esta pagina, respuesta instantanea.
+                        body: JSON.stringify({ text, targetLanguage: lang, bookId, pageNumber: pageNum }),
                     });
                     if (!resp.ok) { attempts++; continue; }
                     const d = await resp.json();
@@ -1434,8 +1436,8 @@ export default function ProfessionalFlipbook({ pdfUrl, bookTitle = "Libro", auth
         // sigue mostrándose. allSettled garantiza que ambas promesas se
         // resuelvan sin abortar el spread por un fallo de una sola página.
         const [leftRes, rightRes] = await Promise.allSettled([
-            leftIsComic  ? Promise.resolve("") : translateOne(leftText),
-            rightPageNum >= 1 && !rightIsComic ? translateOne(rightText) : Promise.resolve(""),
+            leftIsComic  ? Promise.resolve("") : translateOne(leftText, leftPageNum),
+            rightPageNum >= 1 && !rightIsComic ? translateOne(rightText, rightPageNum) : Promise.resolve(""),
         ]);
         const leftTrans  = leftRes.status === "fulfilled"  ? leftRes.value  : "";
         const rightTrans = rightRes.status === "fulfilled" ? rightRes.value : "";

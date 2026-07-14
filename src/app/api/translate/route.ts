@@ -342,7 +342,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { text, targetLanguage } = body;
+    const { text, targetLanguage, bookId, pageNumber } = body;
     const target = normalizeTarget(targetLanguage);
 
     if (!text || !target.prompt) {
@@ -352,6 +352,21 @@ export async function POST(req: Request) {
     // Reject payloads larger than 200KB to prevent abuse
     if (typeof text === "string" && text.length > 200_000) {
       return NextResponse.json({ error: "Payload too large" }, { status: 413 });
+    }
+
+    // 0. DETERMINISTIC CACHE by (bookId, pageNumber, language) —
+    // preferred lookup when the caller (reader) knows which page it is
+    // reading. Beats the hash-based cache because it doesn't depend on
+    // the exact text extraction algorithm.
+    const hasPageKey = typeof bookId === "string" && bookId.length > 0
+      && typeof pageNumber === "number" && pageNumber >= 1;
+    if (hasPageKey) {
+      const pageCached = await (prisma as any).bookPageTranslation.findUnique({
+        where: { bookId_pageNumber_language: { bookId, pageNumber, language: target.iso } },
+      }).catch(() => null);
+      if (pageCached) {
+        return NextResponse.json({ translation: pageCached.translatedText, engine: pageCached.engine || "book-cache" });
+      }
     }
 
     const safeText = text.length > 60000 ? text.slice(0, 60000) : text;
@@ -472,6 +487,28 @@ export async function POST(req: Request) {
       } catch (dbError) {
         console.error("[TRANSLATE] DB Save error:", dbError);
       }
+
+      // Also save to deterministic per-page cache when the caller (reader)
+      // knows which page it is. This makes the NEXT open of the same book
+      // in the same language a guaranteed instant hit.
+      if (hasPageKey && resultText) {
+        try {
+          await (prisma as any).bookPageTranslation.upsert({
+            where: { bookId_pageNumber_language: { bookId, pageNumber, language: target.iso } },
+            update: { translatedText: resultText, engine: engineUsed },
+            create: {
+              bookId,
+              pageNumber,
+              language: target.iso,
+              translatedText: resultText,
+              engine: engineUsed,
+            },
+          });
+        } catch (e) {
+          console.error("[TRANSLATE] bookPageTranslation upsert error:", e);
+        }
+      }
+
       return NextResponse.json({ translation: resultText, engine: engineUsed });
     }
 

@@ -559,6 +559,25 @@ model Translation {
   @@index([hash])
 }
 
+/// Deterministic per-page translation cache: keyed by (bookId, pageNumber,
+/// language). Unlike Translation which is hash-based (fragile against tiny
+/// PDF extraction differences), this table always matches because it uses
+/// stable identifiers. The reader passes bookId + pageNumber when calling
+/// /api/translate — a hit here means instant, guaranteed.
+model BookPageTranslation {
+  id             String   @id @default(cuid())
+  bookId         String
+  pageNumber     Int
+  language       String   // ISO code: en, fr, de, pt-BR, it, zh-CN, ...
+  translatedText String
+  engine         String?  // "claude-batch", "on-demand", etc.
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([bookId, pageNumber, language])
+  @@index([bookId, language])
+}
+
 /// Append-only log of privileged actions (admin/superadmin/teacher destructive ops).
 /// Used for forensic investigation after an incident. NEVER updated, only inserted.
 model AuditLog {

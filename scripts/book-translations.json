@@ -1,0 +1,1620 @@
+{
+  "titles": {
+    " El Dragón que no Sabia Volar": {
+      "en": "The Dragon Who Couldn't Fly",
+      "fr": "Le Dragon qui ne savait pas voler",
+      "de": "Der Drache, der nicht fliegen konnte",
+      "pt": "O Dragão que Não Sabia Voar",
+      "it": "Il Drago che Non Sapeva Volare",
+      "zh": "不会飞的龙"
+    },
+    "Alicia en el País de las Maravillas un Viaje para Crecer": {
+      "en": "Alice in Wonderland: A Journey to Grow",
+      "fr": "Alice au Pays des Merveilles : Un Voyage pour Grandir",
+      "de": "Alice im Wunderland: Eine Reise zum Erwachsenwerden",
+      "pt": "Alice no País das Maravilhas: Uma Jornada para Crescer",
+      "it": "Alice nel Paese delle Meraviglie: Un Viaggio per Crescere",
+      "zh": "爱丽丝梦游仙境：成长之旅"
+    },
+    "Anaconda": {
+      "en": "Anaconda",
+      "fr": "Anaconda",
+      "de": "Anaconda",
+      "pt": "Anaconda",
+      "it": "Anaconda",
+      "zh": "森蚺"
+    },
+    "Beto el Brócoli Valiente": {
+      "en": "Beto the Brave Broccoli",
+      "fr": "Beto le Brocoli Courageux",
+      "de": "Beto, der tapfere Brokkoli",
+      "pt": "Beto, o Brócolis Corajoso",
+      "it": "Beto il Broccolo Coraggioso",
+      "zh": "勇敢的西兰花贝托"
+    },
+    "Bruno el Oso Tímido": {
+      "en": "Bruno the Shy Bear",
+      "fr": "Bruno l'Ours Timide",
+      "de": "Bruno der schüchterne Bär",
+      "pt": "Bruno, o Urso Tímido",
+      "it": "Bruno l'Orso Timido",
+      "zh": "害羞的小熊布鲁诺"
+    },
+    "Camino Seguro al Parque": {
+      "en": "Safe Path to the Park",
+      "fr": "Chemin Sûr vers le Parc",
+      "de": "Sicherer Weg zum Park",
+      "pt": "Caminho Seguro ao Parque",
+      "it": "Percorso Sicuro al Parco",
+      "zh": "安全去公园的路"
+    },
+    "Crimen y Castigo": {
+      "en": "Crime and Punishment",
+      "fr": "Crime et Châtiment",
+      "de": "Schuld und Sühne",
+      "pt": "Crime e Castigo",
+      "it": "Delitto e Castigo",
+      "zh": "罪与罚"
+    },
+    "Cuidemos el Agua": {
+      "en": "Let's Take Care of Water",
+      "fr": "Prenons Soin de l'Eau",
+      "de": "Wir schützen das Wasser",
+      "pt": "Vamos Cuidar da Água",
+      "it": "Prendiamoci Cura dell'Acqua",
+      "zh": "让我们爱护水资源"
+    },
+    "Cumbres Borrascosas": {
+      "en": "Wuthering Heights",
+      "fr": "Les Hauts de Hurlevent",
+      "de": "Sturmhöhe",
+      "pt": "O Morro dos Ventos Uivantes",
+      "it": "Cime Tempestose",
+      "zh": "呼啸山庄"
+    },
+    "DR. JEKYLL AND MR HYDE ": {
+      "en": "Dr. Jekyll and Mr. Hyde",
+      "fr": "Dr. Jekyll et M. Hyde",
+      "de": "Dr. Jekyll und Mr. Hyde",
+      "pt": "Dr. Jekyll e Sr. Hyde",
+      "it": "Dr. Jekyll e Mr. Hyde",
+      "zh": "化身博士"
+    },
+    "De Visita al Zoológico": {
+      "en": "A Visit to the Zoo",
+      "fr": "Une Visite au Zoo",
+      "de": "Ein Besuch im Zoo",
+      "pt": "Uma Visita ao Zoológico",
+      "it": "Una Visita allo Zoo",
+      "zh": "参观动物园"
+    },
+    "Desconectados": {
+      "en": "Disconnected",
+      "fr": "Déconnectés",
+      "de": "Ohne Verbindung",
+      "pt": "Desconectados",
+      "it": "Disconnessi",
+      "zh": "断线的人"
+    },
+    "Don Segundo Sombra": {
+      "en": "Don Segundo Sombra",
+      "fr": "Don Segundo Sombra",
+      "de": "Don Segundo Sombra",
+      "pt": "Don Segundo Sombra",
+      "it": "Don Segundo Sombra",
+      "zh": "堂塞贡多·松布拉"
+    },
+    "Dorothy y el País de Oz": {
+      "en": "Dorothy and the Land of Oz",
+      "fr": "Dorothy et le Pays d'Oz",
+      "de": "Dorothy und das Land Oz",
+      "pt": "Dorothy e a Terra de Oz",
+      "it": "Dorothy e il Paese di Oz",
+      "zh": "多萝西与奥兹国"
+    },
+    "El Bosque de Cristal": {
+      "en": "The Crystal Forest",
+      "fr": "La Forêt de Cristal",
+      "de": "Der Kristallwald",
+      "pt": "A Floresta de Cristal",
+      "it": "La Foresta di Cristallo",
+      "zh": "水晶森林"
+    },
+    "El Bosque de los Espejos": {
+      "en": "The Forest of Mirrors",
+      "fr": "La Forêt des Miroirs",
+      "de": "Der Wald der Spiegel",
+      "pt": "A Floresta dos Espelhos",
+      "it": "La Foresta degli Specchi",
+      "zh": "镜之森"
+    },
+    "El Caracol que Pudo Llegar a Tiempo": {
+      "en": "The Snail Who Made It in Time",
+      "fr": "L'Escargot qui a Réussi à Arriver à Temps",
+      "de": "Die Schnecke, die rechtzeitig ankam",
+      "pt": "O Caracol que Chegou a Tempo",
+      "it": "La Lumaca che Arrivò in Tempo",
+      "zh": "准时到达的蜗牛"
+    },
+    "El Codigo Invisible": {
+      "en": "The Invisible Code",
+      "fr": "Le Code Invisible",
+      "de": "Der unsichtbare Code",
+      "pt": "O Código Invisível",
+      "it": "Il Codice Invisibile",
+      "zh": "隐形密码"
+    },
+    "El Colibri y el Oso Perezoso": {
+      "en": "The Hummingbird and the Sloth",
+      "fr": "Le Colibri et le Paresseux",
+      "de": "Der Kolibri und das Faultier",
+      "pt": "O Beija-Flor e a Preguiça",
+      "it": "Il Colibrì e il Bradipo",
+      "zh": "蜂鸟与树懒"
+    },
+    "El Corazón de la Familia": {
+      "en": "The Heart of the Family",
+      "fr": "Le Cœur de la Famille",
+      "de": "Das Herz der Familie",
+      "pt": "O Coração da Família",
+      "it": "Il Cuore della Famiglia",
+      "zh": "家的心"
+    },
+    "El Día de las Emociones de Nina": {
+      "en": "Nina's Day of Emotions",
+      "fr": "La Journée des Émotions de Nina",
+      "de": "Ninas Tag der Gefühle",
+      "pt": "O Dia das Emoções de Nina",
+      "it": "La Giornata delle Emozioni di Nina",
+      "zh": "妮娜的情绪日"
+    },
+    "El Experimento del Profe Loco": {
+      "en": "The Crazy Teacher's Experiment",
+      "fr": "L'Expérience du Prof Fou",
+      "de": "Das Experiment des verrückten Lehrers",
+      "pt": "O Experimento do Professor Louco",
+      "it": "L'Esperimento del Prof Pazzo",
+      "zh": "疯狂老师的实验"
+    },
+    "El Lapiz de las Emociones": {
+      "en": "The Pencil of Emotions",
+      "fr": "Le Crayon des Émotions",
+      "de": "Der Stift der Gefühle",
+      "pt": "O Lápis das Emoções",
+      "it": "La Matita delle Emozioni",
+      "zh": "情绪的铅笔"
+    },
+    "El León y el Ratón": {
+      "en": "The Lion and the Mouse",
+      "fr": "Le Lion et la Souris",
+      "de": "Der Löwe und die Maus",
+      "pt": "O Leão e o Rato",
+      "it": "Il Leone e il Topo",
+      "zh": "狮子与老鼠"
+    },
+    "El Mapa de los Mundo Perdidos": {
+      "en": "The Map of the Lost Worlds",
+      "fr": "La Carte des Mondes Perdus",
+      "de": "Die Karte der Verlorenen Welten",
+      "pt": "O Mapa dos Mundos Perdidos",
+      "it": "La Mappa dei Mondi Perduti",
+      "zh": "失落世界地图"
+    },
+    "El Mercado de las Frutas ": {
+      "en": "The Fruit Market",
+      "fr": "Le Marché aux Fruits",
+      "de": "Der Obstmarkt",
+      "pt": "O Mercado das Frutas",
+      "it": "Il Mercato della Frutta",
+      "zh": "水果市场"
+    },
+    "El Misterio del Número Perdido": {
+      "en": "The Mystery of the Lost Number",
+      "fr": "Le Mystère du Nombre Perdu",
+      "de": "Das Geheimnis der verlorenen Zahl",
+      "pt": "O Mistério do Número Perdido",
+      "it": "Il Mistero del Numero Perduto",
+      "zh": "失落的数字之谜"
+    },
+    "El Principito ": {
+      "en": "The Little Prince",
+      "fr": "Le Petit Prince",
+      "de": "Der kleine Prinz",
+      "pt": "O Pequeno Príncipe",
+      "it": "Il Piccolo Principe",
+      "zh": "小王子"
+    },
+    "El Salón de los Descubrimientos": {
+      "en": "The Discovery Room",
+      "fr": "La Salle des Découvertes",
+      "de": "Der Entdeckungssaal",
+      "pt": "A Sala das Descobertas",
+      "it": "La Sala delle Scoperte",
+      "zh": "发现之屋"
+    },
+    "El Secreto de la Isla": {
+      "en": "The Secret of the Island",
+      "fr": "Le Secret de l'Île",
+      "de": "Das Geheimnis der Insel",
+      "pt": "O Segredo da Ilha",
+      "it": "Il Segreto dell'Isola",
+      "zh": "岛屿的秘密"
+    },
+    "El Tren de los Juguetes Perdidos": {
+      "en": "The Train of Lost Toys",
+      "fr": "Le Train des Jouets Perdus",
+      "de": "Der Zug der verlorenen Spielsachen",
+      "pt": "O Trem dos Brinquedos Perdidos",
+      "it": "Il Treno dei Giocattoli Perduti",
+      "zh": "失落玩具列车"
+    },
+    "El Viaje de las Vocales": {
+      "en": "The Journey of the Vowels",
+      "fr": "Le Voyage des Voyelles",
+      "de": "Die Reise der Vokale",
+      "pt": "A Viagem das Vogais",
+      "it": "Il Viaggio delle Vocali",
+      "zh": "元音之旅"
+    },
+    "El amigo que nunca vi": {
+      "en": "The Friend I Never Saw",
+      "fr": "L'Ami que je n'ai jamais vu",
+      "de": "Der Freund, den ich nie sah",
+      "pt": "O Amigo que Nunca Vi",
+      "it": "L'Amico che Non Ho Mai Visto",
+      "zh": "我未见过的朋友"
+    },
+    "El legado de la dos Casas": {
+      "en": "The Legacy of the Two Houses",
+      "fr": "L'Héritage des Deux Maisons",
+      "de": "Das Erbe der zwei Häuser",
+      "pt": "O Legado das Duas Casas",
+      "it": "L'Eredità delle Due Case",
+      "zh": "两家的遗产"
+    },
+    "El Último Destello": {
+      "en": "The Last Flash",
+      "fr": "Le Dernier Éclat",
+      "de": "Der letzte Glanz",
+      "pt": "O Último Brilho",
+      "it": "L'Ultimo Bagliore",
+      "zh": "最后一闪"
+    },
+    "En la Diestra de Dios Padre": {
+      "en": "At the Right Hand of God the Father",
+      "fr": "À la Droite de Dieu le Père",
+      "de": "Zur Rechten Gottvaters",
+      "pt": "À Direita de Deus Pai",
+      "it": "Alla Destra di Dio Padre",
+      "zh": "在天父之右"
+    },
+    "Enviar": {
+      "en": "Send",
+      "fr": "Envoyer",
+      "de": "Senden",
+      "pt": "Enviar",
+      "it": "Invia",
+      "zh": "发送"
+    },
+    "Expedición al Abismo": {
+      "en": "Expedition to the Abyss",
+      "fr": "Expédition vers l'Abîme",
+      "de": "Expedition in den Abgrund",
+      "pt": "Expedição ao Abismo",
+      "it": "Spedizione all'Abisso",
+      "zh": "深渊探险"
+    },
+    "Frankeinstein": {
+      "en": "Frankenstein",
+      "fr": "Frankenstein",
+      "de": "Frankenstein",
+      "pt": "Frankenstein",
+      "it": "Frankenstein",
+      "zh": "弗兰肯斯坦"
+    },
+    "Guardianes del Cerro Azul": {
+      "en": "Guardians of Blue Hill",
+      "fr": "Gardiens de la Colline Bleue",
+      "de": "Wächter des Blauen Hügels",
+      "pt": "Guardiões do Cerro Azul",
+      "it": "Guardiani del Colle Azzurro",
+      "zh": "蓝色山丘的守护者"
+    },
+    "Gulliver 2.0": {
+      "en": "Gulliver 2.0",
+      "fr": "Gulliver 2.0",
+      "de": "Gulliver 2.0",
+      "pt": "Gulliver 2.0",
+      "it": "Gulliver 2.0",
+      "zh": "格列佛 2.0"
+    },
+    "HAMLET": {
+      "en": "Hamlet",
+      "fr": "Hamlet",
+      "de": "Hamlet",
+      "pt": "Hamlet",
+      "it": "Amleto",
+      "zh": "哈姆雷特"
+    },
+    "Historia de dos Ciudades": {
+      "en": "A Tale of Two Cities",
+      "fr": "Le Conte de Deux Cités",
+      "de": "Eine Geschichte aus zwei Städten",
+      "pt": "Um Conto de Duas Cidades",
+      "it": "Racconto di Due Città",
+      "zh": "双城记"
+    },
+    "La Aventura de Zorp en la Tierra": {
+      "en": "Zorp's Adventure on Earth",
+      "fr": "L'Aventure de Zorp sur Terre",
+      "de": "Zorps Abenteuer auf der Erde",
+      "pt": "A Aventura de Zorp na Terra",
+      "it": "L'Avventura di Zorp sulla Terra",
+      "zh": "佐普的地球冒险"
+    },
+    "La Biblioteca Sumergida": {
+      "en": "The Sunken Library",
+      "fr": "La Bibliothèque Engloutie",
+      "de": "Die versunkene Bibliothek",
+      "pt": "A Biblioteca Submersa",
+      "it": "La Biblioteca Sommersa",
+      "zh": "沉没的图书馆"
+    },
+    "La Biblioteca de Las Historias VIvas": {
+      "en": "The Library of Living Stories",
+      "fr": "La Bibliothèque des Histoires Vivantes",
+      "de": "Die Bibliothek der Lebendigen Geschichten",
+      "pt": "A Biblioteca das Histórias Vivas",
+      "it": "La Biblioteca delle Storie Viventi",
+      "zh": "活故事图书馆"
+    },
+    "La Casa del Viento": {
+      "en": "The House of the Wind",
+      "fr": "La Maison du Vent",
+      "de": "Das Haus des Windes",
+      "pt": "A Casa do Vento",
+      "it": "La Casa del Vento",
+      "zh": "风之屋"
+    },
+    "La Cigarra y la Hormiga": {
+      "en": "The Cicada and the Ant",
+      "fr": "La Cigale et la Fourmi",
+      "de": "Die Zikade und die Ameise",
+      "pt": "A Cigarra e a Formiga",
+      "it": "La Cicala e la Formica",
+      "zh": "蝉与蚂蚁"
+    },
+    "La Ciudad de los Árboles Silenciosos": {
+      "en": "The City of Silent Trees",
+      "fr": "La Ville des Arbres Silencieux",
+      "de": "Die Stadt der stillen Bäume",
+      "pt": "A Cidade das Árvores Silenciosas",
+      "it": "La Città degli Alberi Silenziosi",
+      "zh": "静默之树之城"
+    },
+    "La Estrella Que no Quería Dormir": {
+      "en": "The Star That Didn't Want to Sleep",
+      "fr": "L'Étoile qui ne voulait pas dormir",
+      "de": "Der Stern, der nicht schlafen wollte",
+      "pt": "A Estrela que Não Queria Dormir",
+      "it": "La Stella che Non Voleva Dormire",
+      "zh": "不想睡觉的星星"
+    },
+    "La Fiesta de las Frutas": {
+      "en": "The Fruit Party",
+      "fr": "La Fête des Fruits",
+      "de": "Das Obstfest",
+      "pt": "A Festa das Frutas",
+      "it": "La Festa della Frutta",
+      "zh": "水果派对"
+    },
+    "La Guardiana de Viento y la Pluma": {
+      "en": "The Guardian of Wind and the Feather",
+      "fr": "La Gardienne du Vent et la Plume",
+      "de": "Die Hüterin des Windes und die Feder",
+      "pt": "A Guardiã do Vento e a Pena",
+      "it": "La Custode del Vento e la Piuma",
+      "zh": "风之守护者与羽毛"
+    },
+    "La Liebre y la Tortuga": {
+      "en": "The Hare and the Tortoise",
+      "fr": "Le Lièvre et la Tortue",
+      "de": "Der Hase und die Schildkröte",
+      "pt": "A Lebre e a Tartaruga",
+      "it": "La Lepre e la Tartaruga",
+      "zh": "龟兔赛跑"
+    },
+    "La Llamada de lo Salvaje": {
+      "en": "The Call of the Wild",
+      "fr": "L'Appel de la Forêt",
+      "de": "Der Ruf der Wildnis",
+      "pt": "O Chamado Selvagem",
+      "it": "Il Richiamo della Foresta",
+      "zh": "野性的呼唤"
+    },
+    "La Luciérnaga y el Caracol": {
+      "en": "The Firefly and the Snail",
+      "fr": "La Luciole et l'Escargot",
+      "de": "Der Glühwürmchen und die Schnecke",
+      "pt": "O Vaga-lume e o Caracol",
+      "it": "La Lucciola e la Lumaca",
+      "zh": "萤火虫与蜗牛"
+    },
+    "La Mochila de Sofía": {
+      "en": "Sofia's Backpack",
+      "fr": "Le Sac à Dos de Sofia",
+      "de": "Sofias Rucksack",
+      "pt": "A Mochila de Sofia",
+      "it": "Lo Zaino di Sofia",
+      "zh": "索菲亚的背包"
+    },
+    "La Mochila de los Secretos": {
+      "en": "The Backpack of Secrets",
+      "fr": "Le Sac à Dos des Secrets",
+      "de": "Der Rucksack der Geheimnisse",
+      "pt": "A Mochila dos Segredos",
+      "it": "Lo Zaino dei Segreti",
+      "zh": "秘密背包"
+    },
+    "La Nube que Bajó a Jugar": {
+      "en": "The Cloud That Came Down to Play",
+      "fr": "Le Nuage qui est descendu jouer",
+      "de": "Die Wolke, die zum Spielen herabkam",
+      "pt": "A Nuvem que Desceu para Brincar",
+      "it": "La Nuvola che Scese a Giocare",
+      "zh": "下来玩耍的云"
+    },
+    "La Pequeña Nube que Pinto el Cielo": {
+      "en": "The Little Cloud That Painted the Sky",
+      "fr": "Le Petit Nuage qui a peint le ciel",
+      "de": "Die kleine Wolke, die den Himmel malte",
+      "pt": "A Pequena Nuvem que Pintou o Céu",
+      "it": "La Piccola Nuvola che Dipinse il Cielo",
+      "zh": "彩绘天空的小云"
+    },
+    "La Semilla que Aprendió a Crecer": {
+      "en": "The Seed That Learned to Grow",
+      "fr": "La Graine qui a appris à grandir",
+      "de": "Der Samen, der wachsen lernte",
+      "pt": "A Semente que Aprendeu a Crescer",
+      "it": "Il Seme che Imparò a Crescere",
+      "zh": "学会成长的种子"
+    },
+    "La Tienda de los Juguetes": {
+      "en": "The Toy Store",
+      "fr": "Le Magasin de Jouets",
+      "de": "Der Spielzeugladen",
+      "pt": "A Loja de Brinquedos",
+      "it": "Il Negozio dei Giocattoli",
+      "zh": "玩具店"
+    },
+    "La Tortuga que llegó Primero": {
+      "en": "The Turtle That Came First",
+      "fr": "La Tortue qui est arrivée première",
+      "de": "Die Schildkröte, die als Erste ankam",
+      "pt": "A Tartaruga que Chegou Primeiro",
+      "it": "La Tartaruga che Arrivò per Prima",
+      "zh": "第一个到达的乌龟"
+    },
+    "La Transformación de Ori": {
+      "en": "Ori's Transformation",
+      "fr": "La Transformation d'Ori",
+      "de": "Oris Verwandlung",
+      "pt": "A Transformação de Ori",
+      "it": "La Trasformazione di Ori",
+      "zh": "奥里的蜕变"
+    },
+    "La Vorágine": {
+      "en": "The Vortex",
+      "fr": "Le Tourbillon",
+      "de": "Der Strudel",
+      "pt": "A Voragem",
+      "it": "La Voragine",
+      "zh": "旋涡"
+    },
+    "La Vuelta al Mundo en 80 Días": {
+      "en": "Around the World in 80 Days",
+      "fr": "Le Tour du Monde en 80 Jours",
+      "de": "In 80 Tagen um die Welt",
+      "pt": "A Volta ao Mundo em 80 Dias",
+      "it": "Il Giro del Mondo in 80 Giorni",
+      "zh": "环游地球八十天"
+    },
+    "La cena sin pantallas": {
+      "en": "Dinner Without Screens",
+      "fr": "Le Dîner sans Écrans",
+      "de": "Abendessen ohne Bildschirme",
+      "pt": "O Jantar sem Telas",
+      "it": "La Cena senza Schermi",
+      "zh": "无屏晚餐"
+    },
+    "La isla del Tesoro": {
+      "en": "Treasure Island",
+      "fr": "L'Île au Trésor",
+      "de": "Die Schatzinsel",
+      "pt": "A Ilha do Tesouro",
+      "it": "L'Isola del Tesoro",
+      "zh": "金银岛"
+    },
+    "La luz que todavia viaja": {
+      "en": "The Light That Still Travels",
+      "fr": "La Lumière qui voyage encore",
+      "de": "Das Licht, das noch reist",
+      "pt": "A Luz que Ainda Viaja",
+      "it": "La Luce che Viaggia Ancora",
+      "zh": "仍在旅行的光"
+    },
+    "Ladrillo por ladrillo": {
+      "en": "Brick by Brick",
+      "fr": "Brique par Brique",
+      "de": "Stein für Stein",
+      "pt": "Tijolo por Tijolo",
+      "it": "Mattone dopo Mattone",
+      "zh": "一砖一瓦"
+    },
+    "Las Aventuras de Rin Rin Renacuajo": {
+      "en": "The Adventures of Rin Rin the Tadpole",
+      "fr": "Les Aventures de Rin Rin le Têtard",
+      "de": "Die Abenteuer von Rin Rin, der Kaulquappe",
+      "pt": "As Aventuras de Rin Rin Girino",
+      "it": "Le Avventure di Rin Rin il Girino",
+      "zh": "小蝌蚪林林历险记"
+    },
+    "Las Aventuras de Tom Sawyer": {
+      "en": "The Adventures of Tom Sawyer",
+      "fr": "Les Aventures de Tom Sawyer",
+      "de": "Die Abenteuer des Tom Sawyer",
+      "pt": "As Aventuras de Tom Sawyer",
+      "it": "Le Avventure di Tom Sawyer",
+      "zh": "汤姆·索亚历险记"
+    },
+    "Las Figuras se Presentan": {
+      "en": "The Shapes Introduce Themselves",
+      "fr": "Les Formes se Présentent",
+      "de": "Die Formen stellen sich vor",
+      "pt": "As Formas se Apresentam",
+      "it": "Le Forme si Presentano",
+      "zh": "图形自我介绍"
+    },
+    "Las Voces del Rio": {
+      "en": "The Voices of the River",
+      "fr": "Les Voix du Fleuve",
+      "de": "Die Stimmen des Flusses",
+      "pt": "As Vozes do Rio",
+      "it": "Le Voci del Fiume",
+      "zh": "河流之声"
+    },
+    "Lila Quiere Convertirse en un rió ": {
+      "en": "Lila Wants to Become a River",
+      "fr": "Lila veut devenir une rivière",
+      "de": "Lila möchte ein Fluss werden",
+      "pt": "Lila Quer Se Tornar um Rio",
+      "it": "Lila Vuole Diventare un Fiume",
+      "zh": "莉拉想变成一条河"
+    },
+    "Lino Alcanza las Estrellas": {
+      "en": "Lino Reaches the Stars",
+      "fr": "Lino Atteint les Étoiles",
+      "de": "Lino erreicht die Sterne",
+      "pt": "Lino Alcança as Estrelas",
+      "it": "Lino Raggiunge le Stelle",
+      "zh": "利诺触碰星星"
+    },
+    "Los Cinco Sentidos de Martina": {
+      "en": "Martina's Five Senses",
+      "fr": "Les Cinq Sens de Martina",
+      "de": "Martinas fünf Sinne",
+      "pt": "Os Cinco Sentidos de Martina",
+      "it": "I Cinque Sensi di Martina",
+      "zh": "玛蒂娜的五种感官"
+    },
+    "Los Libros de mi Pasado": {
+      "en": "The Books of My Past",
+      "fr": "Les Livres de Mon Passé",
+      "de": "Die Bücher meiner Vergangenheit",
+      "pt": "Os Livros do Meu Passado",
+      "it": "I Libri del Mio Passato",
+      "zh": "我的过往之书"
+    },
+    "Los Miserables": {
+      "en": "Les Misérables",
+      "fr": "Les Misérables",
+      "de": "Die Elenden",
+      "pt": "Os Miseráveis",
+      "it": "I Miserabili",
+      "zh": "悲惨世界"
+    },
+    "Los Ojos del Jaguar": {
+      "en": "The Eyes of the Jaguar",
+      "fr": "Les Yeux du Jaguar",
+      "de": "Die Augen des Jaguars",
+      "pt": "Os Olhos do Jaguar",
+      "it": "Gli Occhi del Giaguaro",
+      "zh": "美洲豹之眼"
+    },
+    "Maria": {
+      "en": "Maria",
+      "fr": "Maria",
+      "de": "Maria",
+      "pt": "Maria",
+      "it": "Maria",
+      "zh": "玛丽亚"
+    },
+    "Mateo y el Parque de las Pequeñas Maravillas": {
+      "en": "Mateo and the Park of Little Wonders",
+      "fr": "Mateo et le Parc des Petites Merveilles",
+      "de": "Mateo und der Park der kleinen Wunder",
+      "pt": "Mateo e o Parque das Pequenas Maravilhas",
+      "it": "Mateo e il Parco delle Piccole Meraviglie",
+      "zh": "马特奥与小奇迹公园"
+    },
+    "Mi Nombre es Especial": {
+      "en": "My Name Is Special",
+      "fr": "Mon Prénom est Spécial",
+      "de": "Mein Name ist besonders",
+      "pt": "Meu Nome é Especial",
+      "it": "Il Mio Nome è Speciale",
+      "zh": "我的名字很特别"
+    },
+    "Miguel Strogoff Adaptación": {
+      "en": "Michael Strogoff (Adaptation)",
+      "fr": "Michel Strogoff (Adaptation)",
+      "de": "Michael Strogoff (Adaption)",
+      "pt": "Miguel Strogoff (Adaptação)",
+      "it": "Michele Strogoff (Adattamento)",
+      "zh": "米歇尔·斯特罗戈夫（改编）"
+    },
+    "Mimo y el miedo a la Oscuridad": {
+      "en": "Mimo and the Fear of the Dark",
+      "fr": "Mimo et la Peur du Noir",
+      "de": "Mimo und die Angst vor der Dunkelheit",
+      "pt": "Mimo e o Medo do Escuro",
+      "it": "Mimo e la Paura del Buio",
+      "zh": "米莫与对黑暗的恐惧"
+    },
+    "Modo avión": {
+      "en": "Airplane Mode",
+      "fr": "Mode Avion",
+      "de": "Flugmodus",
+      "pt": "Modo Avião",
+      "it": "Modalità Aereo",
+      "zh": "飞行模式"
+    },
+    "Mowgli y la Sabiduria de la Jungla": {
+      "en": "Mowgli and the Wisdom of the Jungle",
+      "fr": "Mowgli et la Sagesse de la Jungle",
+      "de": "Mogli und die Weisheit des Dschungels",
+      "pt": "Mowgli e a Sabedoria da Selva",
+      "it": "Mowgli e la Saggezza della Giungla",
+      "zh": "毛克利与丛林智慧"
+    },
+    "Nico y el Paraguas de Colores": {
+      "en": "Nico and the Colorful Umbrella",
+      "fr": "Nico et le Parapluie Coloré",
+      "de": "Nico und der bunte Regenschirm",
+      "pt": "Nico e o Guarda-Chuva Colorido",
+      "it": "Nico e l'Ombrello Colorato",
+      "zh": "尼科与彩色雨伞"
+    },
+    "Pinocho": {
+      "en": "Pinocchio",
+      "fr": "Pinocchio",
+      "de": "Pinocchio",
+      "pt": "Pinóquio",
+      "it": "Pinocchio",
+      "zh": "匹诺曹"
+    },
+    "Samuel y Robi": {
+      "en": "Samuel and Robi",
+      "fr": "Samuel et Robi",
+      "de": "Samuel und Robi",
+      "pt": "Samuel e Robi",
+      "it": "Samuel e Robi",
+      "zh": "塞缪尔与罗比"
+    },
+    "Tito, El Conejo que no quería Compartir": {
+      "en": "Tito, the Rabbit Who Didn't Want to Share",
+      "fr": "Tito, le Lapin qui ne voulait pas partager",
+      "de": "Tito, das Kaninchen, das nicht teilen wollte",
+      "pt": "Tito, o Coelho que Não Queria Compartilhar",
+      "it": "Tito, il Coniglio che Non Voleva Condividere",
+      "zh": "不肯分享的兔子提托"
+    },
+    "Tom Sawyer y el Mapa del Tesoro": {
+      "en": "Tom Sawyer and the Treasure Map",
+      "fr": "Tom Sawyer et la Carte au Trésor",
+      "de": "Tom Sawyer und die Schatzkarte",
+      "pt": "Tom Sawyer e o Mapa do Tesouro",
+      "it": "Tom Sawyer e la Mappa del Tesoro",
+      "zh": "汤姆·索亚与藏宝图"
+    },
+    "Trescientos corazones": {
+      "en": "Three Hundred Hearts",
+      "fr": "Trois Cents Cœurs",
+      "de": "Dreihundert Herzen",
+      "pt": "Trezentos Corações",
+      "it": "Trecento Cuori",
+      "zh": "三百颗心"
+    },
+    "Un Día en la Granja de Lolo": {
+      "en": "A Day on Lolo's Farm",
+      "fr": "Une Journée à la Ferme de Lolo",
+      "de": "Ein Tag auf Lolos Bauernhof",
+      "pt": "Um Dia na Fazenda de Lolo",
+      "it": "Un Giorno alla Fattoria di Lolo",
+      "zh": "洛洛农场的一天"
+    },
+    "Un Largo Viaje en Bicicleta": {
+      "en": "A Long Bicycle Journey",
+      "fr": "Un Long Voyage à Vélo",
+      "de": "Eine lange Fahrradreise",
+      "pt": "Uma Longa Viagem de Bicicleta",
+      "it": "Un Lungo Viaggio in Bicicletta",
+      "zh": "漫长的骑行之旅"
+    },
+    "Un Visitante del Pasado": {
+      "en": "A Visitor from the Past",
+      "fr": "Un Visiteur du Passé",
+      "de": "Ein Besucher aus der Vergangenheit",
+      "pt": "Um Visitante do Passado",
+      "it": "Un Visitatore dal Passato",
+      "zh": "来自过去的访客"
+    },
+    "Una Historia con Sara": {
+      "en": "A Story with Sara",
+      "fr": "Une Histoire avec Sara",
+      "de": "Eine Geschichte mit Sara",
+      "pt": "Uma História com Sara",
+      "it": "Una Storia con Sara",
+      "zh": "与萨拉的故事"
+    },
+    "Uno, Dos, Tres, ¡Vamos a Contar!": {
+      "en": "One, Two, Three, Let's Count!",
+      "fr": "Un, Deux, Trois, Comptons !",
+      "de": "Eins, Zwei, Drei, Zählen wir!",
+      "pt": "Um, Dois, Três, Vamos Contar!",
+      "it": "Uno, Due, Tre, Contiamo!",
+      "zh": "一、二、三，一起数数！"
+    },
+    "Viaje al Centro de la Tierra": {
+      "en": "Journey to the Center of the Earth",
+      "fr": "Voyage au Centre de la Terre",
+      "de": "Reise zum Mittelpunkt der Erde",
+      "pt": "Viagem ao Centro da Terra",
+      "it": "Viaggio al Centro della Terra",
+      "zh": "地心游记"
+    },
+    "¿Qué Me Pongo Hoy?": {
+      "en": "What Should I Wear Today?",
+      "fr": "Que Vais-je Porter Aujourd'hui ?",
+      "de": "Was ziehe ich heute an?",
+      "pt": "O Que Vou Vestir Hoje?",
+      "it": "Cosa Mi Metto Oggi?",
+      "zh": "今天穿什么？"
+    }
+  },
+  "grades": {
+    "TRANSICION": {
+      "en": "Preschool",
+      "fr": "Maternelle",
+      "de": "Vorschule",
+      "pt": "Pré-escola",
+      "it": "Scuola Materna",
+      "zh": "学前班"
+    },
+    "TRANSICIÓN": {
+      "en": "Preschool",
+      "fr": "Maternelle",
+      "de": "Vorschule",
+      "pt": "Pré-escola",
+      "it": "Scuola Materna",
+      "zh": "学前班"
+    },
+    "PRIMERO": {
+      "en": "1st Grade",
+      "fr": "CP",
+      "de": "1. Klasse",
+      "pt": "1º Ano",
+      "it": "1ª Classe",
+      "zh": "一年级"
+    },
+    "SEGUNDO": {
+      "en": "2nd Grade",
+      "fr": "CE1",
+      "de": "2. Klasse",
+      "pt": "2º Ano",
+      "it": "2ª Classe",
+      "zh": "二年级"
+    },
+    "TERCERO": {
+      "en": "3rd Grade",
+      "fr": "CE2",
+      "de": "3. Klasse",
+      "pt": "3º Ano",
+      "it": "3ª Classe",
+      "zh": "三年级"
+    },
+    "CUARTO": {
+      "en": "4th Grade",
+      "fr": "CM1",
+      "de": "4. Klasse",
+      "pt": "4º Ano",
+      "it": "4ª Classe",
+      "zh": "四年级"
+    },
+    "QUINTO": {
+      "en": "5th Grade",
+      "fr": "CM2",
+      "de": "5. Klasse",
+      "pt": "5º Ano",
+      "it": "5ª Classe",
+      "zh": "五年级"
+    },
+    "SEXTO": {
+      "en": "6th Grade",
+      "fr": "6e",
+      "de": "6. Klasse",
+      "pt": "6º Ano",
+      "it": "6ª Classe",
+      "zh": "六年级"
+    },
+    "SEPTIMO": {
+      "en": "7th Grade",
+      "fr": "5e",
+      "de": "7. Klasse",
+      "pt": "7º Ano",
+      "it": "7ª Classe",
+      "zh": "七年级"
+    },
+    "OCTAVO": {
+      "en": "8th Grade",
+      "fr": "4e",
+      "de": "8. Klasse",
+      "pt": "8º Ano",
+      "it": "8ª Classe",
+      "zh": "八年级"
+    },
+    "NOVENO": {
+      "en": "9th Grade",
+      "fr": "3e",
+      "de": "9. Klasse",
+      "pt": "9º Ano",
+      "it": "9ª Classe",
+      "zh": "九年级"
+    },
+    "DECIMO": {
+      "en": "10th Grade",
+      "fr": "2nde",
+      "de": "10. Klasse",
+      "pt": "10º Ano",
+      "it": "10ª Classe",
+      "zh": "十年级"
+    },
+    "ONCE": {
+      "en": "11th Grade",
+      "fr": "1re",
+      "de": "11. Klasse",
+      "pt": "11º Ano",
+      "it": "11ª Classe",
+      "zh": "十一年级"
+    }
+  },
+  "categories": {
+    "Infantil": {
+      "en": "Children's",
+      "fr": "Enfants",
+      "de": "Kinder",
+      "pt": "Infantil",
+      "it": "Bambini",
+      "zh": "儿童"
+    },
+    "Académico": {
+      "en": "Academic",
+      "fr": "Académique",
+      "de": "Akademisch",
+      "pt": "Acadêmico",
+      "it": "Accademico",
+      "zh": "学术"
+    },
+    "Literatura": {
+      "en": "Literature",
+      "fr": "Littérature",
+      "de": "Literatur",
+      "pt": "Literatura",
+      "it": "Letteratura",
+      "zh": "文学"
+    },
+    "Ciencia": {
+      "en": "Science",
+      "fr": "Science",
+      "de": "Wissenschaft",
+      "pt": "Ciência",
+      "it": "Scienza",
+      "zh": "科学"
+    },
+    "Historia": {
+      "en": "History",
+      "fr": "Histoire",
+      "de": "Geschichte",
+      "pt": "História",
+      "it": "Storia",
+      "zh": "历史"
+    },
+    "General": {
+      "en": "General",
+      "fr": "Général",
+      "de": "Allgemein",
+      "pt": "Geral",
+      "it": "Generale",
+      "zh": "综合"
+    }
+  },
+  "subjects": {
+    "Español": {
+      "en": "Spanish",
+      "fr": "Espagnol",
+      "de": "Spanisch",
+      "pt": "Espanhol",
+      "it": "Spagnolo",
+      "zh": "西班牙语"
+    },
+    "Ciencias": {
+      "en": "Sciences",
+      "fr": "Sciences",
+      "de": "Naturwissenschaften",
+      "pt": "Ciências",
+      "it": "Scienze",
+      "zh": "科学"
+    },
+    "Matemáticas": {
+      "en": "Mathematics",
+      "fr": "Mathématiques",
+      "de": "Mathematik",
+      "pt": "Matemática",
+      "it": "Matematica",
+      "zh": "数学"
+    },
+    "Historia": {
+      "en": "History",
+      "fr": "Histoire",
+      "de": "Geschichte",
+      "pt": "História",
+      "it": "Storia",
+      "zh": "历史"
+    },
+    "Inglés": {
+      "en": "English",
+      "fr": "Anglais",
+      "de": "Englisch",
+      "pt": "Inglês",
+      "it": "Inglese",
+      "zh": "英语"
+    },
+    "Artes": {
+      "en": "Arts",
+      "fr": "Arts",
+      "de": "Kunst",
+      "pt": "Artes",
+      "it": "Arti",
+      "zh": "艺术"
+    }
+  },
+  "ui": {
+    "Consola de Súper Administración": {
+      "en": "Super Administration Console",
+      "fr": "Console de Super Administration",
+      "de": "Super-Administrations-Konsole",
+      "pt": "Console de Super Administração",
+      "it": "Console di Super Amministrazione",
+      "zh": "超级管理控制台"
+    },
+    "Gestión global de contratos, colegios y suscripciones B2B de Leyópolis.": {
+      "en": "Global management of contracts, schools and B2B subscriptions of Leyópolis.",
+      "fr": "Gestion globale des contrats, écoles et abonnements B2B de Leyópolis.",
+      "de": "Globale Verwaltung von Verträgen, Schulen und B2B-Abonnements von Leyópolis.",
+      "pt": "Gestão global de contratos, escolas e assinaturas B2B de Leyópolis.",
+      "it": "Gestione globale di contratti, scuole e abbonamenti B2B di Leyópolis.",
+      "zh": "Leyópolis 合同、学校和 B2B 订阅的全球管理。"
+    },
+    "Nuevo Colegio": {
+      "en": "New School",
+      "fr": "Nouvelle École",
+      "de": "Neue Schule",
+      "pt": "Nova Escola",
+      "it": "Nuova Scuola",
+      "zh": "新学校"
+    },
+    "Sincronizar BD": {
+      "en": "Sync DB",
+      "fr": "Synchroniser BD",
+      "de": "DB synchronisieren",
+      "pt": "Sincronizar BD",
+      "it": "Sincronizza DB",
+      "zh": "同步数据库"
+    },
+    "Registrar Nuevo Colegio": {
+      "en": "Register New School",
+      "fr": "Enregistrer une Nouvelle École",
+      "de": "Neue Schule registrieren",
+      "pt": "Registrar Nova Escola",
+      "it": "Registra Nuova Scuola",
+      "zh": "注册新学校"
+    },
+    "Configura la suscripción y límites de la nueva institución.": {
+      "en": "Configure the subscription and limits of the new institution.",
+      "fr": "Configurez l'abonnement et les limites de la nouvelle institution.",
+      "de": "Konfigurieren Sie das Abonnement und die Grenzwerte der neuen Institution.",
+      "pt": "Configure a assinatura e os limites da nova instituição.",
+      "it": "Configura l'abbonamento e i limiti della nuova istituzione.",
+      "zh": "配置新机构的订阅和限制。"
+    },
+    "Nombre de la Institución": {
+      "en": "Institution Name",
+      "fr": "Nom de l'Institution",
+      "de": "Name der Institution",
+      "pt": "Nome da Instituição",
+      "it": "Nome dell'Istituzione",
+      "zh": "机构名称"
+    },
+    "Dominio (Identificador único)": {
+      "en": "Domain (Unique Identifier)",
+      "fr": "Domaine (Identifiant Unique)",
+      "de": "Domain (eindeutige Kennung)",
+      "pt": "Domínio (Identificador Único)",
+      "it": "Dominio (Identificatore Univoco)",
+      "zh": "域名（唯一标识符）"
+    },
+    "Plan": {
+      "en": "Plan",
+      "fr": "Plan",
+      "de": "Plan",
+      "pt": "Plano",
+      "it": "Piano",
+      "zh": "方案"
+    },
+    "Trial": {
+      "en": "Trial",
+      "fr": "Essai",
+      "de": "Test",
+      "pt": "Teste",
+      "it": "Prova",
+      "zh": "试用"
+    },
+    "Mensual": {
+      "en": "Monthly",
+      "fr": "Mensuel",
+      "de": "Monatlich",
+      "pt": "Mensal",
+      "it": "Mensile",
+      "zh": "月度"
+    },
+    "Anual": {
+      "en": "Annual",
+      "fr": "Annuel",
+      "de": "Jährlich",
+      "pt": "Anual",
+      "it": "Annuale",
+      "zh": "年度"
+    },
+    "Límite Estudiantes": {
+      "en": "Student Limit",
+      "fr": "Limite d'Étudiants",
+      "de": "Schülerlimit",
+      "pt": "Limite de Alunos",
+      "it": "Limite Studenti",
+      "zh": "学生上限"
+    },
+    "Duración del acceso (Días)": {
+      "en": "Access Duration (Days)",
+      "fr": "Durée d'Accès (Jours)",
+      "de": "Zugriffsdauer (Tage)",
+      "pt": "Duração do Acesso (Dias)",
+      "it": "Durata dell'Accesso (Giorni)",
+      "zh": "访问时长（天）"
+    },
+    "Funciones incluidas en el plan": {
+      "en": "Features Included in the Plan",
+      "fr": "Fonctionnalités Incluses dans le Plan",
+      "de": "Im Plan enthaltene Funktionen",
+      "pt": "Funcionalidades Incluídas no Plano",
+      "it": "Funzionalità Incluse nel Piano",
+      "zh": "方案包含的功能"
+    },
+    "Motion Tracking (lector)": {
+      "en": "Motion Tracking (reader)",
+      "fr": "Suivi de Mouvement (lecteur)",
+      "de": "Bewegungserkennung (Leser)",
+      "pt": "Rastreamento de Movimento (leitor)",
+      "it": "Motion Tracking (lettore)",
+      "zh": "动作追踪（阅读器）"
+    },
+    "Juegos Motion Tracking": {
+      "en": "Motion Tracking Games",
+      "fr": "Jeux de Suivi de Mouvement",
+      "de": "Bewegungs-Tracking-Spiele",
+      "pt": "Jogos de Rastreamento de Movimento",
+      "it": "Giochi Motion Tracking",
+      "zh": "动作追踪游戏"
+    },
+    "Traducción a 7 idiomas": {
+      "en": "Translation into 7 Languages",
+      "fr": "Traduction en 7 langues",
+      "de": "Übersetzung in 7 Sprachen",
+      "pt": "Tradução em 7 idiomas",
+      "it": "Traduzione in 7 lingue",
+      "zh": "7 种语言翻译"
+    },
+    "Límite de unidades pedagógicas": {
+      "en": "Pedagogical Units Limit",
+      "fr": "Limite d'Unités Pédagogiques",
+      "de": "Grenze pädagogischer Einheiten",
+      "pt": "Limite de Unidades Pedagógicas",
+      "it": "Limite di Unità Pedagogiche",
+      "zh": "教学单元上限"
+    },
+    "Ilimitado": {
+      "en": "Unlimited",
+      "fr": "Illimité",
+      "de": "Unbegrenzt",
+      "pt": "Ilimitado",
+      "it": "Illimitato",
+      "zh": "无限制"
+    },
+    "Habilitar Institución": {
+      "en": "Enable Institution",
+      "fr": "Activer l'Institution",
+      "de": "Institution aktivieren",
+      "pt": "Habilitar Instituição",
+      "it": "Abilita Istituzione",
+      "zh": "启用机构"
+    },
+    "Estudiantes": {
+      "en": "Students",
+      "fr": "Étudiants",
+      "de": "Schüler",
+      "pt": "Alunos",
+      "it": "Studenti",
+      "zh": "学生"
+    },
+    "Docentes": {
+      "en": "Teachers",
+      "fr": "Enseignants",
+      "de": "Lehrer",
+      "pt": "Professores",
+      "it": "Insegnanti",
+      "zh": "教师"
+    },
+    "Administración": {
+      "en": "Administration",
+      "fr": "Administration",
+      "de": "Verwaltung",
+      "pt": "Administração",
+      "it": "Amministrazione",
+      "zh": "管理"
+    },
+    "Coordinadores": {
+      "en": "Coordinators",
+      "fr": "Coordinateurs",
+      "de": "Koordinatoren",
+      "pt": "Coordenadores",
+      "it": "Coordinatori",
+      "zh": "协调员"
+    },
+    "Clases": {
+      "en": "Classes",
+      "fr": "Classes",
+      "de": "Klassen",
+      "pt": "Turmas",
+      "it": "Classi",
+      "zh": "班级"
+    },
+    "Resumen": {
+      "en": "Summary",
+      "fr": "Résumé",
+      "de": "Zusammenfassung",
+      "pt": "Resumo",
+      "it": "Riepilogo",
+      "zh": "摘要"
+    },
+    "Gestión de Docentes": {
+      "en": "Teacher Management",
+      "fr": "Gestion des Enseignants",
+      "de": "Lehrerverwaltung",
+      "pt": "Gestão de Professores",
+      "it": "Gestione Insegnanti",
+      "zh": "教师管理"
+    },
+    "Registrar Docente": {
+      "en": "Register Teacher",
+      "fr": "Enregistrer un Enseignant",
+      "de": "Lehrer registrieren",
+      "pt": "Registrar Professor",
+      "it": "Registra Insegnante",
+      "zh": "注册教师"
+    },
+    "Nombre": {
+      "en": "Name",
+      "fr": "Nom",
+      "de": "Name",
+      "pt": "Nome",
+      "it": "Nome",
+      "zh": "姓名"
+    },
+    "Email": {
+      "en": "Email",
+      "fr": "E-mail",
+      "de": "E-Mail",
+      "pt": "E-mail",
+      "it": "Email",
+      "zh": "邮箱"
+    },
+    "Licencia": {
+      "en": "License",
+      "fr": "Licence",
+      "de": "Lizenz",
+      "pt": "Licença",
+      "it": "Licenza",
+      "zh": "许可证"
+    },
+    "Activada": {
+      "en": "Activated",
+      "fr": "Activée",
+      "de": "Aktiviert",
+      "pt": "Ativada",
+      "it": "Attivata",
+      "zh": "已激活"
+    },
+    "Acciones": {
+      "en": "Actions",
+      "fr": "Actions",
+      "de": "Aktionen",
+      "pt": "Ações",
+      "it": "Azioni",
+      "zh": "操作"
+    },
+    "Expira": {
+      "en": "Expires",
+      "fr": "Expire",
+      "de": "Läuft ab",
+      "pt": "Expira",
+      "it": "Scade",
+      "zh": "到期"
+    },
+    "Buscar libros, autores, temas...": {
+      "en": "Search books, authors, topics...",
+      "fr": "Rechercher livres, auteurs, sujets...",
+      "de": "Bücher, Autoren, Themen suchen...",
+      "pt": "Buscar livros, autores, temas...",
+      "it": "Cerca libri, autori, argomenti...",
+      "zh": "搜索书籍、作者、主题…"
+    },
+    "Ayuda": {
+      "en": "Help",
+      "fr": "Aide",
+      "de": "Hilfe",
+      "pt": "Ajuda",
+      "it": "Aiuto",
+      "zh": "帮助"
+    },
+    "Todos": {
+      "en": "All",
+      "fr": "Tous",
+      "de": "Alle",
+      "pt": "Todos",
+      "it": "Tutti",
+      "zh": "全部"
+    },
+    "En riesgo": {
+      "en": "At Risk",
+      "fr": "En Risque",
+      "de": "Gefährdet",
+      "pt": "Em Risco",
+      "it": "A Rischio",
+      "zh": "有风险"
+    },
+    "Activos hoy": {
+      "en": "Active Today",
+      "fr": "Actifs Aujourd'hui",
+      "de": "Heute Aktiv",
+      "pt": "Ativos Hoje",
+      "it": "Attivi Oggi",
+      "zh": "今日活跃"
+    },
+    "Estudiantes a cargo": {
+      "en": "Students in Charge",
+      "fr": "Étudiants en Charge",
+      "de": "Betreute Schüler",
+      "pt": "Alunos sob Responsabilidade",
+      "it": "Studenti a Carico",
+      "zh": "负责学生"
+    },
+    "Estudiantes en riesgo": {
+      "en": "At-Risk Students",
+      "fr": "Étudiants à Risque",
+      "de": "Gefährdete Schüler",
+      "pt": "Alunos em Risco",
+      "it": "Studenti a Rischio",
+      "zh": "风险学生"
+    },
+    "Requieren atención inmediata": {
+      "en": "Require Immediate Attention",
+      "fr": "Nécessitent Attention Immédiate",
+      "de": "Erfordern sofortige Aufmerksamkeit",
+      "pt": "Requerem Atenção Imediata",
+      "it": "Richiedono Attenzione Immediata",
+      "zh": "需要立即关注"
+    },
+    "Refrescar": {
+      "en": "Refresh",
+      "fr": "Actualiser",
+      "de": "Aktualisieren",
+      "pt": "Atualizar",
+      "it": "Aggiorna",
+      "zh": "刷新"
+    },
+    "Mis estudiantes": {
+      "en": "My Students",
+      "fr": "Mes Étudiants",
+      "de": "Meine Schüler",
+      "pt": "Meus Alunos",
+      "it": "I Miei Studenti",
+      "zh": "我的学生"
+    },
+    "estudiantes": {
+      "en": "students",
+      "fr": "étudiants",
+      "de": "Schüler",
+      "pt": "alunos",
+      "it": "studenti",
+      "zh": "学生"
+    },
+    "estudiante": {
+      "en": "student",
+      "fr": "étudiant",
+      "de": "Schüler",
+      "pt": "aluno",
+      "it": "studente",
+      "zh": "学生"
+    },
+    "Panel Profesor": {
+      "en": "Teacher Panel",
+      "fr": "Panneau Enseignant",
+      "de": "Lehrerpanel",
+      "pt": "Painel do Professor",
+      "it": "Pannello Insegnante",
+      "zh": "教师面板"
+    },
+    "Panel Coordinador": {
+      "en": "Coordinator Panel",
+      "fr": "Panneau Coordinateur",
+      "de": "Koordinatorpanel",
+      "pt": "Painel do Coordenador",
+      "it": "Pannello Coordinatore",
+      "zh": "协调员面板"
+    },
+    "IA Docente": {
+      "en": "Teaching AI",
+      "fr": "IA Enseignante",
+      "de": "Lehr-KI",
+      "pt": "IA Docente",
+      "it": "IA Docente",
+      "zh": "教学 AI"
+    },
+    "Generador Quiz": {
+      "en": "Quiz Generator",
+      "fr": "Générateur de Quiz",
+      "de": "Quiz-Generator",
+      "pt": "Gerador de Quiz",
+      "it": "Generatore di Quiz",
+      "zh": "测验生成器"
+    },
+    "Mis Clases": {
+      "en": "My Classes",
+      "fr": "Mes Classes",
+      "de": "Meine Klassen",
+      "pt": "Minhas Turmas",
+      "it": "Le Mie Classi",
+      "zh": "我的班级"
+    },
+    "Respuestas Quiz": {
+      "en": "Quiz Answers",
+      "fr": "Réponses au Quiz",
+      "de": "Quiz-Antworten",
+      "pt": "Respostas do Quiz",
+      "it": "Risposte del Quiz",
+      "zh": "测验答案"
+    },
+    "Súper Admin": {
+      "en": "Super Admin",
+      "fr": "Super Admin",
+      "de": "Super-Admin",
+      "pt": "Super Admin",
+      "it": "Super Admin",
+      "zh": "超级管理员"
+    },
+    "Gestión Libros BBDD": {
+      "en": "Book DB Management",
+      "fr": "Gestion BD Livres",
+      "de": "Bücher-DB-Verwaltung",
+      "pt": "Gestão do BD de Livros",
+      "it": "Gestione DB Libri",
+      "zh": "图书数据库管理"
+    },
+    "Todos los Usuarios": {
+      "en": "All Users",
+      "fr": "Tous les Utilisateurs",
+      "de": "Alle Benutzer",
+      "pt": "Todos os Usuários",
+      "it": "Tutti gli Utenti",
+      "zh": "所有用户"
+    },
+    "Licencias": {
+      "en": "Licenses",
+      "fr": "Licences",
+      "de": "Lizenzen",
+      "pt": "Licenças",
+      "it": "Licenze",
+      "zh": "许可证"
+    },
+    "Métricas Reales": {
+      "en": "Real Metrics",
+      "fr": "Métriques Réelles",
+      "de": "Reale Metriken",
+      "pt": "Métricas Reais",
+      "it": "Metriche Reali",
+      "zh": "真实指标"
+    },
+    "Plataforma": {
+      "en": "Platform",
+      "fr": "Plateforme",
+      "de": "Plattform",
+      "pt": "Plataforma",
+      "it": "Piattaforma",
+      "zh": "平台"
+    },
+    "Configuración": {
+      "en": "Settings",
+      "fr": "Paramètres",
+      "de": "Einstellungen",
+      "pt": "Configurações",
+      "it": "Impostazioni",
+      "zh": "设置"
+    },
+    "Cerrar sesión": {
+      "en": "Sign Out",
+      "fr": "Se Déconnecter",
+      "de": "Abmelden",
+      "pt": "Sair",
+      "it": "Esci",
+      "zh": "退出登录"
+    },
+    "Centro de Ayuda": {
+      "en": "Help Center",
+      "fr": "Centre d'Aide",
+      "de": "Hilfezentrum",
+      "pt": "Central de Ajuda",
+      "it": "Centro Assistenza",
+      "zh": "帮助中心"
+    },
+    "Menú Principal": {
+      "en": "Main Menu",
+      "fr": "Menu Principal",
+      "de": "Hauptmenü",
+      "pt": "Menu Principal",
+      "it": "Menu Principale",
+      "zh": "主菜单"
+    },
+    "Control Global": {
+      "en": "Global Control",
+      "fr": "Contrôle Global",
+      "de": "Globale Steuerung",
+      "pt": "Controle Global",
+      "it": "Controllo Globale",
+      "zh": "全局控制"
+    },
+    "Herramientas Docente": {
+      "en": "Teacher Tools",
+      "fr": "Outils Enseignant",
+      "de": "Lehrerwerkzeuge",
+      "pt": "Ferramentas Docente",
+      "it": "Strumenti Docente",
+      "zh": "教师工具"
+    },
+    "Coordinación": {
+      "en": "Coordination",
+      "fr": "Coordination",
+      "de": "Koordination",
+      "pt": "Coordenação",
+      "it": "Coordinamento",
+      "zh": "协调"
+    },
+    "Vista Profesor": {
+      "en": "Teacher View",
+      "fr": "Vue Enseignant",
+      "de": "Lehreransicht",
+      "pt": "Visão do Professor",
+      "it": "Vista Insegnante",
+      "zh": "教师视图"
+    },
+    "Instituciones activas": {
+      "en": "Active Institutions",
+      "fr": "Institutions Actives",
+      "de": "Aktive Institutionen",
+      "pt": "Instituições Ativas",
+      "it": "Istituzioni Attive",
+      "zh": "活跃机构"
+    },
+    "Usuarios totales": {
+      "en": "Total Users",
+      "fr": "Utilisateurs Totaux",
+      "de": "Gesamtbenutzer",
+      "pt": "Usuários Totais",
+      "it": "Utenti Totali",
+      "zh": "总用户数"
+    },
+    "Analiza el rendimiento de tus estudiantes.": {
+      "en": "Analyze your students' performance.",
+      "fr": "Analysez la performance de vos étudiants.",
+      "de": "Analysieren Sie die Leistung Ihrer Schüler.",
+      "pt": "Analise o desempenho dos seus alunos.",
+      "it": "Analizza la performance dei tuoi studenti.",
+      "zh": "分析学生的表现。"
+    },
+    "Tasa de Completitud": {
+      "en": "Completion Rate",
+      "fr": "Taux d'Achèvement",
+      "de": "Abschlussquote",
+      "pt": "Taxa de Conclusão",
+      "it": "Tasso di Completamento",
+      "zh": "完成率"
+    },
+    "Promedio de lecturas finalizadas": {
+      "en": "Average of Completed Readings",
+      "fr": "Moyenne des Lectures Terminées",
+      "de": "Durchschnitt abgeschlossener Lesungen",
+      "pt": "Média de Leituras Concluídas",
+      "it": "Media delle Letture Completate",
+      "zh": "已完成阅读平均值"
+    },
+    "Tiempo Promedio": {
+      "en": "Average Time",
+      "fr": "Temps Moyen",
+      "de": "Durchschnittliche Zeit",
+      "pt": "Tempo Médio",
+      "it": "Tempo Medio",
+      "zh": "平均时长"
+    },
+    "Por sesión de lectura": {
+      "en": "Per Reading Session",
+      "fr": "Par Session de Lecture",
+      "de": "Pro Lesesitzung",
+      "pt": "Por Sessão de Leitura",
+      "it": "Per Sessione di Lettura",
+      "zh": "每次阅读"
+    },
+    "Rendimiento por Clase": {
+      "en": "Performance by Class",
+      "fr": "Performance par Classe",
+      "de": "Leistung nach Klasse",
+      "pt": "Desempenho por Turma",
+      "it": "Rendimento per Classe",
+      "zh": "按班级绩效"
+    },
+    "Global": {
+      "en": "Global",
+      "fr": "Global",
+      "de": "Global",
+      "pt": "Global",
+      "it": "Globale",
+      "zh": "全局"
+    },
+    "Completado": {
+      "en": "Completed",
+      "fr": "Terminé",
+      "de": "Abgeschlossen",
+      "pt": "Concluído",
+      "it": "Completato",
+      "zh": "已完成"
+    }
+  }
+}

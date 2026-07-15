@@ -150,32 +150,15 @@ async function translateWithOpenAI(text: string, targetPrompt: string, apiKey: s
 }
 
 /**
- * Cadena de proveedores. Claude preferido (mejor calidad), Gemini como
- * fallback barato, OpenAI último. Si Claude devuelve 'credit balance too low'
- * o 401/403, saltamos directo al próximo sin re-intentar.
+ * SOLO Claude — sin fallbacks. Si Claude falla, propagamos el error tal cual
+ * para que el frontend lo muestre y el usuario recargue saldo si hace falta.
  */
 async function translatePage(
   text: string,
   targetPrompt: string,
-  keys: { claude?: string; gemini?: string; openai?: string },
+  claudeKey: string,
 ): Promise<TranslateResult> {
-  let lastError = "sin proveedores configurados";
-  if (keys.claude) {
-    const r = await translateWithClaude(text, targetPrompt, keys.claude);
-    if (r.ok) return r;
-    lastError = r.error;
-  }
-  if (keys.gemini) {
-    const r = await translateWithGemini(text, targetPrompt, keys.gemini);
-    if (r.ok) return r;
-    lastError = r.error;
-  }
-  if (keys.openai) {
-    const r = await translateWithOpenAI(text, targetPrompt, keys.openai);
-    if (r.ok) return r;
-    lastError = r.error;
-  }
-  return { ok: false, error: lastError };
+  return await translateWithClaude(text, targetPrompt, claudeKey);
 }
 
 async function extractPdfPages(pdfUrl: string): Promise<string[]> {
@@ -240,15 +223,12 @@ export async function POST(req: Request) {
   const settings = await prisma.systemSetting.findMany();
   const settingsMap = settings.reduce((acc: Record<string, string>, s) => { acc[s.key] = s.value; return acc; }, {});
   const sanitize = (k?: string) => (k || "").trim().replace(/^["']|["']$/g, "");
-  const keys = {
-    claude: sanitize(settingsMap.ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY),
-    gemini: sanitize(settingsMap.GOOGLE_API_KEY || process.env.GOOGLE_API_KEY),
-    openai: sanitize(settingsMap.OPENAI_API_KEY || process.env.OPENAI_API_KEY),
-  };
+  const claudeKey = sanitize(settingsMap.ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY);
 
-  if (!keys.claude && !keys.gemini && !keys.openai) {
+  if (!claudeKey) {
     return NextResponse.json({
-      message: "No hay ninguna API key configurada. Configura ANTHROPIC_API_KEY, GOOGLE_API_KEY u OPENAI_API_KEY en /dashboard/superadmin/settings o como variable de entorno.",
+      message: "Falta ANTHROPIC_API_KEY. Configúrala en /dashboard/superadmin/settings o como variable de entorno.",
+      fatal: true,
     }, { status: 400 });
   }
 
@@ -265,6 +245,19 @@ export async function POST(req: Request) {
     booksProcessed: 0,
     booksSkipped: 0,
     firstError: null as string | null,
+    fatal: false as boolean,
+    fatalReason: null as string | null,
+  };
+
+  // Detecta si un error del proveedor requiere abortar todo el batch
+  // (ej. saldo insuficiente, key inválida). No sirve seguir intentando —
+  // el resto de las páginas fallarán exactamente igual.
+  const isFatalError = (err: string): boolean => {
+    const e = err.toLowerCase();
+    return e.includes("credit balance") || e.includes("insufficient") ||
+           e.includes("quota") || e.includes("401") || e.includes("403") ||
+           e.includes("unauthorized") || e.includes("invalid api key") ||
+           e.includes("invalid x-api-key");
   };
 
   for (const book of books) {
@@ -331,10 +324,21 @@ export async function POST(req: Request) {
             continue;
           }
 
-          const result = await translatePage(page.text, lang.prompt, keys);
+          // Si ya hubo error fatal en una página previa, no seguimos
+          // desperdiciando tiempo con más requests a Claude — todos van a fallar.
+          if (summary.fatal) {
+            summary.failed++;
+            continue;
+          }
+
+          const result = await translatePage(page.text, lang.prompt, claudeKey);
           if (!result.ok) {
             summary.failed++;
             if (!summary.firstError) summary.firstError = `${book.title} pág ${page.num} (${langCode}): ${result.error}`;
+            if (isFatalError(result.error)) {
+              summary.fatal = true;
+              summary.fatalReason = result.error;
+            }
             continue;
           }
 

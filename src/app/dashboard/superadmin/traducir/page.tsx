@@ -305,9 +305,9 @@ export default function TraducirPage() {
         <div>
           <p className="font-semibold text-emerald-300">A prueba de recargas y timeouts</p>
           <p className="text-emerald-200/80 mt-0.5">
-            Cada página se guarda en la base de datos apenas la IA la devuelve. Fallback automático entre
-            <strong> Claude → Gemini → OpenAI</strong> si el primero falla o queda sin saldo.
+            Cada página se guarda en la base de datos apenas <strong>Claude</strong> la devuelve.
             Si recargás o hay timeout, la próxima corrida salta lo ya traducido — <strong>nunca se re-paga un token</strong>.
+            Si Claude devuelve saldo insuficiente o key inválida, el batch aborta inmediatamente y verás el error rojo arriba.
           </p>
         </div>
       </div>

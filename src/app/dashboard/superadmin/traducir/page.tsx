@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Loader2, Languages, Search, CheckCircle2, AlertCircle, Sparkles, BookOpen } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Loader2, Languages, Search, CheckCircle2, AlertCircle, Sparkles, BookOpen, PlayCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -99,9 +99,13 @@ export default function TraducirPage() {
 
   const appendLog = (line: string) => setLog((l) => [...l.slice(-49), line]);
 
-  const startTranslation = async () => {
-    if (selectedBookIds.size === 0 || selectedLangs.size === 0) return;
-    if (!confirm(`Vas a traducir ${selectedBookIds.size} libro(s) COMPLETOS (todas las páginas del PDF) a ${selectedLangs.size} idioma(s) usando Claude. Esto puede tardar y consumir crédito. ¿Continuar?`)) return;
+  /**
+   * Núcleo del batch: acepta las listas ya resueltas (viene del panel superior
+   * O del click en un libro de la tabla). No pregunta confirmación aquí — el
+   * caller la maneja.
+   */
+  const runBatch = async (bookIds: string[], languages: string[]) => {
+    if (bookIds.length === 0 || languages.length === 0) return;
 
     setRunning(true);
     setLog([]);
@@ -109,8 +113,6 @@ export default function TraducirPage() {
     setProgress({ translated: 0, cached: 0, failed: 0, total: 0 });
     setCurrentBook(null);
 
-    const bookIds = Array.from(selectedBookIds);
-    const languages = Array.from(selectedLangs);
     const totalSummary = { translated: 0, cached: 0, failed: 0, total: 0 };
 
     // Cada request procesa 1 libro × 1 idioma. Timeout de 3 min es MÁS que
@@ -199,6 +201,72 @@ export default function TraducirPage() {
     appendLog(`   Fallidas: ${totalSummary.failed}`);
     setRunning(false);
     setCurrentBook(null);
+    // Refrescar tabla de estado
+    fetchStatus();
+  };
+
+  // Wrapper para el botón grande del panel superior (con confirmación)
+  const startTranslation = async () => {
+    if (selectedBookIds.size === 0 || selectedLangs.size === 0) return;
+    if (!confirm(`Vas a traducir ${selectedBookIds.size} libro(s) COMPLETOS (todas las páginas del PDF) a ${selectedLangs.size} idioma(s) usando Claude. Esto puede tardar y consumir crédito. ¿Continuar?`)) return;
+    await runBatch(Array.from(selectedBookIds), Array.from(selectedLangs));
+  };
+
+  // ── Estado global de traducciones (tabla inferior) ─────────────
+  interface StatusRow {
+    id: string;
+    title: string;
+    author: string | null;
+    grade: string | null;
+    coverImage: string | null;
+    hasContentUrl: boolean;
+    maxPage: number;
+    perLang: Record<string, number>;
+    total: number;
+    expected: number;
+    pct: number;
+    isComplete: boolean;
+    isEmpty: boolean;
+    missingLangs: string[];
+  }
+  interface Status {
+    totals: { books: number; complete: number; partial: number; empty: number; translatedPages: number };
+    perLang: { lang: string; booksWithAny: number; totalPages: number }[];
+    books: StatusRow[];
+    languages: string[];
+  }
+  const [status, setStatus] = useState<Status | null>(null);
+  const [statusFilter, setStatusFilter] = useState<"all" | "empty" | "partial" | "complete">("empty");
+  const [statusLoading, setStatusLoading] = useState(false);
+
+  const fetchStatus = useCallback(async () => {
+    setStatusLoading(true);
+    try {
+      const res = await fetch("/api/superadmin/translation-status", { cache: "no-store" });
+      if (res.ok) setStatus(await res.json());
+    } finally {
+      setStatusLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchStatus(); }, [fetchStatus]);
+
+  const translateOneBook = async (book: StatusRow) => {
+    if (running) return;
+    // Traducir a TODOS los idiomas que le falten, o a los seleccionados
+    // si el usuario ya restringió. Priorizamos los faltantes reales.
+    const langsToDo = book.isEmpty
+      ? Array.from(selectedLangs).length ? Array.from(selectedLangs) : ["en", "fr", "de", "pt", "it", "zh"]
+      : book.missingLangs.map((iso) => {
+          // Reverse map ISO → code (pt-BR → pt, zh-CN → zh)
+          if (iso === "pt-BR") return "pt";
+          if (iso === "zh-CN") return "zh";
+          return iso;
+        });
+
+    if (langsToDo.length === 0) return;
+    if (!confirm(`Traducir "${book.title}" completo a ${langsToDo.length} idioma(s): ${langsToDo.join(", ").toUpperCase()}?`)) return;
+    await runBatch([book.id], langsToDo);
   };
 
   const allVisibleSelected = filtered.length > 0 && filtered.every((b) => selectedBookIds.has(b.id));
@@ -376,6 +444,147 @@ export default function TraducirPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* ── ESTADO GLOBAL DE TRADUCCIONES ─────────────────────────── */}
+      <Card className="bg-[#0f1623] border-white/10">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <CardTitle className="text-sm text-slate-300 flex items-center gap-2">
+              Estado de traducciones
+              {status && (
+                <>
+                  <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-300 border-emerald-500/30">
+                    ✓ {status.totals.complete} completos
+                  </Badge>
+                  <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-300 border-amber-500/30">
+                    ⚡ {status.totals.partial} parciales
+                  </Badge>
+                  <Badge variant="outline" className="text-[10px] bg-red-500/10 text-red-300 border-red-500/30">
+                    ⬜ {status.totals.empty} sin traducir
+                  </Badge>
+                  <Badge variant="outline" className="text-[10px] bg-indigo-500/10 text-indigo-300 border-indigo-500/30">
+                    {status.totals.translatedPages.toLocaleString("es-CO")} páginas cacheadas
+                  </Badge>
+                </>
+              )}
+            </CardTitle>
+            <div className="flex items-center gap-2">
+              <div className="flex gap-1 bg-white/5 border border-white/10 rounded p-0.5 text-[11px]">
+                {(["empty", "partial", "complete", "all"] as const).map((f) => (
+                  <button
+                    key={f}
+                    type="button"
+                    onClick={() => setStatusFilter(f)}
+                    className={`px-2 py-1 rounded transition ${
+                      statusFilter === f
+                        ? "bg-indigo-600 text-white"
+                        : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    {f === "empty" ? "Faltan" : f === "partial" ? "Parciales" : f === "complete" ? "Completos" : "Todos"}
+                  </button>
+                ))}
+              </div>
+              <Button type="button" size="sm" variant="outline" onClick={fetchStatus}
+                disabled={statusLoading || running}
+                className="h-8 border-white/10 gap-1">
+                <RefreshCw className={`h-3 w-3 ${statusLoading ? "animate-spin" : ""}`} />
+                Refrescar
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {!status ? (
+            <p className="text-slate-500 text-center py-6 text-sm">Cargando estado…</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-white/10 text-slate-500 uppercase tracking-wide">
+                    <th className="text-left py-2 pr-2 font-semibold">Libro</th>
+                    <th className="text-center px-1 font-semibold">Pág</th>
+                    {status.languages.map((l) => (
+                      <th key={l} className="text-center px-1 font-semibold">{l.toUpperCase()}</th>
+                    ))}
+                    <th className="text-center px-2 font-semibold">%</th>
+                    <th className="text-right pl-2 pr-1 font-semibold">Acción</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {status.books
+                    .filter((b) => {
+                      if (statusFilter === "empty") return b.isEmpty;
+                      if (statusFilter === "partial") return !b.isComplete && !b.isEmpty;
+                      if (statusFilter === "complete") return b.isComplete;
+                      return true;
+                    })
+                    .map((b) => (
+                      <tr key={b.id} className="border-b border-white/5 hover:bg-white/[0.02] transition">
+                        <td className="py-1.5 pr-2">
+                          <div className="flex items-center gap-2">
+                            <span className={`w-1.5 h-1.5 rounded-full ${
+                              b.isComplete ? "bg-emerald-400" : b.isEmpty ? "bg-red-400" : "bg-amber-400"
+                            }`} />
+                            <span className="text-white line-clamp-1" title={b.title}>{b.title}</span>
+                            {b.grade && (
+                              <span className="text-[9px] bg-white/5 text-slate-400 px-1.5 py-0.5 rounded shrink-0">{b.grade}</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="text-center text-slate-400 px-1 tabular-nums">
+                          {b.maxPage || "—"}
+                        </td>
+                        {status.languages.map((l) => {
+                          const n = b.perLang[l] || 0;
+                          const full = b.maxPage > 0 && n >= b.maxPage;
+                          return (
+                            <td key={l} className={`text-center px-1 text-[10px] tabular-nums ${
+                              full ? "text-emerald-400" : n > 0 ? "text-amber-400" : "text-slate-600"
+                            }`}>
+                              {full ? "✓" : n > 0 ? n : "—"}
+                            </td>
+                          );
+                        })}
+                        <td className={`text-center px-2 tabular-nums font-semibold ${
+                          b.pct >= 100 ? "text-emerald-400" : b.pct >= 50 ? "text-amber-400" : "text-slate-500"
+                        }`}>
+                          {b.maxPage > 0 ? `${b.pct}%` : "—"}
+                        </td>
+                        <td className="text-right pl-2 pr-1">
+                          {b.isComplete ? (
+                            <span className="text-emerald-400 text-[10px]">Listo</span>
+                          ) : !b.hasContentUrl ? (
+                            <span className="text-slate-600 text-[10px]">Sin PDF</span>
+                          ) : (
+                            <Button
+                              type="button"
+                              size="sm"
+                              onClick={() => translateOneBook(b)}
+                              disabled={running}
+                              className="h-7 gap-1.5 px-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-[10px]"
+                            >
+                              <PlayCircle className="h-3 w-3" />
+                              Traducir
+                            </Button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+              {status.books.filter((b) => {
+                if (statusFilter === "empty") return b.isEmpty;
+                if (statusFilter === "partial") return !b.isComplete && !b.isEmpty;
+                if (statusFilter === "complete") return b.isComplete;
+                return true;
+              }).length === 0 && (
+                <p className="text-center text-slate-500 py-6">Sin libros en este filtro.</p>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Sticky bar */}
       <div className="fixed bottom-0 left-0 right-0 md:left-64 border-t border-white/10 bg-[#0a0a1a]/95 backdrop-blur-md p-4 flex items-center justify-between gap-4 flex-wrap z-40">

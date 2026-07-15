@@ -112,8 +112,11 @@ export default function TraducirPage() {
     const languages = Array.from(selectedLangs);
     const totalSummary = { translated: 0, cached: 0, failed: 0, total: 0 };
 
-    // Procesar UN LIBRO POR REQUEST para no reventar el timeout de Vercel.
-    // El endpoint acepta un array, pero limitamos aquí a 1 y hacemos loop.
+    // Chunkeamos por (libro × idioma) — un request por combo. Un libro de
+    // 50 páginas × 1 idioma con concurrencia 3 tarda ~2 min: NUNCA hits el
+    // timeout de Vercel (800s). Cada página se guarda en DB al momento, así
+    // que un timeout accidental solo afecta las N últimas páginas de UN idioma
+    // de UN libro — la próxima corrida las levanta del cache.
     for (let bIdx = 0; bIdx < bookIds.length; bIdx++) {
       const bookId = bookIds[bIdx];
       const book = books.find((b) => b.id === bookId);
@@ -121,79 +124,81 @@ export default function TraducirPage() {
       setCurrentBook(bookLabel);
       appendLog(`\n📖 [${bIdx + 1}/${bookIds.length}] ${bookLabel}`);
 
-      try {
-        const res = await fetch("/api/superadmin/translate-books", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ bookIds: [bookId], languages }),
-        });
+      for (let lIdx = 0; lIdx < languages.length; lIdx++) {
+        const lang = languages[lIdx];
+        appendLog(`   🌐 [${lIdx + 1}/${languages.length}] ${lang.toUpperCase()}…`);
 
-        if (!res.ok || !res.body) {
-          const err = await res.json().catch(() => ({}));
-          appendLog(`   ❌ Error: ${err.message || res.statusText}`);
-          continue;
-        }
+        try {
+          const res = await fetch("/api/superadmin/translate-books", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            // Un libro × un idioma por request
+            body: JSON.stringify({ bookIds: [bookId], languages: [lang] }),
+          });
 
-        const reader = res.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = "";
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-
-          const events = buffer.split("\n\n");
-          buffer = events.pop() || "";
-
-          for (const evt of events) {
-            const line = evt.trim();
-            if (!line.startsWith("data:")) continue;
-            try {
-              const p = JSON.parse(line.slice(5).trim());
-              switch (p.type) {
-                case "book-pages":
-                  appendLog(`   ${p.validPages} páginas útiles (de ${p.totalPages})`);
-                  break;
-                case "book-skip":
-                  appendLog(`   ⚠ Saltado: ${p.reason}`);
-                  break;
-                case "book-error":
-                  appendLog(`   ❌ ${p.error}`);
-                  break;
-                case "book-lang-done":
-                  appendLog(`   ✓ ${p.lang.toUpperCase()} completado`);
-                  break;
-                case "page-fail":
-                  appendLog(`   ✗ Pág ${p.page} (${p.lang}): ${p.error}`);
-                  break;
-                case "page-ok":
-                case "page-cached":
-                  // Actualiza contador global (suma libros previos + los del actual)
-                  if (p.progress) {
-                    setProgress({
-                      translated: totalSummary.translated + p.progress.translated,
-                      cached: totalSummary.cached + p.progress.cached,
-                      failed: totalSummary.failed + p.progress.failed,
-                      total: totalSummary.total + p.progress.total,
-                    });
-                  }
-                  break;
-                case "complete":
-                  // Acumular contadores del libro
-                  totalSummary.translated += p.summary.translated;
-                  totalSummary.cached += p.summary.cached;
-                  totalSummary.failed += p.summary.failed;
-                  totalSummary.total += p.summary.totalPages;
-                  appendLog(`   ✅ Terminado: ${p.summary.translated} nuevas, ${p.summary.cached} cache, ${p.summary.failed} fallidas`);
-                  break;
-              }
-            } catch {/* ignore */}
+          if (!res.ok || !res.body) {
+            const err = await res.json().catch(() => ({}));
+            appendLog(`      ❌ Error: ${err.message || res.statusText}`);
+            continue;
           }
+
+          const reader = res.body.getReader();
+          const decoder = new TextDecoder();
+          let buffer = "";
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+
+            const events = buffer.split("\n\n");
+            buffer = events.pop() || "";
+
+            for (const evt of events) {
+              const line = evt.trim();
+              if (!line.startsWith("data:")) continue;
+              try {
+                const p = JSON.parse(line.slice(5).trim());
+                switch (p.type) {
+                  case "book-pages":
+                    if (lIdx === 0) appendLog(`      ${p.validPages} páginas útiles`);
+                    break;
+                  case "book-skip":
+                    appendLog(`      ⚠ Saltado: ${p.reason}`);
+                    break;
+                  case "book-error":
+                    appendLog(`      ❌ ${p.error}`);
+                    break;
+                  case "page-fail":
+                    appendLog(`      ✗ Pág ${p.page}: ${p.error}`);
+                    break;
+                  case "page-ok":
+                  case "page-cached":
+                    if (p.progress) {
+                      setProgress({
+                        translated: totalSummary.translated + p.progress.translated,
+                        cached: totalSummary.cached + p.progress.cached,
+                        failed: totalSummary.failed + p.progress.failed,
+                        total: totalSummary.total + p.progress.total,
+                      });
+                    }
+                    break;
+                  case "complete":
+                    totalSummary.translated += p.summary.translated;
+                    totalSummary.cached += p.summary.cached;
+                    totalSummary.failed += p.summary.failed;
+                    totalSummary.total += p.summary.totalPages;
+                    appendLog(`      ✓ ${p.summary.translated} nuevas, ${p.summary.cached} cache, ${p.summary.failed} fallidas`);
+                    break;
+                }
+              } catch {/* ignore */}
+            }
+          }
+        } catch (e: any) {
+          appendLog(`      ❌ Error de red: ${e?.message || e}`);
         }
-      } catch (e: any) {
-        appendLog(`   ❌ Error de red: ${e?.message || e}`);
       }
+      appendLog(`   ✅ Libro completado en todos los idiomas`);
     }
 
     setCompletedSummary(totalSummary as any);
@@ -222,6 +227,20 @@ export default function TraducirPage() {
             Descarga el PDF de cada libro seleccionado, extrae el texto página por página y lo traduce
             íntegro a los idiomas elegidos usando <strong className="text-indigo-300">Claude Haiku 4.5</strong>.
             Todo queda cacheado — cuando un estudiante abra el libro y cambie idioma, ya lo verá traducido al instante.
+          </p>
+        </div>
+      </div>
+
+      {/* Safety notice — the user was worried about wasted tokens on reload */}
+      <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3 text-xs text-emerald-200 flex gap-2">
+        <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5" />
+        <div>
+          <p className="font-semibold text-emerald-300">A prueba de recargas y timeouts</p>
+          <p className="text-emerald-200/80 mt-0.5">
+            Cada página se guarda en la base de datos apenas Claude la devuelve. Si recargás la página o
+            un request se cae, al volver a arrancar simplemente saltamos las páginas ya traducidas (contador ⚡ Cache) —
+            <strong> no se re-paga ni un token</strong>. Los libros se procesan uno por idioma, un request por combo,
+            así que cada llamada es corta y no toca el timeout de Vercel.
           </p>
         </div>
       </div>

@@ -45,6 +45,7 @@ export default function TraducirPage() {
   const [currentStatus, setCurrentStatus] = useState<string>(""); // heartbeat
   const [log, setLog] = useState<string[]>([]);
   const [completedSummary, setCompletedSummary] = useState<Progress | null>(null);
+  const [fatalError, setFatalError] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -112,6 +113,7 @@ export default function TraducirPage() {
     setCompletedSummary(null);
     setProgress({ translated: 0, cached: 0, failed: 0, total: 0 });
     setCurrentBook(null);
+    setFatalError(null);
 
     const totalSummary = { translated: 0, cached: 0, failed: 0, total: 0 };
 
@@ -187,7 +189,15 @@ export default function TraducirPage() {
         totalSummary.total += data.totalPages || 0;
 
         appendLog(`      ✓ ${data.translated || 0} nuevas, ${data.cached || 0} cache, ${data.failed || 0} fallidas`);
-        if (data.firstError) appendLog(`      ⚠ ${data.firstError}`);
+        if (data.firstError) {
+          appendLog(`      ⚠ ${data.firstError}`);
+          const err = String(data.firstError).toLowerCase();
+          if (err.includes("credit balance") || err.includes("credits") || err.includes("insufficient") || err.includes("quota")) {
+            setFatalError("💳 Sin saldo en el proveedor de IA. Recarga créditos en la cuenta correspondiente (Anthropic / OpenAI / Google) o configura otra API key en /dashboard/superadmin/settings.");
+          } else if (err.includes("401") || err.includes("unauthorized") || err.includes("api key")) {
+            setFatalError("🔑 API key inválida o rechazada. Revisa las keys en /dashboard/superadmin/settings o env vars.");
+          }
+        }
         setProgress({ ...totalSummary });
       }
       appendLog(`   ✅ Libro completado`);
@@ -295,13 +305,30 @@ export default function TraducirPage() {
         <div>
           <p className="font-semibold text-emerald-300">A prueba de recargas y timeouts</p>
           <p className="text-emerald-200/80 mt-0.5">
-            Cada página se guarda en la base de datos apenas Claude la devuelve. Si recargás la página o
-            un request se cae, al volver a arrancar simplemente saltamos las páginas ya traducidas (contador ⚡ Cache) —
-            <strong> no se re-paga ni un token</strong>. Los libros se procesan uno por idioma, un request por combo,
-            así que cada llamada es corta y no toca el timeout de Vercel.
+            Cada página se guarda en la base de datos apenas la IA la devuelve. Fallback automático entre
+            <strong> Claude → Gemini → OpenAI</strong> si el primero falla o queda sin saldo.
+            Si recargás o hay timeout, la próxima corrida salta lo ya traducido — <strong>nunca se re-paga un token</strong>.
           </p>
         </div>
       </div>
+
+      {/* Fatal error banner — surfaces credit/quota/auth errors clearly */}
+      {fatalError && (
+        <div className="rounded-lg border-2 border-red-500/50 bg-red-500/10 p-4 text-sm text-red-100 flex gap-3 items-start">
+          <AlertCircle className="h-5 w-5 shrink-0 mt-0.5 text-red-400" />
+          <div className="flex-1">
+            <p className="font-bold text-red-300">Error del proveedor de IA</p>
+            <p className="text-red-200/90 mt-1">{fatalError}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setFatalError(null)}
+            className="text-red-300 hover:text-white text-xs px-2 py-1"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* Idiomas */}
       <Card className="bg-[#0f1623] border-white/10">

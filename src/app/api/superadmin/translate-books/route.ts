@@ -59,22 +59,15 @@ function stripPreamble(text: string): string {
   return out.trim();
 }
 
-async function translateWithClaude(
-  text: string,
-  targetPrompt: string,
-  apiKey: string,
-): Promise<{ ok: true; translation: string } | { ok: false; error: string }> {
+type TranslateResult = { ok: true; translation: string; engine: string } | { ok: false; error: string };
+
+async function translateWithClaude(text: string, targetPrompt: string, apiKey: string): Promise<TranslateResult> {
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 60_000);
-
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-      },
+      headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
       signal: controller.signal,
       body: JSON.stringify({
         model: "claude-haiku-4-5-20251001",
@@ -84,20 +77,105 @@ async function translateWithClaude(
       }),
     });
     clearTimeout(timer);
-
     if (!response.ok) {
       const errText = await response.text().catch(() => "");
       return { ok: false, error: `Claude HTTP ${response.status}: ${errText.slice(0, 200)}` };
     }
     const data = await response.json();
     const translation = data.content?.[0]?.text;
-    if (!translation || translation.trim().length <= 5) {
-      return { ok: false, error: "Respuesta vacía" };
-    }
-    return { ok: true, translation: stripPreamble(translation) };
+    if (!translation || translation.trim().length <= 5) return { ok: false, error: "Claude: respuesta vacía" };
+    return { ok: true, translation: stripPreamble(translation), engine: "claude-batch" };
   } catch (e: any) {
-    return { ok: false, error: e?.name === "AbortError" ? "timeout" : (e?.message || String(e)) };
+    return { ok: false, error: e?.name === "AbortError" ? "Claude timeout" : (e?.message || String(e)) };
   }
+}
+
+async function translateWithGemini(text: string, targetPrompt: string, apiKey: string): Promise<TranslateResult> {
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 60_000);
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        signal: controller.signal,
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: buildTranslationPrompt(text, targetPrompt) }] }],
+          generationConfig: { temperature: 0.3, maxOutputTokens: 8192 },
+        }),
+      },
+    );
+    clearTimeout(timer);
+    if (!response.ok) {
+      const errText = await response.text().catch(() => "");
+      return { ok: false, error: `Gemini HTTP ${response.status}: ${errText.slice(0, 200)}` };
+    }
+    const data = await response.json();
+    const translation = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!translation || translation.trim().length <= 5) return { ok: false, error: "Gemini: respuesta vacía" };
+    return { ok: true, translation: stripPreamble(translation), engine: "gemini-batch" };
+  } catch (e: any) {
+    return { ok: false, error: e?.name === "AbortError" ? "Gemini timeout" : (e?.message || String(e)) };
+  }
+}
+
+async function translateWithOpenAI(text: string, targetPrompt: string, apiKey: string): Promise<TranslateResult> {
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 60_000);
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: { authorization: `Bearer ${apiKey}`, "content-type": "application/json" },
+      signal: controller.signal,
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        max_tokens: 4096,
+        temperature: 0.3,
+        messages: [{ role: "user", content: buildTranslationPrompt(text, targetPrompt) }],
+      }),
+    });
+    clearTimeout(timer);
+    if (!response.ok) {
+      const errText = await response.text().catch(() => "");
+      return { ok: false, error: `OpenAI HTTP ${response.status}: ${errText.slice(0, 200)}` };
+    }
+    const data = await response.json();
+    const translation = data.choices?.[0]?.message?.content;
+    if (!translation || translation.trim().length <= 5) return { ok: false, error: "OpenAI: respuesta vacía" };
+    return { ok: true, translation: stripPreamble(translation), engine: "openai-batch" };
+  } catch (e: any) {
+    return { ok: false, error: e?.name === "AbortError" ? "OpenAI timeout" : (e?.message || String(e)) };
+  }
+}
+
+/**
+ * Cadena de proveedores. Claude preferido (mejor calidad), Gemini como
+ * fallback barato, OpenAI último. Si Claude devuelve 'credit balance too low'
+ * o 401/403, saltamos directo al próximo sin re-intentar.
+ */
+async function translatePage(
+  text: string,
+  targetPrompt: string,
+  keys: { claude?: string; gemini?: string; openai?: string },
+): Promise<TranslateResult> {
+  let lastError = "sin proveedores configurados";
+  if (keys.claude) {
+    const r = await translateWithClaude(text, targetPrompt, keys.claude);
+    if (r.ok) return r;
+    lastError = r.error;
+  }
+  if (keys.gemini) {
+    const r = await translateWithGemini(text, targetPrompt, keys.gemini);
+    if (r.ok) return r;
+    lastError = r.error;
+  }
+  if (keys.openai) {
+    const r = await translateWithOpenAI(text, targetPrompt, keys.openai);
+    if (r.ok) return r;
+    lastError = r.error;
+  }
+  return { ok: false, error: lastError };
 }
 
 async function extractPdfPages(pdfUrl: string): Promise<string[]> {
@@ -162,10 +240,16 @@ export async function POST(req: Request) {
   const settings = await prisma.systemSetting.findMany();
   const settingsMap = settings.reduce((acc: Record<string, string>, s) => { acc[s.key] = s.value; return acc; }, {});
   const sanitize = (k?: string) => (k || "").trim().replace(/^["']|["']$/g, "");
-  const claudeKey = sanitize(settingsMap.ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY);
+  const keys = {
+    claude: sanitize(settingsMap.ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY),
+    gemini: sanitize(settingsMap.GOOGLE_API_KEY || process.env.GOOGLE_API_KEY),
+    openai: sanitize(settingsMap.OPENAI_API_KEY || process.env.OPENAI_API_KEY),
+  };
 
-  if (!claudeKey) {
-    return NextResponse.json({ message: "Falta ANTHROPIC_API_KEY (configura en /dashboard/superadmin/settings o env)" }, { status: 400 });
+  if (!keys.claude && !keys.gemini && !keys.openai) {
+    return NextResponse.json({
+      message: "No hay ninguna API key configurada. Configura ANTHROPIC_API_KEY, GOOGLE_API_KEY u OPENAI_API_KEY en /dashboard/superadmin/settings o como variable de entorno.",
+    }, { status: 400 });
   }
 
   const books = await prisma.book.findMany({
@@ -247,7 +331,7 @@ export async function POST(req: Request) {
             continue;
           }
 
-          const result = await translateWithClaude(page.text, lang.prompt, claudeKey);
+          const result = await translatePage(page.text, lang.prompt, keys);
           if (!result.ok) {
             summary.failed++;
             if (!summary.firstError) summary.firstError = `${book.title} pág ${page.num} (${langCode}): ${result.error}`;
@@ -257,25 +341,24 @@ export async function POST(req: Request) {
           try {
             await (prisma as any).bookPageTranslation.upsert({
               where: { bookId_pageNumber_language: { bookId: book.id, pageNumber: page.num, language: lang.iso } },
-              update: { translatedText: result.translation, engine: "claude-batch" },
+              update: { translatedText: result.translation, engine: result.engine },
               create: {
                 bookId: book.id,
                 pageNumber: page.num,
                 language: lang.iso,
                 translatedText: result.translation,
-                engine: "claude-batch",
+                engine: result.engine,
               },
             });
-            // Retrocompat: guardar también en el cache de hash antiguo
             await prisma.translation.upsert({
               where: { hash: cacheKey(page.text, lang.iso) },
-              update: { translatedText: result.translation, engine: "claude-batch" },
+              update: { translatedText: result.translation, engine: result.engine },
               create: {
                 hash: cacheKey(page.text, lang.iso),
                 originalText: page.text.slice(0, 4000),
                 translatedText: result.translation,
                 targetLanguage: lang.iso,
-                engine: "claude-batch",
+                engine: result.engine,
               },
             }).catch(() => {});
             summary.translated++;

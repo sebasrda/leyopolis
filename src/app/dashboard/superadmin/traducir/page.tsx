@@ -112,11 +112,11 @@ export default function TraducirPage() {
     const languages = Array.from(selectedLangs);
     const totalSummary = { translated: 0, cached: 0, failed: 0, total: 0 };
 
-    // Chunkeamos por (libro × idioma) — un request por combo. Un libro de
-    // 50 páginas × 1 idioma con concurrencia 3 tarda ~2 min: NUNCA hits el
-    // timeout de Vercel (800s). Cada página se guarda en DB al momento, así
-    // que un timeout accidental solo afecta las N últimas páginas de UN idioma
-    // de UN libro — la próxima corrida las levanta del cache.
+    // Cada request procesa 1 libro × 1 idioma. Timeout duro de 5 min por
+    // request via AbortController — si algo se cuelga, seguimos con el
+    // siguiente combo. Las páginas ya guardadas quedan en cache.
+    const REQUEST_TIMEOUT_MS = 5 * 60 * 1000;
+
     for (let bIdx = 0; bIdx < bookIds.length; bIdx++) {
       const bookId = bookIds[bIdx];
       const book = books.find((b) => b.id === bookId);
@@ -126,79 +126,51 @@ export default function TraducirPage() {
 
       for (let lIdx = 0; lIdx < languages.length; lIdx++) {
         const lang = languages[lIdx];
+        const started = Date.now();
         appendLog(`   🌐 [${lIdx + 1}/${languages.length}] ${lang.toUpperCase()}…`);
+
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
         try {
           const res = await fetch("/api/superadmin/translate-books", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            // Un libro × un idioma por request
             body: JSON.stringify({ bookIds: [bookId], languages: [lang] }),
+            signal: controller.signal,
           });
+          clearTimeout(timer);
 
-          if (!res.ok || !res.body) {
-            const err = await res.json().catch(() => ({}));
-            appendLog(`      ❌ Error: ${err.message || res.statusText}`);
+          const data = await res.json().catch(() => ({}));
+
+          if (!res.ok) {
+            appendLog(`      ❌ HTTP ${res.status}: ${data?.message || "error desconocido"}`);
             continue;
           }
 
-          const reader = res.body.getReader();
-          const decoder = new TextDecoder();
-          let buffer = "";
+          // Acumular contadores
+          totalSummary.translated += data.translated || 0;
+          totalSummary.cached += data.cached || 0;
+          totalSummary.failed += data.failed || 0;
+          totalSummary.total += data.totalPages || 0;
 
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            buffer += decoder.decode(value, { stream: true });
-
-            const events = buffer.split("\n\n");
-            buffer = events.pop() || "";
-
-            for (const evt of events) {
-              const line = evt.trim();
-              if (!line.startsWith("data:")) continue;
-              try {
-                const p = JSON.parse(line.slice(5).trim());
-                switch (p.type) {
-                  case "book-pages":
-                    if (lIdx === 0) appendLog(`      ${p.validPages} páginas útiles`);
-                    break;
-                  case "book-skip":
-                    appendLog(`      ⚠ Saltado: ${p.reason}`);
-                    break;
-                  case "book-error":
-                    appendLog(`      ❌ ${p.error}`);
-                    break;
-                  case "page-fail":
-                    appendLog(`      ✗ Pág ${p.page}: ${p.error}`);
-                    break;
-                  case "page-ok":
-                  case "page-cached":
-                    if (p.progress) {
-                      setProgress({
-                        translated: totalSummary.translated + p.progress.translated,
-                        cached: totalSummary.cached + p.progress.cached,
-                        failed: totalSummary.failed + p.progress.failed,
-                        total: totalSummary.total + p.progress.total,
-                      });
-                    }
-                    break;
-                  case "complete":
-                    totalSummary.translated += p.summary.translated;
-                    totalSummary.cached += p.summary.cached;
-                    totalSummary.failed += p.summary.failed;
-                    totalSummary.total += p.summary.totalPages;
-                    appendLog(`      ✓ ${p.summary.translated} nuevas, ${p.summary.cached} cache, ${p.summary.failed} fallidas`);
-                    break;
-                }
-              } catch {/* ignore */}
-            }
+          const elapsed = Math.round((Date.now() - started) / 1000);
+          appendLog(`      ✓ ${data.translated || 0} nuevas, ${data.cached || 0} cache, ${data.failed || 0} fallidas (${elapsed}s)`);
+          if (data.firstError) {
+            appendLog(`      ⚠ Primer error: ${data.firstError}`);
           }
+
+          setProgress({ ...totalSummary });
         } catch (e: any) {
-          appendLog(`      ❌ Error de red: ${e?.message || e}`);
+          clearTimeout(timer);
+          if (e?.name === "AbortError") {
+            appendLog(`      ⏱ Timeout (>5 min) — saltando al siguiente. Las páginas hechas ya quedaron guardadas.`);
+          } else {
+            appendLog(`      ❌ Error de red: ${e?.message || e}`);
+          }
         }
       }
-      appendLog(`   ✅ Libro completado en todos los idiomas`);
+      appendLog(`   ✅ Libro completado`);
     }
 
     setCompletedSummary(totalSummary as any);

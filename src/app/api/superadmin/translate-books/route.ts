@@ -189,6 +189,30 @@ export async function POST(req: Request) {
       continue;
     }
 
+    // ── FAST PATH: si TODAS las páginas del libro ya están traducidas a
+    // TODOS los idiomas pedidos, no bajemos ni extraigamos el PDF (esa era
+    // la causa principal del cuelgue: re-descargar y re-extraer PDFs grandes
+    // 6 veces por libro cuando ya estaba todo hecho).
+    const cachedCount = await (prisma as any).bookPageTranslation.count({
+      where: { bookId: book.id, language: { in: languages.map((l) => LANG_TABLE[l].iso) } },
+    }).catch(() => 0);
+
+    // Estimamos el max page number cacheado. Si existe, y todos los idiomas
+    // tienen la misma cantidad de páginas, asumimos que está completo.
+    const maxCachedPage = await (prisma as any).bookPageTranslation.findFirst({
+      where: { bookId: book.id },
+      orderBy: { pageNumber: "desc" },
+      select: { pageNumber: true },
+    }).catch(() => null);
+
+    const expectedFull = (maxCachedPage?.pageNumber || 0) * languages.length;
+    if (maxCachedPage && cachedCount >= expectedFull && expectedFull > 0) {
+      summary.cached += cachedCount;
+      summary.totalPages += maxCachedPage.pageNumber * languages.length;
+      summary.booksProcessed++;
+      continue;
+    }
+
     let pages: string[];
     try {
       pages = await extractPdfPages(book.contentUrl);

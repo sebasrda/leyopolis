@@ -42,6 +42,7 @@ export default function TraducirPage() {
   const [running, setRunning] = useState(false);
   const [progress, setProgress] = useState<Progress | null>(null);
   const [currentBook, setCurrentBook] = useState<string | null>(null);
+  const [currentStatus, setCurrentStatus] = useState<string>(""); // heartbeat
   const [log, setLog] = useState<string[]>([]);
   const [completedSummary, setCompletedSummary] = useState<Progress | null>(null);
 
@@ -112,10 +113,11 @@ export default function TraducirPage() {
     const languages = Array.from(selectedLangs);
     const totalSummary = { translated: 0, cached: 0, failed: 0, total: 0 };
 
-    // Cada request procesa 1 libro × 1 idioma. Timeout duro de 5 min por
-    // request via AbortController — si algo se cuelga, seguimos con el
-    // siguiente combo. Las páginas ya guardadas quedan en cache.
-    const REQUEST_TIMEOUT_MS = 5 * 60 * 1000;
+    // Cada request procesa 1 libro × 1 idioma. Timeout de 3 min es MÁS que
+    // suficiente (un libro de 50 páginas con concurrencia 3 termina en 100s
+    // en el peor caso). Si se pasa de 3 min, algo se cuelga en Vercel/Claude:
+    // abortamos, reintentamos 1 vez, y si sigue mal saltamos al siguiente.
+    const REQUEST_TIMEOUT_MS = 3 * 60 * 1000;
 
     for (let bIdx = 0; bIdx < bookIds.length; bIdx++) {
       const bookId = bookIds[bIdx];
@@ -126,49 +128,65 @@ export default function TraducirPage() {
 
       for (let lIdx = 0; lIdx < languages.length; lIdx++) {
         const lang = languages[lIdx];
-        const started = Date.now();
         appendLog(`   🌐 [${lIdx + 1}/${languages.length}] ${lang.toUpperCase()}…`);
 
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+        // Función de request con retry. Un request por combo, timeout 3 min.
+        const doRequest = async (attempt: number): Promise<{ok: boolean; data?: any; error?: string}> => {
+          const controller = new AbortController();
+          const started = Date.now();
 
-        try {
-          const res = await fetch("/api/superadmin/translate-books", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ bookIds: [bookId], languages: [lang] }),
-            signal: controller.signal,
-          });
-          clearTimeout(timer);
+          // Heartbeat visible en la UI para que el usuario vea que hay actividad
+          const heartbeat = setInterval(() => {
+            const elapsed = Math.round((Date.now() - started) / 1000);
+            setCurrentStatus(`${bookLabel} · ${lang.toUpperCase()} · esperando servidor (${elapsed}s)${attempt > 1 ? ` · intento ${attempt}` : ""}`);
+          }, 1000);
 
-          const data = await res.json().catch(() => ({}));
+          const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
-          if (!res.ok) {
-            appendLog(`      ❌ HTTP ${res.status}: ${data?.message || "error desconocido"}`);
-            continue;
+          try {
+            const res = await fetch("/api/superadmin/translate-books", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ bookIds: [bookId], languages: [lang] }),
+              signal: controller.signal,
+            });
+            clearTimeout(timer);
+            clearInterval(heartbeat);
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+              return { ok: false, error: `HTTP ${res.status}: ${data?.message || "error"}` };
+            }
+            return { ok: true, data };
+          } catch (e: any) {
+            clearTimeout(timer);
+            clearInterval(heartbeat);
+            if (e?.name === "AbortError") return { ok: false, error: "timeout" };
+            return { ok: false, error: e?.message || String(e) };
           }
+        };
 
-          // Acumular contadores
-          totalSummary.translated += data.translated || 0;
-          totalSummary.cached += data.cached || 0;
-          totalSummary.failed += data.failed || 0;
-          totalSummary.total += data.totalPages || 0;
-
-          const elapsed = Math.round((Date.now() - started) / 1000);
-          appendLog(`      ✓ ${data.translated || 0} nuevas, ${data.cached || 0} cache, ${data.failed || 0} fallidas (${elapsed}s)`);
-          if (data.firstError) {
-            appendLog(`      ⚠ Primer error: ${data.firstError}`);
-          }
-
-          setProgress({ ...totalSummary });
-        } catch (e: any) {
-          clearTimeout(timer);
-          if (e?.name === "AbortError") {
-            appendLog(`      ⏱ Timeout (>5 min) — saltando al siguiente. Las páginas hechas ya quedaron guardadas.`);
-          } else {
-            appendLog(`      ❌ Error de red: ${e?.message || e}`);
-          }
+        let result = await doRequest(1);
+        if (!result.ok && result.error === "timeout") {
+          appendLog(`      ⏱ Timeout, reintentando…`);
+          result = await doRequest(2);
         }
+
+        setCurrentStatus("");
+
+        if (!result.ok) {
+          appendLog(`      ❌ ${result.error} — saltando al siguiente`);
+          continue;
+        }
+
+        const data = result.data;
+        totalSummary.translated += data.translated || 0;
+        totalSummary.cached += data.cached || 0;
+        totalSummary.failed += data.failed || 0;
+        totalSummary.total += data.totalPages || 0;
+
+        appendLog(`      ✓ ${data.translated || 0} nuevas, ${data.cached || 0} cache, ${data.failed || 0} fallidas`);
+        if (data.firstError) appendLog(`      ⚠ ${data.firstError}`);
+        setProgress({ ...totalSummary });
       }
       appendLog(`   ✅ Libro completado`);
     }
@@ -334,6 +352,12 @@ export default function TraducirPage() {
               <p className="text-[11px] text-slate-400 flex items-center gap-2">
                 <BookOpen className="h-3 w-3" />
                 Procesando: <span className="text-white font-medium">{currentBook}</span>
+              </p>
+            )}
+            {currentStatus && running && (
+              <p className="text-[11px] text-amber-300 flex items-center gap-2 bg-amber-500/5 border border-amber-500/20 rounded px-2 py-1 mt-1">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                {currentStatus}
               </p>
             )}
             {log.length > 0 && (

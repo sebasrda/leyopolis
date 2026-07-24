@@ -5,7 +5,9 @@
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
       "Bash(git push *)",
-      "Bash(node ./node_modules/typescript/bin/tsc --noEmit)"
+      "Bash(node ./node_modules/typescript/bin/tsc --noEmit)",
+      "Bash(node -e \"require\\('dotenv'\\).config\\({path:'.env.local'}\\); console.log\\('DATABASE_URL set:', !!process.env.DATABASE_URL\\); console.log\\('scheme:', \\(process.env.DATABASE_URL||''\\).split\\(':'\\)[0]\\)\")",
+      "Bash(node scratch/stats_translation.mjs)"
     ]
   }
 }

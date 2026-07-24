@@ -7,6 +7,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { isLoginLocked, recordLoginFailure, resetLoginFailures, clientIp } from "@/lib/ratelimit";
+import jwt from "jsonwebtoken";
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as unknown as Adapter,
@@ -116,6 +117,62 @@ export const authOptions: NextAuthOptions = {
           expiresAt: user.expiresAt,
         };
       },
+    }),
+    CredentialsProvider({
+      id: "sso",
+      name: "sso",
+      credentials: {
+        token: { label: "Token", type: "text" },
+      },
+      async authorize(credentials) {
+        if (!credentials?.token) {
+          throw new Error("Token missing");
+        }
+
+        try {
+          const secret = process.env.EDUNOMAD_JWT_SECRET;
+          if (!secret) throw new Error("EDUNOMAD_JWT_SECRET not configured");
+
+          const decoded = jwt.verify(credentials.token, secret) as any;
+          if (!decoded.email) throw new Error("Token missing email");
+
+          const emailRaw = decoded.email.trim();
+          
+          const user = await prisma.user.findFirst({
+            where: { email: { equals: emailRaw, mode: "insensitive" } },
+          });
+
+          if (!user) {
+            throw new Error(`El usuario ${emailRaw} no existe en Leyopolis. Debes estar registrado en ambas plataformas con el mismo correo.`);
+          }
+
+          if (user.isActive === false) {
+            throw new Error("Su cuenta ha sido suspendida. Contacte con un administrador.");
+          }
+
+          if (user.expiresAt && new Date() > user.expiresAt) {
+            throw new Error("Su licencia ha expirado");
+          }
+
+          const role =
+            user.role === "SUPERADMIN" || user.role === "STUDENT" || user.role === "TEACHER" || user.role === "COORDINATOR" || user.role === "ADMIN"
+              ? user.role
+              : "STUDENT";
+
+          return {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            image: user.image,
+            role,
+            licenseType: user.licenseType,
+            expiresAt: user.expiresAt,
+          };
+        } catch (error: any) {
+          console.error("SSO verify error:", error.message);
+          throw new Error(error.message || "Fallo en autenticación SSO");
+        }
+      }
     }),
   ],
   callbacks: {

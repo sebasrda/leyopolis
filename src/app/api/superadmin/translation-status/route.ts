@@ -34,11 +34,16 @@ export async function GET() {
   const rows = books.map((book) => {
     const langMap = byBook.get(book.id) || new Map<string, Set<number>>();
 
-    // Max page number known across all languages (proxy for total pages)
+    // Find all unique pages translated across any language
+    const allPages = new Set<number>();
     let maxPage = 0;
     for (const set of langMap.values()) {
-      for (const p of set) if (p > maxPage) maxPage = p;
+      for (const p of set) {
+        allPages.add(p);
+        if (p > maxPage) maxPage = p;
+      }
     }
+    const expectedPagesCount = allPages.size;
 
     const perLang: Record<string, number> = {};
     for (const lang of LANGS) {
@@ -46,16 +51,13 @@ export async function GET() {
     }
 
     const total = Object.values(perLang).reduce((a, b) => a + b, 0);
-    const expected = maxPage * LANGS.length;
+    const expected = expectedPagesCount * LANGS.length;
     const pct = expected > 0 ? Math.round((total / expected) * 100) : 0;
 
-    // A book is "complete" if every language has AT LEAST maxPage pages.
-    // (The extractor filters pages <20 chars, so some books may legitimately
-    // have fewer 'valid' pages than maxPage; but if all langs match the max,
-    // we consider it done.)
-    const isComplete = maxPage > 0 && LANGS.every((l) => (perLang[l] || 0) >= maxPage);
+    // A book is "complete" if every language has translated all the unique text-containing pages found.
+    const isComplete = expectedPagesCount > 0 && LANGS.every((l) => (perLang[l] || 0) >= expectedPagesCount);
 
-    const missingLangs = LANGS.filter((l) => (perLang[l] || 0) < maxPage);
+    const missingLangs = LANGS.filter((l) => (perLang[l] || 0) < expectedPagesCount);
 
     return {
       id: book.id,

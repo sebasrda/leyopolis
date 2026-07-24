@@ -3,7 +3,7 @@
 import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { signIn } from 'next-auth/react'
-import { Loader2, AlertCircle } from 'lucide-react'
+import { Loader2, AlertCircle, Sparkles, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 
 function AutoLoginContent() {
@@ -14,7 +14,7 @@ function AutoLoginContent() {
   useEffect(() => {
     const token = searchParams.get('token')
     if (!token) {
-      setError('No se proporcionó ningún token de acceso.')
+      setError('No se proporcionó ningún token de acceso seguro.')
       return
     }
 
@@ -39,31 +39,54 @@ function AutoLoginContent() {
   }, [searchParams, router])
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50/50 p-4">
-      <div className="w-full max-w-md rounded-2xl bg-white p-8 text-center shadow-lg border border-gray-100">
-        <h1 className="mb-2 text-2xl font-bold text-gray-900">Iniciando sesión</h1>
+    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-slate-950 p-4">
+      {/* Elementos de fondo decorativos */}
+      <div className="absolute top-[-10%] left-[-10%] h-[50%] w-[50%] rounded-full bg-blue-600/20 blur-[120px]" />
+      <div className="absolute bottom-[-10%] right-[-10%] h-[50%] w-[50%] rounded-full bg-purple-600/20 blur-[120px]" />
+      
+      <div className="relative w-full max-w-md overflow-hidden rounded-3xl bg-slate-900/80 p-10 text-center shadow-2xl backdrop-blur-xl border border-slate-800">
         
         {error ? (
-          <div className="mt-6 flex flex-col items-center">
-            <div className="rounded-full bg-red-100 p-3 mb-4">
-              <AlertCircle className="h-8 w-8 text-red-600" />
+          <div className="flex flex-col items-center animate-in fade-in zoom-in duration-300">
+            <div className="rounded-full bg-red-500/10 p-4 mb-6 ring-1 ring-red-500/20">
+              <AlertCircle className="h-10 w-10 text-red-500" />
             </div>
-            <p className="mb-6 text-sm text-gray-600">{error}</p>
+            <h1 className="mb-2 text-2xl font-bold text-white tracking-tight">Acceso Denegado</h1>
+            <p className="mb-8 text-slate-400 leading-relaxed max-w-xs">{error}</p>
             <Link 
               href="/login"
-              className="w-full rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-gray-800"
+              className="group flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3.5 text-sm font-semibold text-white transition-all hover:bg-blue-500 focus:ring-4 focus:ring-blue-600/20"
             >
-              Volver al inicio de sesión manual
+              Volver al portal principal
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </Link>
           </div>
         ) : (
-          <div className="mt-8 flex flex-col items-center justify-center space-y-4">
-            <Loader2 className="h-12 w-12 animate-spin text-blue-600" />
-            <p className="text-sm text-gray-500">
-              Validando credenciales seguras con EduNomad...
-            </p>
+          <div className="flex flex-col items-center justify-center space-y-6 py-6">
+            <div className="relative">
+              <div className="absolute inset-0 rounded-full bg-blue-500 blur-xl opacity-20 animate-pulse" />
+              <div className="relative rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 p-4 text-white shadow-xl">
+                <Sparkles className="h-8 w-8 animate-pulse" />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <h1 className="text-2xl font-bold text-white tracking-tight">Conectando mundos</h1>
+              <p className="text-sm text-slate-400">
+                Sincronizando de forma segura tu perfil con Leyopolis...
+              </p>
+            </div>
+            
+            <div className="pt-4 flex w-full items-center justify-center gap-3">
+              <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
+              <span className="text-sm font-medium text-blue-400 animate-pulse">Autenticando...</span>
+            </div>
           </div>
         )}
+      </div>
+      
+      <div className="absolute bottom-8 text-center text-xs font-medium text-slate-600">
+        Plataforma Segura • Leyopolis
       </div>
     </div>
   )
@@ -71,7 +94,11 @@ function AutoLoginContent() {
 
 export default function AutoLoginPage() {
   return (
-    <Suspense fallback={<div className="flex h-screen items-center justify-center"><Loader2 className="animate-spin h-8 w-8" /></div>}>
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center bg-slate-950">
+        <Loader2 className="animate-spin h-8 w-8 text-blue-500" />
+      </div>
+    }>
       <AutoLoginContent />
     </Suspense>
   )

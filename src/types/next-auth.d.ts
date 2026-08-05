@@ -9,12 +9,14 @@ declare module "next-auth" {
     user: {
       id?: string;
       role?: LeyopolisUserRole;
+      ssoSource?: string;
     } & DefaultSession["user"];
   }
 
   interface User {
     id: string;
     role?: LeyopolisUserRole;
+    ssoSource?: string;
   }
 }
 
@@ -22,5 +24,6 @@ declare module "next-auth/jwt" {
   interface JWT {
     id?: string;
     role?: LeyopolisUserRole;
+    ssoSource?: string;
   }
 }

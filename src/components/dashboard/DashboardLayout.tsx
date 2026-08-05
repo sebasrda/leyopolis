@@ -22,7 +22,8 @@ import {
   Target,
   HelpCircle,
   BookMarked,
-  ShieldCheck
+  ShieldCheck,
+  ExternalLink
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -286,6 +287,10 @@ export default function DashboardLayout({ children, serverXp, serverLevel, serve
   const isFemale = firstName.endsWith("a");
   const defaultAvatar = isFemale ? "/images/avatars/girl.png" : "/images/avatars/boy.png";
 
+  // EduNomad SSO detection
+  const isFromEdunomad = (session?.user as any)?.ssoSource === "edunomad";
+  const edunomadUrl = process.env.NEXT_PUBLIC_EDUNOMAD_FRONTEND_URL || "https://colegiovirtus.vercel.app";
+
   // XP progress within current level — using DIRECT fetched values
   const currentLevelXp = LEVEL_THRESHOLDS[Math.min(displayLevel - 1, LEVEL_THRESHOLDS.length - 1)] || 0;
   const nextLevelXp = LEVEL_THRESHOLDS[Math.min(displayLevel, LEVEL_THRESHOLDS.length - 1)] || currentLevelXp + 500;
@@ -486,6 +491,26 @@ export default function DashboardLayout({ children, serverXp, serverLevel, serve
             {!collapsed && <span className="font-medium text-sm">Cerrar sesión</span>}
           </button>
 
+          {/* EduNomad Return Button */}
+          {isFromEdunomad && !collapsed && (
+            <a
+              href={edunomadUrl}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-gradient-to-r from-teal-500/15 to-cyan-500/15 border border-teal-500/25 text-teal-300 hover:from-teal-500/25 hover:to-cyan-500/25 hover:text-teal-200 transition-all mt-1"
+            >
+              <ExternalLink className="shrink-0" style={{ height: '18px', width: '18px' }} />
+              <span className="font-medium text-sm">Regresar a EduNomad</span>
+            </a>
+          )}
+          {isFromEdunomad && collapsed && (
+            <a
+              href={edunomadUrl}
+              className="flex justify-center px-3 py-2.5 rounded-xl bg-gradient-to-r from-teal-500/15 to-cyan-500/15 border border-teal-500/25 text-teal-300 hover:from-teal-500/25 hover:to-cyan-500/25 hover:text-teal-200 transition-all mt-1"
+              title="Regresar a EduNomad"
+            >
+              <ExternalLink className="shrink-0" style={{ height: '18px', width: '18px' }} />
+            </a>
+          )}
+
           {!collapsed && (
             <div className="pt-1">
               <a
@@ -642,6 +667,17 @@ export default function DashboardLayout({ children, serverXp, serverLevel, serve
                 >
                   Cerrar sesión
                 </DropdownMenuItem>
+                {isFromEdunomad && (
+                  <>
+                    <DropdownMenuSeparator className="bg-card/10" />
+                    <DropdownMenuItem asChild className="hover:bg-teal-500/10 focus:bg-teal-500/10 text-teal-400 cursor-pointer">
+                      <a href={edunomadUrl} className="flex items-center gap-2">
+                        <ExternalLink className="h-4 w-4" />
+                        Regresar a EduNomad
+                      </a>
+                    </DropdownMenuItem>
+                  </>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

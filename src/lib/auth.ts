@@ -167,6 +167,7 @@ export const authOptions: NextAuthOptions = {
             role,
             licenseType: user.licenseType,
             expiresAt: user.expiresAt,
+            ssoSource: "edunomad",
           };
         } catch (error: any) {
           console.error("SSO verify error:", error.message);
@@ -185,6 +186,9 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.licenseType = (user as any).licenseType;
         token.expiresAt = (user as any).expiresAt;
+        if ((user as any).ssoSource) {
+          token.ssoSource = (user as any).ssoSource;
+        }
       }
       if (token.id && !token.role) {
         const dbUser = await prisma.user.findUnique({ where: { id: String(token.id) }, select: { role: true, licenseType: true, expiresAt: true } });
@@ -203,6 +207,7 @@ export const authOptions: NextAuthOptions = {
         if (token.id) session.user.id = token.id;
         (session.user as any).licenseType = token.licenseType;
         (session.user as any).expiresAt = token.expiresAt;
+        if (token.ssoSource) (session.user as any).ssoSource = token.ssoSource;
       }
       return session;
     },

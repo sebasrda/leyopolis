@@ -289,7 +289,8 @@ export default function DashboardLayout({ children, serverXp, serverLevel, serve
 
   // EduNomad SSO detection
   const isFromEdunomad = (session?.user as any)?.ssoSource === "edunomad";
-  const edunomadUrl = process.env.NEXT_PUBLIC_EDUNOMAD_FRONTEND_URL || "https://colegiovirtus.vercel.app";
+  const edunomadBase = process.env.NEXT_PUBLIC_EDUNOMAD_FRONTEND_URL || "https://colegiovirtus.vercel.app";
+  const edunomadUrl = isStudent ? `${edunomadBase}/student` : `${edunomadBase}/teacher`;
 
   // XP progress within current level — using DIRECT fetched values
   const currentLevelXp = LEVEL_THRESHOLDS[Math.min(displayLevel - 1, LEVEL_THRESHOLDS.length - 1)] || 0;

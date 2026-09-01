@@ -232,6 +232,10 @@ export function GestureRompecabezas({ onComplete, onExit }: Props) {
       if (!ctx)   { raf = requestAnimationFrame(tick); return; }
 
       const img     = imgRef.current;
+      // Size of one source cell in the bitmap. Derived from the image itself so
+      // the art can ship at any square resolution — hard-coding PIECE_SZ here only
+      // worked while the images happened to be exactly GRID * PIECE_SZ (330px).
+      const srcCell = img ? Math.min(img.naturalWidth, img.naturalHeight) / GRID : 0;
       const pos     = getPosition();
       const gs      = gestureStateRef.current;
       const isHand  = gs.isHandDetected;
@@ -321,8 +325,8 @@ export function GestureRompecabezas({ onComplete, onExit }: Props) {
         c.save(); c.globalAlpha = alpha;
         if (img) {
           c.beginPath(); c.rect(dx, dy, PIECE_SZ, PIECE_SZ); c.clip();
-          c.drawImage(img, (id % GRID) * PIECE_SZ, Math.floor(id / GRID) * PIECE_SZ,
-            PIECE_SZ, PIECE_SZ, dx, dy, PIECE_SZ, PIECE_SZ);
+          c.drawImage(img, (id % GRID) * srcCell, Math.floor(id / GRID) * srcCell,
+            srcCell, srcCell, dx, dy, PIECE_SZ, PIECE_SZ);
         } else {
           c.fillStyle = PIECE_COLORS[id]; c.fillRect(dx, dy, PIECE_SZ, PIECE_SZ);
           c.fillStyle = "rgba(255,255,255,0.9)"; c.font = "bold 30px sans-serif"; c.textAlign = "center";

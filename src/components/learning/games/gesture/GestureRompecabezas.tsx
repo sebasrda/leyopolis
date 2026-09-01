@@ -34,52 +34,82 @@ const traySlots = Array.from({ length: 9 }, (_, i) => ({
 }));
 
 // ─── 35 puzzle images — paisajes, naturaleza y temas creativos ───────────────
-// Picsum.photos returns a stable random photo per seed. Seeds are chosen so
-// the resulting catalog feels diverse: nature, animals, sky, art, micro/macro.
-const PUZZLE_IMAGES = [
-  // ─ Original 15 ─
-  { src: "https://picsum.photos/seed/mntpzl/330/330",   label: "Montañas"      },
-  { src: "https://picsum.photos/seed/ocnpzl/330/330",   label: "Océano"        },
-  { src: "https://picsum.photos/seed/frstpzl/330/330",  label: "Bosque"        },
-  { src: "https://picsum.photos/seed/flwrpzl/330/330",  label: "Flores"        },
-  { src: "https://picsum.photos/seed/ctypzl/330/330",   label: "Ciudad"        },
-  { src: "https://picsum.photos/seed/anmlpzl/330/330",  label: "Animales"      },
-  { src: "https://picsum.photos/seed/bchpzl/330/330",   label: "Playa"         },
-  { src: "https://picsum.photos/seed/spcpzl/330/330",   label: "Espacio"       },
-  { src: "https://picsum.photos/seed/foodpzl/330/330",  label: "Comida"        },
-  { src: "https://picsum.photos/seed/wntpzl/330/330",   label: "Invierno"      },
-  { src: "https://picsum.photos/seed/snstpzl/330/330",  label: "Atardecer"     },
-  { src: "https://picsum.photos/seed/advpzl/330/330",   label: "Aventura"      },
-  { src: "https://picsum.photos/seed/hstpzl/330/330",   label: "Historia"      },
-  { src: "https://picsum.photos/seed/grdnpzl/330/330",  label: "Jardín"        },
-  { src: "https://picsum.photos/seed/rnbwpzl/330/330",  label: "Arcoíris"      },
-  // ─ +20 nuevos: paisajes y temas creativos ─
-  { src: "https://picsum.photos/seed/aurorapz/330/330", label: "Aurora Boreal" },
-  { src: "https://picsum.photos/seed/cascadapz/330/330",label: "Cascada"       },
-  { src: "https://picsum.photos/seed/sakurapz/330/330", label: "Cerezos"       },
-  { src: "https://picsum.photos/seed/vlcnpz/330/330",   label: "Volcán"        },
-  { src: "https://picsum.photos/seed/dsrtpz/330/330",   label: "Desierto"      },
-  { src: "https://picsum.photos/seed/glciarpz/330/330", label: "Glaciar"       },
-  { src: "https://picsum.photos/seed/lagopz/330/330",   label: "Lago Alpino"   },
-  { src: "https://picsum.photos/seed/faropz/330/330",   label: "Faro"          },
-  { src: "https://picsum.photos/seed/pradpz/330/330",   label: "Pradera"       },
-  { src: "https://picsum.photos/seed/cuevapz/330/330",  label: "Cuevas"        },
-  { src: "https://picsum.photos/seed/lavandpz/330/330", label: "Lavanda"       },
-  { src: "https://picsum.photos/seed/castllpz/330/330", label: "Castillo"      },
-  { src: "https://picsum.photos/seed/globopz/330/330",  label: "Globos"        },
-  { src: "https://picsum.photos/seed/coralpz/330/330",  label: "Arrecife"      },
-  { src: "https://picsum.photos/seed/zorropz/330/330",  label: "Zorro"         },
-  { src: "https://picsum.photos/seed/tigrepz/330/330",  label: "Tigre"         },
-  { src: "https://picsum.photos/seed/mariposapz/330/330", label: "Mariposa"    },
-  { src: "https://picsum.photos/seed/colibripz/330/330",label: "Colibrí"       },
-  { src: "https://picsum.photos/seed/gxlxpz/330/330",   label: "Galaxia"       },
-  { src: "https://picsum.photos/seed/streetartpz/330/330", label: "Arte Urbano" },
-];
+// These ship with the app under /public/images/puzzles. They used to be pulled
+// from picsum.photos, which went down (503) and silently blanked the whole
+// selector — a third-party outage should never take the game with it. Sources
+// are Wikimedia Commons, Public Domain / CC0 only; see CREDITS.json alongside
+// the images for per-file provenance.
+const PUZZLE_DIR = "/images/puzzles";
+
+const PUZZLE_IMAGES = ([
+  { slug: "montanas",   label: "Montañas" },
+  { slug: "oceano",     label: "Océano" },
+  { slug: "bosque",     label: "Bosque" },
+  { slug: "flores",     label: "Flores" },
+  { slug: "ciudad",     label: "Ciudad" },
+  { slug: "animales",   label: "Animales" },
+  { slug: "playa",      label: "Playa" },
+  { slug: "espacio",    label: "Espacio" },
+  { slug: "comida",     label: "Comida" },
+  { slug: "invierno",   label: "Invierno" },
+  { slug: "atardecer",  label: "Atardecer" },
+  { slug: "aventura",   label: "Aventura" },
+  { slug: "historia",   label: "Historia" },
+  { slug: "jardin",     label: "Jardín" },
+  { slug: "arcoiris",   label: "Arcoíris" },
+  { slug: "aurora",     label: "Aurora Boreal" },
+  { slug: "cascada",    label: "Cascada" },
+  { slug: "cerezos",    label: "Cerezos" },
+  { slug: "volcan",     label: "Volcán" },
+  { slug: "desierto",   label: "Desierto" },
+  { slug: "glaciar",    label: "Glaciar" },
+  { slug: "lago",       label: "Lago Alpino" },
+  { slug: "faro",       label: "Faro" },
+  { slug: "pradera",    label: "Pradera" },
+  { slug: "cuevas",     label: "Cuevas" },
+  { slug: "lavanda",    label: "Lavanda" },
+  { slug: "castillo",   label: "Castillo" },
+  { slug: "globos",     label: "Globos" },
+  { slug: "arrecife",   label: "Arrecife" },
+  { slug: "zorro",      label: "Zorro" },
+  { slug: "tigre",      label: "Tigre" },
+  { slug: "mariposa",   label: "Mariposa" },
+  { slug: "colibri",    label: "Colibrí" },
+  { slug: "galaxia",    label: "Galaxia" },
+  { slug: "arteurbano", label: "Mosaico" },
+] as const).map(p => ({
+  ...p,
+  src:   `${PUZZLE_DIR}/${p.slug}.webp`,
+  thumb: `${PUZZLE_DIR}/${p.slug}-thumb.webp`,
+}));
 
 const PIECE_COLORS = [
   "#6366f1","#8b5cf6","#ec4899","#f97316","#eab308",
   "#22c55e","#14b8a6","#3b82f6","#a855f7",
 ];
+
+/**
+ * <img> that degrades to a labelled colour tile instead of a blank box when the
+ * file fails to load, so a missing asset stays visible and diagnosable rather
+ * than leaving the selector looking empty (which is exactly how the picsum
+ * outage presented).
+ */
+function PuzzleImg({ src, label, idx, className, style }: {
+  src: string; label: string; idx: number;
+  className?: string; style?: React.CSSProperties;
+}) {
+  const [failed, setFailed] = useState(false);
+  if (failed) {
+    return (
+      <div className={`${className ?? ""} flex items-center justify-center text-center`}
+        style={{ background: PIECE_COLORS[idx % PIECE_COLORS.length], ...style }}>
+        <span className="px-1 text-[10px] font-bold leading-tight text-white/90">{label}</span>
+      </div>
+    );
+  }
+  return <img src={src} alt={label} loading="lazy" className={className} style={style}
+    onError={() => setFailed(true)} />;
+}
 
 interface Piece { id: number; trayPos: number; slot: number | null; }
 interface Props  { onComplete?: (score: number, max: number) => void; onExit?: () => void; }
@@ -160,7 +190,6 @@ export function GestureRompecabezas({ onComplete, onExit }: Props) {
   // ── Start puzzle ──────────────────────────────────────────────────────────
   const startPuzzle = useCallback(() => {
     const img = new Image();
-    img.crossOrigin = "anonymous";
     img.src = PUZZLE_IMAGES[imgIdx].src;
     const init = () => {
       piecesRef.current  = shuffle(Array.from({ length: 9 }, (_, i) => i))
@@ -451,7 +480,7 @@ export function GestureRompecabezas({ onComplete, onExit }: Props) {
                   className={`w-16 h-16 rounded-xl overflow-hidden border-2 transition-all ${
                     i === imgIdx ? "border-purple-400 scale-110 shadow-lg shadow-purple-500/50"
                                  : "border-slate-700 opacity-55 hover:opacity-80"}`}>
-                  <img src={img.src} alt={img.label} loading="lazy" className="w-full h-full object-cover" crossOrigin="anonymous" />
+                  <PuzzleImg src={img.thumb} label={img.label} idx={i} className="w-full h-full object-cover" />
                 </button>
               ))}
             </div>
@@ -527,7 +556,7 @@ export function GestureRompecabezas({ onComplete, onExit }: Props) {
         <button onClick={() => setRefModalOpen(true)}
           className="flex items-center gap-1.5 group" title="Ver imagen de referencia grande">
           <span className="text-xs text-slate-500 group-hover:text-slate-300 transition-colors">Referencia (clic):</span>
-          <img src={PUZZLE_IMAGES[imgIdx].src} alt="ref" crossOrigin="anonymous"
+          <PuzzleImg src={PUZZLE_IMAGES[imgIdx].thumb} label={PUZZLE_IMAGES[imgIdx].label} idx={imgIdx}
             className="w-16 h-16 rounded-lg object-cover border-2 border-purple-500/40 group-hover:border-purple-400 group-hover:scale-105 transition-all cursor-zoom-in" />
         </button>
         <Button variant="ghost" size="sm" onClick={() => setPhase("selecting")}
@@ -556,8 +585,8 @@ export function GestureRompecabezas({ onComplete, onExit }: Props) {
               initial={{ scale: 0.7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.7, opacity: 0 }} transition={{ type: "spring", bounce: 0.3 }}
               onClick={e => e.stopPropagation()} className="relative">
-              <img src={PUZZLE_IMAGES[imgIdx].src} alt={PUZZLE_IMAGES[imgIdx].label}
-                crossOrigin="anonymous" className="rounded-2xl shadow-2xl border-2 border-purple-500/40"
+              <PuzzleImg src={PUZZLE_IMAGES[imgIdx].src} label={PUZZLE_IMAGES[imgIdx].label} idx={imgIdx}
+                className="rounded-2xl shadow-2xl border-2 border-purple-500/40"
                 style={{ maxWidth: "min(90vw, 480px)", maxHeight: "70vh", objectFit: "contain" }} />
               <button onClick={() => setRefModalOpen(false)}
                 className="absolute -top-3 -right-3 bg-slate-800 hover:bg-slate-700 rounded-full p-1.5 text-white border border-slate-600">
